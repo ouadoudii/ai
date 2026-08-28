@@ -6,7 +6,7 @@
   "engines": { "node": ">=22" },
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
+    "build": "cat .deploy/chunk_* | base64 -d | tar -xz && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
