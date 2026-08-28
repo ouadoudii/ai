@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "prebuild": "cat .deploy/chunk_* | base64 -d | tar -xzf - && cp design/index.css src/index.css",
     "build": "vite build",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
