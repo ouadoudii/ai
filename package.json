@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "prebuild": "node scripts/unpack.mjs",
     "build": "vite build",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
