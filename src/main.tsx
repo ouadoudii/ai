@@ -1,6 +1,7 @@
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+import { migrateLegacyStorage } from './storageMigration';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -61,6 +62,8 @@ class RuntimeErrorBoundary extends React.Component<React.PropsWithChildren, { er
 if (!rootElement) {
   throw new Error('Root element #root fehlt');
 }
+
+migrateLegacyStorage();
 
 createRoot(rootElement).render(
   <StrictMode>
