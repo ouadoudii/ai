@@ -12,6 +12,7 @@ import { CaringVoiceHero } from './CaringVoiceHero';
 import { CaringGuardian } from './CaringGuardian';
 import { evaluateNutritionAlarms } from '../utils/interventionEngine';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
+import { getLocalDateKey } from '../utils/dateKey';
 
 interface TodayHomeViewProps {
   moments: FoodMoment[];
@@ -44,7 +45,7 @@ export const TodayHomeView: React.FC<TodayHomeViewProps> = ({
   const handleQuickVoiceSubmit = (text: string, aiResult?: any) => {
     if (!onSaveCheckIn) return;
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateKey();
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const currentHour = new Date().getHours();
     const timeOfDay = currentHour < 11 ? 'morning' : currentHour < 16 ? 'midday' : 'evening';
@@ -80,7 +81,7 @@ export const TodayHomeView: React.FC<TodayHomeViewProps> = ({
     });
   };
 
-  const todayKey = new Date().toISOString().split('T')[0];
+  const todayKey = getLocalDateKey();
   const todayMoments = React.useMemo(
     () => moments.filter((moment) => moment.date === todayKey).slice(0, 3),
     [moments, todayKey],
