@@ -1,4 +1,4 @@
-name: Build check
+name: Test and build
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test-and-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,4 +15,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install
+      - run: npm test
       - run: npm run build
