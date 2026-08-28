@@ -57,7 +57,6 @@ body {
   min-height: 100vh;
 }
 
-/* warmer app chrome */
 header[class*="sticky"],
 header[class*="fixed"] {
   background: rgba(251,248,243,.88) !important;
@@ -77,7 +76,6 @@ header[class*="fixed"] {
   border-color: rgba(120,105,91,.10) !important;
 }
 
-/* Stronger hierarchy on the Today screen */
 main h1,
 main h2.font-display,
 main .font-display[class*="text-3xl"],
@@ -92,11 +90,7 @@ main p[class*="text-stone-600"] {
   color: var(--cary-muted) !important;
 }
 
-/* hero feeling: more generous and less dashboard-like */
-main > div:first-child {
-  position: relative;
-}
-
+main > div:first-child { position: relative; }
 main > div:first-child::before {
   content: "";
   position: absolute;
@@ -110,7 +104,6 @@ main > div:first-child::before {
   filter: blur(2px);
 }
 
-/* meal / moment cards: larger visual presence */
 article[class*="rounded-3xl"],
 button[class*="rounded-3xl"][class*="overflow-hidden"],
 div[class*="rounded-3xl"][class*="overflow-hidden"] {
@@ -130,7 +123,33 @@ img[class*="object-cover"] {
   filter: saturate(1.04) contrast(1.015);
 }
 
-/* category/filter chips */
+/* editorial meal-card treatment */
+article[class*="rounded-3xl"] h3,
+article[class*="rounded-3xl"] .font-display,
+div[class*="rounded-3xl"][class*="overflow-hidden"] h3 {
+  letter-spacing: -.025em !important;
+  line-height: 1.12 !important;
+  color: #24312c !important;
+}
+
+article[class*="rounded-3xl"] p,
+div[class*="rounded-3xl"][class*="overflow-hidden"] p {
+  line-height: 1.5 !important;
+}
+
+article[class*="rounded-3xl"] [class*="text-xs"],
+div[class*="rounded-3xl"][class*="overflow-hidden"] [class*="text-xs"] {
+  letter-spacing: .01em;
+}
+
+article [class*="rounded-full"][class*="bg-"],
+article [class*="rounded-xl"][class*="bg-"],
+div[class*="rounded-3xl"][class*="overflow-hidden"] [class*="rounded-full"][class*="bg-"] {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.42);
+}
+
 button[class*="rounded-full"][class*="border"],
 button[class*="rounded-2xl"][class*="border"] {
   border-color: rgba(120,105,91,.13) !important;
@@ -155,7 +174,6 @@ button[class*="rounded-2xl"][class*="border"] {
   box-shadow: 0 8px 22px rgba(231,100,84,.20) !important;
 }
 
-/* mobile: editorial cards + floating navigation */
 @media (max-width: 767px) {
   body { padding-bottom: 92px; }
   main {
@@ -188,10 +206,40 @@ button[class*="rounded-2xl"][class*="border"] {
     overflow: visible !important;
   }
 
-  /* give photo cards more of the old app's visual weight */
+  /* bigger photos, cleaner reading rhythm */
   article img[class*="object-cover"],
   [class*="rounded-3xl"] > img[class*="object-cover"] {
-    min-height: 150px;
+    min-height: 178px !important;
+    max-height: 230px;
+    width: 100% !important;
+    object-fit: cover !important;
+  }
+
+  article[class*="rounded-3xl"] > div:not(:has(img)),
+  div[class*="rounded-3xl"][class*="overflow-hidden"] > div:not(:has(img)) {
+    padding-top: 16px;
+    padding-bottom: 17px;
+  }
+
+  article[class*="rounded-3xl"] h3,
+  article[class*="rounded-3xl"] .font-display,
+  div[class*="rounded-3xl"][class*="overflow-hidden"] h3 {
+    font-size: 1.15rem !important;
+  }
+
+  article[class*="rounded-3xl"] [class*="gap-1"],
+  article[class*="rounded-3xl"] [class*="gap-2"] {
+    row-gap: .45rem !important;
+  }
+
+  article[class*="rounded-3xl"] [class*="text-stone-400"],
+  article[class*="rounded-3xl"] [class*="text-stone-500"] {
+    color: #827970 !important;
+  }
+
+  button[class*="rounded-full"][class*="px-3"],
+  button[class*="rounded-full"][class*="px-4"] {
+    min-height: 38px;
   }
 
   button { -webkit-tap-highlight-color: transparent; }
