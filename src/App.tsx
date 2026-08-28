@@ -1,25 +1,37 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Heart, Home, Plus, Sparkles, BarChart3, MessageCircle } from 'lucide-react';
 import { averageRating, createMoment, toggleFavorite, type Moment } from './utils/moments';
+import { addCheckIn, CHECKIN_STORAGE_KEY, latestCheckIn, type CheckInMood, type DailyCheckIn } from './utils/checkins';
 
 const seed: Moment[] = [
 {id:1,title:'Mediterranean Breakfast',meal:'Breakfast',note:'Fresh, simple and energizing.',favorite:true,rating:5,date:'Today, 08:30'},
 {id:2,title:'Colorful Lunch Bowl',meal:'Lunch',note:'A balanced bowl with vegetables and grains.',favorite:false,rating:4,date:'Today, 13:10'},
 {id:3,title:'Evening Comfort Plate',meal:'Dinner',note:'Warm food and a calm end to the day.',favorite:true,rating:5,date:'Yesterday, 19:40'}];
 
+const moodOptions: Array<{ mood: CheckInMood; emoji: string; label: string }> = [
+ { mood: 'good', emoji: '😊', label: 'Good' },
+ { mood: 'calm', emoji: '😌', label: 'Calm' },
+ { mood: 'neutral', emoji: '😐', label: 'Neutral' },
+ { mood: 'low', emoji: '😕', label: 'Low' },
+];
+
 export default function App(){
  const [tab,setTab]=useState('Today');
  const [moments,setMoments]=useState<Moment[]>(()=>{try{return JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'null')||seed}catch{return seed}});
+ const [checkIns,setCheckIns]=useState<DailyCheckIn[]>(()=>{try{return JSON.parse(localStorage.getItem(CHECKIN_STORAGE_KEY)||'[]')}catch{return []}});
  const [adding,setAdding]=useState(false);
  const [title,setTitle]=useState('');
  useEffect(()=>localStorage.setItem('nimmapp_moments_v1',JSON.stringify(moments)),[moments]);
+ useEffect(()=>localStorage.setItem(CHECKIN_STORAGE_KEY,JSON.stringify(checkIns)),[checkIns]);
  const favs=useMemo(()=>moments.filter(m=>m.favorite),[moments]);
  const shown=tab==='Favorites'?favs:moments;
+ const latestMood=latestCheckIn(checkIns)?.mood;
  const add=()=>{const moment=createMoment(title);if(!moment)return;setMoments([moment,...moments]);setTitle('');setAdding(false)};
+ const saveMood=(mood:CheckInMood)=>setCheckIns(current=>addCheckIn(current,mood));
  return <div className="app-shell">
   <header className="topbar"><div><div className="eyebrow">CARY · FOOD JOURNEY</div><h1>Eat with care. Remember what matters.</h1></div><button className="avatar">OE</button></header>
   <main>
-   {tab==='Today' && <><section className="hero"><div><span className="pill"><Sparkles size={15}/> Daily care</span><h2>How are you feeling around food today?</h2><p>Your private journal for meals, feelings and small discoveries — without judgment.</p><div className="hero-actions"><button onClick={()=>setAdding(true)} className="primary"><Plus size={18}/> Add a moment</button><button className="secondary"><MessageCircle size={18}/> Talk to Food Coach</button></div></div><div className="check"><b>Today’s gentle check-in</b><div className="moods"><span>😊</span><span>😌</span><span>😐</span><span>😕</span></div><small>Choose what feels closest. No score, no pressure.</small></div></section>
+   {tab==='Today' && <><section className="hero"><div><span className="pill"><Sparkles size={15}/> Daily care</span><h2>How are you feeling around food today?</h2><p>Your private journal for meals, feelings and small discoveries — without judgment.</p><div className="hero-actions"><button onClick={()=>setAdding(true)} className="primary"><Plus size={18}/> Add a moment</button><button onClick={()=>setTab('Coach')} className="secondary"><MessageCircle size={18}/> Talk to Food Coach</button></div></div><div className="check"><b>Today’s gentle check-in</b><div className="moods">{moodOptions.map(option=><button key={option.mood} className={latestMood===option.mood?'mood-choice selected':'mood-choice'} onClick={()=>saveMood(option.mood)} aria-label={option.label} aria-pressed={latestMood===option.mood}><span>{option.emoji}</span><small>{option.label}</small></button>)}</div><small>{latestMood ? 'Saved. You can change it whenever you want.' : 'Choose what feels closest. No score, no pressure.'}</small></div></section>
    <section className="section-head"><div><span className="eyebrow">YOUR JOURNEY</span><h3>Recent food moments</h3></div><button onClick={()=>setTab('Calendar')}>View calendar</button></section></>}
    {tab==='Coach' && <section className="feature"><Sparkles size={30}/><h2>Your Food Coach</h2><p>Reflect on patterns, hunger, energy and enjoyment. Cary keeps the tone supportive and practical.</p><textarea placeholder="What would you like to talk about?"/><button className="primary">Start reflection</button></section>}
    {tab==='Stats' && <section className="feature"><BarChart3 size={30}/><h2>Your patterns</h2><div className="stats"><div><b>{moments.length}</b><span>moments</span></div><div><b>{favs.length}</b><span>favorites</span></div><div><b>{averageRating(moments)}/5</b><span>avg. joy</span></div></div></section>}
