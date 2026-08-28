@@ -1,0 +1,6 @@
+{
+  "name": "Cary",
+  "description": "Cary — Caring companion for sleep, mindful nutrition & wellbeing with voice check-ins and archetype matrix in English and Arabic (العربية).",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
