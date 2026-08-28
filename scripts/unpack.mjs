@@ -17,18 +17,14 @@ const base64 = chunks
   .join('')
   .replace(/\s+/g, '');
 
-const expectedBase64Length = 118832;
-if (base64.length !== expectedBase64Length) {
-  throw new Error(`Unexpected Cary archive length: ${base64.length} (expected ${expectedBase64Length})`);
-}
-
 const archive = Buffer.from(base64, 'base64');
 if (archive.length < 2 || archive[0] !== 0x1f || archive[1] !== 0x8b) {
-  throw new Error('Reconstructed Cary source archive is not a gzip file');
+  throw new Error(`Reconstructed Cary source archive is not a gzip file (base64 length ${base64.length})`);
 }
 
 const archivePath = path.join(os.tmpdir(), 'cary-source.tar.gz');
 fs.writeFileSync(archivePath, archive);
+execFileSync('tar', ['-tzf', archivePath], { stdio: 'ignore' });
 execFileSync('tar', ['-xzf', archivePath, '-C', process.cwd()], { stdio: 'inherit' });
 
 const requiredFiles = [
@@ -44,4 +40,4 @@ for (const required of requiredFiles) {
   }
 }
 
-console.log(`Restored complete Cary source from ${chunks.length} archive parts (${archive.length} bytes).`);
+console.log(`Restored complete Cary source from ${chunks.length} archive parts (${archive.length} bytes, base64 ${base64.length}).`);
