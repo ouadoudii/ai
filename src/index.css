@@ -129,3 +129,19 @@ body {
 img[class*="object-cover"] {
   box-shadow: 0 5px 16px rgba(57,45,35,.10);
 }
+
+/* Respect the device accessibility setting for people sensitive to motion. */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
