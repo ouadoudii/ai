@@ -19,7 +19,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Restore complete source when archive is present
         id: restore
@@ -63,7 +62,6 @@ jobs:
               const moments = [1,2,3].map(i => baseMoment({ id: `p${i}`, nutrition: { protein: 35 } }));
               expect(analyzeNutritionType(moments).archetype).toBe('protein_performer');
             });
-
             it('keeps the profile locked until enough data exists', () => {
               expect(analyzeNutritionType([baseMoment()]).unlocked).toBe(false);
             });
@@ -75,7 +73,6 @@ jobs:
               expect(feedback.title.length).toBeGreaterThan(0);
               expect(feedback.message.length).toBeGreaterThan(0);
             });
-
             it('calculates coaching metrics without NaN values', () => {
               const metrics = calculateCoachingMetrics([baseMoment(), baseMoment({ id: 'm2', rating: 5 })]);
               for (const value of Object.values(metrics)) if (typeof value === 'number') expect(Number.isFinite(value)).toBe(true);
