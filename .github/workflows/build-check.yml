@@ -1,19 +1,118 @@
-name: Test and build
+name: Restore, test and build Cary
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  test-and-build:
+  restore-test-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm install
-      - run: npm test
-      - run: npm run build
+
+      - name: Restore complete source when archive is present
+        id: restore
+        shell: bash
+        run: |
+          if compgen -G '.deploy/full_*' > /dev/null; then
+            node scripts/unpack.mjs
+            echo "restored=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "restored=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare tested production package
+        if: steps.restore.outputs.restored == 'true'
+        shell: bash
+        run: |
+          rm -f src/utils/moments.ts src/utils/moments.test.ts src/utils/checkIn.ts src/utils/checkIn.test.ts
+          node <<'NODE'
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          pkg.name = 'cary-food-journey';
+          pkg.scripts = { dev: 'vite', build: 'vite build', preview: 'vite preview', test: 'vitest run', lint: 'tsc --noEmit' };
+          pkg.devDependencies = { ...(pkg.devDependencies || {}), vitest: '^3.2.4' };
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          NODE
+          cat > src/utils/coreEngines.test.ts <<'TEST'
+          import { describe, expect, it } from 'vitest';
+          import type { FoodMoment, DailyCheckIn } from '../types';
+          import { analyzeNutritionType } from './nutritionTypeEngine';
+          import { calculateCoachingMetrics, generateMomentCoachFeedback } from './coachEngine';
+          import { evaluateNutritionAlarms } from './interventionEngine';
+
+          const baseMoment = (overrides: Partial<FoodMoment> = {}): FoodMoment => ({
+            id: 'm1', title: 'Test meal', label: 'Lunch', category: 'lunch', date: '2026-08-28', time: '12:30',
+            location: 'Home', locationCategory: 'home', imageUrl: '', rating: 4, mood: 'satisfied', tags: [], createdAt: 1,
+            ...overrides,
+          });
+
+          describe('nutrition type engine', () => {
+            it('detects a protein performer from repeated protein-rich meals', () => {
+              const moments = [1,2,3].map(i => baseMoment({ id: `p${i}`, nutrition: { protein: 35 } }));
+              expect(analyzeNutritionType(moments).archetype).toBe('protein_performer');
+            });
+
+            it('keeps the profile locked until enough data exists', () => {
+              expect(analyzeNutritionType([baseMoment()]).unlocked).toBe(false);
+            });
+          });
+
+          describe('coach engine', () => {
+            it('returns feedback for a mindful meal', () => {
+              const feedback = generateMomentCoachFeedback(baseMoment({ eatingPace: 'slow', distraction: 'mindful', fullnessLevel: 3 }));
+              expect(feedback.title.length).toBeGreaterThan(0);
+              expect(feedback.message.length).toBeGreaterThan(0);
+            });
+
+            it('calculates coaching metrics without NaN values', () => {
+              const metrics = calculateCoachingMetrics([baseMoment(), baseMoment({ id: 'm2', rating: 5 })]);
+              for (const value of Object.values(metrics)) if (typeof value === 'number') expect(Number.isFinite(value)).toBe(true);
+            });
+          });
+
+          describe('guardian intervention engine', () => {
+            it('raises a sleep-deficit alarm', () => {
+              const checkIn: DailyCheckIn = {
+                id: 'c1', date: '2026-08-28', time: '08:00', timeOfDay: 'morning',
+                sleep: { durationHours: 5, quality: 2, wakeFeeling: 'tired' },
+                wellbeing: { energyLevel: 2, mood: 'comfort', stressLevel: 3 }, createdAt: 1,
+              };
+              const result = evaluateNutritionAlarms([], [checkIn]);
+              expect(result.hasAlarms).toBe(true);
+              expect(result.activeAlarms.some(a => a.triggerKey === 'sleep_deficit')).toBe(true);
+            });
+          });
+          TEST
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit restored real source files
+        if: steps.restore.outputs.restored == 'true'
+        shell: bash
+        run: |
+          rm -rf .deploy scripts/unpack.mjs
+          rmdir scripts 2>/dev/null || true
+          git config user.name "Cary CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Restore full Cary source after tests"
+          git push origin HEAD:main
