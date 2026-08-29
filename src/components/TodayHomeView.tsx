@@ -12,6 +12,7 @@ import {
 import { FoodMoment, DailyCheckIn } from '../types';
 import { CaringVoiceHero } from './CaringVoiceHero';
 import { CaringGuardian } from './CaringGuardian';
+import { TodaySnapshot } from './TodaySnapshot';
 import { evaluateNutritionAlarms } from '../utils/interventionEngine';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
 import { getLocalDateKey } from '../utils/dateKey';
@@ -99,6 +100,8 @@ export const TodayHomeView: React.FC<TodayHomeViewProps> = ({
         latestCheckIn={checkIns[0]}
         archetype={nutritionProfile.archetype}
       />
+
+      <TodaySnapshot moments={moments} checkIns={checkIns} onOpenCheckIn={onOpenCheckInModal} />
 
       <CaringGuardian
         guardianStatus={guardianStatus}
