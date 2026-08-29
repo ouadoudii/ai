@@ -6,6 +6,7 @@ interface MealOption {
   value: string;
   imageUrl: string;
   alt: string;
+  position: string;
 }
 
 const foodImages = [
@@ -39,22 +40,17 @@ const foodImages = [
 ] as const;
 
 const positions = ['center', '50% 35%', '50% 65%', '35% 50%', '65% 50%', '45% 45%'];
+const ITEMS_PER_PAGE = 12;
+const PAGE_COUNT = Math.ceil(foodImages.length / ITEMS_PER_PAGE);
 
-const makeOptions = (page: number): MealOption[] =>
-  Array.from({ length: 81 }, (_, index) => {
-    const sourceIndex = (index + page * 11) % foodImages.length;
-    const [name, photoId, alt] = foodImages[sourceIndex];
-    const cropSeed = index + page * 81;
-    const position = positions[cropSeed % positions.length];
-    return {
-      value: `${name} · Auswahl ${cropSeed + 1}`,
-      imageUrl: `https://images.unsplash.com/${photoId}?w=240&h=240&auto=format&fit=crop&q=78&ixid=cary-${page}-${index}`,
-      alt: `${alt}, Bildauswahl ${cropSeed + 1}`,
-      position,
-    } as MealOption & { position: string };
-  });
-
-const pages = [makeOptions(0), makeOptions(1)];
+const pages: MealOption[][] = Array.from({ length: PAGE_COUNT }, (_, pageIndex) =>
+  foodImages.slice(pageIndex * ITEMS_PER_PAGE, (pageIndex + 1) * ITEMS_PER_PAGE).map(([name, photoId, alt], index) => ({
+    value: name,
+    imageUrl: `https://images.unsplash.com/${photoId}?w=520&h=520&auto=format&fit=crop&q=84&ixid=cary-${pageIndex}-${index}`,
+    alt,
+    position: positions[(pageIndex * ITEMS_PER_PAGE + index) % positions.length],
+  }))
+);
 
 interface MealVisualPickerProps {
   value: string;
@@ -72,22 +68,21 @@ export const MealVisualPicker: React.FC<MealVisualPickerProps> = ({ value, onCha
   return (
     <fieldset className="min-w-0">
       <legend className="sr-only">{question}</legend>
-      <p className="sr-only">Wische seitlich für die zweite Bildseite. Tippe ein Bild an, um es auszuwählen.</p>
+      <p className="sr-only">Wische seitlich für weitere Bildseiten. Tippe ein Bild an, um es auszuwählen.</p>
 
       <div
         className="flex overflow-x-auto snap-x snap-mandatory gap-3 no-scrollbar pb-1"
-        aria-label={`${question}, zwei Seiten mit jeweils 81 Bildern`}
+        aria-label={`${question}, ${PAGE_COUNT} Seiten mit bis zu 12 Bildern`}
       >
         {pages.map((options, pageIndex) => (
           <div
             key={pageIndex}
-            className="min-w-full snap-center grid grid-cols-9 gap-1 sm:gap-1.5"
+            className="min-w-full snap-center grid grid-cols-3 gap-2"
             role="radiogroup"
-            aria-label={`${question}, Seite ${pageIndex + 1} von 2`}
+            aria-label={`${question}, Seite ${pageIndex + 1} von ${PAGE_COUNT}`}
           >
             {options.map((option) => {
               const selected = value === option.value;
-              const imagePosition = (option as MealOption & { position?: string }).position || 'center';
               return (
                 <button
                   key={option.value}
@@ -96,9 +91,9 @@ export const MealVisualPicker: React.FC<MealVisualPickerProps> = ({ value, onCha
                   aria-checked={selected}
                   aria-label={option.alt}
                   onClick={() => onChange(option.value)}
-                  className={`relative aspect-square overflow-hidden rounded-md sm:rounded-lg border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-1 transition-[border-color,box-shadow,transform] ${
+                  className={`relative aspect-square overflow-hidden rounded-xl border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-1 transition-[border-color,box-shadow,transform] ${
                     selected
-                      ? 'border-amber-600 ring-2 ring-amber-200 scale-[0.96]'
+                      ? 'border-amber-600 ring-2 ring-amber-200 scale-[0.97]'
                       : 'border-transparent hover:border-amber-300'
                   }`}
                 >
@@ -108,15 +103,12 @@ export const MealVisualPicker: React.FC<MealVisualPickerProps> = ({ value, onCha
                     aria-hidden="true"
                     loading="lazy"
                     className="absolute inset-0 w-full h-full object-cover"
-                    style={{ objectPosition: imagePosition }}
+                    style={{ objectPosition: option.position }}
                   />
                   {selected && (
-                    <span
-                      className="absolute inset-0 bg-amber-500/15 flex items-center justify-center"
-                      aria-hidden="true"
-                    >
-                      <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-amber-600 text-white flex items-center justify-center shadow-sm">
-                        <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="absolute inset-0 bg-amber-500/15 flex items-center justify-center" aria-hidden="true">
+                      <span className="w-7 h-7 rounded-full bg-amber-600 text-white flex items-center justify-center shadow-sm">
+                        <Check className="w-4 h-4" />
                       </span>
                     </span>
                   )}
@@ -128,8 +120,9 @@ export const MealVisualPicker: React.FC<MealVisualPickerProps> = ({ value, onCha
       </div>
 
       <div className="mt-2 flex justify-center gap-1.5" aria-hidden="true">
-        <span className="w-5 h-1.5 rounded-full bg-amber-500" />
-        <span className="w-1.5 h-1.5 rounded-full bg-stone-300" />
+        {pages.map((_, index) => (
+          <span key={index} className="w-1.5 h-1.5 rounded-full bg-stone-300 first:w-5 first:bg-amber-500" />
+        ))}
       </div>
     </fieldset>
   );
