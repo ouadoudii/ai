@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { DailyCheckIn, TimeOfDayPhase, FoodMood, EatingPace, DistractionLevel } from '../types';
 import { getCurrentCaringPrompt, CaringPrompt } from '../utils/caringPrompts';
+import { MealVisualPicker } from './MealVisualPicker';
 
 interface DailyCheckInModalProps {
   isOpen: boolean;
@@ -494,18 +495,11 @@ export const DailyCheckInModal: React.FC<DailyCheckInModalProps> = ({
                   ) : (
                     /* Midday / Evening Step 1: Essen */
                     <>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-stone-700 block">
-                          {timePhase === 'midday' ? 'Was gab es zum Mittagessen?' : 'Was gab es zum Abendessen?'}
-                        </label>
-                        <input
-                          type="text"
-                          value={mealTitle}
-                          onChange={(e) => setMealTitle(e.target.value)}
-                          placeholder="z.B. Gegrillter Lachs mit Ofengemüse..."
-                          className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-stone-50 border border-stone-200 rounded-xl focus:border-amber-800 focus:bg-white focus:outline-hidden"
-                        />
-                      </div>
+                      <MealVisualPicker
+                        value={mealTitle}
+                        onChange={setMealTitle}
+                        timePhase={timePhase}
+                      />
 
                       {/* Sättigung & Hunger */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -578,18 +572,11 @@ export const DailyCheckInModal: React.FC<DailyCheckInModalProps> = ({
                 <div className="space-y-4">
                   {timePhase === 'morning' ? (
                     <>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-stone-700 block">
-                          Frühstück / Erstes Essen des Tages:
-                        </label>
-                        <input
-                          type="text"
-                          value={mealTitle}
-                          onChange={(e) => setMealTitle(e.target.value)}
-                          placeholder="z.B. Haferflocken mit Beeren & Quark oder Intervallfasten bis 12:00..."
-                          className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-stone-50 border border-stone-200 rounded-xl focus:border-amber-800 focus:bg-white focus:outline-hidden"
-                        />
-                      </div>
+                      <MealVisualPicker
+                        value={mealTitle}
+                        onChange={setMealTitle}
+                        timePhase={timePhase}
+                      />
 
                       <div className="p-3 bg-stone-50 rounded-xl border border-stone-200/80 text-xs">
                         <div className="flex justify-between text-stone-600 mb-1">
