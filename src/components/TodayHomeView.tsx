@@ -6,6 +6,8 @@ import {
   MessageSquare,
   ChevronRight,
   Smile,
+  ShieldCheck,
+  Download,
 } from 'lucide-react';
 import { FoodMoment, DailyCheckIn } from '../types';
 import { CaringVoiceHero } from './CaringVoiceHero';
@@ -13,6 +15,7 @@ import { CaringGuardian } from './CaringGuardian';
 import { evaluateNutritionAlarms } from '../utils/interventionEngine';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
 import { getLocalDateKey } from '../utils/dateKey';
+import { downloadCaryDataExport } from '../utils/dataExport';
 
 interface TodayHomeViewProps {
   moments: FoodMoment[];
@@ -217,6 +220,31 @@ export const TodayHomeView: React.FC<TodayHomeViewProps> = ({
             <span>Weiteren Moment hinzufügen</span>
           </button>
         )}
+      </section>
+
+      <section className="rounded-3xl border border-emerald-200/70 bg-emerald-50/50 p-5 sm:p-6" aria-labelledby="data-trust-title">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-3.5 min-w-0">
+            <div className="w-11 h-11 rounded-2xl bg-white text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Deine Daten</p>
+              <h3 id="data-trust-title" className="font-display font-bold text-stone-900">Du behältst die Kontrolle</h3>
+              <p className="mt-1 text-sm leading-relaxed text-stone-600 max-w-2xl">
+                Tagebuch und Check-ins werden in diesem Browser gespeichert. Wenn du eine Cary-AI-Funktion nutzt, können die für diese Anfrage benötigten Inhalte zur Verarbeitung an den AI-Dienst gesendet werden.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => downloadCaryDataExport(moments, checkIns)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-white border border-emerald-200 px-4 py-2.5 text-sm font-bold text-emerald-800 hover:bg-emerald-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 transition-colors shrink-0"
+          >
+            <Download className="w-4 h-4" />
+            Daten exportieren
+          </button>
+        </div>
       </section>
     </div>
   );
