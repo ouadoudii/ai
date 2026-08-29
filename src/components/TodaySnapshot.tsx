@@ -26,7 +26,7 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ moments, checkIns,
         <button
           type="button"
           onClick={onOpenCheckIn}
-          className="rounded-lg px-2 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+          className="min-h-11 rounded-xl px-3 text-xs font-bold text-emerald-800 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
         >
           Check-in
         </button>
@@ -41,25 +41,35 @@ export const TodaySnapshot: React.FC<TodaySnapshotProps> = ({ moments, checkIns,
           <p className="mt-0.5 text-[11px] font-medium text-stone-500">Momente</p>
         </div>
 
-        <div className="rounded-2xl border border-stone-200/80 bg-white p-3.5 shadow-xs">
+        <button
+          type="button"
+          onClick={onOpenCheckIn}
+          aria-label={latestCheckIn ? `Energie heute: ${latestCheckIn.wellbeing.energyLevel} von 5. Check-in öffnen` : 'Energie für heute eintragen'}
+          className="min-h-11 rounded-2xl border border-stone-200/80 bg-white p-3.5 text-left shadow-xs transition-colors hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+        >
           <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
             <Sparkles className="h-4 w-4" aria-hidden="true" />
           </div>
           <p className="text-xl font-display font-bold text-stone-900">
-            {latestCheckIn ? `${latestCheckIn.wellbeing.energyLevel}/5` : '—'}
+            {latestCheckIn ? `${latestCheckIn.wellbeing.energyLevel}/5` : 'Eintragen'}
           </p>
           <p className="mt-0.5 text-[11px] font-medium text-stone-500">Energie</p>
-        </div>
+        </button>
 
-        <div className="rounded-2xl border border-stone-200/80 bg-white p-3.5 shadow-xs">
+        <button
+          type="button"
+          onClick={onOpenCheckIn}
+          aria-label={latestSleep ? `Schlaf heute: ${latestSleep.durationHours} Stunden. Check-in öffnen` : 'Schlaf für heute eintragen'}
+          className="min-h-11 rounded-2xl border border-stone-200/80 bg-white p-3.5 text-left shadow-xs transition-colors hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
+        >
           <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
             <Moon className="h-4 w-4" aria-hidden="true" />
           </div>
           <p className="text-xl font-display font-bold text-stone-900">
-            {latestSleep ? `${latestSleep.durationHours}h` : '—'}
+            {latestSleep ? `${latestSleep.durationHours}h` : 'Eintragen'}
           </p>
           <p className="mt-0.5 text-[11px] font-medium text-stone-500">Schlaf</p>
-        </div>
+        </button>
       </div>
     </section>
   );
