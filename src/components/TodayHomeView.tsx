@@ -17,6 +17,7 @@ import { evaluateNutritionAlarms } from '../utils/interventionEngine';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
 import { getLocalDateKey } from '../utils/dateKey';
 import { downloadCaryDataExport } from '../utils/dataExport';
+import { getRecentTodayMoments } from '../utils/todayFeed';
 
 interface TodayHomeViewProps {
   moments: FoodMoment[];
@@ -87,7 +88,7 @@ export const TodayHomeView: React.FC<TodayHomeViewProps> = ({
 
   const todayKey = getLocalDateKey();
   const todayMoments = React.useMemo(
-    () => moments.filter((moment) => moment.date === todayKey).slice(0, 3),
+    () => getRecentTodayMoments(moments, todayKey, 3),
     [moments, todayKey],
   );
 
@@ -150,7 +151,10 @@ export const TodayHomeView: React.FC<TodayHomeViewProps> = ({
         <div className="flex items-center justify-between border-b border-stone-100 pb-3 gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <Heart className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
-            <h3 id="today-moments-title" className="font-display font-bold text-base sm:text-lg text-stone-900">Heute</h3>
+            <div className="min-w-0">
+              <h3 id="today-moments-title" className="font-display font-bold text-base sm:text-lg text-stone-900">Heute</h3>
+              {todayMoments.length > 0 && <p className="text-[11px] text-stone-500">Neueste Momente zuerst</p>}
+            </div>
           </div>
           <button
             type="button"
