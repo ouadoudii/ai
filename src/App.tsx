@@ -19,6 +19,7 @@ import { FoodFavoritesView } from './components/FoodFavoritesView';
 import { FoodCoachView } from './components/FoodCoachView';
 import { TodayHomeView } from './components/TodayHomeView';
 import { DailyCheckInModal } from './components/DailyCheckInModal';
+import { CatchUpMiddayCheckInModal } from './components/CatchUpMiddayCheckInModal';
 import { NutritionTypeAnalysisView } from './components/NutritionTypeAnalysisView';
 import { getLocalDateKey } from './utils/dateKey';
 import { UtensilsCrossed, Plus } from 'lucide-react';
@@ -56,25 +57,42 @@ export default function App() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>('today');
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
   const [isCheckInModalOpen, setIsCheckInModalOpen] = React.useState(false);
+  const [isMiddayCatchUpOpen, setIsMiddayCatchUpOpen] = React.useState(false);
   const [editingMoment, setEditingMoment] = React.useState<FoodMoment | null>(null);
   const [selectedMomentDetail, setSelectedMomentDetail] = React.useState<FoodMoment | null>(null);
   const [isMobilePreviewMode, setIsMobilePreviewMode] = React.useState(false);
 
-  React.useEffect(() => {
+  const completedToday = React.useMemo(() => {
     const today = getLocalDateKey();
-    const completedToday = new Set(
+    return new Set(
       checkIns
         .filter((checkIn) => checkIn.date === today && !SEEDED_CHECKIN_IDS.has(checkIn.id))
         .map((checkIn) => checkIn.timeOfDay),
     );
+  }, [checkIns]);
+
+  const shouldCatchUpMidday = new Date().getHours() >= 16 && !completedToday.has('midday');
+
+  const openSmartCheckIn = React.useCallback(() => {
+    if (new Date().getHours() >= 16 && !completedToday.has('midday')) {
+      setIsMiddayCatchUpOpen(true);
+      return;
+    }
+    setIsCheckInModalOpen(true);
+  }, [completedToday]);
+
+  React.useEffect(() => {
     const hasMissingEligibleDaypart = getEligibleDayparts(new Date().getHours()).some((phase) => !completedToday.has(phase));
     const hasLaunchedThisSession = sessionStorage.getItem('nimmapp_checkin_auto_opened') === 'true';
     if (!hasMissingEligibleDaypart || hasLaunchedThisSession) return;
 
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
-    const timer = setTimeout(() => setIsCheckInModalOpen(true), 500);
+    const timer = setTimeout(() => {
+      if (new Date().getHours() >= 16 && !completedToday.has('midday')) setIsMiddayCatchUpOpen(true);
+      else setIsCheckInModalOpen(true);
+    }, 500);
     return () => clearTimeout(timer);
-  }, [checkIns]);
+  }, [completedToday]);
 
   const [filterState, setFilterState] = React.useState<FilterState>({ searchQuery: '', selectedCategory: 'all', selectedDateRange: 'all', selectedMood: 'all', onlyFavorites: false, minRating: 0, selectedTag: 'all' });
 
@@ -115,9 +133,9 @@ export default function App() {
 
   const renderMainContent = () => {
     switch (activeTab) {
-      case 'today': return <TodayHomeView moments={moments} checkIns={checkIns} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={() => setIsCheckInModalOpen(true)} onNavigateToCoach={() => setActiveTab('coach')} onNavigateToTypeAnalysis={() => setActiveTab('type_analysis')} onNavigateToTimeline={() => setActiveTab('timeline')} onSaveCheckIn={handleSaveCheckIn} />;
-      case 'coach': return <FoodCoachView moments={moments} checkIns={checkIns} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={() => setIsCheckInModalOpen(true)} onNavigateToTimeline={() => setActiveTab('timeline')} onNavigateToTypeAnalysis={() => setActiveTab('type_analysis')} />;
-      case 'type_analysis': return <NutritionTypeAnalysisView moments={moments} checkIns={checkIns} onOpenCheckIn={() => setIsCheckInModalOpen(true)} onOpenAddMoment={() => { setEditingMoment(null); setIsAddModalOpen(true); }} />;
+      case 'today': return <TodayHomeView moments={moments} checkIns={checkIns} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={openSmartCheckIn} onNavigateToCoach={() => setActiveTab('coach')} onNavigateToTypeAnalysis={() => setActiveTab('type_analysis')} onNavigateToTimeline={() => setActiveTab('timeline')} onSaveCheckIn={handleSaveCheckIn} />;
+      case 'coach': return <FoodCoachView moments={moments} checkIns={checkIns} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={openSmartCheckIn} onNavigateToTimeline={() => setActiveTab('timeline')} onNavigateToTypeAnalysis={() => setActiveTab('type_analysis')} />;
+      case 'type_analysis': return <NutritionTypeAnalysisView moments={moments} checkIns={checkIns} onOpenCheckIn={openSmartCheckIn} onOpenAddMoment={() => { setEditingMoment(null); setIsAddModalOpen(true); }} />;
       case 'calendar': return <FoodCalendarView moments={moments} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} />;
       case 'stats': return <FoodStatsView moments={moments} onSelectCategory={(cat) => { setFilterState((prev) => ({ ...prev, selectedCategory: cat })); setActiveTab('timeline'); }} />;
       case 'favorites': return <FoodFavoritesView favoriteMoments={favoriteMoments} onSelectMoment={setSelectedMomentDetail} onEditMoment={(m) => { setEditingMoment(m); setIsAddModalOpen(true); }} onDeleteMoment={handleDeleteMoment} onToggleFavorite={handleToggleFavorite} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} />;
@@ -125,5 +143,5 @@ export default function App() {
     }
   };
 
-  return <div className="min-h-screen bg-[#FAFAF9] text-stone-900 pb-24 md:pb-0"><Header activeTab={activeTab} setActiveTab={setActiveTab} filterState={filterState} setFilterState={setFilterState} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={() => setIsCheckInModalOpen(true)} isMobilePreviewMode={isMobilePreviewMode} setIsMobilePreviewMode={setIsMobilePreviewMode} totalMoments={moments.length} /><main className={`mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 ${isMobilePreviewMode ? 'max-w-md' : 'max-w-7xl'}`}>{renderMainContent()}</main><MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={() => setIsCheckInModalOpen(true)} favoriteCount={favoriteMoments.length} /><AddMomentModal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setEditingMoment(null); }} onSave={handleSaveMoment} editingMoment={editingMoment} momentLabels={MOMENT_LABELS} /><DailyCheckInModal isOpen={isCheckInModalOpen} onClose={() => setIsCheckInModalOpen(false)} onSaveCheckIn={handleSaveCheckIn} existingCheckInsCount={checkIns.length} /><MomentDetailModal moment={selectedMomentDetail} isOpen={!!selectedMomentDetail} onClose={() => setSelectedMomentDetail(null)} onEdit={(m) => { setSelectedMomentDetail(null); setEditingMoment(m); setIsAddModalOpen(true); }} onDelete={handleDeleteMoment} onToggleFavorite={handleToggleFavorite} /></div>;
+  return <div className="min-h-screen bg-[#FAFAF9] text-stone-900 pb-24 md:pb-0"><Header activeTab={activeTab} setActiveTab={setActiveTab} filterState={filterState} setFilterState={setFilterState} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={openSmartCheckIn} isMobilePreviewMode={isMobilePreviewMode} setIsMobilePreviewMode={setIsMobilePreviewMode} totalMoments={moments.length} /><main className={`mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 ${isMobilePreviewMode ? 'max-w-md' : 'max-w-7xl'}`}>{renderMainContent()}</main><MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={openSmartCheckIn} favoriteCount={favoriteMoments.length} /><AddMomentModal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setEditingMoment(null); }} onSave={handleSaveMoment} editingMoment={editingMoment} momentLabels={MOMENT_LABELS} /><CatchUpMiddayCheckInModal isOpen={isMiddayCatchUpOpen} onClose={() => setIsMiddayCatchUpOpen(false)} onSaveCheckIn={handleSaveCheckIn} /><DailyCheckInModal isOpen={isCheckInModalOpen} onClose={() => setIsCheckInModalOpen(false)} onSaveCheckIn={handleSaveCheckIn} existingCheckInsCount={checkIns.length} /><MomentDetailModal moment={selectedMomentDetail} isOpen={!!selectedMomentDetail} onClose={() => setSelectedMomentDetail(null)} onEdit={(m) => { setSelectedMomentDetail(null); setEditingMoment(m); setIsAddModalOpen(true); }} onDelete={handleDeleteMoment} onToggleFavorite={handleToggleFavorite} /></div>;
 }
