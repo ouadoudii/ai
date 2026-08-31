@@ -1,5 +1,14 @@
 import { FoodMoment, DailyCheckIn, NutritionTypeProfile, NutritionArchetype } from '../types';
 
+/** Seeded showcase entries must never count as real user evidence. */
+export function isSeedDemoMoment(moment: FoodMoment): boolean {
+  return /^moment-\d{1,2}$/.test(moment.id);
+}
+
+export function isSeedDemoCheckIn(checkIn: DailyCheckIn): boolean {
+  return /^checkin-\d{1,2}$/.test(checkIn.id);
+}
+
 /**
  * Cary nutrition-pattern engine.
  * A type is deliberately not unlocked from a handful of entries on one day:
@@ -9,10 +18,13 @@ export function analyzeNutritionType(
   moments: FoodMoment[],
   checkIns: DailyCheckIn[] = []
 ): NutritionTypeProfile {
-  const totalDataPoints = moments.length + checkIns.length;
+  const realMoments = moments.filter((m) => !isSeedDemoMoment(m));
+  const realCheckIns = checkIns.filter((c) => !isSeedDemoCheckIn(c));
+
+  const totalDataPoints = realMoments.length + realCheckIns.length;
   const uniqueDays = new Set([
-    ...moments.map((m) => m.date).filter(Boolean),
-    ...checkIns.map((c) => c.date).filter(Boolean),
+    ...realMoments.map((m) => m.date).filter(Boolean),
+    ...realCheckIns.map((c) => c.date).filter(Boolean),
   ]).size;
   const targetDataPoints = 12;
   const targetDays = 5;
@@ -28,7 +40,7 @@ export function analyzeNutritionType(
   let breakfastCount = 0;
   let overfullCount = 0;
 
-  moments.forEach((m) => {
+  realMoments.forEach((m) => {
     if (m.nutrition?.protein && m.nutrition.protein >= 25) proteinHeavyCount++;
     if (m.eatingPace === 'slow' && (!m.distraction || m.distraction === 'mindful')) mindfulSlowCount++;
     if (m.distraction === 'screen' || m.distraction === 'work') screenDistractedCount++;
@@ -38,7 +50,7 @@ export function analyzeNutritionType(
     if (m.category === 'breakfast' || (hour >= 6 && hour <= 10)) breakfastCount++;
   });
 
-  checkIns.forEach((c) => {
+  realCheckIns.forEach((c) => {
     if (c.food?.distraction === 'mindful' && c.food?.eatingPace === 'slow') mindfulSlowCount++;
     if (c.food?.distraction === 'screen' || c.food?.distraction === 'work') screenDistractedCount++;
     if (c.food?.fullnessAfter && c.food.fullnessAfter >= 5) overfullCount++;
@@ -49,8 +61,8 @@ export function analyzeNutritionType(
     }
   });
 
-  const foodObservationCount = Math.max(1, moments.length + checkIns.filter((c) => c.food).length);
-  const proteinRatio = proteinHeavyCount / Math.max(1, moments.length);
+  const foodObservationCount = Math.max(1, realMoments.length + realCheckIns.filter((c) => c.food).length);
+  const proteinRatio = proteinHeavyCount / Math.max(1, realMoments.length);
   const mindfulRatio = mindfulSlowCount / foodObservationCount;
   const lateDinnerRatio = lateDinnerCount / foodObservationCount;
   const breakfastRatio = breakfastCount / foodObservationCount;
