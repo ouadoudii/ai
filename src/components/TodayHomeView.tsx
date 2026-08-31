@@ -1,277 +1,48 @@
 import React from 'react';
-import {
-  ArrowRight,
-  Check,
-  ChevronRight,
-  Circle,
-  Clock3,
-  Download,
-  History,
-  MessageCircle,
-  Plus,
-  ShieldCheck,
-  Sparkles,
-  Sunrise,
-  SunMedium,
-  MoonStar,
-} from 'lucide-react';
+import { ArrowRight, Check, ChevronRight, Circle, Clock3, Download, History, MessageCircle, Plus, ShieldCheck, Sparkles, Sunrise, SunMedium, MoonStar } from 'lucide-react';
 import { FoodMoment, DailyCheckIn, TimeOfDayPhase } from '../types';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
 import { getLocalDateKey } from '../utils/dateKey';
 import { downloadCaryDataExport } from '../utils/dataExport';
 import { getRecentTodayMoments } from '../utils/todayFeed';
 
-interface TodayHomeViewProps {
-  moments: FoodMoment[];
-  checkIns: DailyCheckIn[];
-  onOpenAddModal: () => void;
-  onOpenCheckInModal: () => void;
-  onSelectMoment: (moment: FoodMoment) => void;
-  onNavigateToCoach: () => void;
-  onNavigateToTypeAnalysis: () => void;
-  onNavigateToTimeline: () => void;
-  onSaveCheckIn?: (checkIn: Omit<DailyCheckIn, 'id' | 'createdAt'>) => void;
-}
-
-const isSeededDemoCheckIn = (checkIn: DailyCheckIn) => /^checkin-\d{1,2}$/.test(checkIn.id);
-const isSeededDemoMoment = (moment: FoodMoment) => /^moment-\d{1,2}$/.test(moment.id);
-
-const phaseMeta: Record<TimeOfDayPhase, { label: string; eyebrow: string; icon: React.ReactNode }> = {
-  morning: { label: 'Morgen', eyebrow: 'Schlaf & Frühstück', icon: <Sunrise className="w-5 h-5" /> },
-  midday: { label: 'Mittag', eyebrow: 'Essen & Energie', icon: <SunMedium className="w-5 h-5" /> },
-  evening: { label: 'Abend', eyebrow: 'Abendessen & Rückblick', icon: <MoonStar className="w-5 h-5" /> },
+interface TodayHomeViewProps { moments: FoodMoment[]; checkIns: DailyCheckIn[]; onOpenAddModal: () => void; onOpenCheckInModal: () => void; onSelectMoment: (moment: FoodMoment) => void; onNavigateToCoach: () => void; onNavigateToTypeAnalysis: () => void; onNavigateToTimeline: () => void; onSaveCheckIn?: (checkIn: Omit<DailyCheckIn, 'id' | 'createdAt'>) => void; }
+const isSeededDemoCheckIn = (c: DailyCheckIn) => /^checkin-\d{1,2}$/.test(c.id);
+const isSeededDemoMoment = (m: FoodMoment) => /^moment-\d{1,2}$/.test(m.id);
+const phaseMeta: Record<TimeOfDayPhase, { label: string; eyebrow: string; icon: React.ReactNode; iconTone: string; cardTone: string }> = {
+  morning: { label: 'Morgen', eyebrow: 'Schlaf & Frühstück', icon: <Sunrise className="w-5 h-5" />, iconTone: 'bg-orange-100 text-orange-700', cardTone: 'from-orange-50 to-amber-50' },
+  midday: { label: 'Mittag', eyebrow: 'Essen & Energie', icon: <SunMedium className="w-5 h-5" />, iconTone: 'bg-emerald-100 text-emerald-700', cardTone: 'from-emerald-50 to-lime-50' },
+  evening: { label: 'Abend', eyebrow: 'Abendessen & Rückblick', icon: <MoonStar className="w-5 h-5" />, iconTone: 'bg-violet-100 text-violet-700', cardTone: 'from-violet-50 to-fuchsia-50' },
 };
+const currentPhaseForHour = (hour: number): TimeOfDayPhase => hour < 11 ? 'morning' : hour < 16 ? 'midday' : 'evening';
 
-const currentPhaseForHour = (hour: number): TimeOfDayPhase => {
-  if (hour < 11) return 'morning';
-  if (hour < 16) return 'midday';
-  return 'evening';
-};
-
-export const TodayHomeView: React.FC<TodayHomeViewProps> = ({
-  moments,
-  checkIns,
-  onOpenAddModal,
-  onOpenCheckInModal,
-  onSelectMoment,
-  onNavigateToCoach,
-  onNavigateToTypeAnalysis,
-  onNavigateToTimeline,
-}) => {
-  const todayKey = getLocalDateKey();
-  const hour = new Date().getHours();
-  const currentPhase = currentPhaseForHour(hour);
+export const TodayHomeView: React.FC<TodayHomeViewProps> = ({ moments, checkIns, onOpenAddModal, onOpenCheckInModal, onSelectMoment, onNavigateToCoach, onNavigateToTypeAnalysis, onNavigateToTimeline }) => {
+  const todayKey = getLocalDateKey(); const currentPhase = currentPhaseForHour(new Date().getHours());
   const nutritionProfile = React.useMemo(() => analyzeNutritionType(moments, checkIns), [moments, checkIns]);
+  const realTodayCheckIns = React.useMemo(() => checkIns.filter(c => c.date === todayKey && !isSeededDemoCheckIn(c)), [checkIns, todayKey]);
+  const realTodayMoments = React.useMemo(() => moments.filter(m => m.date === todayKey && !isSeededDemoMoment(m)), [moments, todayKey]);
+  const completed = React.useMemo(() => ({ morning: realTodayCheckIns.some(c => c.timeOfDay === 'morning') || realTodayMoments.some(m => m.category === 'breakfast'), midday: realTodayCheckIns.some(c => c.timeOfDay === 'midday') || realTodayMoments.some(m => m.category === 'lunch'), evening: realTodayCheckIns.some(c => c.timeOfDay === 'evening') || realTodayMoments.some(m => m.category === 'dinner') }), [realTodayCheckIns, realTodayMoments]);
+  const eligiblePhases: TimeOfDayPhase[] = currentPhase === 'morning' ? ['morning'] : currentPhase === 'midday' ? ['morning','midday'] : ['morning','midday','evening'];
+  const nextPhase = eligiblePhases.find(p => !completed[p]); const allEligibleDone = !nextPhase; const isCatchUp = !!nextPhase && nextPhase !== currentPhase; const primaryPhase = nextPhase || currentPhase;
+  const todayMoments = React.useMemo(() => getRecentTodayMoments(realTodayMoments, todayKey, 3), [realTodayMoments, todayKey]);
+  const dateLabel = React.useMemo(() => new Intl.DateTimeFormat('de-DE', { weekday:'long', day:'numeric', month:'long' }).format(new Date()), []);
+  const completedCount = (['morning','midday','evening'] as TimeOfDayPhase[]).filter(p => completed[p]).length;
+  const learningText = nutritionProfile.unlocked ? nutritionProfile.recommendedFocus : `Cary lernt noch. ${nutritionProfile.dataPointsCurrent}/${nutritionProfile.dataPointsNeeded} verwertbare Einträge sind gesammelt.`;
+  const heroTone = primaryPhase === 'morning' ? 'from-[#FFF0DA] via-[#FFE5C3] to-[#F9CFA7]' : primaryPhase === 'midday' ? 'from-[#E7F4DF] via-[#DDF0D7] to-[#CFE7D1]' : 'from-[#EEE8FA] via-[#E8E0F5] to-[#DDD3F0]';
 
-  const realTodayCheckIns = React.useMemo(
-    () => checkIns.filter((c) => c.date === todayKey && !isSeededDemoCheckIn(c)),
-    [checkIns, todayKey],
-  );
-  const realTodayMoments = React.useMemo(
-    () => moments.filter((m) => m.date === todayKey && !isSeededDemoMoment(m)),
-    [moments, todayKey],
-  );
+  return <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in duration-200">
+    <section className="pt-2 sm:pt-4 px-1"><p className="text-xs font-bold text-[#A46A45] capitalize tracking-wide">{dateLabel}</p><div className="mt-1 flex items-end justify-between gap-4"><div><h1 className="text-4xl sm:text-5xl font-display font-bold tracking-tight text-[#34251E]">Heute</h1><p className="mt-1 text-sm sm:text-base text-[#765D50]">Dein Tag, in kleinen Momenten.</p></div><div className="hidden sm:block rounded-full bg-[#F7E8D8] px-3 py-1.5 text-xs font-bold text-[#8C5B3D]">{completedCount} von 3</div></div></section>
 
-  const completed = React.useMemo(() => ({
-    morning: realTodayCheckIns.some((c) => c.timeOfDay === 'morning') || realTodayMoments.some((m) => m.category === 'breakfast'),
-    midday: realTodayCheckIns.some((c) => c.timeOfDay === 'midday') || realTodayMoments.some((m) => m.category === 'lunch'),
-    evening: realTodayCheckIns.some((c) => c.timeOfDay === 'evening') || realTodayMoments.some((m) => m.category === 'dinner'),
-  }), [realTodayCheckIns, realTodayMoments]);
+    <section className={`relative overflow-hidden rounded-[32px] bg-gradient-to-br ${heroTone} p-6 sm:p-8 shadow-[0_18px_45px_rgba(100,70,45,0.10)]`}><div className="absolute -right-12 -top-12 w-40 h-40 rounded-full bg-white/30"/><div className="absolute right-8 bottom-5 w-16 h-16 rounded-full bg-white/20"/><div className="relative max-w-xl"><div className="w-12 h-12 rounded-[18px] bg-white/75 shadow-sm flex items-center justify-center text-[#7A5138]">{allEligibleDone ? <Sparkles className="w-5 h-5"/> : phaseMeta[primaryPhase].icon}</div><p className="mt-5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#875D43]">{allEligibleDone ? 'Schön gemacht' : 'Als Nächstes'}</p><h2 className="mt-1 text-2xl sm:text-3xl font-display font-bold text-[#34251E]">{allEligibleDone ? 'Für jetzt bist du fertig' : isCatchUp ? `${phaseMeta[primaryPhase].label} kurz nachholen` : `${phaseMeta[primaryPhase].label}-Check`}</h2><p className="mt-2 text-sm leading-relaxed text-[#684F42]">{allEligibleDone ? 'Cary hat für diesen Tagesabschnitt genug. Du kannst einfach weitermachen.' : isCatchUp ? `Der ${phaseMeta[primaryPhase].label.toLowerCase()}-Moment fehlt noch. Ein kurzer Check genügt.` : `${phaseMeta[primaryPhase].eyebrow}. Ein kurzer Check, ohne langen Fragebogen.`}</p><button type="button" onClick={allEligibleDone ? onOpenAddModal : onOpenCheckInModal} className="mt-5 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-[#3D2B23] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#6E4D3D]/15 hover:bg-[#2F211B] active:scale-[.98] transition-all">{allEligibleDone ? <Plus className="w-4 h-4"/> : phaseMeta[primaryPhase].icon}<span>{allEligibleDone ? 'Etwas festhalten' : isCatchUp ? 'Jetzt nachholen' : 'Check-in starten'}</span><ArrowRight className="w-4 h-4"/></button></div></section>
 
-  const eligiblePhases = React.useMemo<TimeOfDayPhase[]>(() => {
-    if (currentPhase === 'morning') return ['morning'];
-    if (currentPhase === 'midday') return ['morning', 'midday'];
-    return ['morning', 'midday', 'evening'];
-  }, [currentPhase]);
+    <section><div className="flex items-end justify-between px-1 mb-3"><div><p className="text-[11px] font-bold uppercase tracking-[.16em] text-[#A46A45]">Dein Tagesweg</p><h2 className="mt-1 text-xl font-display font-bold text-[#34251E]">Morgen · Mittag · Abend</h2></div><span className="text-xs font-bold text-[#8C6D5D]">{completedCount}/3</span></div><div className="grid sm:grid-cols-3 gap-3">{(['morning','midday','evening'] as TimeOfDayPhase[]).map((phase) => { const done=completed[phase]; const idx=phase==='morning'?0:phase==='midday'?1:2; const currentIdx=currentPhase==='morning'?0:currentPhase==='midday'?1:2; const missing=idx<=currentIdx&&!done; const future=idx>currentIdx; return <button type="button" key={phase} onClick={done?onNavigateToTimeline:future?undefined:onOpenCheckInModal} disabled={future} className={`min-h-32 rounded-[24px] bg-gradient-to-br ${phaseMeta[phase].cardTone} p-4 text-left shadow-sm transition-transform enabled:hover:-translate-y-0.5 disabled:opacity-55`}><div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${done?'bg-white text-emerald-700':phaseMeta[phase].iconTone}`}>{done?<Check className="w-5 h-5"/>:phaseMeta[phase].icon}</div><div className="mt-4 flex items-center justify-between"><div><h3 className="font-bold text-[#3C2D26]">{phaseMeta[phase].label}</h3><p className="text-xs text-[#80685C] mt-0.5">{done?'Erledigt':missing?'Offen':phaseMeta[phase].eyebrow}</p></div>{!future && <ChevronRight className="w-4 h-4 text-[#947A6C]"/>}{future && <Circle className="w-3 h-3 text-[#BBAA9F]"/>}</div></button>})}</div></section>
 
-  const nextPhase = eligiblePhases.find((phase) => !completed[phase]);
-  const allEligibleDone = !nextPhase;
-  const isCatchUp = !!nextPhase && nextPhase !== currentPhase;
-  const primaryPhase = nextPhase || currentPhase;
+    <section className="rounded-[28px] bg-gradient-to-br from-[#FFF3E7] to-[#F8E7E2] p-5 sm:p-6 shadow-sm"><div className="flex gap-4"><div className="w-11 h-11 rounded-2xl bg-white/80 flex items-center justify-center text-[#C26752] shrink-0"><Sparkles className="w-5 h-5"/></div><div><p className="text-[11px] font-bold uppercase tracking-[.16em] text-[#B05E4E]">Cary bemerkt</p><h2 className="mt-1 text-lg font-display font-bold text-[#402B25]">{nutritionProfile.unlocked?'Ein Muster wird sichtbar':'Cary lernt dich kennen'}</h2><p className="mt-1.5 text-sm leading-relaxed text-[#775B52]">{learningText}</p><button onClick={onNavigateToTypeAnalysis} className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#7E4438]">Dein Muster ansehen <ChevronRight className="w-4 h-4"/></button></div></div></section>
 
-  const todayMoments = React.useMemo(
-    () => getRecentTodayMoments(realTodayMoments, todayKey, 3),
-    [realTodayMoments, todayKey],
-  );
+    <section className="rounded-[28px] bg-white/90 p-5 sm:p-6 shadow-[0_10px_35px_rgba(95,65,45,.07)]"><div className="flex items-center justify-between"><div><p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#A46A45]">Heute festgehalten</p><h2 className="mt-1 text-lg font-display font-bold text-[#34251E]">Deine Einträge</h2></div><button onClick={onNavigateToTimeline} className="text-xs font-bold text-[#8C5B3D] flex items-center">Verlauf <ChevronRight className="w-4 h-4"/></button></div>{todayMoments.length>0?<div className="mt-4 grid sm:grid-cols-3 gap-3">{todayMoments.map(moment=><button key={moment.id} onClick={()=>onSelectMoment(moment)} className="overflow-hidden rounded-[20px] bg-[#FFF9F3] text-left"><img src={moment.imageUrl} alt="" className="w-full h-28 object-cover"/><div className="p-3"><p className="text-[10px] font-bold uppercase text-[#A16C50]">{moment.label} · {moment.time}</p><p className="mt-1 text-sm font-bold text-[#3D2B23] truncate">{moment.title}</p></div></button>)}</div>:<div className="mt-4 rounded-[20px] bg-[#FFF7EE] px-4 py-5 text-center"><p className="text-sm font-semibold text-[#72594C]">Noch keine Mahlzeit separat gespeichert.</p><button onClick={onOpenAddModal} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-bold text-[#704B38] shadow-sm"><Plus className="w-4 h-4"/>Mahlzeit hinzufügen</button></div>}</section>
 
-  const dateLabel = React.useMemo(
-    () => new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()),
-    [],
-  );
+    <section className="grid grid-cols-3 gap-2.5"><button onClick={onNavigateToTypeAnalysis} className="rounded-[20px] bg-[#FBE9DE] px-3 py-4 text-center text-[#8C503B]"><Sparkles className="w-5 h-5 mx-auto"/><span className="mt-1.5 block text-xs font-bold">Muster</span></button><button onClick={onNavigateToCoach} className="rounded-[20px] bg-[#E5F2E6] px-3 py-4 text-center text-[#497451]"><MessageCircle className="w-5 h-5 mx-auto"/><span className="mt-1.5 block text-xs font-bold">Cary</span></button><button onClick={onNavigateToTimeline} className="rounded-[20px] bg-[#EEE8F8] px-3 py-4 text-center text-[#67558B]"><History className="w-5 h-5 mx-auto"/><span className="mt-1.5 block text-xs font-bold">Verlauf</span></button></section>
 
-  const completedCount = (['morning', 'midday', 'evening'] as TimeOfDayPhase[]).filter((phase) => completed[phase]).length;
-  const learningText = nutritionProfile.unlocked
-    ? nutritionProfile.recommendedFocus
-    : `Cary lernt noch. ${nutritionProfile.dataPointsCurrent}/${nutritionProfile.dataPointsNeeded} verwertbare Einträge sind gesammelt.`;
-
-  return (
-    <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in duration-200">
-      <section className="pt-2 sm:pt-4">
-        <p className="text-xs font-semibold text-stone-500 capitalize">{dateLabel}</p>
-        <div className="mt-1 flex items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-display font-bold tracking-tight text-stone-950">Heute</h1>
-            <p className="mt-1 text-sm sm:text-base text-stone-600">Cary begleitet dich Schritt für Schritt durch deinen Tag.</p>
-          </div>
-          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-stone-500">
-            <span>{completedCount}/3</span>
-            <span>erledigt</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-[28px] border border-stone-200 bg-white p-5 sm:p-6 shadow-sm">
-        <div className="flex items-start gap-4">
-          <div className="w-11 h-11 rounded-2xl bg-stone-950 text-white flex items-center justify-center shrink-0">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-500">Als Nächstes</p>
-            <h2 className="mt-1 text-xl sm:text-2xl font-display font-bold text-stone-950">
-              {allEligibleDone ? 'Für jetzt ist alles erledigt' : isCatchUp ? `${phaseMeta[primaryPhase].label} kurz nachholen` : `${phaseMeta[primaryPhase].label}-Check`}
-            </h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-stone-600">
-              {allEligibleDone
-                ? 'Du musst gerade nichts nachtragen. Wenn du möchtest, kannst du jederzeit noch eine Mahlzeit oder Beobachtung festhalten.'
-                : isCatchUp
-                  ? `Der ${phaseMeta[primaryPhase].label.toLowerCase()}-Abschnitt fehlt noch. Cary holt ihn zuerst nach, bevor dein Tag weitergeht.`
-                  : `Ein kurzer Check reicht. ${phaseMeta[primaryPhase].eyebrow} – ohne langen Fragebogen.`}
-            </p>
-            <button
-              type="button"
-              onClick={allEligibleDone ? onOpenAddModal : onOpenCheckInModal}
-              className="mt-4 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-stone-950 px-5 py-3 text-sm font-bold text-white hover:bg-stone-800 active:scale-[0.99] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900 focus-visible:ring-offset-2"
-            >
-              {allEligibleDone ? <Plus className="w-4 h-4" /> : phaseMeta[primaryPhase].icon}
-              <span>{allEligibleDone ? 'Etwas festhalten' : isCatchUp ? 'Jetzt nachholen' : 'Check-in starten'}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-[28px] border border-stone-200 bg-white overflow-hidden shadow-sm" aria-labelledby="day-journey-title">
-        <div className="px-5 sm:px-6 pt-5 pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-500">Dein Tagesweg</p>
-              <h2 id="day-journey-title" className="mt-1 font-display text-lg font-bold text-stone-950">Drei Momente, ein klarer Rhythmus</h2>
-            </div>
-            <span className="text-xs font-semibold text-stone-500">{completedCount}/3</span>
-          </div>
-        </div>
-
-        <div className="divide-y divide-stone-100">
-          {(['morning', 'midday', 'evening'] as TimeOfDayPhase[]).map((phase) => {
-            const done = completed[phase];
-            const phaseIndex = phase === 'morning' ? 0 : phase === 'midday' ? 1 : 2;
-            const currentIndex = currentPhase === 'morning' ? 0 : currentPhase === 'midday' ? 1 : 2;
-            const isPastAndMissing = phaseIndex < currentIndex && !done;
-            const isCurrentAndMissing = phase === currentPhase && !done;
-            const isFuture = phaseIndex > currentIndex;
-
-            return (
-              <button
-                type="button"
-                key={phase}
-                onClick={done ? onNavigateToTimeline : isFuture ? undefined : onOpenCheckInModal}
-                disabled={isFuture}
-                className="w-full px-5 sm:px-6 py-4 flex items-center gap-4 text-left disabled:cursor-default hover:bg-stone-50/70 disabled:hover:bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-900"
-              >
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${done ? 'bg-emerald-100 text-emerald-700' : isPastAndMissing || isCurrentAndMissing ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-400'}`}>
-                  {done ? <Check className="w-5 h-5" /> : phaseMeta[phase].icon}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-stone-900">{phaseMeta[phase].label}</h3>
-                    {done && <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">Erledigt</span>}
-                    {isPastAndMissing && <span className="text-[10px] font-bold uppercase tracking-wide text-amber-800">Fehlt</span>}
-                    {isCurrentAndMissing && <span className="text-[10px] font-bold uppercase tracking-wide text-amber-800">Jetzt</span>}
-                  </div>
-                  <p className="mt-0.5 text-xs sm:text-sm text-stone-500">{phaseMeta[phase].eyebrow}</p>
-                </div>
-                {done || isPastAndMissing || isCurrentAndMissing ? <ChevronRight className="w-4 h-4 text-stone-400" /> : <Circle className="w-3.5 h-3.5 text-stone-300" />}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="rounded-[28px] border border-stone-200 bg-[#F4F1EA] p-5 sm:p-6">
-        <div className="flex items-start gap-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-white border border-stone-200 flex items-center justify-center text-stone-800 shrink-0">
-            <Sparkles className="w-4.5 h-4.5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-500">Cary bemerkt</p>
-            <h2 className="mt-1 font-display text-lg font-bold text-stone-950">
-              {nutritionProfile.unlocked ? 'Ein Muster wird sichtbar' : 'Noch keine vorschnellen Schlüsse'}
-            </h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-stone-600">{learningText}</p>
-            <button type="button" onClick={onNavigateToTypeAnalysis} className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-stone-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900 rounded-md">
-              <span>Dein Muster ansehen</span><ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-[28px] border border-stone-200 bg-white p-5 sm:p-6 shadow-sm" aria-labelledby="recent-title">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-500">Heute festgehalten</p>
-            <h2 id="recent-title" className="mt-1 font-display text-lg font-bold text-stone-950">Deine Einträge</h2>
-          </div>
-          <button type="button" onClick={onNavigateToTimeline} className="inline-flex items-center gap-1 text-xs font-bold text-stone-600 hover:text-stone-900">
-            Verlauf <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {todayMoments.length > 0 ? (
-          <div className="mt-4 space-y-2.5">
-            {todayMoments.map((moment) => (
-              <button type="button" key={moment.id} onClick={() => onSelectMoment(moment)} className="w-full flex items-center gap-3 rounded-2xl border border-stone-200 p-2.5 text-left hover:bg-stone-50 transition-colors">
-                <img src={moment.imageUrl} alt="" className="w-12 h-12 rounded-xl object-cover border border-stone-200 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">{moment.label} · {moment.time}</p>
-                  <p className="mt-0.5 text-sm font-bold text-stone-900 truncate">{moment.title}</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-stone-400" />
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-2xl bg-stone-50 border border-dashed border-stone-300 px-4 py-5 text-center">
-            <p className="text-sm font-semibold text-stone-700">Noch keine Mahlzeit separat gespeichert.</p>
-            <button type="button" onClick={onOpenAddModal} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-white border border-stone-200 px-4 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100"><Plus className="w-4 h-4" />Mahlzeit hinzufügen</button>
-          </div>
-        )}
-      </section>
-
-      <section className="grid grid-cols-3 gap-2.5">
-        <button type="button" onClick={onNavigateToTypeAnalysis} className="rounded-2xl border border-stone-200 bg-white px-3 py-4 text-center hover:bg-stone-50 transition-colors">
-          <Sparkles className="w-4 h-4 mx-auto text-stone-700" />
-          <span className="mt-1.5 block text-xs font-bold text-stone-800">Muster</span>
-        </button>
-        <button type="button" onClick={onNavigateToCoach} className="rounded-2xl border border-stone-200 bg-white px-3 py-4 text-center hover:bg-stone-50 transition-colors">
-          <MessageCircle className="w-4 h-4 mx-auto text-stone-700" />
-          <span className="mt-1.5 block text-xs font-bold text-stone-800">Cary</span>
-        </button>
-        <button type="button" onClick={onNavigateToTimeline} className="rounded-2xl border border-stone-200 bg-white px-3 py-4 text-center hover:bg-stone-50 transition-colors">
-          <History className="w-4 h-4 mx-auto text-stone-700" />
-          <span className="mt-1.5 block text-xs font-bold text-stone-800">Verlauf</span>
-        </button>
-      </section>
-
-      <details className="rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-600">
-        <summary className="cursor-pointer list-none flex items-center justify-between gap-3 font-semibold text-stone-700">
-          <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" />Deine Daten</span>
-          <Clock3 className="w-4 h-4 text-stone-400" />
-        </summary>
-        <div className="pt-3 text-xs leading-relaxed border-t border-stone-100 mt-3">
-          <p>Tagebuch und Check-ins bleiben in diesem Browser gespeichert. Für einzelne Cary-AI-Funktionen können die dafür nötigen Inhalte an den AI-Dienst gesendet werden.</p>
-          <button type="button" onClick={() => downloadCaryDataExport(moments, checkIns)} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 font-bold text-stone-700 hover:bg-stone-100"><Download className="w-4 h-4" />Daten exportieren</button>
-        </div>
-      </details>
-    </div>
-  );
+    <details className="rounded-2xl bg-[#F7F0E8] px-4 py-3 text-sm text-[#786257]"><summary className="cursor-pointer list-none flex items-center justify-between font-semibold"><span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4"/>Deine Daten</span><Clock3 className="w-4 h-4"/></summary><div className="pt-3 mt-3 border-t border-[#E7D8CB] text-xs leading-relaxed"><p>Tagebuch und Check-ins bleiben in diesem Browser gespeichert. Für einzelne Cary-AI-Funktionen können die dafür nötigen Inhalte an den AI-Dienst gesendet werden.</p><button onClick={()=>downloadCaryDataExport(moments,checkIns)} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 font-bold"><Download className="w-4 h-4"/>Daten exportieren</button></div></details>
+  </div>;
 };
