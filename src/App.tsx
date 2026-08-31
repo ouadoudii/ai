@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { FoodMoment, ActiveTab, FilterState, MomentCategory, DailyCheckIn } from './types';
+import { FoodMoment, ActiveTab, FilterState, MomentCategory, DailyCheckIn, TimeOfDayPhase } from './types';
 import { INITIAL_FOOD_MOMENTS, MOMENT_LABELS } from './data/momentsData';
 import { INITIAL_DAILY_CHECK_INS } from './data/checkInsData';
 import { Header } from './components/Header';
@@ -21,10 +21,17 @@ import { TodayHomeView } from './components/TodayHomeView';
 import { DailyCheckInModal } from './components/DailyCheckInModal';
 import { NutritionTypeAnalysisView } from './components/NutritionTypeAnalysisView';
 import { getLocalDateKey } from './utils/dateKey';
-import { Sparkles, UtensilsCrossed, Plus, Smartphone, RotateCcw, SlidersHorizontal, Flame, Calendar, Layers, Heart, Brain } from 'lucide-react';
+import { UtensilsCrossed, Plus } from 'lucide-react';
 
 const STORAGE_KEY = 'nimmapp_moments_v1';
 const STORAGE_KEY_CHECKINS = 'nimmapp_checkins_v1';
+const SEEDED_CHECKIN_IDS = new Set(['checkin-1', 'checkin-2', 'checkin-3']);
+
+const getEligibleDayparts = (hour: number): TimeOfDayPhase[] => {
+  if (hour >= 5 && hour < 11) return ['morning'];
+  if (hour >= 11 && hour < 16) return ['morning', 'midday'];
+  return ['morning', 'midday', 'evening'];
+};
 
 export default function App() {
   const [moments, setMoments] = React.useState<FoodMoment[]>(() => {
@@ -55,9 +62,14 @@ export default function App() {
 
   React.useEffect(() => {
     const today = getLocalDateKey();
-    const hasCompletedToday = checkIns.some((checkIn) => checkIn.date === today && !checkIn.id.startsWith('checkin-'));
+    const completedToday = new Set(
+      checkIns
+        .filter((checkIn) => checkIn.date === today && !SEEDED_CHECKIN_IDS.has(checkIn.id))
+        .map((checkIn) => checkIn.timeOfDay),
+    );
+    const hasMissingEligibleDaypart = getEligibleDayparts(new Date().getHours()).some((phase) => !completedToday.has(phase));
     const hasLaunchedThisSession = sessionStorage.getItem('nimmapp_checkin_auto_opened') === 'true';
-    if (hasCompletedToday || hasLaunchedThisSession) return;
+    if (!hasMissingEligibleDaypart || hasLaunchedThisSession) return;
 
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
     const timer = setTimeout(() => setIsCheckInModalOpen(true), 500);
@@ -90,7 +102,7 @@ export default function App() {
   const handleSaveCheckIn = (checkInData: Omit<DailyCheckIn, 'id' | 'createdAt'>) => {
     const now = Date.now();
     const newCheckIn: DailyCheckIn = { ...checkInData, id: `user-checkin-${now}`, createdAt: now };
-    setCheckIns((prev) => [newCheckIn, ...prev.filter((c) => !(c.date === checkInData.date && c.timeOfDay === checkInData.timeOfDay && !c.id.startsWith('checkin-')))]);
+    setCheckIns((prev) => [newCheckIn, ...prev.filter((c) => !(c.date === checkInData.date && c.timeOfDay === checkInData.timeOfDay && !SEEDED_CHECKIN_IDS.has(c.id)))]);
     if (checkInData.food?.mealTitle) {
       const newMoment: FoodMoment = { id: `moment-${now}`, title: checkInData.food.mealTitle, label: checkInData.food.category === 'breakfast' ? 'Frühstück' : checkInData.food.category === 'lunch' ? 'Mittagessen' : 'Abendessen', category: checkInData.food.category, date: checkInData.date, time: checkInData.time, location: 'Zuhause', locationCategory: 'home', imageUrl: checkInData.food.category === 'breakfast' ? 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=800&auto=format&fit=crop&q=80' : checkInData.food.category === 'lunch' ? 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80' : 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&auto=format&fit=crop&q=80', rating: 5, mood: checkInData.wellbeing.mood, hungerLevel: checkInData.food.hungerBefore, fullnessLevel: checkInData.food.fullnessAfter, eatingPace: checkInData.food.eatingPace, distraction: checkInData.food.distraction, energyAfter: checkInData.wellbeing.energyLevel >= 4 ? 'energized' : 'neutral', coachFeedback: { title: 'Via Voice-Check-in erfasst', message: checkInData.coachSummary || 'Mahlzeit erfolgreich mit Cary erfasst.', type: 'praise', badge: 'Daily Check-in' }, notes: checkInData.wellbeing.note, tags: ['Check-in', 'Voice', checkInData.timeOfDay], createdAt: now };
       setMoments((prev) => [newMoment, ...prev]);
