@@ -50,8 +50,8 @@ export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, 
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-[#FDE6D8] px-3 py-1.5 text-[11px] font-black uppercase tracking-[.14em] text-[#A45336]"><Sparkles className="w-3.5 h-3.5" />Festhalten</div>
-            <h2 id="capture-title" className="mt-3 font-display text-3xl font-black text-[#34251E]">Was ist gerade passiert?</h2>
-            <p className="mt-2 text-sm leading-relaxed text-[#806354]">Du musst nicht wissen, was Cary intern speichert. Wähle einfach den schnellsten Weg.</p>
+            <h2 id="capture-title" className="mt-3 font-display text-3xl font-black text-[#34251E]">Was darf Cary sich merken?</h2>
+            <p className="mt-2 text-sm leading-relaxed text-[#806354]">Ein paar Sekunden reichen. Wähle einfach, was gerade zu dir passt.</p>
           </div>
           <button onClick={onClose} className="w-10 h-10 shrink-0 rounded-full bg-white text-[#76594B] flex items-center justify-center border border-[#E8D8CB]" aria-label="Schließen"><X className="w-4 h-4" /></button>
         </div>
