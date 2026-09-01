@@ -34,7 +34,7 @@ const copy: Record<JourneyPhase, { title: string; description: string }> = {
   },
   midday: {
     title: 'Wie läuft dein Mittag?',
-    description: 'Essen, Hunger und Energie helfen Cary, deinen Tagesrhythmus zu verstehen.',
+    description: 'Essen, Hunger und Energie helfen dabei, deinen Tagesrhythmus zu verstehen.',
   },
   evening: {
     title: 'Wie endet dein Tag?',
@@ -53,7 +53,7 @@ export const getNextJourneyStep = (hour: number, completion: JourneyCompletion):
       catchUp: false,
       complete: true,
       title: 'Für jetzt ist alles festgehalten.',
-      description: 'Cary meldet sich wieder, wenn der nächste Moment im Tag sinnvoll wird.',
+      description: 'Für diesen Tagesabschnitt ist nichts mehr nötig.',
     };
   }
 
