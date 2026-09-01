@@ -21,6 +21,7 @@ import { TodayHomeView } from './components/TodayHomeView';
 import { DailyCheckInModal } from './components/DailyCheckInModal';
 import { CatchUpMiddayCheckInModal } from './components/CatchUpMiddayCheckInModal';
 import { NutritionTypeAnalysisView } from './components/NutritionTypeAnalysisView';
+import { CaptureChoiceModal } from './components/CaptureChoiceModal';
 import { getLocalDateKey } from './utils/dateKey';
 import { UtensilsCrossed, Plus } from 'lucide-react';
 
@@ -55,6 +56,7 @@ export default function App() {
   React.useEffect(() => { try { localStorage.setItem(STORAGE_KEY_CHECKINS, JSON.stringify(checkIns)); } catch (e) { console.error('Failed to save check-ins to localStorage', e); } }, [checkIns]);
 
   const [activeTab, setActiveTab] = React.useState<ActiveTab>('today');
+  const [isCaptureOpen, setIsCaptureOpen] = React.useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
   const [isCheckInModalOpen, setIsCheckInModalOpen] = React.useState(false);
   const [isMiddayCatchUpOpen, setIsMiddayCatchUpOpen] = React.useState(false);
@@ -71,8 +73,6 @@ export default function App() {
     );
   }, [checkIns]);
 
-  const shouldCatchUpMidday = new Date().getHours() >= 16 && !completedToday.has('midday');
-
   const openSmartCheckIn = React.useCallback(() => {
     if (new Date().getHours() >= 16 && !completedToday.has('midday')) {
       setIsMiddayCatchUpOpen(true);
@@ -81,16 +81,20 @@ export default function App() {
     setIsCheckInModalOpen(true);
   }, [completedToday]);
 
+  const openFoodCapture = React.useCallback(() => {
+    setEditingMoment(null);
+    setIsAddModalOpen(true);
+  }, []);
+
+  const openCapture = React.useCallback(() => setIsCaptureOpen(true), []);
+
   React.useEffect(() => {
     const hasMissingEligibleDaypart = getEligibleDayparts(new Date().getHours()).some((phase) => !completedToday.has(phase));
     const hasLaunchedThisSession = sessionStorage.getItem('nimmapp_checkin_auto_opened') === 'true';
     if (!hasMissingEligibleDaypart || hasLaunchedThisSession) return;
 
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
-    const timer = setTimeout(() => {
-      if (new Date().getHours() >= 16 && !completedToday.has('midday')) setIsMiddayCatchUpOpen(true);
-      else setIsCheckInModalOpen(true);
-    }, 500);
+    const timer = setTimeout(() => setIsCaptureOpen(true), 650);
     return () => clearTimeout(timer);
   }, [completedToday]);
 
@@ -122,26 +126,25 @@ export default function App() {
     const newCheckIn: DailyCheckIn = { ...checkInData, id: `user-checkin-${now}`, createdAt: now };
     setCheckIns((prev) => [newCheckIn, ...prev.filter((c) => !(c.date === checkInData.date && c.timeOfDay === checkInData.timeOfDay && !SEEDED_CHECKIN_IDS.has(c.id)))]);
     if (checkInData.food?.mealTitle) {
-      const newMoment: FoodMoment = { id: `moment-${now}`, title: checkInData.food.mealTitle, label: checkInData.food.category === 'breakfast' ? 'Frühstück' : checkInData.food.category === 'lunch' ? 'Mittagessen' : 'Abendessen', category: checkInData.food.category, date: checkInData.date, time: checkInData.time, location: 'Zuhause', locationCategory: 'home', imageUrl: checkInData.food.category === 'breakfast' ? 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=800&auto=format&fit=crop&q=80' : checkInData.food.category === 'lunch' ? 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80' : 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&auto=format&fit=crop&q=80', rating: 5, mood: checkInData.wellbeing.mood, hungerLevel: checkInData.food.hungerBefore, fullnessLevel: checkInData.food.fullnessAfter, eatingPace: checkInData.food.eatingPace, distraction: checkInData.food.distraction, energyAfter: checkInData.wellbeing.energyLevel >= 4 ? 'energized' : 'neutral', coachFeedback: { title: 'Via Voice-Check-in erfasst', message: checkInData.coachSummary || 'Mahlzeit erfolgreich mit Cary erfasst.', type: 'praise', badge: 'Daily Check-in' }, notes: checkInData.wellbeing.note, tags: ['Check-in', 'Voice', checkInData.timeOfDay], createdAt: now };
+      const newMoment: FoodMoment = { id: `moment-${now}`, title: checkInData.food.mealTitle, label: checkInData.food.category === 'breakfast' ? 'Frühstück' : checkInData.food.category === 'lunch' ? 'Mittagessen' : 'Abendessen', category: checkInData.food.category, date: checkInData.date, time: checkInData.time, location: 'Zuhause', locationCategory: 'home', imageUrl: checkInData.food.category === 'breakfast' ? 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=800&auto=format&fit=crop&q=80' : checkInData.food.category === 'lunch' ? 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80' : 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&auto=format&fit=crop&q=80', rating: 5, mood: checkInData.wellbeing.mood, hungerLevel: checkInData.food.hungerBefore, fullnessLevel: checkInData.food.fullnessAfter, eatingPace: checkInData.food.eatingPace, distraction: checkInData.food.distraction, energyAfter: checkInData.wellbeing.energyLevel >= 4 ? 'energized' : 'neutral', coachFeedback: { title: 'Via Check-in erfasst', message: checkInData.coachSummary || 'Erfolgreich mit Cary festgehalten.', type: 'praise', badge: 'Cary Check-in' }, notes: checkInData.wellbeing.note, tags: ['Check-in', checkInData.timeOfDay], createdAt: now };
       setMoments((prev) => [newMoment, ...prev]);
     }
   };
 
   const handleDeleteMoment = (id: string) => { setMoments((prev) => prev.filter((m) => m.id !== id)); if (selectedMomentDetail?.id === id) setSelectedMomentDetail(null); };
   const handleToggleFavorite = (id: string) => { setMoments((prev) => prev.map((m) => m.id === id ? { ...m, isFavorite: !m.isFavorite } : m)); if (selectedMomentDetail?.id === id) setSelectedMomentDetail((prev) => prev ? { ...prev, isFavorite: !prev.isFavorite } : null); };
-  const handleResetSampleData = () => { setMoments(INITIAL_FOOD_MOMENTS); setCheckIns(INITIAL_DAILY_CHECK_INS); };
 
   const renderMainContent = () => {
     switch (activeTab) {
-      case 'today': return <TodayHomeView moments={moments} checkIns={checkIns} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={openSmartCheckIn} onNavigateToCoach={() => setActiveTab('coach')} onNavigateToTypeAnalysis={() => setActiveTab('type_analysis')} onNavigateToTimeline={() => setActiveTab('timeline')} onSaveCheckIn={handleSaveCheckIn} />;
-      case 'coach': return <FoodCoachView moments={moments} checkIns={checkIns} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={openSmartCheckIn} onNavigateToTimeline={() => setActiveTab('timeline')} onNavigateToTypeAnalysis={() => setActiveTab('type_analysis')} />;
-      case 'type_analysis': return <NutritionTypeAnalysisView moments={moments} checkIns={checkIns} onOpenCheckIn={openSmartCheckIn} onOpenAddMoment={() => { setEditingMoment(null); setIsAddModalOpen(true); }} />;
-      case 'calendar': return <FoodCalendarView moments={moments} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} />;
+      case 'today': return <TodayHomeView moments={moments} checkIns={checkIns} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={openCapture} onOpenCheckInModal={openCapture} onNavigateToCoach={() => setActiveTab('coach')} onNavigateToTypeAnalysis={() => setActiveTab('type_analysis')} onNavigateToTimeline={() => setActiveTab('timeline')} onSaveCheckIn={handleSaveCheckIn} />;
+      case 'coach': return <FoodCoachView moments={moments} checkIns={checkIns} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={openCapture} onOpenCheckInModal={openCapture} onNavigateToTimeline={() => setActiveTab('timeline')} onNavigateToTypeAnalysis={() => setActiveTab('type_analysis')} />;
+      case 'type_analysis': return <NutritionTypeAnalysisView moments={moments} checkIns={checkIns} onOpenCheckIn={openCapture} onOpenAddMoment={openCapture} />;
+      case 'calendar': return <FoodCalendarView moments={moments} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={openFoodCapture} />;
       case 'stats': return <FoodStatsView moments={moments} onSelectCategory={(cat) => { setFilterState((prev) => ({ ...prev, selectedCategory: cat })); setActiveTab('timeline'); }} />;
-      case 'favorites': return <FoodFavoritesView favoriteMoments={favoriteMoments} onSelectMoment={setSelectedMomentDetail} onEditMoment={(m) => { setEditingMoment(m); setIsAddModalOpen(true); }} onDeleteMoment={handleDeleteMoment} onToggleFavorite={handleToggleFavorite} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} />;
-      case 'timeline': default: return <div className="space-y-5"><div className="bg-white p-3 sm:p-4 rounded-3xl border border-stone-200/80 shadow-xs"><MomentCategoryFilter filterState={filterState} setFilterState={setFilterState} momentCounts={momentCounts} totalCount={moments.length} /></div><div className="flex items-center justify-between px-1 text-xs text-stone-500"><span className="font-semibold text-stone-800">{filteredMoments.length} {filteredMoments.length === 1 ? 'Moment gefunden' : 'Momente gefunden'}</span>{(filterState.selectedCategory !== 'all' || filterState.selectedMood !== 'all' || filterState.onlyFavorites || filterState.searchQuery) && <button onClick={() => setFilterState({ searchQuery: '', selectedCategory: 'all', selectedDateRange: 'all', selectedMood: 'all', onlyFavorites: false, minRating: 0, selectedTag: 'all' })} className="text-amber-600 hover:text-amber-700 font-semibold hover:underline">Filter zurücksetzen</button>}</div>{filteredMoments.length > 0 ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">{filteredMoments.map((moment) => <MomentCard key={moment.id} moment={moment} onSelect={setSelectedMomentDetail} onEdit={(m) => { setEditingMoment(m); setIsAddModalOpen(true); }} onDelete={handleDeleteMoment} onToggleFavorite={handleToggleFavorite} />)}</div> : <div className="text-center py-16 px-4 bg-white rounded-3xl border border-stone-200/80 shadow-xs space-y-3"><UtensilsCrossed className="w-10 h-10 mx-auto text-stone-300" /><h3 className="font-display font-bold text-base sm:text-lg text-stone-900">Keine Momente für diese Auswahl gefunden</h3><p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto">Starte dein kulinarisches Tagebuch und halte deinen ersten besonderen Moment fest.</p><button onClick={() => { setEditingMoment(null); setIsAddModalOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white rounded-xl font-bold text-xs sm:text-sm hover:bg-amber-600"><Plus className="w-4 h-4" />Ersten Moment hinzufügen</button></div>}</div>;
+      case 'favorites': return <FoodFavoritesView favoriteMoments={favoriteMoments} onSelectMoment={setSelectedMomentDetail} onEditMoment={(m) => { setEditingMoment(m); setIsAddModalOpen(true); }} onDeleteMoment={handleDeleteMoment} onToggleFavorite={handleToggleFavorite} onOpenAddModal={openFoodCapture} />;
+      case 'timeline': default: return <div className="space-y-5"><div className="bg-white p-3 sm:p-4 rounded-3xl border border-stone-200/80 shadow-xs"><MomentCategoryFilter filterState={filterState} setFilterState={setFilterState} momentCounts={momentCounts} totalCount={moments.length} /></div><div className="flex items-center justify-between px-1 text-xs text-stone-500"><span className="font-semibold text-stone-800">{filteredMoments.length} {filteredMoments.length === 1 ? 'Moment gefunden' : 'Momente gefunden'}</span>{(filterState.selectedCategory !== 'all' || filterState.selectedMood !== 'all' || filterState.onlyFavorites || filterState.searchQuery) && <button onClick={() => setFilterState({ searchQuery: '', selectedCategory: 'all', selectedDateRange: 'all', selectedMood: 'all', onlyFavorites: false, minRating: 0, selectedTag: 'all' })} className="text-amber-600 hover:text-amber-700 font-semibold hover:underline">Filter zurücksetzen</button>}</div>{filteredMoments.length > 0 ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">{filteredMoments.map((moment) => <MomentCard key={moment.id} moment={moment} onSelect={setSelectedMomentDetail} onEdit={(m) => { setEditingMoment(m); setIsAddModalOpen(true); }} onDelete={handleDeleteMoment} onToggleFavorite={handleToggleFavorite} />)}</div> : <div className="text-center py-16 px-4 bg-white rounded-3xl border border-stone-200/80 shadow-xs space-y-3"><UtensilsCrossed className="w-10 h-10 mx-auto text-stone-300" /><h3 className="font-display font-bold text-base sm:text-lg text-stone-900">Noch nichts festgehalten</h3><p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto">Halte einen Essensmoment fest und Cary beginnt, deinen Alltag kennenzulernen.</p><button onClick={openCapture} className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#E86F45] text-white rounded-xl font-bold text-xs sm:text-sm"><Plus className="w-4 h-4" />Etwas festhalten</button></div>}</div>;
     }
   };
 
-  return <div className="min-h-screen bg-[#FAFAF9] text-stone-900 pb-24 md:pb-0"><Header activeTab={activeTab} setActiveTab={setActiveTab} filterState={filterState} setFilterState={setFilterState} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={openSmartCheckIn} isMobilePreviewMode={isMobilePreviewMode} setIsMobilePreviewMode={setIsMobilePreviewMode} totalMoments={moments.length} /><main className={`mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 ${isMobilePreviewMode ? 'max-w-md' : 'max-w-7xl'}`}>{renderMainContent()}</main><MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} onOpenAddModal={() => { setEditingMoment(null); setIsAddModalOpen(true); }} onOpenCheckInModal={openSmartCheckIn} favoriteCount={favoriteMoments.length} /><AddMomentModal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setEditingMoment(null); }} onSave={handleSaveMoment} editingMoment={editingMoment} momentLabels={MOMENT_LABELS} /><CatchUpMiddayCheckInModal isOpen={isMiddayCatchUpOpen} onClose={() => setIsMiddayCatchUpOpen(false)} onSaveCheckIn={handleSaveCheckIn} /><DailyCheckInModal isOpen={isCheckInModalOpen} onClose={() => setIsCheckInModalOpen(false)} onSaveCheckIn={handleSaveCheckIn} existingCheckInsCount={checkIns.length} /><MomentDetailModal moment={selectedMomentDetail} isOpen={!!selectedMomentDetail} onClose={() => setSelectedMomentDetail(null)} onEdit={(m) => { setSelectedMomentDetail(null); setEditingMoment(m); setIsAddModalOpen(true); }} onDelete={handleDeleteMoment} onToggleFavorite={handleToggleFavorite} /></div>;
+  return <div className="min-h-screen bg-[#FAFAF9] text-stone-900 pb-28 md:pb-0"><Header activeTab={activeTab} setActiveTab={setActiveTab} filterState={filterState} setFilterState={setFilterState} onOpenAddModal={openCapture} onOpenCheckInModal={openCapture} isMobilePreviewMode={isMobilePreviewMode} setIsMobilePreviewMode={setIsMobilePreviewMode} totalMoments={moments.length} /><main className={`mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 ${isMobilePreviewMode ? 'max-w-md' : 'max-w-7xl'}`}>{renderMainContent()}</main><MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} onCapture={openCapture} favoriteCount={favoriteMoments.length} /><CaptureChoiceModal isOpen={isCaptureOpen} onClose={() => setIsCaptureOpen(false)} onFood={openFoodCapture} onTellCary={openSmartCheckIn} onQuickCheck={openSmartCheckIn} /><AddMomentModal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setEditingMoment(null); }} onSave={handleSaveMoment} editingMoment={editingMoment} momentLabels={MOMENT_LABELS} /><CatchUpMiddayCheckInModal isOpen={isMiddayCatchUpOpen} onClose={() => setIsMiddayCatchUpOpen(false)} onSaveCheckIn={handleSaveCheckIn} /><DailyCheckInModal isOpen={isCheckInModalOpen} onClose={() => setIsCheckInModalOpen(false)} onSaveCheckIn={handleSaveCheckIn} existingCheckInsCount={checkIns.length} /><MomentDetailModal moment={selectedMomentDetail} isOpen={!!selectedMomentDetail} onClose={() => setSelectedMomentDetail(null)} onEdit={(m) => { setSelectedMomentDetail(null); setEditingMoment(m); setIsAddModalOpen(true); }} onDelete={handleDeleteMoment} onToggleFavorite={handleToggleFavorite} /></div>;
 }
