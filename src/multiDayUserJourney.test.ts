@@ -46,12 +46,16 @@ describe('realistic multi-day user journey', () => {
 
   it('keeps missed midday available to catch up in the evening', () => {
     const next = getNextJourneyStep(20, { morning: true, midday: false, evening: false });
-    expect(next?.phase).toBe('midday');
-    expect(next?.isCatchUp).toBe(true);
+    expect(next.phase).toBe('midday');
+    expect(next.catchUp).toBe(true);
+    expect(next.complete).toBe(false);
   });
 
   it('stops prompting when all eligible day phases are complete', () => {
-    expect(getNextJourneyStep(20, { morning: true, midday: true, evening: true })).toBeNull();
+    const next = getNextJourneyStep(20, { morning: true, midday: true, evening: true });
+    expect(next.complete).toBe(true);
+    expect(next.catchUp).toBe(false);
+    expect(next.title).toContain('alles festgehalten');
   });
 
   it('lets a returning user repeat a recent meal without mutating the old day', () => {
