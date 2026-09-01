@@ -4,7 +4,6 @@ import { loadCloudMemory, mergeMemory, saveCloudMemory, CaryMemorySnapshot } fro
 
 const MOMENTS_KEY = 'nimmapp_moments_v1';
 const CHECKINS_KEY = 'nimmapp_checkins_v1';
-const SYNC_EVENT = 'cary-memory-synced';
 
 function readLocalMemory(): CaryMemorySnapshot {
   try {
@@ -22,7 +21,6 @@ function readLocalMemory(): CaryMemorySnapshot {
 function writeLocalMemory(memory: CaryMemorySnapshot) {
   localStorage.setItem(MOMENTS_KEY, JSON.stringify(memory.moments));
   localStorage.setItem(CHECKINS_KEY, JSON.stringify(memory.checkIns));
-  window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: memory }));
 }
 
 export const CaryCloudMemorySync: React.FC<{ session: CarySession | null }> = ({ session }) => {
@@ -36,8 +34,15 @@ export const CaryCloudMemorySync: React.FC<{ session: CarySession | null }> = ({
       const local = readLocalMemory();
       const remote = await loadCloudMemory(session);
       const merged = mergeMemory(local, remote || { moments: [], checkIns: [] });
+      const localPayload = JSON.stringify(local);
       const payload = JSON.stringify(merged);
-      if (payload !== JSON.stringify(local)) writeLocalMemory(merged);
+      if (payload !== localPayload) {
+        writeLocalMemory(merged);
+        await saveCloudMemory(session, merged);
+        lastPayloadRef.current = payload;
+        window.location.reload();
+        return;
+      }
       if (payload !== lastPayloadRef.current) {
         await saveCloudMemory(session, merged);
         lastPayloadRef.current = payload;
@@ -55,18 +60,18 @@ export const CaryCloudMemorySync: React.FC<{ session: CarySession | null }> = ({
     const onStorage = (event: StorageEvent) => {
       if (event.key === MOMENTS_KEY || event.key === CHECKINS_KEY) void syncNow();
     };
-    const onLocalChange = () => void syncNow();
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') void syncNow();
+    };
     window.addEventListener('storage', onStorage);
-    window.addEventListener('cary-local-memory-changed', onLocalChange);
-    const timer = window.setInterval(syncNow, 30_000);
+    document.addEventListener('visibilitychange', onVisibility);
+    const timer = window.setInterval(syncNow, 15_000);
     return () => {
       window.removeEventListener('storage', onStorage);
-      window.removeEventListener('cary-local-memory-changed', onLocalChange);
+      document.removeEventListener('visibilitychange', onVisibility);
       window.clearInterval(timer);
     };
   }, [session, syncNow]);
 
   return null;
 };
-
-export const CARY_MEMORY_SYNC_EVENT = SYNC_EVENT;
