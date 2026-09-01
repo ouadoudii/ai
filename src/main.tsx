@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { CaryAccountGate } from './components/CaryAccountGate';
 import { CaryOnboarding } from './components/CaryOnboarding';
+import { CaryCloudMemorySync } from './components/CaryCloudMemorySync';
 import { migrateLegacyStorage } from './storageMigration';
 import './index.css';
 
@@ -73,6 +74,7 @@ createRoot(rootElement).render(
       <CaryAccountGate>
         {({ accessMode, session, openAccount }) => (
           <CaryOnboarding>
+            <CaryCloudMemorySync session={accessMode === 'account' ? session : null} />
             <App />
             <button
               type="button"
