@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { renderToString } from 'react-dom/server';
 import App from './App';
 
-describe('Cary startup smoke test', () => {
+describe('startup smoke test', () => {
   it('renders the initial app tree without crashing', () => {
     const html = renderToString(<App />);
     expect(html.length).toBeGreaterThan(100);
-    expect(html).toContain('Cary');
+    expect(html).toContain('Dein Rhythmus');
+    expect(html).toContain('Heute');
+    expect(html).toContain('Muster');
   });
 });
