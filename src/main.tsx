@@ -2,6 +2,7 @@ import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { CaryAccountGate } from './components/CaryAccountGate';
+import { CaryOnboarding } from './components/CaryOnboarding';
 import { migrateLegacyStorage } from './storageMigration';
 import './index.css';
 
@@ -71,17 +72,17 @@ createRoot(rootElement).render(
     <RuntimeErrorBoundary>
       <CaryAccountGate>
         {({ accessMode, session, openAccount }) => (
-          <>
+          <CaryOnboarding>
             <App />
             <button
               type="button"
               onClick={openAccount}
-              className="fixed z-40 right-4 bottom-24 md:bottom-5 rounded-full border border-[#E5D6CB] bg-white/95 backdrop-blur-xl px-4 py-2.5 shadow-[0_10px_30px_rgba(72,49,38,.16)] text-xs font-bold text-[#5F4538] hover:-translate-y-0.5 transition-transform"
+              className="fixed z-40 right-4 bottom-28 md:bottom-5 rounded-full border border-[#E5D6CB] bg-white/95 backdrop-blur-xl px-4 py-2.5 shadow-[0_10px_30px_rgba(72,49,38,.16)] text-xs font-bold text-[#5F4538] hover:-translate-y-0.5 transition-transform"
               aria-label="Cary Konto öffnen"
             >
               {accessMode === 'account' ? (session?.user.email || 'Mein Konto') : 'Gast · Anmelden'}
             </button>
-          </>
+          </CaryOnboarding>
         )}
       </CaryAccountGate>
     </RuntimeErrorBoundary>
