@@ -1,8 +1,9 @@
 import React from 'react';
-import { Camera, Check, ChevronDown, ImagePlus, X } from 'lucide-react';
+import { Camera, Check, ChevronDown, Globe2, ImagePlus, Search, X } from 'lucide-react';
 import { FoodMoment, MomentCategory } from '../types';
-import { MOMENT_LABELS, PRESET_PHOTOS } from '../data/momentsData';
+import { PRESET_PHOTOS } from '../data/momentsData';
 import { getLocalDateKey } from '../utils/dateKey';
+import { getFoodSuggestions, inferCountryFromLocale } from '../utils/foodSuggestions';
 
 interface AddMomentModalProps {
   isOpen: boolean;
@@ -12,83 +13,71 @@ interface AddMomentModalProps {
 }
 
 const categories: MomentCategory[] = ['breakfast', 'lunch', 'dinner', 'snack', 'coffee', 'dessert'];
-
-const categoryForHour = (hour: number): MomentCategory => {
-  if (hour < 11) return 'breakfast';
-  if (hour < 15) return 'lunch';
-  if (hour < 18) return 'snack';
-  return 'dinner';
+const labels: Record<MomentCategory, string> = {
+  breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack', coffee: 'Coffee', dessert: 'Dessert', drinks: 'Drinks', travel: 'Travel',
 };
+const categoryForHour = (hour: number): MomentCategory => hour < 11 ? 'breakfast' : hour < 15 ? 'lunch' : hour < 18 ? 'snack' : 'dinner';
 
 export const AddMomentModal: React.FC<AddMomentModalProps> = ({ isOpen, onClose, onSave, editingMoment }) => {
   const [category, setCategory] = React.useState<MomentCategory>('lunch');
   const [imageUrl, setImageUrl] = React.useState('');
-  const [autoTitle, setAutoTitle] = React.useState('');
+  const [title, setTitle] = React.useState('');
   const [notes, setNotes] = React.useState('');
   const [showMore, setShowMore] = React.useState(false);
+  const [country, setCountry] = React.useState<string | null>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (!isOpen) return;
+    const fallback = inferCountryFromLocale();
+    setCountry(fallback);
+    fetch('/api/locale').then((r) => r.ok ? r.json() : null).then((data) => {
+      if (data?.country) setCountry(String(data.country).toUpperCase());
+    }).catch(() => undefined);
+
     if (editingMoment) {
       setCategory(editingMoment.category);
       setImageUrl(editingMoment.imageUrl);
-      setAutoTitle(editingMoment.title);
+      setTitle(editingMoment.title);
       setNotes(editingMoment.notes || '');
       setShowMore(Boolean(editingMoment.notes));
       return;
     }
-
-    const defaultCategory = categoryForHour(new Date().getHours());
-    const preset = PRESET_PHOTOS.find((photo) => photo.category === defaultCategory) || PRESET_PHOTOS[0];
-    setCategory(defaultCategory);
-    setImageUrl(preset.url);
-    setAutoTitle(preset.title || MOMENT_LABELS[defaultCategory].label);
+    const next = categoryForHour(new Date().getHours());
+    setCategory(next);
+    setImageUrl(PRESET_PHOTOS.find((p) => p.category === next)?.url || PRESET_PHOTOS[0].url);
+    setTitle('');
     setNotes('');
     setShowMore(false);
   }, [isOpen, editingMoment]);
 
+  const suggestions = React.useMemo(() => getFoodSuggestions(country, category, title).slice(0, 18), [country, category, title]);
+  const popular = React.useMemo(() => getFoodSuggestions(country, category).slice(0, 10), [country, category]);
+
   const chooseCategory = (next: MomentCategory) => {
     setCategory(next);
-    const preset = PRESET_PHOTOS.find((photo) => photo.category === next);
-    if (preset) {
-      setImageUrl(preset.url);
-      setAutoTitle(preset.title);
-    } else {
-      setAutoTitle(MOMENT_LABELS[next].label);
-    }
-  };
-
-  const choosePreset = (photo: (typeof PRESET_PHOTOS)[number]) => {
-    setImageUrl(photo.url);
-    setAutoTitle(photo.title || MOMENT_LABELS[category].label);
+    setTitle('');
+    setImageUrl(PRESET_PHOTOS.find((p) => p.category === next)?.url || PRESET_PHOTOS[0].url);
   };
 
   const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setImageUrl(reader.result);
-        setAutoTitle(MOMENT_LABELS[category].label);
-      }
-    };
+    reader.onload = () => { if (typeof reader.result === 'string') setImageUrl(reader.result); };
     reader.readAsDataURL(file);
   };
 
   const save = () => {
     const now = new Date();
-    const label = MOMENT_LABELS[category].label;
-    const title = autoTitle.trim() || label;
-
+    const mealTitle = title.trim() || labels[category];
     onSave({
-      title,
-      label,
+      title: mealTitle,
+      label: labels[category],
       category,
       date: editingMoment?.date || getLocalDateKey(now),
       time: editingMoment?.time || now.toTimeString().slice(0, 5),
-      location: editingMoment?.location || 'Nicht angegeben',
+      location: editingMoment?.location || 'Not specified',
       locationCategory: editingMoment?.locationCategory || 'home',
       imageUrl: imageUrl || PRESET_PHOTOS[0].url,
       rating: editingMoment?.rating || 5,
@@ -110,69 +99,29 @@ export const AddMomentModal: React.FC<AddMomentModalProps> = ({ isOpen, onClose,
   };
 
   if (!isOpen) return null;
+  return <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/45 backdrop-blur-sm sm:p-4">
+    <div className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-[34px] sm:rounded-[34px] bg-[#F7F5F0] shadow-2xl">
+      <div className="sticky top-0 z-10 flex items-center justify-between bg-[#F7F5F0]/95 px-5 pt-5 pb-3 backdrop-blur-xl">
+        <div><p className="text-[11px] font-extrabold uppercase tracking-[.18em] text-[#8A867E]">Food</p><h2 className="mt-1 text-2xl font-display font-black text-[#252824]">What did you have?</h2></div>
+        <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full bg-white border border-[#E5E0D7]" aria-label="Close"><X className="h-5 w-5"/></button>
+      </div>
+      <div className="px-5 pb-6">
+        <div className="flex gap-2 overflow-x-auto pb-2">{categories.map((item) => <button key={item} onClick={() => chooseCategory(item)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-extrabold ${item===category?'bg-[#252824] text-white':'bg-white border border-[#E5E0D7] text-[#66655F]'}`}>{labels[item]}</button>)}</div>
 
-  const matchingPhotos = PRESET_PHOTOS.filter((photo) => photo.category === category);
-  const visiblePhotos = matchingPhotos.length > 0 ? matchingPhotos : PRESET_PHOTOS.slice(0, 4);
+        <label className="mt-4 block relative"><Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#918D84]"/><input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="Search or type any dish…" className="w-full rounded-[20px] border border-[#DED8CF] bg-white py-4 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-[#E76F45]/20"/></label>
+        <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#918D84]"><Globe2 className="w-3.5 h-3.5"/>{country ? `Local suggestions for ${country} first` : 'Local suggestions when location is available'}</div>
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/45 backdrop-blur-sm sm:p-4">
-      <div className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-[34px] sm:rounded-[34px] bg-[#FFF9F2] shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between bg-[#FFF9F2]/95 px-5 pt-5 pb-3 backdrop-blur-xl">
-          <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-[.18em] text-[#A76042]">Moment</p>
-            <h2 className="mt-1 text-2xl font-display font-black text-[#31221C]">Was gab's?</h2>
-          </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full bg-[#F1E4D8] text-[#6D5144] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3A2922]" aria-label="Schließen">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{(title.trim()?suggestions:popular).map((item)=><button key={item.name} onClick={()=>setTitle(item.name)} className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold border ${title===item.name?'bg-[#E76F45] text-white border-[#E76F45]':'bg-white border-[#E3DDD4] text-[#565650]'}`}>{item.name}</button>)}</div>
+        {title.trim() && !suggestions.some((s)=>s.name.toLowerCase()===title.trim().toLowerCase()) && <p className="mt-3 text-xs text-[#6F6C65]">Can't find it? Keep your own name — any dish can be saved.</p>}
 
-        <div className="px-5 pb-6">
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {categories.map((item) => {
-              const active = item === category;
-              return (
-                <button key={item} type="button" onClick={() => chooseCategory(item)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-extrabold transition ${active ? 'bg-[#34251E] text-white' : 'bg-[#F1E4D8] text-[#76594A]'}`}>
-                  {MOMENT_LABELS[item].label}
-                </button>
-              );
-            })}
-          </div>
+        <div className="mt-5 grid grid-cols-3 gap-2">{PRESET_PHOTOS.filter((p)=>p.category===category).slice(0,2).map((photo)=><button key={photo.url} onClick={()=>setImageUrl(photo.url)} className={`aspect-square overflow-hidden rounded-[20px] ${imageUrl===photo.url?'ring-3 ring-[#E76F45]':'border border-[#E5E0D7]'}`}><img src={photo.url} alt="" className="w-full h-full object-cover"/></button>)}<button onClick={()=>fileRef.current?.click()} className="aspect-square rounded-[20px] border-2 border-dashed border-[#D8D1C7] bg-white flex flex-col items-center justify-center text-[#77736B]"><Camera className="w-6 h-6"/><span className="mt-2 text-[10px] font-bold">Your photo</span></button></div>
+        <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleUpload} className="hidden"/>
 
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {visiblePhotos.map((photo) => {
-              const selected = imageUrl === photo.url;
-              return (
-                <button key={photo.url} type="button" onClick={() => choosePreset(photo)} className={`relative aspect-square overflow-hidden rounded-[24px] ${selected ? 'ring-4 ring-[#E86F45] ring-offset-2 ring-offset-[#FFF9F2]' : ''}`} aria-label={photo.title}>
-                  <img src={photo.url} alt="" className="h-full w-full object-cover" />
-                  {selected && <span className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white text-[#E86F45] shadow"><Check className="h-5 w-5" /></span>}
-                </button>
-              );
-            })}
-
-            <button type="button" onClick={() => fileRef.current?.click()} className="aspect-square rounded-[24px] border-2 border-dashed border-[#DABFAE] bg-[#FFF1E4] text-[#87563F] flex flex-col items-center justify-center">
-              <Camera className="h-7 w-7" />
-              <span className="mt-2 text-xs font-extrabold">Eigenes Foto</span>
-            </button>
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleUpload} className="hidden" />
-
-          <button type="button" onClick={() => setShowMore((value) => !value)} className="mt-5 flex w-full items-center justify-between rounded-2xl bg-[#F3E8DD] px-4 py-3 text-sm font-bold text-[#6E5143]">
-            <span className="flex items-center gap-2"><ImagePlus className="h-4 w-4" />Optional etwas merken</span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${showMore ? 'rotate-180' : ''}`} />
-          </button>
-
-          {showMore && (
-            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="z. B. besonders lecker, mit Freunden …" rows={3} className="mt-3 w-full resize-none rounded-2xl bg-white px-4 py-3 text-sm text-[#3A2922] outline-none ring-1 ring-[#E7D6C9] focus:ring-2 focus:ring-[#E86F45]" />
-          )}
-
-          <button type="button" onClick={save} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#E86F45] px-5 py-4 text-sm font-extrabold text-white shadow-[0_12px_28px_rgba(199,82,47,.25)] active:scale-[.99]">
-            <Check className="h-5 w-5" />
-            {editingMoment ? 'Änderungen speichern' : 'Moment speichern'}
-          </button>
-          <p className="mt-2 text-center text-[11px] text-[#9A7A69]">Kein Text nötig. Bild wählen, speichern, fertig.</p>
-        </div>
+        <button onClick={()=>setShowMore(v=>!v)} className="mt-5 flex w-full items-center justify-between rounded-[18px] bg-[#EFE9DE] px-4 py-3 text-sm font-bold text-[#5E5D57]"><span className="flex items-center gap-2"><ImagePlus className="w-4 h-4"/>Add a note</span><ChevronDown className={`w-4 h-4 ${showMore?'rotate-180':''}`}/></button>
+        {showMore&&<textarea value={notes} onChange={(e)=>setNotes(e.target.value)} placeholder="Optional context…" rows={3} className="mt-3 w-full resize-none rounded-[18px] bg-white px-4 py-3 text-sm outline-none border border-[#E1DBD2]"/>}
+        <button onClick={save} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#E76F45] px-5 py-4 text-sm font-extrabold text-white"><Check className="h-5 w-5"/>{editingMoment?'Save changes':'Save meal'}</button>
+        <p className="mt-2 text-center text-[11px] text-[#99958C]">Type anything. Suggestions are shortcuts, not limits.</p>
       </div>
     </div>
-  );
+  </div>;
 };
