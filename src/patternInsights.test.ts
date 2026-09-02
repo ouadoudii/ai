@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { buildPatternInsights, confidenceForEvidence } from './utils/patternInsights';
 import type { DailyCheckIn, FoodMoment } from './types';
 
-describe('Cary pattern insights', () => {
+describe('pattern insights', () => {
   it('uses cautious confidence labels', () => {
-    expect(confidenceForEvidence(2)).toBe('Hinweis');
-    expect(confidenceForEvidence(4)).toBe('Tendenz');
-    expect(confidenceForEvidence(7)).toBe('Muster');
+    expect(confidenceForEvidence(2)).toBe('Signal');
+    expect(confidenceForEvidence(4)).toBe('Trend');
+    expect(confidenceForEvidence(7)).toBe('Pattern');
   });
 
   it('ignores seeded demo data', () => {
@@ -27,8 +27,8 @@ describe('Cary pattern insights', () => {
     const result = buildPatternInsights([], checks);
     const sleepEnergy = result.find((item) => item.id === 'sleep-energy');
     expect(sleepEnergy).toBeTruthy();
-    expect(sleepEnergy?.observation).toContain('2 von 2');
-    expect(sleepEnergy?.confidence).toBe('Hinweis');
+    expect(sleepEnergy?.observation).toContain('2 of 2');
+    expect(sleepEnergy?.confidence).toBe('Signal');
   });
 
   it('creates a lunch rhythm card after repeated real lunches', () => {
@@ -40,7 +40,7 @@ describe('Cary pattern insights', () => {
     ] as FoodMoment[];
     const result = buildPatternInsights(moments, []);
     const rhythm = result.find((item) => item.id === 'lunch-rhythm');
-    expect(rhythm?.observation).toContain('3 von 4');
-    expect(rhythm?.confidence).toBe('Tendenz');
+    expect(rhythm?.observation).toContain('3 of 4');
+    expect(rhythm?.confidence).toBe('Trend');
   });
 });
