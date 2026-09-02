@@ -24,6 +24,6 @@ describe('daily journey', () => {
   it('does not nag when all currently relevant phases are complete', () => {
     const step = getNextJourneyStep(13, { morning: true, midday: true, evening: false });
     expect(step.complete).toBe(true);
-    expect(step.title).toContain('alles festgehalten');
+    expect(step.title).toContain('captured');
   });
 });
