@@ -3,37 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Cary — Your Caring Companion for Sleep, Nutrition & Wellbeing | كاري</title>
-    <meta name="description" content="Cary: Caring daily check-ins, WhatsApp-style voice mic, sleep, mindful nutrition tracking, and archetype analysis in English and Arabic." />
-    <meta property="og:title" content="Cary | كاري" />
-    <meta property="og:description" content="Mindfulness, sleep & nutrition with personalized archetype analysis and voice check-ins." />
+    <title>Rhythm — Sleep, Food & Energy Patterns</title>
+    <meta name="description" content="Rhythm helps you capture sleep, food, energy and wellbeing with minimal effort, then surfaces patterns only when they genuinely repeat." />
+    <meta property="og:title" content="Rhythm" />
+    <meta property="og:description" content="Notice what shapes your everyday rhythm without turning life into a tracking project." />
     <meta property="og:type" content="website" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body class="bg-[#FBFBFA] text-stone-800 antialiased selection:bg-amber-100 selection:text-amber-900 min-h-screen">
     <div id="root">
-      <main id="cary-boot" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f7f2ea;font-family:system-ui,-apple-system,sans-serif;color:#292524">
+      <main id="rhythm-boot" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f7f2ea;font-family:system-ui,-apple-system,sans-serif;color:#292524">
         <section style="max-width:520px;width:100%;background:#fff;border:1px solid #e7e5e4;border-radius:24px;padding:28px;box-shadow:0 14px 40px rgba(57,45,35,.08)">
-          <div style="font-size:30px;margin-bottom:8px">🍽️</div>
-          <h1 style="font-size:22px;margin:0 0 8px">Cary lädt …</h1>
-          <p id="cary-boot-status" style="margin:0;color:#78716c;line-height:1.5">HTML ist geladen. Die App wird gestartet.</p>
+          <div style="font-size:30px;margin-bottom:8px">◌</div>
+          <h1 style="font-size:22px;margin:0 0 8px">Rhythm is loading…</h1>
+          <p id="rhythm-boot-status" style="margin:0;color:#78716c;line-height:1.5">Starting the app.</p>
         </section>
       </main>
     </div>
     <script>
       window.addEventListener('error', function (event) {
-        var status = document.getElementById('cary-boot-status');
-        if (status) status.textContent = 'Startfehler: ' + (event.message || 'Unbekannter JavaScript-Fehler');
+        var status = document.getElementById('rhythm-boot-status');
+        if (status) status.textContent = 'Startup error: ' + (event.message || 'Unknown JavaScript error');
       });
       window.addEventListener('unhandledrejection', function (event) {
-        var status = document.getElementById('cary-boot-status');
-        if (status) status.textContent = 'Startfehler: ' + String(event.reason || 'Unbekannter Promise-Fehler');
+        var status = document.getElementById('rhythm-boot-status');
+        if (status) status.textContent = 'Startup error: ' + String(event.reason || 'Unknown promise error');
       });
       setTimeout(function () {
-        var status = document.getElementById('cary-boot-status');
-        if (status) status.textContent = 'Die React-App hat nach 8 Sekunden noch nicht übernommen. Das JavaScript-Bundle startet nicht korrekt.';
+        var status = document.getElementById('rhythm-boot-status');
+        if (status) status.textContent = 'The app has not started after 8 seconds. The JavaScript bundle may have failed to load.';
       }, 8000);
     </script>
     <script type="module" src="/src/main.tsx"></script>
