@@ -1,0 +1,71 @@
+import React from 'react';
+
+export type AppLanguage = 'en' | 'ar';
+
+type Dictionary = Record<string, { en: string; ar: string }>;
+
+const dictionary: Dictionary = {
+  today: { en: 'Today', ar: 'اليوم' },
+  add: { en: 'Add', ar: 'أضف' },
+  patterns: { en: 'Patterns', ar: 'الأنماط' },
+  sleepFoodEnergy: { en: 'Sleep · Food · Energy', ar: 'النوم · الطعام · الطاقة' },
+  mainNav: { en: 'Main navigation', ar: 'التنقل الرئيسي' },
+  nothingLogged: { en: 'Nothing logged yet', ar: 'لم يتم تسجيل أي شيء بعد' },
+  entry: { en: 'entry', ar: 'إدخال' },
+  entries: { en: 'entries', ar: 'إدخالات' },
+  todaySuffix: { en: 'today', ar: 'اليوم' },
+  captureOnly: { en: 'Only capture what matters today.', ar: 'سجّل فقط ما يهمك اليوم.' },
+  dayBuilds: { en: 'Your day builds itself as you go.', ar: 'يكتمل يومك تلقائياً مع كل تسجيل.' },
+  captureHint: { en: 'Use a photo, your voice, or a few taps. No complete diary required.', ar: 'استخدم صورة أو صوتك أو بضع نقرات. لا حاجة إلى تدوين يوميات كاملة.' },
+  todaySoFar: { en: 'Today so far', ar: 'اليوم حتى الآن' },
+  tooEarly: { en: 'Too early for conclusions.', ar: 'ما زال الوقت مبكراً لاستخلاص النتائج.' },
+  whatRepeats: { en: 'What keeps repeating?', ar: 'ما الذي يتكرر؟' },
+  everydayReveal: { en: 'Everyday entries gradually reveal useful connections.', ar: 'تُظهر تسجيلاتك اليومية الروابط المفيدة تدريجياً.' },
+  viewPatterns: { en: 'View patterns', ar: 'عرض الأنماط' },
+  noPerfectDay: { en: 'You do not need to document a perfect day.', ar: 'لا تحتاج إلى توثيق يوم مثالي.' },
+  noticeDontObsess: { en: 'Notice, don’t obsess', ar: 'لاحظ بدون مبالغة' },
+  understandRhythm: { en: 'Understand what shapes your everyday rhythm.', ar: 'افهم ما الذي يشكّل إيقاع يومك.' },
+  onboardingBody: { en: 'Quickly capture food, sleep, energy or how you feel. Only repeated evidence becomes a pattern.', ar: 'سجّل الطعام أو النوم أو الطاقة أو شعورك بسرعة. فقط ما يتكرر يتحول إلى نمط.' },
+  photo: { en: 'Photo', ar: 'صورة' },
+  speak: { en: 'Speak', ar: 'تحدث' },
+  tap: { en: 'Tap', ar: 'نقر' },
+  noPerfectTracking: { en: 'No perfect tracking.', ar: 'لا حاجة لتتبع مثالي.' },
+  ordinaryEnough: { en: 'Ordinary days are enough. One day is never presented as a pattern.', ar: 'الأيام العادية تكفي. لن نعتبر يوماً واحداً نمطاً أبداً.' },
+  startToday: { en: 'Start with today', ar: 'ابدأ باليوم' },
+  language: { en: 'العربية', ar: 'English' },
+  addWhat: { en: 'What happened?', ar: 'ماذا حدث؟' },
+  addLabel: { en: 'Add', ar: 'إضافة' },
+  again: { en: 'Again', ar: 'مرة أخرى' },
+  type: { en: 'Type', ar: 'اكتب' },
+  captureKinds: { en: 'Food, sleep, energy or how you feel. That is enough.', ar: 'الطعام أو النوم أو الطاقة أو شعورك. هذا يكفي.' },
+  yourData: { en: 'Your data', ar: 'بياناتك' },
+  patternsIntro: { en: 'Only things that genuinely repeat in your everyday life appear here. No diagnosis and no invented labels.', ar: 'هنا تظهر فقط الأشياء التي تتكرر فعلاً في حياتك اليومية. لا تشخيص ولا تسميات مختلقة.' },
+  observations: { en: 'observations', ar: 'ملاحظات' },
+  tryWeek: { en: 'Try this week', ar: 'جرّب هذا الأسبوع' },
+  realDataPoints: { en: 'real data points', ar: 'نقاط بيانات حقيقية' },
+  ordinaryDaysEnough: { en: 'Ordinary days are enough.', ar: 'الأيام العادية تكفي.' },
+};
+
+const LanguageContext = React.createContext<{ language: AppLanguage; setLanguage: (lang: AppLanguage) => void; t: (key: string) => string }>({ language: 'en', setLanguage: () => {}, t: (key) => key });
+
+export const LanguageProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const [language, setLanguageState] = React.useState<AppLanguage>(() => {
+    try {
+      const saved = localStorage.getItem('rhythm_language_v1');
+      return saved === 'ar' ? 'ar' : 'en';
+    } catch { return 'en'; }
+  });
+  const setLanguage = React.useCallback((lang: AppLanguage) => {
+    setLanguageState(lang);
+    try { localStorage.setItem('rhythm_language_v1', lang); } catch {}
+  }, []);
+  React.useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.body.dir = language === 'ar' ? 'rtl' : 'ltr';
+  }, [language]);
+  const t = React.useCallback((key: string) => dictionary[key]?.[language] ?? key, [language]);
+  return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>;
+};
+
+export const useLanguage = () => React.useContext(LanguageContext);
