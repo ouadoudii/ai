@@ -13,7 +13,7 @@ const dictionary: Dictionary = {
   understandRhythm:{en:'Discover what helps you feel your best.',ar:'اكتشف ما يساعدك لتشعر بأفضل حال.'},
   onboardingBody:{en:'Share a few everyday moments about food, sleep, energy and mood. Over time, we connect the dots and reveal your personal rhythm.',ar:'شارك بضع لحظات عادية عن الطعام والنوم والطاقة والشعور. مع الوقت نربط بينها ونساعدك على اكتشاف إيقاعك الخاص.'},
   photo:{en:'Photo',ar:'صورة'}, speak:{en:'Tell me',ar:'احكِ لي'}, tap:{en:'Quick check',ar:'اختيار سريع'}, noPerfectTracking:{en:'Keep it easy.',ar:'خلّها بسيطة.'},
-  ordinaryEnough:{en:'You don’t have to log everything. Small, honest moments are enough to learn from.',ar:'لا تحتاج لتسجيل كل شيء. لحظات بسيطة وصادقة تكفي لنتعلّم منها.'}, startToday:{en:'Discover my rhythm',ar:'ابدأ اكتشاف إيقاعي'}, language:{en:'العربية',ar:'English'},
+  ordinaryEnough:{en:'You don’t have to log everything. Small, honest moments are enough to learn from.',ar:'لا تحتاج لتسجيل كل شيء. لحظات بسيطة وصادقة تكفي لنتعلّم منها.'}, startToday:{en:'Discover my rhythm',ar:'ابدأ اكتشاف إيقاعي'}, language:{en:'العربية',ar:'الإنجليزية'},
   addWhat:{en:'What would you like to capture?',ar:'ما اللحظة التي تريد تسجيلها؟'}, addLabel:{en:'One quick moment',ar:'لحظة سريعة'}, again:{en:'Have it again?',ar:'تكرر شيء من قبل؟'}, type:{en:'Write',ar:'اكتب'},
   captureKinds:{en:'Choose whatever feels easiest. A few seconds is enough.',ar:'اختر الأسهل لك. بضع ثوانٍ تكفي.'}, yourData:{en:'Your discoveries',ar:'اكتشافاتك'},
   patternsIntro:{en:'This is where everyday moments start turning into useful discoveries about you.',ar:'هنا تتحول لحظاتك اليومية تدريجياً إلى اكتشافات مفيدة عنك.'}, observations:{en:'moments',ar:'لحظات'}, tryWeek:{en:'A small experiment',ar:'تجربة صغيرة'},
