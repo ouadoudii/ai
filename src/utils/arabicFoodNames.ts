@@ -16,11 +16,16 @@ const ar: Record<string,string> = {
 'Eggs and bacon':'بيض مع لحم مقدد','Bagel with cream cheese':'بيغل مع جبن كريمي','Pancakes and maple syrup':'بان كيك بشراب القيقب','Turkey sandwich':'ساندويتش ديك رومي','Mac and cheese':'مكرونة بالجبن','Cheeseburger':'تشيز برغر','BBQ chicken':'دجاج باربكيو','Chili':'تشيلي','Apple pie':'فطيرة التفاح',
 'Poha':'بوها','Idli and sambar':'إدلي مع سامبار','Paratha':'براتا','Dal and rice':'دال مع الأرز','Chana masala':'تشانا ماسالا','Biryani':'برياني','Butter chicken':'دجاج بالزبدة','Palak paneer':'بالاك بانير','Masala dosa':'ماسالا دوسا','Gulab jamun':'غولاب جامون',
 'Miso soup and rice':'شوربة ميسو مع الأرز','Onigiri':'أونيغيري','Soba noodles':'نودلز سوبا','Udon noodles':'نودلز أودون','Chicken katsu':'دجاج كاتسو','Yakitori':'ياكيتوري','Mochi':'موتشي',
-'Chilaquiles':'تشيلاكيلس','Huevos rancheros':'بيض رانشيروس','Quesadilla':'كيساديا','Pozole':'بوزولي','Burrito':'بوريتو','Enchiladas':'إنشيلادا','Guacamole and tortilla chips':'غواكامولي مع رقائق التورتيلا'
+'Chilaquiles':'تشيلاكيلس','Huevos rancheros':'بيض رانشيروس','Quesadilla':'كيساديا','Pozole':'بوزولي','Burrito':'بوريتو','Enchiladas':'إنشيلادا','Guacamole and tortilla chips':'غواكامولي مع رقائق التورتيلا',
+'Sauerteig Toast':'توست العجين المخمر','Sauerteig-Toast':'توست العجين المخمر','Avocado Sauerteig Toast':'توست العجين المخمر بالأفوكادو','Avocado-Sauerteig-Toast':'توست العجين المخمر بالأفوكادو','Neapolitanische Pizza':'بيتزا نابولية','Neapolitanische Pizza Margherita':'بيتزا مارغريتا النابولية'
 };
 
+function normalize(name:string):string{return name.trim().replace(/\s+/g,' ').toLocaleLowerCase();}
+const normalizedAr=new Map(Object.entries(ar).map(([key,value])=>[normalize(key),value]));
+
 export function localizeFoodName(name:string, language:AppLanguage):string {
-  return language === 'ar' ? (ar[name] || name) : name;
+  if(language!=='ar')return name;
+  return ar[name] || normalizedAr.get(normalize(name)) || name;
 }
 
 export function localizeFoodSuggestions(items:FoodSuggestion[], language:AppLanguage, query=''):FoodSuggestion[] {
@@ -28,4 +33,4 @@ export function localizeFoodSuggestions(items:FoodSuggestion[], language:AppLang
   return items.map(item=>({...item,name:localizeFoodName(item.name,language)})).filter(item=>!q||item.name.toLocaleLowerCase(language==='ar'?'ar':'en').includes(q));
 }
 
-export function hasArabicFoodLabel(name:string):boolean { return /[\u0600-\u06FF]/.test(ar[name] || ''); }
+export function hasArabicFoodLabel(name:string):boolean { return /[\u0600-\u06FF]/.test(localizeFoodName(name,'ar')); }
