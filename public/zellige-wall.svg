@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+<defs>
+  <linearGradient id="wash" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eadfc9"/><stop offset=".55" stop-color="#c9a87c"/><stop offset="1" stop-color="#8e7459"/></linearGradient>
+  <filter id="soft"><feGaussianBlur stdDeviation="8"/></filter>
+  <pattern id="tiles" width="180" height="180" patternUnits="userSpaceOnUse">
+    <rect width="180" height="180" fill="#e9dfcc"/>
+    <rect x="6" y="6" width="78" height="78" rx="3" fill="#d6c39b" stroke="#f7efe1" stroke-width="5"/>
+    <path d="M45 14 76 45 45 76 14 45Z" fill="#3f7180"/><path d="M45 26 64 45 45 64 26 45Z" fill="#e1a94b"/><circle cx="45" cy="45" r="7" fill="#7d4035"/>
+    <rect x="96" y="6" width="78" height="78" rx="3" fill="#9e5747" stroke="#f7efe1" stroke-width="5"/>
+    <path d="M135 16c12 14 24 18 30 29-6 12-18 16-30 29-12-13-24-17-30-29 6-11 18-15 30-29Z" fill="#ead9b7"/><circle cx="135" cy="45" r="8" fill="#526b48"/>
+    <rect x="6" y="96" width="78" height="78" rx="3" fill="#607e70" stroke="#f7efe1" stroke-width="5"/>
+    <path d="M14 135h62M45 104v62M23 113l44 44M67 113l-44 44" stroke="#f0dca7" stroke-width="7"/><circle cx="45" cy="135" r="11" fill="#c96f49"/>
+    <rect x="96" y="96" width="78" height="78" rx="3" fill="#e8c9aa" stroke="#f7efe1" stroke-width="5"/>
+    <path d="M135 106 166 135 135 164 106 135Z" fill="#b85d4b"/><path d="M135 116 155 135 135 154 115 135Z" fill="#f1e8ce"/><circle cx="135" cy="135" r="8" fill="#3f7180"/>
+  </pattern>
+  <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#261f18" stop-opacity=".04"/><stop offset="1" stop-color="#261f18" stop-opacity=".42"/></linearGradient>
+</defs>
+<rect width="1200" height="760" fill="url(#wash)"/>
+<rect x="280" width="920" height="760" fill="url(#tiles)"/>
+<path d="M0 0h360v760H0z" fill="#d6c1a1"/>
+<g opacity=".23" filter="url(#soft)" fill="#2f4537">
+  <path d="M75 760c24-180 44-330 105-510 18-52 51-107 92-157-18 86-26 157-23 217 39-58 81-102 133-131-49 75-91 150-120 235 51-34 95-48 139-51-63 52-109 103-141 157 49-12 95-7 140 15-74 28-129 62-172 104-24 49-39 89-48 121Z"/>
+  <ellipse cx="194" cy="168" rx="44" ry="15" transform="rotate(-30 194 168)"/><ellipse cx="251" cy="245" rx="50" ry="16" transform="rotate(28 251 245)"/><ellipse cx="146" cy="337" rx="56" ry="16" transform="rotate(-18 146 337)"/>
+</g>
+<rect width="1200" height="760" fill="url(#shade)"/>
+</svg>
