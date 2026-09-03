@@ -9,15 +9,20 @@ import { AddMomentModal } from './components/AddMomentModal';
 import { DailyCheckInModal } from './components/DailyCheckInModal';
 import { CatchUpMiddayCheckInModal } from './components/CatchUpMiddayCheckInModal';
 import { MomentDetailModal } from './components/MomentDetailModal';
+import { TodayHomeView } from './components/TodayHomeView';
+import { Header } from './components/Header';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import type { FoodMoment,MomentCategory } from './types';
 
 const countries=['MA','DE','FR','IT','ES','TR','GB','US','IN','JP','MX'];
 const dayCategories:MomentCategory[]=['breakfast','lunch','snack','dinner','coffee','dessert'];
-const latinLeak=/\b(Today|Patterns|Add|Food|Morning|Midday|Evening|Search|Local suggestions|Hunger|Fullness|Energy|Save|Later|Back|Next|Share|Edit|Delete|Location|Rating|Note|Close)\b/;
-const moment={id:'u-ar',title:'كسكس بسبع خضار',label:'الغداء',category:'lunch',date:'2026-09-02',time:'13:30',location:'الرباط',locationCategory:'home',imageUrl:'',rating:5,mood:'satisfied',hungerLevel:3,fullnessLevel:4,energyAfter:'neutral',tags:[],createdAt:1} as FoodMoment;
+const latinLeak=/\b(Today|Patterns|Discoveries|Add|Food|Morning|Midday|Evening|Search|Local|Hunger|Fullness|Energy|Save|Later|Back|Next|Share|Edit|Delete|Location|Rating|Note|Close|Language|English|Rhythm)\b/i;
+const moment={id:'u-ar',title:'كسكس بسبع خضار',label:'الغداء',category:'lunch',date:'2026-09-03',time:'13:30',location:'الرباط',locationCategory:'home',imageUrl:'',rating:5,mood:'satisfied',hungerLevel:3,fullnessLevel:4,energyAfter:'neutral',tags:[],createdAt:2} as FoodMoment;
+const legacyMoment={...moment,id:'u-legacy',title:'Neapolitanische Pizza',category:'dinner' as MomentCategory,time:'20:10',createdAt:3};
 let oldStorage:any;
 beforeAll(()=>{oldStorage=(globalThis as any).localStorage;(globalThis as any).localStorage={getItem:(k:string)=>k==='rhythm_language_v1'?'ar':null,setItem:()=>{},removeItem:()=>{}}});
 afterAll(()=>{(globalThis as any).localStorage=oldStorage});
+const visibleText=(html:string)=>html.replace(/<style[\s\S]*?<\/style>/g,' ').replace(/<[^>]*>/g,' ').replace(/&[^;]+;/g,' ').replace(/\s+/g,' ').trim();
 
 describe('Arabic user country and full-day simulation',()=>{
   for(const country of countries){
@@ -51,6 +56,20 @@ describe('Arabic user country and full-day simulation',()=>{
       shell(<MomentDetailModal moment={moment} onClose={()=>{}} onEdit={()=>{}} onDelete={()=>{}} onToggleFavorite={()=>{}}/>),
     ].join('\n');
     expect(html).toMatch(/[\u0600-\u06FF]/);
-    expect(html).not.toMatch(latinLeak);
+    expect(visibleText(html)).not.toMatch(latinLeak);
+  });
+
+  it('Arabic home and navigation contain no visible English product wording',()=>{
+    const shell=(node:React.ReactNode)=>renderToString(<LanguageProvider>{node}</LanguageProvider>);
+    const html=[
+      shell(<Header activeTab="today" setActiveTab={()=>{}} onOpenAddModal={()=>{}}/>),
+      shell(<MobileBottomNav activeTab="today" setActiveTab={()=>{}} onCapture={()=>{}} favoriteCount={0}/>),
+      shell(<TodayHomeView moments={[legacyMoment,moment]} checkIns={[]} onOpenAddModal={()=>{}} onOpenCheckInModal={()=>{}} onSelectMoment={()=>{}} onNavigateToCoach={()=>{}} onNavigateToTypeAnalysis={()=>{}} onNavigateToTimeline={()=>{}}/>),
+    ].join('\n');
+    const text=visibleText(html);
+    expect(text).toMatch(/[\u0600-\u06FF]/);
+    expect(text).toContain('بيتزا نابولية');
+    expect(text).not.toContain('Neapolitanische Pizza');
+    expect(text).not.toMatch(latinLeak);
   });
 });
