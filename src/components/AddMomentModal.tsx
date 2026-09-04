@@ -7,6 +7,7 @@ import { localizeFoodSuggestions } from '../utils/arabicFoodNames';
 import { getDishPhoto } from '../utils/dishPhoto';
 import { fetchFoodAutocomplete } from '../apiClient';
 import { trackUx } from '../utils/uxAnalytics';
+import { mergeAutocompleteSuggestions, rankLocalAutocomplete } from '../utils/foodAutocomplete';
 import { useLanguage } from '../i18n';
 
 interface AddMomentModalProps { isOpen:boolean; onClose:()=>void; onSave:(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>void; editingMoment?:FoodMoment|null; }
@@ -14,8 +15,6 @@ const categories:MomentCategory[]=['breakfast','lunch','dinner','snack','coffee'
 const enLabels:Record<MomentCategory,string>={breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',snack:'Snack',coffee:'Coffee',dessert:'Dessert',drinks:'Drinks',travel:'Travel'};
 const arLabels:Record<MomentCategory,string>={breakfast:'الفطور',lunch:'الغداء',dinner:'العشاء',snack:'وجبة خفيفة',coffee:'قهوة',dessert:'حلويات',drinks:'مشروبات',travel:'سفر'};
 const categoryForHour=(hour:number):MomentCategory=>hour<11?'breakfast':hour<15?'lunch':hour<18?'snack':'dinner';
-const norm=(v:string)=>v.trim().toLocaleLowerCase().replace(/\s+/g,' ');
-
 export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSave,editingMoment})=>{
   const {language}=useLanguage(); const ar=language==='ar'; const labels=ar?arLabels:enLabels;
   const [category,setCategory]=React.useState<MomentCategory>('lunch');
@@ -35,8 +34,8 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSav
 
   const all=React.useMemo(()=>getFoodSuggestions(country,category),[country,category]);
   const localizedAll=React.useMemo(()=>localizeFoodSuggestions(all,language),[all,language]);
-  const localMatches=React.useMemo(()=>{const q=norm(title);if(!q)return localizedAll.slice(0,6);return localizedAll.filter(x=>norm(x.name).startsWith(q)).concat(localizedAll.filter(x=>!norm(x.name).startsWith(q)&&norm(x.name).includes(q))).slice(0,6)},[localizedAll,title]);
-  const mergedSuggestions=React.useMemo(()=>{const seen=new Set<string>();return [...localMatches.map(x=>x.name),...aiSuggestions].filter(name=>{const k=norm(name);if(!k||seen.has(k)||k===norm(title))return false;seen.add(k);return true}).slice(0,6)},[localMatches,aiSuggestions,title]);
+  const localMatches=React.useMemo(()=>rankLocalAutocomplete(localizedAll.map(x=>x.name),title,6),[localizedAll,title]);
+  const mergedSuggestions=React.useMemo(()=>mergeAutocompleteSuggestions(localMatches,aiSuggestions,title,6),[localMatches,aiSuggestions,title]);
   const matchedPhoto=React.useMemo(()=>getDishPhoto(title,category),[title,category]);
 
   React.useEffect(()=>{if(!isOpen||confirmed||title.trim().length<2){setAiSuggestions([]);setAiLoading(false);return;}const q=title.trim();const id=++requestId.current;const timer=setTimeout(async()=>{setAiLoading(true);const results=await fetchFoodAutocomplete({query:q,category,language,country});if(id!==requestId.current)return;setAiSuggestions(results);setAiLoading(false);if(results.length)trackUx({eventName:'autocomplete_returned',surface:'meal_editor',language,metadata:{source:'ai',count:results.length,category}})},450);return()=>clearTimeout(timer)},[title,category,language,country,isOpen,confirmed]);
