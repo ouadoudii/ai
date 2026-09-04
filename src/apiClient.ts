@@ -78,3 +78,14 @@ export async function askGeminiCoach(
     return fallbackChat(query, moments);
   }
 }
+
+export async function fetchFoodAutocomplete(input:{query:string;category:string;language:'en'|'ar';country?:string|null}):Promise<string[]> {
+  const query=input.query.trim();
+  if(query.length<2)return [];
+  try{
+    const res=await fetch('/api/food-autocomplete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,category:input.category,language:input.language,country:input.country||null})});
+    if(!res.ok)return [];
+    const data=await res.json();
+    return Array.isArray(data?.suggestions)?data.suggestions.filter((v:unknown)=>typeof v==='string').slice(0,5):[];
+  }catch{return []}
+}
