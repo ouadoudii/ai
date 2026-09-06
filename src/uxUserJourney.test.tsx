@@ -17,7 +17,7 @@ const check=(phase:'morning'|'midday'|'evening'):DailyCheckIn=>({id:'user-'+phas
 
 describe('Arabic mobile UX day simulation',()=>{
   it('uses the zellige wall and Arabic-only visible home copy',()=>{
-    const html=renderToString(<LanguageProvider><TodayHomeView moments={[moment]} checkIns={[]} onOpenAddModal={noop} onOpenCheckInModal={noop} onSelectMoment={noop as any} onNavigateToCoach={noop} onNavigateToTypeAnalysis={noop} onNavigateToTimeline={noop}/></LanguageProvider>);
+    const html=renderToString(<LanguageProvider><TodayHomeView moments={[moment]} checkIns={[]} onOpenAddModal={noop} onOpenSnack={noop} onOpenCheckInModal={noop as any} onSelectMoment={noop as any} onNavigateToCoach={noop} onNavigateToTypeAnalysis={noop} onNavigateToTimeline={noop}/></LanguageProvider>);
     expect(html).toContain('/zellige-wall.svg');
     expect(html).toContain('مرحباً بك');
     expect(html).toContain('بيتزا نابولية');
@@ -26,8 +26,9 @@ describe('Arabic mobile UX day simulation',()=>{
   });
 
   it('renders morning, midday and evening as completed after a full simulated day',()=>{
-    const html=renderToString(<LanguageProvider><TodayHomeView moments={[]} checkIns={[check('morning'),check('midday'),check('evening')]} onOpenAddModal={noop} onOpenCheckInModal={noop} onSelectMoment={noop as any} onNavigateToCoach={noop} onNavigateToTypeAnalysis={noop} onNavigateToTimeline={noop}/></LanguageProvider>);
+    const html=renderToString(<LanguageProvider><TodayHomeView moments={[]} checkIns={[check('morning'),check('midday'),check('evening')]} onOpenAddModal={noop} onOpenSnack={noop} onOpenCheckInModal={noop as any} onSelectMoment={noop as any} onNavigateToCoach={noop} onNavigateToTypeAnalysis={noop} onNavigateToTimeline={noop}/></LanguageProvider>);
     expect((html.match(/تم تسجيل هذه اللحظة/g)||[]).length).toBe(3);
+    expect(html).toContain('وجبة خفيفة');
   });
 
   it('keeps the five-item Arabic mobile navigation free of English labels',()=>{
