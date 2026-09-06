@@ -25,8 +25,10 @@ describe('food visual matrix',()=>{
     expect(visual.imageUrl).toContain('images.unsplash.com');
   });
 
-  it('prioritizes the selected meal category in the default matrix',()=>{
-    const first=getFoodVisuals('breakfast','',6);
-    expect(first.every(v=>v.category==='breakfast')).toBe(true);
+  it('prioritizes the selected meal category before filling with other visuals',()=>{
+    const breakfastCount=FOOD_VISUALS.filter(v=>v.category==='breakfast').length;
+    const first=getFoodVisuals('breakfast','',18);
+    expect(first.slice(0,breakfastCount).every(v=>v.category==='breakfast')).toBe(true);
+    expect(first.length).toBeGreaterThan(breakfastCount);
   });
 });
