@@ -12,12 +12,12 @@ import { addMealItem, buildMealTitle, removeMealItem } from '../utils/mealItems'
 import { getFoodVisuals, localizeFoodVisualName, type FoodVisual } from '../utils/foodVisuals';
 import { useLanguage } from '../i18n';
 
-interface AddMomentModalProps { isOpen:boolean; onClose:()=>void; onSave:(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>void; editingMoment?:FoodMoment|null; }
+interface AddMomentModalProps { isOpen:boolean; onClose:()=>void; onSave:(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>void; editingMoment?:FoodMoment|null; initialCategory?:MomentCategory|null; }
 const categories:MomentCategory[]=['breakfast','lunch','dinner','snack','coffee','dessert'];
 const enLabels:Record<MomentCategory,string>={breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',snack:'Snack',coffee:'Coffee',dessert:'Dessert',drinks:'Drinks',travel:'Travel'};
 const arLabels:Record<MomentCategory,string>={breakfast:'الفطور',lunch:'الغداء',dinner:'العشاء',snack:'وجبة خفيفة',coffee:'قهوة',dessert:'حلويات',drinks:'مشروبات',travel:'سفر'};
 const categoryForHour=(hour:number):MomentCategory=>hour<11?'breakfast':hour<15?'lunch':hour<18?'snack':'dinner';
-export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSave,editingMoment})=>{
+export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSave,editingMoment,initialCategory})=>{
   const {language}=useLanguage(); const ar=language==='ar'; const labels=ar?arLabels:enLabels;
   const [category,setCategory]=React.useState<MomentCategory>('lunch');
   const [imageUrl,setImageUrl]=React.useState('');
@@ -32,7 +32,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSav
   const fileRef=React.useRef<HTMLInputElement>(null);
   const requestId=React.useRef(0);
 
-  React.useEffect(()=>{if(!isOpen)return;setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems([editingMoment.title]);setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const next=categoryForHour(new Date().getHours());setCategory(next);setImageUrl('');setTitle('');setItems([]);setNotes('');setShowMore(false);setAiSuggestions([])},[isOpen,editingMoment]);
+  React.useEffect(()=>{if(!isOpen)return;setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems([editingMoment.title]);setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const next=initialCategory||categoryForHour(new Date().getHours());setCategory(next);setImageUrl('');setTitle('');setItems([]);setNotes('');setShowMore(false);setAiSuggestions([])},[isOpen,editingMoment,initialCategory]);
 
   const all=React.useMemo(()=>getFoodSuggestions(country,category),[country,category]);
   const localizedAll=React.useMemo(()=>localizeFoodSuggestions(all,language),[all,language]);
