@@ -49,7 +49,13 @@ describe('legacy repeated meals in Arabic mode', () => {
     });
   }
 
-  it('keeps the original stored title in English mode', () => {
+  it('keeps Latin stored titles unchanged in English mode', () => {
     expect(localizeStoredFoodName('Neapolitanische Pizza', 'dinner', 'en')).toBe('Neapolitanische Pizza');
+  });
+
+  it('translates known Arabic stored titles back to English when English is selected', () => {
+    expect(localizeStoredFoodName('طاجين الكفتة', 'dinner', 'en')).toBe('Kefta tagine');
+    expect(localizeStoredFoodName('مسمن', 'breakfast', 'en')).toBe('Msemen');
+    expect(localizeStoredFoodName('شاي مغربي بالنعناع', 'coffee', 'en')).toBe('Moroccan mint tea');
   });
 });
