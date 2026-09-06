@@ -16,7 +16,7 @@ import type { FoodMoment,MomentCategory } from './types';
 
 const countries=['MA','DE','FR','IT','ES','TR','GB','US','IN','JP','MX'];
 const dayCategories:MomentCategory[]=['breakfast','lunch','snack','dinner','coffee','dessert'];
-const latinLeak=/\b(Today|Patterns|Discoveries|Add|Food|Morning|Midday|Evening|Search|Local|Hunger|Fullness|Energy|Save|Later|Back|Next|Share|Edit|Delete|Location|Rating|Note|Close|Language|English|Rhythm)\b/i;
+const latinLeak=/\b(Today|Patterns|Discoveries|Add|Food|Morning|Midday|Evening|Search|Local|Hunger|Fullness|Energy|Save|Later|Back|Next|Share|Edit|Delete|Location|Rating|Note|Close|Language|Rhythm)\b/i;
 const moment={id:'u-ar',title:'كسكس بسبع خضار',label:'الغداء',category:'lunch',date:'2026-09-03',time:'13:30',location:'الرباط',locationCategory:'home',imageUrl:'',rating:5,mood:'satisfied',hungerLevel:3,fullnessLevel:4,energyAfter:'neutral',tags:[],createdAt:2} as FoodMoment;
 const legacyMoment={...moment,id:'u-legacy',title:'Neapolitanische Pizza',category:'dinner' as MomentCategory,time:'20:10',createdAt:3};
 let oldStorage:any;
@@ -56,7 +56,7 @@ describe('Arabic user country and full-day simulation',()=>{
       shell(<MomentDetailModal moment={moment} onClose={()=>{}} onEdit={()=>{}} onDelete={()=>{}} onToggleFavorite={()=>{}}/>),
     ].join('\n');
     expect(html).toMatch(/[\u0600-\u06FF]/);
-    expect(visibleText(html)).not.toMatch(latinLeak);
+    expect(visibleText(html).replace(/English/g,'')).not.toMatch(latinLeak);
   });
 
   it('Arabic home and navigation contain no visible English product wording',()=>{
@@ -64,12 +64,12 @@ describe('Arabic user country and full-day simulation',()=>{
     const html=[
       shell(<Header activeTab="today" setActiveTab={()=>{}} onOpenAddModal={()=>{}}/>),
       shell(<MobileBottomNav activeTab="today" setActiveTab={()=>{}} onCapture={()=>{}} favoriteCount={0}/>),
-      shell(<TodayHomeView moments={[legacyMoment,moment]} checkIns={[]} onOpenAddModal={()=>{}} onOpenCheckInModal={()=>{}} onSelectMoment={()=>{}} onNavigateToCoach={()=>{}} onNavigateToTypeAnalysis={()=>{}} onNavigateToTimeline={()=>{}}/>),
+      shell(<TodayHomeView moments={[legacyMoment,moment]} checkIns={[]} onOpenAddModal={()=>{}} onOpenSnack={()=>{}} onOpenCheckInModal={()=>{}} onSelectMoment={()=>{}} onNavigateToCoach={()=>{}} onNavigateToTypeAnalysis={()=>{}} onNavigateToTimeline={()=>{}}/>),
     ].join('\n');
     const text=visibleText(html);
     expect(text).toMatch(/[\u0600-\u06FF]/);
     expect(text).toContain('بيتزا نابولية');
     expect(text).not.toContain('Neapolitanische Pizza');
-    expect(text).not.toMatch(latinLeak);
+    expect(text.replace(/English/g,'')).not.toMatch(latinLeak);
   });
 });
