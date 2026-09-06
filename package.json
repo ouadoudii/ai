@@ -10,7 +10,8 @@
     "test": "vitest run",
     "lint": "tsc --noEmit",
     "quality:arab-users": "vitest run src/arabUserScenarios.test.tsx src/uxUserJourney.test.tsx src/targetedCheckInPhase.test.tsx src/arabicUserJourney.test.tsx src/arabicFoodNames.test.ts",
-    "quality:deploy": "npm run lint && npm run quality:arab-users && npm test"
+    "quality:deploy": "npm run lint && npm run quality:arab-users && npm test",
+    "test:visual": "playwright test"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -33,6 +34,7 @@
     "typescript": "~5.8.2",
     "vite": "^6.2.3",
     "@types/express": "^4.17.21",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@playwright/test": "^1.55.0"
   }
 }
