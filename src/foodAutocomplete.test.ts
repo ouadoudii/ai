@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {mergeAutocompleteSuggestions,rankLocalAutocomplete} from './utils/foodAutocomplete';
+import {mergeAutocompleteSuggestions,normalizeAutocomplete,rankLocalAutocomplete} from './utils/foodAutocomplete';
 
 describe('meal autocomplete',()=>{
   it('puts prefix matches before looser contains matches',()=>{
@@ -23,5 +23,17 @@ describe('meal autocomplete',()=>{
   it('keeps the list intentionally short',()=>{
     const local=Array.from({length:10},(_,i)=>'Dish '+i);
     expect(mergeAutocompleteSuggestions(local,[],'x',6)).toHaveLength(6);
+  });
+
+  it('normalizes user typing before matching',()=>{
+    expect(normalizeAutocomplete('  Chicken   Pasta  ')).toBe('chicken pasta');
+    expect(normalizeAutocomplete('  طاجين   الدجاج  ')).toBe('طاجين الدجاج');
+  });
+
+  it('allows a typed value to remain independent of suggested values',()=>{
+    const typed='My family rice';
+    const list=mergeAutocompleteSuggestions(['Rice bowl'],['Chicken rice'],typed,6);
+    expect(list).not.toContain(typed);
+    expect(normalizeAutocomplete(typed)).toBe('my family rice');
   });
 });
