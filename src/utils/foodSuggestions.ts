@@ -8,6 +8,7 @@ const global: FoodSuggestion[] = [
   ['Steak and potatoes','dinner'],['Beef stir-fry','dinner'],['Shrimp pasta','dinner'],['Vegetable stir-fry','dinner'],['Mushroom pasta','dinner'],['Lasagna','dinner'],['Tomato soup','dinner'],['Stuffed peppers','dinner'],['Roast chicken','dinner'],['Grilled fish','dinner'],['Pizza','dinner'],['Sushi','dinner'],['Tacos','dinner'],['Ramen','dinner'],['Risotto','dinner'],
   ['Apple','snack'],['Banana','snack'],['Nuts','snack'],['Protein yogurt','snack'],['Hummus and vegetables','snack'],['Dark chocolate','snack'],['Cheese and crackers','snack'],['Dates','snack'],
   ['Espresso','coffee'],['Cappuccino','coffee'],['Latte','coffee'],['Tea','coffee'],['Matcha latte','coffee'],
+  ['Water','drinks'],['Sparkling water','drinks'],['Laban','drinks'],['Lemon mint drink','drinks'],['Tamarind drink','drinks'],['Jallab','drinks'],['Qamar al-Din','drinks'],
   ['Cheesecake','dessert'],['Ice cream','dessert'],['Chocolate cake','dessert'],['Fruit salad','dessert'],['Tiramisu','dessert'],
 ].map(([name, category]) => ({ name, category: category as MomentCategory }));
 
