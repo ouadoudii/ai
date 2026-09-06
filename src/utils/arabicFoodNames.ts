@@ -23,6 +23,7 @@ const ar: Record<string,string> = {
 
 function normalize(name:string):string{return name.trim().replace(/[\u2026…]/g,'').replace(/\s+/g,' ').toLocaleLowerCase();}
 const normalizedAr=new Map(Object.entries(ar).map(([key,value])=>[normalize(key),value]));
+const normalizedEn=new Map(Object.entries(ar).map(([key,value])=>[normalize(value),key]));
 const latin=/[A-Za-zÀ-ÖØ-öø-ÿ]/;
 const categoryFallback:Record<MomentCategory,string>={breakfast:'وجبة فطور سابقة',lunch:'وجبة غداء سابقة',dinner:'وجبة عشاء سابقة',snack:'وجبة خفيفة سابقة',coffee:'مشروب سابق',dessert:'حلوى سابقة',drinks:'مشروب سابق',travel:'وجبة سابقة'};
 
@@ -45,7 +46,7 @@ export function localizeFoodName(name:string, language:AppLanguage):string {
 }
 
 export function localizeStoredFoodName(name:string, category:MomentCategory, language:AppLanguage):string {
-  if(language!=='ar')return name;
+  if(language==='en')return normalizedEn.get(normalize(name)) || name;
   const localized=localizeFoodName(name,'ar');
   return latin.test(localized) ? categoryFallback[category] : localized;
 }
