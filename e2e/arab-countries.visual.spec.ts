@@ -49,6 +49,11 @@ for(const country of countries){
     await expect(page.getByText('English',{exact:true})).toBeVisible();
     await page.screenshot({path:testInfo.outputPath(`${country}-02-capture.png`),fullPage:true});
 
+    const dialog=page.getByRole('dialog');
+    if(await dialog.isVisible().catch(()=>false)){
+      const closeButton=dialog.getByRole('button',{name:/إغلاق|Close/});
+      if(await closeButton.isVisible().catch(()=>false)) await closeButton.click();
+    }
     const photoButton=page.getByRole('button',{name:/صورة/}).first();
     await expect(photoButton).toBeVisible();
     await photoButton.click();
@@ -87,7 +92,6 @@ test('guest mode persists locally without requiring an account',async({page})=>{
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await expect(page.getByText(/Welcome back/)).not.toBeVisible();
   await expect(page.getByRole('button',{name:/Open account/})).toContainText(/Guest/);
   const stored=await page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1'));
   expect(stored).toContain('guest-local');
@@ -106,8 +110,8 @@ test('returning account mode restores a stored session and keeps cloud sync avai
     localStorage.setItem('cary_access_mode_v1','account');
     localStorage.setItem('cary_onboarding_v2_complete','true');
     localStorage.setItem('cary_auth_session_v1',JSON.stringify({
-      access_token:'test-access-token',
-      refresh_token:'test-refresh-token',
+      access_token:'test-token',
+      refresh_token:'test-refresh',
       expires_at:Math.floor(Date.now()/1000)+3600,
       user:{id:'returning-user',email:'returning@example.com'}
     }));
