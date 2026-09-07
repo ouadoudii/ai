@@ -31,8 +31,8 @@ for(const country of countries){
     });
     await page.addInitScript(({country})=>{
       localStorage.setItem('rhythm_language_v1','ar');
-      localStorage.setItem('nimmapp_access_mode_v1','guest');
-      localStorage.setItem('nimmapp_onboarding_v2_complete','true');
+      localStorage.setItem('cary_access_mode_v1','guest');
+      localStorage.setItem('cary_onboarding_v2_complete','true');
       localStorage.setItem('rhythm_country_v1',country);
       sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
     },{country});
@@ -62,8 +62,8 @@ for(const country of countries){
 test('English switch changes the real capture UI to LTR',async({page},testInfo)=>{
   await page.addInitScript(()=>{
     localStorage.setItem('rhythm_language_v1','ar');
-    localStorage.setItem('nimmapp_access_mode_v1','guest');
-    localStorage.setItem('nimmapp_onboarding_v2_complete','true');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
@@ -75,4 +75,45 @@ test('English switch changes the real capture UI to LTR',async({page},testInfo)=
   await expect(page.locator('html')).toHaveAttribute('dir','ltr');
   await expect(page.getByText(/What would you like to capture\?/)).toBeVisible();
   await page.screenshot({path:testInfo.outputPath('english-switch.png'),fullPage:true});
+});
+
+
+test('guest mode persists locally without requiring an account',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','en');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    localStorage.setItem('nimmapp_moments_v1',JSON.stringify([{id:'guest-local',title:'Guest local meal',createdAt:Date.now()}]));
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+  });
+  await page.goto('/');
+  await expect(page.getByText(/Welcome back/)).not.toBeVisible();
+  await expect(page.getByRole('button',{name:/Open account/})).toContainText(/Guest/);
+  const stored=await page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1'));
+  expect(stored).toContain('guest-local');
+});
+
+test('returning account mode restores a stored session and keeps cloud sync available',async({page})=>{
+  await page.route('https://iedexrvvmpymnyyursdx.supabase.co/rest/v1/cary_memory**',async route=>{
+    if(route.request().method()==='GET'){
+      await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{moments:[],check_ins:[]}])});
+    }else{
+      await route.fulfill({status:201,contentType:'application/json',body:''});
+    }
+  });
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','en');
+    localStorage.setItem('cary_access_mode_v1','account');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    localStorage.setItem('cary_auth_session_v1',JSON.stringify({
+      access_token:'test-access-token',
+      refresh_token:'test-refresh-token',
+      expires_at:Math.floor(Date.now()/1000)+3600,
+      user:{id:'returning-user',email:'returning@example.com'}
+    }));
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+  });
+  await page.goto('/');
+  await expect(page.getByRole('button',{name:/Open account/})).toContainText('returning@example.com');
+  await expect(page.getByText(/Start on this device/)).not.toBeVisible();
 });
