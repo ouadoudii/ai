@@ -42,7 +42,7 @@ for(const country of countries){
     await expect(page.getByText(/مرحباً بك/)).toBeVisible();
     await page.screenshot({path:testInfo.outputPath(`${country}-01-home.png`),fullPage:true});
 
-    const captureButton=page.getByRole('button',{name:/إضافة|Add/}).last();
+    const captureButton=page.getByTestId('primary-capture-button');
     await expect(captureButton).toBeVisible();
     await captureButton.click();
     await expect(page.getByText('العربية',{exact:true})).toBeVisible();
@@ -67,7 +67,7 @@ test('English switch changes the real capture UI to LTR',async({page},testInfo)=
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  const captureButton=page.getByRole('button',{name:/إضافة|Add/}).last();
+  const captureButton=page.getByTestId('primary-capture-button');
   await captureButton.click();
   const english=page.getByRole('button',{name:/English/}).first();
   await expect(english).toBeVisible();
