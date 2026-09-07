@@ -31,8 +31,8 @@ for(const country of countries){
     });
     await page.addInitScript(({country})=>{
       localStorage.setItem('rhythm_language_v1','ar');
-      localStorage.setItem('cary_access_mode_v1','guest');
-      localStorage.setItem('cary_onboarding_v2_complete','true');
+      localStorage.setItem('nimmapp_access_mode_v1','guest');
+      localStorage.setItem('nimmapp_onboarding_v2_complete','true');
       localStorage.setItem('rhythm_country_v1',country);
       sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
     },{country});
@@ -62,8 +62,8 @@ for(const country of countries){
 test('English switch changes the real capture UI to LTR',async({page},testInfo)=>{
   await page.addInitScript(()=>{
     localStorage.setItem('rhythm_language_v1','ar');
-    localStorage.setItem('cary_access_mode_v1','guest');
-    localStorage.setItem('cary_onboarding_v2_complete','true');
+    localStorage.setItem('nimmapp_access_mode_v1','guest');
+    localStorage.setItem('nimmapp_onboarding_v2_complete','true');
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
