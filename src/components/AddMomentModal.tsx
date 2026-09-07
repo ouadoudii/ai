@@ -11,6 +11,7 @@ import { mergeAutocompleteSuggestions, rankLocalAutocomplete } from '../utils/fo
 import { addMealItem, buildMealTitle, removeMealItem } from '../utils/mealItems';
 import { getFoodVisuals, localizeFoodVisualName, type FoodVisual } from '../utils/foodVisuals';
 import { useLanguage } from '../i18n';
+import { getAvailableMealCategories } from '../utils/phaseAvailability';
 
 interface AddMomentModalProps { isOpen:boolean; onClose:()=>void; onSave:(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>void; editingMoment?:FoodMoment|null; initialCategory?:MomentCategory|null; }
 const categories:MomentCategory[]=['breakfast','lunch','dinner','snack','coffee','dessert'];
@@ -18,7 +19,7 @@ const enLabels:Record<MomentCategory,string>={breakfast:'Breakfast',lunch:'Lunch
 const arLabels:Record<MomentCategory,string>={breakfast:'الفطور',lunch:'الغداء',dinner:'العشاء',snack:'وجبة خفيفة',coffee:'قهوة',dessert:'حلويات',drinks:'مشروبات',travel:'سفر'};
 const categoryForHour=(hour:number):MomentCategory=>hour<11?'breakfast':hour<15?'lunch':hour<18?'snack':'dinner';
 export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSave,editingMoment,initialCategory})=>{
-  const {language}=useLanguage(); const ar=language==='ar'; const labels=ar?arLabels:enLabels;
+  const {language}=useLanguage(); const ar=language==='ar'; const labels=ar?arLabels:enLabels; const hour=new Date().getHours(); const visibleCategories=getAvailableMealCategories(hour,categories);
   const [category,setCategory]=React.useState<MomentCategory>('lunch');
   const [imageUrl,setImageUrl]=React.useState('');
   const [title,setTitle]=React.useState('');
@@ -32,7 +33,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSav
   const fileRef=React.useRef<HTMLInputElement>(null);
   const requestId=React.useRef(0);
 
-  React.useEffect(()=>{if(!isOpen)return;setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems([editingMoment.title]);setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const next=initialCategory||categoryForHour(new Date().getHours());setCategory(next);setImageUrl('');setTitle('');setItems([]);setNotes('');setShowMore(false);setAiSuggestions([])},[isOpen,editingMoment,initialCategory]);
+  React.useEffect(()=>{if(!isOpen)return;setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems([editingMoment.title]);setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const suggested=initialCategory||categoryForHour(new Date().getHours());const next=visibleCategories.includes(suggested)?suggested:(visibleCategories[0]||'snack');setCategory(next);setImageUrl('');setTitle('');setItems([]);setNotes('');setShowMore(false);setAiSuggestions([])},[isOpen,editingMoment,initialCategory]);
 
   const all=React.useMemo(()=>getFoodSuggestions(country,category),[country,category]);
   const localizedAll=React.useMemo(()=>localizeFoodSuggestions(all,language),[all,language]);
@@ -60,7 +61,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSav
   return <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/45 backdrop-blur-sm sm:p-4"><div className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-[34px] sm:rounded-[34px] bg-[#F7F5F0] shadow-2xl">
     <div className="sticky top-0 z-10 flex items-center justify-between bg-[#F7F5F0]/95 px-5 pt-5 pb-3 backdrop-blur-xl"><div><p className="text-[11px] font-extrabold uppercase tracking-[.18em] text-[#8A867E]">{ar?'الطعام':'Food'}</p><h2 className="mt-1 text-2xl font-display font-black text-[#252824]">{ar?'ماذا أكلت؟':'What did you have?'}</h2></div><button onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full bg-white border border-[#E5E0D7]" aria-label={ar?'إغلاق':'Close'}><X className="h-5 w-5"/></button></div>
     <div className="px-5 pb-6">
-      <div className="flex gap-2 overflow-x-auto pb-2">{categories.map(item=><button key={item} onClick={()=>chooseCategory(item)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-extrabold ${item===category?'bg-[#252824] text-white':'bg-white border border-[#E5E0D7] text-[#66655F]'}`}>{labels[item]}</button>)}</div>
+      <div className="flex gap-2 overflow-x-auto pb-2">{visibleCategories.map(item=><button key={item} onClick={()=>chooseCategory(item)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-extrabold ${item===category?'bg-[#252824] text-white':'bg-white border border-[#E5E0D7] text-[#66655F]'}`}>{labels[item]}</button>)}</div>
 
       <div className="mt-4 relative">
         <Search className={`absolute z-10 ${ar?'right-4':'left-4'} top-[26px] -translate-y-1/2 w-4 h-4 text-[#918D84]`}/>
