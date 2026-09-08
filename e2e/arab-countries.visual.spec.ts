@@ -258,3 +258,45 @@ test('Arabic food search recognizes بيض in the real meal editor',async({page}
   await expect(page.getByText('بيض',{exact:true}).first()).toBeVisible();
   await expect(page.getByText(/بيض مخفوق|بيض/).first()).toBeVisible();
 });
+
+
+test('Moroccan Arabic autocomplete recognizes common real foods',async({page})=>{
+  await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+  });
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/صورة/}).click();
+  const input=page.getByPlaceholder(/ابدأ بالكتابة/);
+  const cases=[
+    ['بيض','بيض'],
+    ['بيض ومطيشة','بيض ومطيشة'],
+    ['مسمن','مسمن'],
+    ['بغرير','بغرير'],
+    ['حريرة','حريرة'],
+    ['كسكس','كسكس'],
+    ['طاجين','طاجين'],
+    ['رفيسة','رفيسة'],
+    ['بسطيلة','بسطيلة'],
+    ['بيصارة','بيصارة'],
+    ['حرشة','حرشة'],
+    ['زعلوك','زعلوك'],
+    ['تكتوكة','تكتوكة'],
+    ['كفتة','كفتة'],
+    ['سردين','سردين مشوي'],
+    ['شباكية','شباكية'],
+    ['سلو','سلو'],
+    ['سفنج','سفنج'],
+    ['أتاي','أتاي بالنعناع'],
+  ];
+  for(const [typed,expected] of cases){
+    await input.fill(typed);
+    const recognized=page.getByTestId('recognized-food-alias');
+    await expect(recognized,typed+' should be recognized').toBeVisible();
+    await expect(recognized).toContainText(expected);
+  }
+});
