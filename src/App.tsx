@@ -51,7 +51,7 @@ export default function App(){
   const openFoodCapture=React.useCallback((category:import('./types').MomentCategory|null=null)=>{mealStartedAt.current=Date.now();setInitialMealCategory(category);trackUx({eventName:'flow_started',surface:'meal_editor',language,metadata:{source:'capture_choice'}});setEditingMoment(null);setIsAddModalOpen(true);},[language]);
   const openCapture=React.useCallback(()=>{trackUx({eventName:'capture_opened',surface:'capture_choice',language});setIsCaptureOpen(true)},[language]);
 
-  React.useEffect(()=>{const missing=getEligibleDayparts(new Date().getHours()).some(phase=>!completedToday.has(phase));const launched=sessionStorage.getItem('nimmapp_checkin_auto_opened')==='true';if(!missing||launched)return;sessionStorage.setItem('nimmapp_checkin_auto_opened','true');const timer=setTimeout(()=>{trackUx({eventName:'capture_auto_opened',surface:'capture_choice',language});setIsCaptureOpen(true)},650);return()=>clearTimeout(timer);},[completedToday,language]);
+  // Capture is intentionally user-initiated. Never interrupt app entry with the capture sheet.
 
   const handleSaveMoment=(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>{if(mealStartedAt.current){trackUx({eventName:'flow_finished',surface:'meal_editor',language,durationMs:Date.now()-mealStartedAt.current,outcome:'completed',metadata:{category:momentData.category,has_photo:Boolean(momentData.imageUrl)}});mealStartedAt.current=null;}if(editingMoment){setMoments(prev=>prev.map(m=>m.id===editingMoment.id?{...momentData,id:m.id,createdAt:m.createdAt}:m));setEditingMoment(null);}else setMoments(prev=>[{...momentData,id:`moment-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,createdAt:Date.now()},...prev]);};
 
