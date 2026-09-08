@@ -240,3 +240,21 @@ test('fresh guest lands on home without an automatic capture interruption',async
   await page.getByTestId('primary-capture-button').click();
   await expect(page.getByRole('dialog')).toBeVisible();
 });
+
+
+test('Arabic food search recognizes بيض in the real meal editor',async({page})=>{
+  await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+  });
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/صورة/}).click();
+  const input=page.getByPlaceholder(/ابدأ بالكتابة/);
+  await input.fill('بيض');
+  await expect(page.getByText('بيض',{exact:true}).first()).toBeVisible();
+  await expect(page.getByText(/بيض مخفوق|بيض/).first()).toBeVisible();
+});
