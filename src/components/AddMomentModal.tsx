@@ -35,7 +35,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSav
 
   React.useEffect(()=>{if(!isOpen)return;setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems([editingMoment.title]);setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const suggested=initialCategory||categoryForHour(new Date().getHours());const next=visibleCategories.includes(suggested)?suggested:(visibleCategories[0]||'snack');setCategory(next);setImageUrl('');setTitle('');setItems([]);setNotes('');setShowMore(false);setAiSuggestions([])},[isOpen,editingMoment,initialCategory]);
 
-  const all=React.useMemo(()=>getFoodSuggestions(country,category),[country,category]);
+  const all=React.useMemo(()=>getFoodSuggestions(country,title.trim()?undefined:category),[country,category,title]);
   const localizedAll=React.useMemo(()=>localizeFoodSuggestions(all,language),[all,language]);
   const localMatches=React.useMemo(()=>rankLocalAutocomplete(localizedAll.map(x=>x.name),title,6),[localizedAll,title]);
   const safeAiSuggestions=React.useMemo(()=>ar?aiSuggestions.filter(name=>/[\u0600-\u06FF]/.test(name)&&!/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(name)):aiSuggestions,[aiSuggestions,ar]);
