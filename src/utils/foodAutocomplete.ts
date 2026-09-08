@@ -1,5 +1,7 @@
+import { foodSearchMatches, normalizeFoodSearchText } from './arabicFoodIntelligence';
+
 export function normalizeAutocomplete(value:string):string{
-  return value.trim().toLocaleLowerCase().replace(/\s+/g,' ');
+  return normalizeFoodSearchText(value);
 }
 
 export function rankLocalAutocomplete(names:string[],query:string,limit=6):string[]{
@@ -10,7 +12,7 @@ export function rankLocalAutocomplete(names:string[],query:string,limit=6):strin
     const n=normalizeAutocomplete(name);
     if(n===q)continue;
     if(n.startsWith(q))starts.push(name);
-    else if(n.includes(q))contains.push(name);
+    else if(n.includes(q)||foodSearchMatches(name,query))contains.push(name);
   }
   return [...starts,...contains].slice(0,limit);
 }
