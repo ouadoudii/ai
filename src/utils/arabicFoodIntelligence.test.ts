@@ -14,6 +14,10 @@ describe('Arabic food intelligence',()=>{
     expect(resolveArabFoodAlias('رغايف','MA')?.canonicalEn).toBe('Msemen');
   });
 
+  it('understands simple everyday Arabic foods independent of meal timing',()=>{
+    expect(resolveArabFoodAlias('بيض','MA')?.canonicalEn).toBe('Eggs');
+  });
+
   it('understands regional Egyptian, Levantine and Gulf foods',()=>{
     expect(resolveArabFoodAlias('كوشري','EG')?.canonicalEn).toBe('Koshari');
     expect(resolveArabFoodAlias('manaeesh','LB')?.canonicalEn).toBe('Manakish');
