@@ -1,4 +1,5 @@
 import type { MomentCategory } from '../types';
+import { foodSearchMatches, getRegionalFoodSeeds } from './arabicFoodIntelligence';
 
 export type FoodSuggestion = { name: string; category: MomentCategory };
 
@@ -52,11 +53,12 @@ const countryPacks: Record<string, FoodSuggestion[]> = {
 
 export function getFoodSuggestions(country: string | null | undefined, category?: MomentCategory, query = ''): FoodSuggestion[] {
   const local = country ? countryPacks[country.toUpperCase()] || [] : [];
+  const regional = getRegionalFoodSeeds(country,category);
   const seen = new Set<string>();
-  const q = query.trim().toLowerCase();
-  return [...local, ...global].filter((item) => {
+  const q = query.trim();
+  return [...local, ...regional, ...global].filter((item) => {
     if (category && item.category !== category) return false;
-    if (q && !item.name.toLowerCase().includes(q)) return false;
+    if (q && !foodSearchMatches(item.name,q,country)) return false;
     const key = item.name.toLowerCase();
     if (seen.has(key)) return false;
     seen.add(key);
