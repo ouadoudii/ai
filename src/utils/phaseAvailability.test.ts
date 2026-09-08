@@ -10,7 +10,9 @@ describe('phase availability', () => {
 
   it('blocks future main meals while keeping flexible moments available', () => {
     expect(isMealCategoryAvailable('lunch', 10)).toBe(false);
-    expect(isMealCategoryAvailable('dinner', 15)).toBe(false);
+    expect(isMealCategoryAvailable('dinner', 16)).toBe(false);
+    expect(isMealCategoryAvailable('dinner', 17)).toBe(false);
+    expect(isMealCategoryAvailable('dinner', 18)).toBe(true);
     expect(isMealCategoryAvailable('snack', 10)).toBe(true);
     expect(getAvailableMealCategories(12, ['breakfast','lunch','dinner','snack'])).toEqual(['breakfast','lunch','snack']);
   });
