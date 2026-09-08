@@ -1,6 +1,7 @@
 import type { FoodSuggestion } from './foodSuggestions';
 import type { AppLanguage } from '../i18n';
 import type { MomentCategory } from '../types';
+import { foodSearchMatches, normalizeFoodSearchText, resolveArabFoodAlias } from './arabicFoodIntelligence';
 
 const ar: Record<string,string> = {
 'Avocado toast':'توست بالأفوكادو','Scrambled eggs':'بيض مخفوق','Greek yogurt with fruit':'زبادي يوناني مع الفاكهة','Oatmeal with berries':'شوفان مع التوت','Pancakes':'بان كيك','Croissant':'كرواسون','Smoothie bowl':'وعاء سموذي','Granola bowl':'جرانولا مع الزبادي','Egg sandwich':'ساندويتش بيض','Fruit bowl':'طبق فواكه',
@@ -21,7 +22,7 @@ const ar: Record<string,string> = {
 'Sauerteig Toast':'توست العجين المخمر','Sauerteig-Toast':'توست العجين المخمر','Avocado Sauerteig Toast':'توست العجين المخمر بالأفوكادو','Avocado-Sauerteig-Toast':'توست العجين المخمر بالأفوكادو','Neapolitanische Pizza':'بيتزا نابولية','Neapolitanische Pizza Margherita':'بيتزا مارغريتا النابولية'
 };
 
-function normalize(name:string):string{return name.trim().replace(/[\u2026…]/g,'').replace(/\s+/g,' ').toLocaleLowerCase();}
+function normalize(name:string):string{return normalizeFoodSearchText(name.replace(/[\u2026…]/g,''));}
 const normalizedAr=new Map(Object.entries(ar).map(([key,value])=>[normalize(key),value]));
 const normalizedEn=new Map(Object.entries(ar).map(([key,value])=>[normalize(value),key]));
 const latin=/[A-Za-zÀ-ÖØ-öø-ÿ]/;
@@ -42,7 +43,8 @@ function inferLegacyArabic(name:string):string|null{
 
 export function localizeFoodName(name:string, language:AppLanguage):string {
   if(language!=='ar')return name;
-  return ar[name] || normalizedAr.get(normalize(name)) || inferLegacyArabic(name) || name;
+  const alias=resolveArabFoodAlias(name);
+  return ar[name] || normalizedAr.get(normalize(name)) || alias?.canonicalAr || inferLegacyArabic(name) || name;
 }
 
 export function localizeStoredFoodName(name:string, category:MomentCategory, language:AppLanguage):string {
@@ -52,8 +54,8 @@ export function localizeStoredFoodName(name:string, category:MomentCategory, lan
 }
 
 export function localizeFoodSuggestions(items:FoodSuggestion[], language:AppLanguage, query=''):FoodSuggestion[] {
-  const q=query.trim().toLocaleLowerCase(language==='ar'?'ar':'en');
-  return items.map(item=>({...item,name:localizeFoodName(item.name,language)})).filter(item=>!q||item.name.toLocaleLowerCase(language==='ar'?'ar':'en').includes(q));
+  const q=query.trim();
+  return items.map(item=>({...item,name:localizeFoodName(item.name,language)})).filter(item=>!q||foodSearchMatches(item.name,q));
 }
 
 export function hasArabicFoodLabel(name:string):boolean { return /[\u0600-\u06FF]/.test(localizeFoodName(name,'ar')); }
