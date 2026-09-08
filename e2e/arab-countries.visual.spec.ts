@@ -319,3 +319,30 @@ test('daily check-in meal picker recognizes Moroccan Arabic foods',async({page})
     await expect(page.getByTestId('meal-recognized-food'),typed+' should autocomplete in daily check-in').toBeVisible();
   }
 });
+
+
+test('daily check-in AI autocomplete understands composed Arabic dishes',async({page})=>{
+  await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
+  await page.route('**/api/food-autocomplete',async route=>{
+    const body=JSON.parse(route.request().postData()||'{}');
+    const map:Record<string,string[]>={
+      'بيض مسلوق':['بيض مسلوق'],
+      'بيض مقلي':['بيض مقلي'],
+      'طاجين دجاج بالزيتون':['طاجين دجاج بالزيتون'],
+      'كسكس بالخضر':['كسكس بالخضر']
+    };
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({suggestions:map[body.query]||[]})});
+  });
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+  });
+  await page.goto('/');
+  await page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).first().click();
+  const input=page.getByPlaceholder('ماذا أكلت؟ ابحث أو اكتب…');
+  for(const term of ['بيض مسلوق','بيض مقلي','طاجين دجاج بالزيتون','كسكس بالخضر']){
+    await input.fill(term);
+    await expect(page.getByRole('button',{name:term,exact:true})).toBeVisible();
+  }
+});
