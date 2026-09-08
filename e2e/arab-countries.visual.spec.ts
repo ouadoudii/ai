@@ -61,6 +61,59 @@ for(const country of countries){
   });
 }
 
+test('language switch translates the complete capture and food flow both ways',async({page},testInfo)=>{
+  await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+  });
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+
+  await page.getByTestId('primary-capture-button').click();
+  const dialog=page.getByRole('dialog');
+  await expect(dialog.getByText('لحظة سريعة')).toBeVisible();
+  await expect(dialog.getByText('ما اللحظة التي تريد تسجيلها؟')).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/صورة/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/احكِ لي/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/اختيار سريع/})).toBeVisible();
+
+  await dialog.getByRole('button',{name:'English',exact:true}).click();
+  await expect(page.locator('html')).toHaveAttribute('lang','en');
+  await expect(page.locator('html')).toHaveAttribute('dir','ltr');
+  await expect(dialog.getByText('One quick moment')).toBeVisible();
+  await expect(dialog.getByText('What would you like to capture?')).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/Photo/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/Tell me/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/Quick check/})).toBeVisible();
+  await expect(dialog.getByText(/اختر الأسهل|لحظة سريعة|ما اللحظة/)).toHaveCount(0);
+  await page.screenshot({path:testInfo.outputPath('language-switch-01-english.png'),fullPage:true});
+
+  await dialog.getByRole('button',{name:/Photo/}).click();
+  await expect(page.getByRole('heading',{name:'What did you have?'})).toBeVisible();
+  await expect(page.getByRole('button',{name:/Save meal/})).toBeVisible();
+  await expect(page.getByText(/ماذا أكلت|حفظ الوجبة|اختر بالصورة/)).toHaveCount(0);
+  await page.screenshot({path:testInfo.outputPath('language-switch-02-english-food.png'),fullPage:true});
+
+  await page.getByRole('button',{name:/Close/}).click();
+  await page.getByTestId('primary-capture-button').click();
+  const englishDialog=page.getByRole('dialog');
+  await englishDialog.getByRole('button',{name:'العربية',exact:true}).click();
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+  await expect(englishDialog.getByText('لحظة سريعة')).toBeVisible();
+  await expect(englishDialog.getByText('ما اللحظة التي تريد تسجيلها؟')).toBeVisible();
+  await expect(englishDialog.getByText(/One quick moment|What would you like to capture/)).toHaveCount(0);
+  await englishDialog.getByRole('button',{name:/صورة/}).click();
+  await expect(page.getByRole('heading',{name:'ماذا أكلت؟'})).toBeVisible();
+  await expect(page.getByRole('button',{name:/حفظ الوجبة/})).toBeVisible();
+  await expect(page.getByText(/What did you have|Save meal|Choose by picture/)).toHaveCount(0);
+  await page.screenshot({path:testInfo.outputPath('language-switch-03-arabic-food.png'),fullPage:true});
+});
+
 test('English switch changes the real capture UI to LTR',async({page},testInfo)=>{
   await page.addInitScript(()=>{
     localStorage.setItem('rhythm_language_v1','ar');
