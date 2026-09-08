@@ -3,7 +3,7 @@ import { MomentCategory, TimeOfDayPhase } from '../types';
 export const PHASE_START_HOUR: Record<TimeOfDayPhase, number> = {
   morning: 5,
   midday: 11,
-  evening: 16,
+  evening: 18,
 };
 
 export function isPhaseAvailable(phase: TimeOfDayPhase, hour: number): boolean {
