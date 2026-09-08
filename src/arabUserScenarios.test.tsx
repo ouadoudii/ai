@@ -1,5 +1,5 @@
 import React from 'react';
-import {describe,expect,it,beforeAll,afterAll} from 'vitest';
+import {describe,expect,it,beforeAll,afterAll,beforeEach,afterEach,vi} from 'vitest';
 import {renderToString} from 'react-dom/server';
 import {ARAB_USER_SCENARIOS,ARAB_COUNTRY_CODES} from './quality/arabUserScenarios';
 import {getFoodSuggestions} from './utils/foodSuggestions';
@@ -27,6 +27,8 @@ function snack(index:number):FoodMoment{
 }
 
 describe('44 Arab-country user simulations',()=>{
+  beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(new Date(2026,8,8,21,30,0));});
+  afterEach(()=>{vi.useRealTimers();});
   it('covers all 22 Arab countries with one male and one female profile',()=>{
     expect(new Set(ARAB_COUNTRY_CODES).size).toBe(22);
     expect(ARAB_USER_SCENARIOS).toHaveLength(44);
