@@ -2,6 +2,26 @@ import {test,expect} from '@playwright/test';
 
 const countries=['DZ','BH','KM','DJ','EG','IQ','JO','KW','LB','LY','MR','MA','OM','PS','QA','SA','SO','SD','SY','TN','AE','YE'];
 
+
+async function visibleArabicOutsideLanguageControls(page:any){
+  return page.evaluate(()=>{
+    const arabic=/[\u0600-\u06FF]/;
+    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+    const hits:string[]=[];
+    let node:Node|null;
+    while((node=walker.nextNode())){
+      const el=node.parentElement;
+      if(!el)continue;
+      if(el.closest('[data-language-option="true"]'))continue;
+      const style=getComputedStyle(el);
+      if(style.display==='none'||style.visibility==='hidden')continue;
+      const text=(node.textContent||'').trim();
+      if(text&&arabic.test(text))hits.push(text);
+    }
+    return [...new Set(hits)];
+  });
+}
+
 async function suppressAutoCapture(page:any){
   await page.addInitScript(()=>{
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
@@ -90,12 +110,14 @@ test('language switch translates the complete capture and food flow both ways',a
   await expect(dialog.getByRole('button',{name:/Tell me/})).toBeVisible();
   await expect(dialog.getByRole('button',{name:/Quick check/})).toBeVisible();
   await expect(dialog.getByText(/اختر الأسهل|لحظة سريعة|ما اللحظة/)).toHaveCount(0);
+  await expect.poll(async()=>visibleArabicOutsideLanguageControls(page),{message:'English UI must not contain visible Arabic text outside the Arabic language option'}).toEqual([]);
   await page.screenshot({path:testInfo.outputPath('language-switch-01-english.png'),fullPage:true});
 
   await dialog.getByRole('button',{name:/Photo/}).click();
   await expect(page.getByRole('heading',{name:'What did you have?'})).toBeVisible();
   await expect(page.getByRole('button',{name:/Save meal/})).toBeVisible();
   await expect(page.getByText(/ماذا أكلت|حفظ الوجبة|اختر بالصورة/)).toHaveCount(0);
+  await expect.poll(async()=>visibleArabicOutsideLanguageControls(page),{message:'English food flow must not contain visible Arabic text'}).toEqual([]);
   await page.screenshot({path:testInfo.outputPath('language-switch-02-english-food.png'),fullPage:true});
 
   await page.getByRole('button',{name:/Close/}).click();
