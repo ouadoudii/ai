@@ -49,12 +49,9 @@ for(const country of countries){
     await expect(page.getByText('English',{exact:true})).toBeVisible();
     await page.screenshot({path:testInfo.outputPath(`${country}-02-capture.png`),fullPage:true});
 
-    const dialog=page.getByRole('dialog');
-    if(await dialog.isVisible().catch(()=>false)){
-      const closeButton=dialog.getByRole('button',{name:/إغلاق|Close/});
-      if(await closeButton.isVisible().catch(()=>false)) await closeButton.click();
-    }
-    const photoButton=page.getByRole('button',{name:/صورة/}).first();
+    const captureDialog=page.getByRole('dialog');
+    await expect(captureDialog).toBeVisible();
+    const photoButton=captureDialog.getByRole('button',{name:/صورة/});
     await expect(photoButton).toBeVisible();
     await photoButton.click();
 
@@ -88,7 +85,7 @@ test('guest mode persists locally without requiring an account',async({page})=>{
     localStorage.setItem('rhythm_language_v1','en');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
-    localStorage.setItem('nimmapp_moments_v1',JSON.stringify([{id:'guest-local',title:'Guest local meal',createdAt:Date.now()}]));
+    localStorage.setItem('nimmapp_moments_v1',JSON.stringify([{id:'guest-local',title:'Guest local meal',label:'Lunch',category:'lunch',date:'2026-09-07',time:'12:30',location:'Not specified',locationCategory:'home',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt:Date.now()}]));
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
