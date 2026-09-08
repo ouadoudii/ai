@@ -222,3 +222,21 @@ test('photo meal flow stores two selected dishes in one meal',async({page})=>{
     return raw||'';
   }).toContain('Pasta · Fresh salad');
 });
+
+
+test('fresh guest lands on home without an automatic capture interruption',async({page})=>{
+  await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
+  await page.addInitScript(()=>{
+    localStorage.clear();
+    sessionStorage.clear();
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+  });
+  await page.goto('/');
+  await page.waitForTimeout(1200);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByTestId('primary-capture-button')).toBeVisible();
+  await page.getByTestId('primary-capture-button').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+});
