@@ -16,6 +16,7 @@ async function visibleArabicOutsideLanguageControls(page:any){
       const style=getComputedStyle(el);
       if(style.display==='none'||style.visibility==='hidden')continue;
       const text=(node.textContent||'').trim();
+      if(text==='العربية')continue;
       if(text&&arabic.test(text))hits.push(text);
     }
     return [...new Set(hits)];
@@ -87,6 +88,7 @@ test('language switch translates the complete capture and food flow both ways',a
     localStorage.setItem('rhythm_language_v1','ar');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
+    localStorage.setItem('nimmapp_moments_v1',JSON.stringify([{id:'arabic-coffee',title:'قهوة',label:'قهوة',category:'coffee',date:'2026-09-08',time:'16:00',location:'غير محدد',locationCategory:'home',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt:Date.now()}]));
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
@@ -109,6 +111,8 @@ test('language switch translates the complete capture and food flow both ways',a
   await expect(dialog.getByRole('button',{name:/Photo/})).toBeVisible();
   await expect(dialog.getByRole('button',{name:/Tell me/})).toBeVisible();
   await expect(dialog.getByRole('button',{name:/Quick check/})).toBeVisible();
+  await expect(dialog.getByText('Coffee',{exact:true})).toBeVisible();
+  await expect(dialog.getByText('قهوة',{exact:true})).toHaveCount(0);
   await expect(dialog.getByText(/اختر الأسهل|لحظة سريعة|ما اللحظة/)).toHaveCount(0);
   await expect.poll(async()=>visibleArabicOutsideLanguageControls(page),{message:'English UI must not contain visible Arabic text outside the Arabic language option'}).toEqual([]);
   await page.screenshot({path:testInfo.outputPath('language-switch-01-english.png'),fullPage:true});
