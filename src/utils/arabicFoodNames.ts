@@ -7,7 +7,7 @@ const ar: Record<string,string> = {
 'Avocado toast':'توست بالأفوكادو','Scrambled eggs':'بيض مخفوق','Greek yogurt with fruit':'زبادي يوناني مع الفاكهة','Oatmeal with berries':'شوفان مع التوت','Pancakes':'بان كيك','Croissant':'كرواسون','Smoothie bowl':'وعاء سموذي','Granola bowl':'جرانولا مع الزبادي','Egg sandwich':'ساندويتش بيض','Fruit bowl':'طبق فواكه',
 'Chicken and rice':'دجاج مع الأرز','Pasta with tomato sauce':'مكرونة بصلصة الطماطم','Caesar salad':'سلطة سيزر','Salmon with vegetables':'سلمون مع الخضار','Buddha bowl':'وعاء خضار وحبوب','Vegetable wrap':'راب بالخضار','Chicken curry':'كاري الدجاج','Burger and fries':'برغر مع البطاطس','Spaghetti and meatballs':'سباغيتي مع كرات اللحم','Vegetable soup':'شوربة خضار','Couscous salad':'سلطة كسكس','Club sandwich':'كلوب ساندويتش','Tuna sandwich':'ساندويتش تونة','Rice bowl':'وعاء أرز','Grilled chicken salad':'سلطة دجاج مشوي',
 'Steak and potatoes':'ستيك مع البطاطس','Beef stir-fry':'لحم بقري مقلي مع الخضار','Shrimp pasta':'مكرونة بالروبيان','Vegetable stir-fry':'خضار مقلية','Mushroom pasta':'مكرونة بالفطر','Lasagna':'لازانيا','Tomato soup':'شوربة طماطم','Stuffed peppers':'فلفل محشي','Roast chicken':'دجاج مشوي','Grilled fish':'سمك مشوي','Pizza':'بيتزا','Sushi':'سوشي','Tacos':'تاكوس','Ramen':'رامن','Risotto':'ريزوتو',
-'Apple':'تفاح','Banana':'موز','Nuts':'مكسرات','Water':'ماء','Sparkling water':'مياه غازية','Laban':'لبن','Lemon mint drink':'ليمون بالنعناع','Tamarind drink':'تمر هندي','Jallab':'جلاب','Qamar al-Din':'قمر الدين','Protein yogurt':'زبادي غني بالبروتين','Hummus and vegetables':'حمص مع الخضار','Dark chocolate':'شوكولاتة داكنة','Cheese and crackers':'جبن مع مقرمشات','Dates':'تمر','Espresso':'إسبريسو','Cappuccino':'كابتشينو','Latte':'لاتيه','Tea':'شاي','Matcha latte':'لاتيه ماتشا','Cheesecake':'تشيز كيك','Ice cream':'آيس كريم','Chocolate cake':'كيك الشوكولاتة','Fruit salad':'سلطة فواكه','Tiramisu':'تيراميسو',
+'Apple':'تفاح','Banana':'موز','Nuts':'مكسرات','Water':'ماء','Sparkling water':'مياه غازية','Laban':'لبن','Lemon mint drink':'ليمون بالنعناع','Tamarind drink':'تمر هندي','Jallab':'جلاب','Qamar al-Din':'قمر الدين','Protein yogurt':'زبادي غني بالبروتين','Hummus and vegetables':'حمص مع الخضار','Dark chocolate':'شوكولاتة داكنة','Cheese and crackers':'جبن مع مقرمشات','Dates':'تمر','Coffee':'قهوة','Espresso':'إسبريسو','Cappuccino':'كابتشينو','Latte':'لاتيه','Tea':'شاي','Matcha latte':'لاتيه ماتشا','Cheesecake':'تشيز كيك','Ice cream':'آيس كريم','Chocolate cake':'كيك الشوكولاتة','Fruit salad':'سلطة فواكه','Tiramisu':'تيراميسو',
 'Moroccan mint tea':'شاي مغربي بالنعناع','Msemen':'مسمن','Msemen with honey':'مسمن بالعسل','I did not eat anything':'لم آكل شيئاً','Nothing eaten':'لم اكل شيء','Baghrir':'بغرير','Harcha':'حرشة','Khobz with olive oil':'خبز بزيت الزيتون','Bissara':'بيصارة','Chicken tagine with preserved lemon':'طاجين الدجاج بالحامض المصير','Beef tagine with prunes':'طاجين اللحم بالبرقوق','Vegetable tagine':'طاجين الخضار','Couscous with seven vegetables':'كسكس بسبع خضار','Rfissa':'رفيسة','Harira':'حريرة','Pastilla':'بسطيلة','Kefta tagine':'طاجين الكفتة','Grilled sardines':'سردين مشوي','Taktouka and bread':'تكتوكة مع الخبز','Zaalouk and bread':'زعلوك مع الخبز','Lamb tagine':'طاجين لحم الغنم','Kefta skewers':'أسياخ كفتة','Tangia':'طنجية','Seffa medfouna':'سفة مدفونة','Briouat':'بريوات','Chebakia':'شباكية','Sellou':'سلو','Orange with cinnamon':'برتقال بالقرفة',
 'Bread rolls with cheese':'خبز صغير مع الجبن','Muesli':'موسلي','Pretzel':'بريتزل','Currywurst':'نقانق بالكاري','Schnitzel with potatoes':'شنيتزل مع البطاطس','Potato soup':'شوربة بطاطس','Käsespätzle':'سباتزل بالجبن','Bratwurst':'نقانق براتفورست','Döner kebab':'دونر كباب','Apple strudel':'سترودل التفاح',
 'Croissant and coffee':'كرواسون مع القهوة','Pain au chocolat':'بان أو شوكولا','Croque monsieur':'كروك موسيو','Quiche Lorraine':'كيش لورين','Salade niçoise':'سلطة نيسواز','Ratatouille':'راتاتوي','Steak frites':'ستيك مع البطاطس المقلية','Boeuf bourguignon':'لحم بورغينيون','Crème brûlée':'كريم بروليه',
@@ -48,7 +48,16 @@ export function localizeFoodName(name:string, language:AppLanguage):string {
 }
 
 export function localizeStoredFoodName(name:string, category:MomentCategory, language:AppLanguage):string {
-  if(language==='en')return normalizedEn.get(normalize(name)) || name;
+  if(language==='en'){
+    const alias=resolveArabFoodAlias(name);
+    const translated=normalizedEn.get(normalize(name)) || alias?.canonicalEn;
+    if(translated)return translated;
+    if(/[\u0600-\u06FF]/.test(name)){
+      const fallback:Record<MomentCategory,string>={breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',snack:'Snack',coffee:'Coffee',dessert:'Dessert',drinks:'Drink',travel:'Meal'};
+      return fallback[category];
+    }
+    return name;
+  }
   const localized=localizeFoodName(name,'ar');
   return latin.test(localized) ? categoryFallback[category] : localized;
 }
