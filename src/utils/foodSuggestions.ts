@@ -53,7 +53,8 @@ const countryPacks: Record<string, FoodSuggestion[]> = {
 
 export function getFoodSuggestions(country: string | null | undefined, category?: MomentCategory, query = ''): FoodSuggestion[] {
   const local = country ? countryPacks[country.toUpperCase()] || [] : [];
-  const regional = getRegionalFoodSeeds(country,category);
+  const hasLocalPack=!!(country&&countryPacks[country.toUpperCase()]);
+  const regional = hasLocalPack ? getRegionalFoodSeeds(country,category) : [];
   const seen = new Set<string>();
   const q = query.trim();
   return [...local, ...regional, ...global].filter((item) => {
