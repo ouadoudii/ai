@@ -1,5 +1,5 @@
 import React from 'react';
-import {describe,expect,it,beforeAll,afterAll} from 'vitest';
+import {describe,expect,it,beforeAll,afterAll,beforeEach,afterEach,vi} from 'vitest';
 import {renderToString} from 'react-dom/server';
 import {LanguageProvider} from './i18n';
 import {TodayHomeView} from './components/TodayHomeView';
@@ -16,6 +16,8 @@ const moment:FoodMoment={id:'user-legacy',title:'Neapolitanische Pizza',label:'D
 const check=(phase:'morning'|'midday'|'evening'):DailyCheckIn=>({id:'user-'+phase,date:getLocalDateKey(),time:'12:00',timeOfDay:phase,wellbeing:{energyLevel:3,mood:'satisfied',stressLevel:2,waterGlasses:2},createdAt:Date.now()});
 
 describe('Arabic mobile UX day simulation',()=>{
+  beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(new Date(2026,8,8,21,30,0));});
+  afterEach(()=>{vi.useRealTimers();});
   it('uses the zellige wall and Arabic-only visible home copy',()=>{
     const html=renderToString(<LanguageProvider><TodayHomeView moments={[moment]} checkIns={[]} onOpenAddModal={noop} onOpenSnack={noop} onOpenCheckInModal={noop as any} onSelectMoment={noop as any} onNavigateToCoach={noop} onNavigateToTypeAnalysis={noop} onNavigateToTimeline={noop}/></LanguageProvider>);
     expect(html).toContain('/zellige-wall.svg');
