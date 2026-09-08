@@ -300,3 +300,22 @@ test('Moroccan Arabic autocomplete recognizes common real foods',async({page})=>
     await expect(recognized).toContainText(expected);
   }
 });
+
+
+test('daily check-in meal picker recognizes Moroccan Arabic foods',async({page})=>{
+  await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+  });
+  await page.goto('/');
+  const checkin=page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).first();
+  await checkin.click();
+  const input=page.getByPlaceholder('ماذا أكلت؟ ابحث أو اكتب…');
+  const cases=['بيض','بيض ومطيشة','حريرة','طاجين','رفيسة','بسطيلة','بيصارة','زعلوك','تكتوكة'];
+  for(const typed of cases){
+    await input.fill(typed);
+    await expect(page.getByTestId('meal-recognized-food'),typed+' should autocomplete in daily check-in').toBeVisible();
+  }
+});
