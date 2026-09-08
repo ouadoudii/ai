@@ -118,3 +118,28 @@ test('returning account mode restores a stored session and keeps cloud sync avai
   await expect(page.getByRole('button',{name:/Open account/})).toContainText('returning@example.com');
   await expect(page.getByText(/Start on this device/)).not.toBeVisible();
 });
+
+
+test('photo meal flow stores two selected dishes in one meal',async({page})=>{
+  await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','en');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    localStorage.setItem('nimmapp_moments_v1','[]');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+  });
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/Photo/}).click();
+  await expect(page.getByRole('heading',{name:/What did you have\?/})).toBeVisible();
+  await page.getByTestId('food-visual-pasta').click();
+  await page.getByTestId('food-visual-salad').click();
+  await expect(page.getByTestId('food-visual-pasta')).toHaveAttribute('aria-pressed','true');
+  await expect(page.getByTestId('food-visual-salad')).toHaveAttribute('aria-pressed','true');
+  await page.getByRole('button',{name:/Save meal/}).click();
+  await expect.poll(async()=>{
+    const raw=await page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1'));
+    return raw||'';
+  }).toContain('Pasta · Fresh salad');
+});
