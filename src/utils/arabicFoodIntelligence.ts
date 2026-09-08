@@ -41,6 +41,7 @@ export function normalizeFoodSearchText(value:string):string{
 type AliasGroup={canonicalEn:string;canonicalAr:string;aliases:string[];regions?:ArabFoodRegion[];category?:MomentCategory};
 
 export const ARAB_FOOD_ALIASES:AliasGroup[]=[
+  {canonicalEn:'Eggs',canonicalAr:'بيض',aliases:['بيض','البيض','egg','eggs'],category:'breakfast'},
   {canonicalEn:'Couscous',canonicalAr:'كسكس',aliases:['كسكس','كسكسي','كوسكوس','couscous','cous cous'],regions:['maghreb'],category:'lunch'},
   {canonicalEn:'Moroccan tagine',canonicalAr:'طاجين',aliases:['طاجين','تاجين','tajine','tagine'],regions:['maghreb'],category:'lunch'},
   {canonicalEn:'Harira',canonicalAr:'حريرة',aliases:['حريرة','الحريرة','harira'],regions:['maghreb'],category:'lunch'},
