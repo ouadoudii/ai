@@ -3,6 +3,7 @@ import { Camera, Check, ChevronDown, Globe2, ImagePlus, Search, Sparkles, X } fr
 import { FoodMoment, MomentCategory } from '../types';
 import { getLocalDateKey } from '../utils/dateKey';
 import { getFoodSuggestions } from '../utils/foodSuggestions';
+import { normalizeFoodSearchText, resolveArabFoodAlias } from '../utils/arabicFoodIntelligence';
 import { localizeFoodSuggestions } from '../utils/arabicFoodNames';
 import { getDishPhoto } from '../utils/dishPhoto';
 import { fetchFoodAutocomplete } from '../apiClient';
@@ -37,7 +38,8 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSav
 
   const all=React.useMemo(()=>getFoodSuggestions(country,title.trim()?undefined:category),[country,category,title]);
   const localizedAll=React.useMemo(()=>localizeFoodSuggestions(all,language),[all,language]);
-  const localMatches=React.useMemo(()=>rankLocalAutocomplete(localizedAll.map(x=>x.name),title,6),[localizedAll,title]);
+  const aliasMatch=React.useMemo(()=>{const alias=resolveArabFoodAlias(title,country);return alias?(language==='ar'?alias.canonicalAr:alias.canonicalEn):null},[title,country,language]);
+  const localMatches=React.useMemo(()=>{const ranked=rankLocalAutocomplete(localizedAll.map(x=>x.name),title,6);return aliasMatch&&title.trim()?[aliasMatch,...ranked.filter(name=>normalizeFoodSearchText(name)!==normalizeFoodSearchText(aliasMatch))].slice(0,6):ranked},[localizedAll,title,aliasMatch]);
   const safeAiSuggestions=React.useMemo(()=>ar?aiSuggestions.filter(name=>/[\u0600-\u06FF]/.test(name)&&!/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(name)):aiSuggestions,[aiSuggestions,ar]);
   const mergedSuggestions=React.useMemo(()=>mergeAutocompleteSuggestions(localMatches,safeAiSuggestions,title,6),[localMatches,safeAiSuggestions,title]);
   const photoName=title.trim() || (items.length===1?items[0]:'');
