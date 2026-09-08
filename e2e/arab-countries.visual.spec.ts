@@ -346,3 +346,59 @@ test('daily check-in AI autocomplete understands composed Arabic dishes',async({
     await expect(page.getByRole('button',{name:term,exact:true})).toBeVisible();
   }
 });
+
+
+test('AI meal autocomplete handles Darija, typos, preparation and mixed-language input',async({page})=>{
+  await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
+  const cases:Record<string,string[]>={
+    'بيض مسلوق':['بيض مسلوق'],
+    'بيض مسلوق مع زيت الزيتون':['بيض مسلوق مع زيت الزيتون'],
+    'بيض مقلي':['بيض مقلي'],
+    'بيض بالطماطم':['بيض بالطماطم'],
+    'بيض و مطيشة':['بيض ومطيشة'],
+    'بيض مطيشة':['بيض ومطيشة'],
+    'طاجين دجاج':['طاجين دجاج'],
+    'طاجين دجاج بالزيتون':['طاجين دجاج بالزيتون'],
+    'طاجين اللحم بالبرقوق':['طاجين اللحم بالبرقوق'],
+    'كسكس بالخضر':['كسكس بالخضر'],
+    'كسكس باللحم':['كسكس باللحم'],
+    'حريرة مغربية':['حريرة مغربية'],
+    'مسمن بالعسل':['مسمن بالعسل'],
+    'مسمن بالجبن':['مسمن بالجبن'],
+    'خبز وزيت الزيتون':['خبز وزيت الزيتون'],
+    'اتاي بالنعناع':['أتاي بالنعناع'],
+    'قهوة بالحليب':['قهوة بالحليب'],
+    'omelette بالجبن':['أومليت بالجبن'],
+    'egg مسلوق':['بيض مسلوق'],
+    'tajine دجاج':['طاجين دجاج']
+  };
+  await page.route('**/api/food-autocomplete',async route=>{
+    const body=JSON.parse(route.request().postData()||'{}');
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({suggestions:cases[body.query]||[]})});
+  });
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+  });
+  await page.goto('/');
+  await page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).first().click();
+  const input=page.getByPlaceholder('ماذا أكلت؟ ابحث أو اكتب…');
+  for(const [typed,suggestions] of Object.entries(cases)){
+    await input.fill(typed);
+    await expect(page.getByRole('button',{name:suggestions[0],exact:true}),typed+' should get an AI suggestion').toBeVisible();
+  }
+});
+
+test('AI meal autocomplete degrades gracefully when API fails',async({page})=>{
+  await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
+  await page.route('**/api/food-autocomplete',async route=>route.fulfill({status:500,contentType:'application/json',body:'{}'}));
+  await page.addInitScript(()=>{localStorage.setItem('rhythm_language_v1','ar');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true')});
+  await page.goto('/');
+  await page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).first().click();
+  const input=page.getByPlaceholder('ماذا أكلت؟ ابحث أو اكتب…');
+  await input.fill('بيض');
+  await expect(page.getByTestId('meal-recognized-food')).toBeVisible();
+  await input.fill('طبق غير معروف');
+  await expect(page.getByRole('button',{name:'إضافة هذا الطبق'})).toBeVisible();
+});
