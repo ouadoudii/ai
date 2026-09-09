@@ -19,7 +19,7 @@ async function loadPipeline(task,model){
 }
 
 self.onmessage=async(event)=>{
-  const {id,type,blob,language}=event.data||{};
+  const {id,type,blob,audio,language}=event.data||{};
   try{
     if(type==='image'){
       classifier ||= await loadPipeline('zero-shot-image-classification','Xenova/clip-vit-base-patch32');
@@ -32,14 +32,12 @@ self.onmessage=async(event)=>{
       return;
     }
     if(type==='audio'){
+      if(!(audio instanceof Float32Array)||audio.length===0)throw new Error('Invalid decoded audio');
       transcriber ||= await loadPipeline('automatic-speech-recognition','onnx-community/whisper-tiny');
-      const url=URL.createObjectURL(blob);
-      try{
-        const options={task:'transcribe',chunk_length_s:20,stride_length_s:4};
-        if(language==='ar')options.language='ar';
-        const output=await transcriber(url,options);
-        self.postMessage({id,type:'result',text:String(output?.text||'').trim()});
-      } finally { URL.revokeObjectURL(url); }
+      const options={task:'transcribe',chunk_length_s:20,stride_length_s:4};
+      if(language==='ar')options.language='ar';
+      const output=await transcriber(audio,options);
+      self.postMessage({id,type:'result',text:String(output?.text||'').trim()});
       return;
     }
     throw new Error('Unsupported local AI task');
