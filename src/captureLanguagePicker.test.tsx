@@ -9,16 +9,16 @@ beforeEach(()=>{(globalThis as any).localStorage={getItem:(k:string)=>k==='rhyth
 
 describe('capture language picker',()=>{
   it('shows both explicit language choices inside capture',()=>{
-    const html=renderToString(<LanguageProvider><CaptureChoiceModal isOpen onClose={noop} onFood={noop} onTellCary={noop} onQuickCheck={noop}/></LanguageProvider>);
+    const html=renderToString(<LanguageProvider><CaptureChoiceModal isOpen onClose={noop} onFood={noop} onTellCary={noop}/></LanguageProvider>);
     expect(html).toContain('English');
     expect(html).toContain('العربية');
     expect(html).toContain('ما اللحظة التي تريد تسجيلها؟');
     expect(html).toContain('صورة');
     expect(html).toContain('احكِ لي');
-    expect(html).toContain('اختيار سريع');
+    expect(html).not.toContain('اختيار سريع');
   });
   it('marks the persisted Arabic language as selected',()=>{
-    const html=renderToString(<LanguageProvider><CaptureChoiceModal isOpen onClose={noop} onFood={noop} onTellCary={noop} onQuickCheck={noop}/></LanguageProvider>);
+    const html=renderToString(<LanguageProvider><CaptureChoiceModal isOpen onClose={noop} onFood={noop} onTellCary={noop}/></LanguageProvider>);
     expect(html).toContain('aria-pressed="true"');
     expect(html).not.toContain('What would you like to capture?');
   });
