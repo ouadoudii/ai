@@ -6,7 +6,9 @@ export interface VoiceCheckInResult {
   coachFeedback: CoachFeedback;
   extractedData?: {
     mealTitle?: string;
+    mealItems?: string[];
     mealCategory?: string;
+    mealContext?: string;
     sleepHours?: number | null;
     energyLevel?: number;
     mood?: string;
