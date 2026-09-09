@@ -1,4 +1,4 @@
-import {describe,expect,it} from 'vitest';
+import { extractFoodPhraseFromVoice, describe,expect,it} from 'vitest';
 import {foodSearchMatches,getArabFoodRegion,getRegionalFoodSeeds,normalizeArabicFoodText,resolveArabFoodAlias} from './arabicFoodIntelligence';
 
 describe('Arabic food intelligence',()=>{
@@ -34,5 +34,20 @@ describe('Arabic food intelligence',()=>{
     expect(getArabFoodRegion('MA')).toBe('maghreb');
     expect(getRegionalFoodSeeds('AE').some(x=>x.name==='Machboos')).toBe(true);
     expect(getRegionalFoodSeeds('AE').some(x=>x.name==='Koshari')).toBe(false);
+  });
+});
+
+
+describe('voice food phrase extraction',()=>{
+  it.each([
+    ['كليت بيض مسلوق','بيض مسلوق'],
+    ['أنا كليت طاجين دجاج','طاجين دجاج'],
+    ['اكلت كسكس بالخضر','كسكس بالخضر'],
+    ['شربت قهوة بالحليب','قهوة بالحليب'],
+    ['خديت أتاي بالنعناع','أتاي بالنعناع'],
+    ['فطرت مسمن بالعسل','مسمن بالعسل'],
+    ['I had omelette بالجبن','omelette بالجبن'],
+  ])('extracts %s -> %s',(spoken,expected)=>{
+    expect(extractFoodPhraseFromVoice(spoken)).toBe(expected);
   });
 });
