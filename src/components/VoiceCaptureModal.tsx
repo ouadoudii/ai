@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowLeft, LoaderCircle, Mic2, Square, X } from 'lucide-react';
-import { transcribeAudio } from '../utils/localAi';
+import { transcribeAudio, transcribeAudioServer } from '../utils/localAi';
 import { useLanguage } from '../i18n';
 import { mergeSpeechSegments } from '../utils/speechTranscript';
 
@@ -128,7 +128,15 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
         setDiagnostic(ar?'بدأ Whisper المحلي':'Local Whisper started');
         setProcessing(true);
         try{
-          const text=await transcribeAudio(blob,language);
+          let text='';
+          if(ar){
+            setDiagnostic('Whisper Large V3 Turbo — server');
+            try{text=await transcribeAudioServer(blob)}
+            catch{
+              setDiagnostic('Server unavailable — local Whisper fallback');
+              text=await transcribeAudio(blob,language);
+            }
+          }else text=await transcribeAudio(blob,language);
           if(!text)throw new Error('empty transcript');
           setLastTranscript(text);
           setDiagnostic(ar?'تم النسخ بـ Whisper — جارٍ فهم الرسالة':'Whisper transcription ready — understanding message');
