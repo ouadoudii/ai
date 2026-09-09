@@ -501,6 +501,14 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
 
 
 test('Voice uses browser Arabic speech recognition before Whisper fallback',async({page})=>{
+  await page.route('**/api/voice-checkin',async route=>{
+    const body=JSON.parse(route.request().postData()||'{}');
+    expect(body.transcript).toBe('كليت بيض مسلوق');
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+      coachFeedback:{title:'تمام',message:'فهمت',type:'praise',badge:'Voice',habitScore:90},
+      extractedData:{mealItems:['بيض مسلوق'],mealTitle:'بيض مسلوق',mealCategory:'breakfast'}
+    })});
+  });
   await page.addInitScript(()=>{
     localStorage.setItem('rhythm_language_v1','ar');
     localStorage.setItem('cary_access_mode_v1','guest');
@@ -539,7 +547,7 @@ test('Voice uses browser Arabic speech recognition before Whisper fallback',asyn
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.waitForTimeout(20);
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
-  await expect(page.locator('input[value="كليت بيض مسلوق"]')).toBeVisible();
+  await expect(page.getByText('بيض مسلوق',{exact:true})).toBeVisible();
 });
 
 
