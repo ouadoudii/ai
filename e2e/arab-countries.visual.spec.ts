@@ -455,6 +455,11 @@ test('Voice capture starts, stops, transcribes and prefills the meal editor',asy
     }
     (window as any).MediaRecorder=FakeRecorder;
     Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
+    class FakeAudioContext{
+      async decodeAudioData(){return {numberOfChannels:1,length:4800,sampleRate:48000,getChannelData:()=>new Float32Array(4800).fill(.2)}}
+      async close(){}
+    }
+    (window as any).AudioContext=FakeAudioContext;
     class FakeWorker{
       onmessage:any=null;
       postMessage(message:any){if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{id:message.id,type:'result',text:'boiled eggs'}}),0)}
