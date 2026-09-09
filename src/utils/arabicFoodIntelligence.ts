@@ -120,7 +120,7 @@ export function extractFoodPhraseFromVoice(value:string):string{
   if(!raw)return '';
   let normalized=raw;
   const prefixes=[
-    /^(?:انا\s+)?(?:كليت|كلت|اكلت|أكلت|كنكل|كنت\s+كنكل|فطرت|تعشيت|تغديت)\s+/i,
+    /^(?:(?:انا|أنا)\s+)?(?:كليت|كلت|اكلت|أكلت|كنكل|كنت\s+كنكل|فطرت|تعشيت|تغديت)\s+/i,
     /^(?:انا\s+)?(?:شربت|خديت|خذيت|درت)\s+/i,
     /^(?:كان\s+عندي|عندي)\s+/i,
     /^(?:i\s+(?:had|ate|drank)|had|ate|drank)\s+/i,
