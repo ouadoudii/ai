@@ -49,7 +49,7 @@ describe('Arabic user country and full-day simulation',()=>{
   it('live Arabic capture/check-in/detail screens do not leak common English UI labels',()=>{
     const shell=(node:React.ReactNode)=>renderToString(<LanguageProvider>{node}</LanguageProvider>);
     const html=[
-      shell(<CaptureChoiceModal isOpen onClose={()=>{}} onFood={()=>{}} onTellCary={()=>{}} onQuickCheck={()=>{}}/>),
+      shell(<CaptureChoiceModal isOpen onClose={()=>{}} onFood={()=>{}} onTellCary={()=>{}}/>),
       shell(<AddMomentModal isOpen onClose={()=>{}} onSave={()=>{}}/>),
       shell(<DailyCheckInModal isOpen onClose={()=>{}} onSaveCheckIn={()=>{}}/>),
       shell(<CatchUpMiddayCheckInModal isOpen onClose={()=>{}} onSaveCheckIn={()=>{}}/>),
