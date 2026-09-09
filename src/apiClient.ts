@@ -17,6 +17,38 @@ export interface VoiceCheckInResult {
   };
 }
 
+async function blobToBase64(blob:Blob):Promise<string>{
+  return await new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(reader.error||new Error('Could not read audio'));
+    reader.onload=()=>{
+      const value=String(reader.result||'');
+      const comma=value.indexOf(',');
+      resolve(comma>=0?value.slice(comma+1):value);
+    };
+    reader.readAsDataURL(blob);
+  });
+}
+
+export async function transcribeRecordedAudio(blob:Blob,language:'ar'|'en'):Promise<string>{
+  if(!blob.size)throw new Error('Empty audio');
+  const audioBase64=await blobToBase64(blob);
+  const res=await fetch('/api/transcribe-audio',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      audioBase64,
+      mimeType:blob.type||'audio/webm',
+      language,
+    }),
+  });
+  if(!res.ok)throw new Error(`Transcription API returned status ${res.status}`);
+  const data=await res.json();
+  const text=typeof data?.text==='string'?data.text.trim():'';
+  if(!text)throw new Error('Empty transcript');
+  return text;
+}
+
 export async function processVoiceCheckIn(
   transcript: string,
   timeOfDay: string,
