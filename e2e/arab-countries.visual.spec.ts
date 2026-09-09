@@ -339,7 +339,8 @@ test('daily check-in AI autocomplete understands composed Arabic dishes',async({
     localStorage.setItem('cary_onboarding_v2_complete','true');
   });
   await page.goto('/');
-  await page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).first().click();
+  const checkin=page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).filter({hasText:/منتصف|مساء/}).first();
+  await checkin.click();
   const input=page.getByPlaceholder('ماذا أكلت؟ ابحث أو اكتب…');
   for(const term of ['بيض مسلوق','بيض مقلي','طاجين دجاج بالزيتون','كسكس بالخضر']){
     await input.fill(term);
@@ -382,7 +383,8 @@ test('AI meal autocomplete handles Darija, typos, preparation and mixed-language
     localStorage.setItem('cary_onboarding_v2_complete','true');
   });
   await page.goto('/');
-  await page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).first().click();
+  const checkin=page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).filter({hasText:/منتصف|مساء/}).first();
+  await checkin.click();
   const input=page.getByPlaceholder('ماذا أكلت؟ ابحث أو اكتب…');
   for(const [typed,suggestions] of Object.entries(cases)){
     await input.fill(typed);
@@ -395,7 +397,8 @@ test('AI meal autocomplete degrades gracefully when API fails',async({page})=>{
   await page.route('**/api/food-autocomplete',async route=>route.fulfill({status:500,contentType:'application/json',body:'{}'}));
   await page.addInitScript(()=>{localStorage.setItem('rhythm_language_v1','ar');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true')});
   await page.goto('/');
-  await page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).first().click();
+  const checkin=page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).filter({hasText:/منتصف|مساء/}).first();
+  await checkin.click();
   const input=page.getByPlaceholder('ماذا أكلت؟ ابحث أو اكتب…');
   await input.fill('بيض');
   await expect(page.getByTestId('meal-recognized-food')).toBeVisible();
