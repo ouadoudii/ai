@@ -429,3 +429,66 @@ test('AI meal autocomplete degrades gracefully when API fails',async({page})=>{
   await input.fill('طبق غير معروف');
   await expect(page.getByRole('button',{name:'إضافة هذا الطبق'})).toBeVisible();
 });
+
+
+test('Voice capture handles denied microphone permission without trapping the user',async({page,context})=>{
+  await context.clearPermissions();
+  await page.addInitScript(()=>{localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true')});
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
+  await page.getByRole('button',{name:'Start recording'}).click();
+  await expect(page.getByText('Microphone permission is needed to record.')).toBeVisible();
+  await page.getByRole('button',{name:'Back'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
+});
+
+test('Voice capture starts, stops, transcribes and prefills the meal editor',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    class FakeRecorder{
+      static isTypeSupported(){return true}
+      state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
+      constructor(stream){this.stream=stream}
+      start(){this.state='recording'}
+      stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'],{type:'audio/webm'})});this.onstop?.()}
+    }
+    window.MediaRecorder=FakeRecorder;
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
+    class FakeWorker{
+      constructor(){this.onmessage=null}
+      postMessage(message){if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{id:message.id,type:'result',text:'boiled eggs'}}),0)}
+      terminate(){}
+    }
+    window.Worker=FakeWorker;
+  });
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
+  await page.getByRole('button',{name:'Start recording'}).click();
+  await expect(page.getByRole('button',{name:'Stop recording'})).toBeVisible();
+  await page.getByRole('button',{name:'Stop recording'}).click();
+  await expect(page.getByDisplayValue('boiled eggs')).toBeVisible();
+  await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
+});
+
+test('Voice Back during recording discards audio and returns to Add choices',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    class FakeRecorder{
+      state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
+      constructor(stream){}
+      start(){this.state='recording'}
+      stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'])});this.onstop?.()}
+    }
+    window.MediaRecorder=FakeRecorder;
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
+  });
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
+  await page.getByRole('button',{name:'Start recording'}).click();
+  await page.getByRole('button',{name:'Back'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'What did you have?'})).toHaveCount(0);
+});
