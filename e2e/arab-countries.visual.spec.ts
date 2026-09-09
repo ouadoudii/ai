@@ -433,7 +433,7 @@ test('AI meal autocomplete degrades gracefully when API fails',async({page})=>{
 
 test('Voice capture handles denied microphone permission without trapping the user',async({page,context})=>{
   await context.clearPermissions();
-  await page.addInitScript(()=>{localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true')});
+  await page.addInitScript(()=>{delete (window as any).SpeechRecognition;delete (window as any).webkitSpeechRecognition;localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true')});
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
   await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
@@ -445,7 +445,7 @@ test('Voice capture handles denied microphone permission without trapping the us
 
 test('Voice capture starts, stops, transcribes and prefills the meal editor',async({page})=>{
   await page.addInitScript(()=>{
-    localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    delete (window as any).SpeechRecognition;delete (window as any).webkitSpeechRecognition;localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
     class FakeRecorder{
       static isTypeSupported(){return true}
       state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
