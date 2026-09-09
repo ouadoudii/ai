@@ -186,7 +186,34 @@ Wenn keine Mahlzeit erwähnt wird, lasse mealItems leer bzw. mealTitle leer. For
     });
 
     const parsed = JSON.parse(response.text || '{}');
-    const extracted = parsed.extractedData && typeof parsed.extractedData === 'object' ? parsed.extractedData : {};
+    let extracted = parsed.extractedData && typeof parsed.extractedData === 'object' ? parsed.extractedData : {};
+    // Recovery pass: if the coaching response is valid but structured food extraction
+    // is empty, ask the model once more with a food-only schema. This avoids sending
+    // a clearly understood Arabic meal transcript to the UI as "not understood".
+    if ((!Array.isArray(extracted.mealItems) || extracted.mealItems.length === 0) && transcript) {
+      const recovery = await ai.models.generateContent({
+        model: 'gemini-3.7-flash',
+        contents: `استخرج الطعام والشراب فقط من النص التالي. افهم اللهجات العربية وأخطاء التفريغ الصوتي، ولا تضف ما تم نفيه. النص: ${transcript}`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              mealDetected: { type: Type.BOOLEAN },
+              mealTitle: { type: Type.STRING },
+              mealItems: { type: Type.ARRAY, items: { type: Type.STRING } },
+              mealCategory: { type: Type.STRING },
+              mealContext: { type: Type.STRING },
+            },
+            required: ['mealDetected','mealTitle','mealItems','mealCategory','mealContext'],
+          },
+        },
+      });
+      try {
+        const recovered = JSON.parse(recovery.text || '{}');
+        if (Array.isArray(recovered.mealItems) && recovered.mealItems.length) extracted = recovered;
+      } catch {}
+    }
     let mealItems = Array.isArray(extracted.mealItems)
       ? extracted.mealItems.map((v:any)=>cleanText(v,120)).filter(Boolean)
       : [];
