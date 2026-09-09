@@ -74,3 +74,17 @@ export async function transcribeAudio(blob:Blob,language:'ar'|'en'):Promise<stri
   const result=await runLocalAi<{text:string}>({type:'audio',audio,language});
   return String(result.text||'').trim();
 }
+
+
+export async function transcribeAudioServer(blob:Blob):Promise<string>{
+  const response=await fetch('/api/transcribe-audio',{
+    method:'POST',
+    headers:{'Content-Type':blob.type||'audio/webm'},
+    body:blob
+  });
+  if(!response.ok)throw new Error('Server transcription unavailable');
+  const data=await response.json();
+  const text=String(data?.text||'').trim();
+  if(!text)throw new Error('Empty server transcript');
+  return text;
+}
