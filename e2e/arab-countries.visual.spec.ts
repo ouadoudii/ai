@@ -510,7 +510,7 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
 });
 
 
-test('Voice uses browser Arabic speech recognition before Whisper fallback',async({page})=>{
+test.skip('Legacy browser Arabic speech recognition is not used because local Whisper is more reliable',async({page})=>{
   await page.route('**/api/voice-checkin',async route=>{
     const body=JSON.parse(route.request().postData()||'{}');
     expect(body.transcript).toBe('كليت بيض مسلوق');
@@ -720,4 +720,30 @@ test('Android speech recognition does not concatenate repeated interim hypothese
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
   await expect.poll(()=>transcript).toBe('الصباح كليت المسمن مع العسل');
   await expect(page.getByTestId('voice-understanding-card')).toContainText('الصباح كليت المسمن مع العسل');
+});
+
+
+test('Arabic voice deliberately uses local Whisper even when Chrome speech recognition exists',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    class BadChromeSpeech{start(){throw new Error('Arabic must not use Chrome speech recognition')} stop(){}}
+    (window as any).webkitSpeechRecognition=BadChromeSpeech;
+    class FakeRecorder{
+      static isTypeSupported(){return true}
+      state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
+      constructor(_stream:any){}
+      start(){this.state='recording'}
+      stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'],{type:'audio/webm'})});this.onstop?.()}
+    }
+    (window as any).MediaRecorder=FakeRecorder;
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
+  });
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
+  await expect(page.getByTestId('voice-diagnostic')).toContainText('Whisper');
 });
