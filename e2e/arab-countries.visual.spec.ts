@@ -510,13 +510,19 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
 });
 
 
-test.skip('Legacy browser Arabic speech recognition is not used because local Whisper is more reliable',async({page})=>{
+test('Arabic Whisper understands a full Darija message semantically with multiple foods and negation',async({page})=>{
+  let receivedTranscript='';
   await page.route('**/api/voice-checkin',async route=>{
     const body=JSON.parse(route.request().postData()||'{}');
-    expect(body.transcript).toBe('كليت بيض مسلوق');
+    receivedTranscript=body.transcript||'';
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
-      coachFeedback:{title:'تمام',message:'فهمت',type:'praise',badge:'Voice',habitScore:90},
-      extractedData:{mealItems:['بيض مسلوق'],mealTitle:'بيض مسلوق',mealCategory:'breakfast'}
+      coachFeedback:{title:'تمام',message:'تم فهم الرسالة كاملة',type:'praise',badge:'Voice',habitScore:90},
+      extractedData:{
+        mealItems:['بيض مسلوق','خبز','قهوة بالحليب'],
+        mealTitle:'بيض مسلوق · خبز · قهوة بالحليب',
+        mealCategory:'breakfast',
+        mealContext:'المستخدم قال إنه لم يأكل الحلو'
+      }
     })});
   });
   await page.addInitScript(()=>{
@@ -524,7 +530,8 @@ test.skip('Legacy browser Arabic speech recognition is not used because local Wh
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
-
+    class BadChromeSpeech{start(){throw new Error('Arabic must not use Chrome speech recognition')} stop(){}}
+    (window as any).webkitSpeechRecognition=BadChromeSpeech;
     class FakeRecorder{
       static isTypeSupported(){return true}
       state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
@@ -534,30 +541,128 @@ test.skip('Legacy browser Arabic speech recognition is not used because local Wh
     }
     (window as any).MediaRecorder=FakeRecorder;
     Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
-
-    class FakeSpeechRecognition{
-      lang='';interimResults=false;continuous=false;onresult:any=null;onerror:any=null;
-      onend:any=null;
-      start(){}
-      stop(){setTimeout(()=>{this.onresult?.({results:[[{transcript:'كليت بيض مسلوق'}]]});this.onend?.()},50)}
+    class FakeAudioContext{
+      async decodeAudioData(){return {numberOfChannels:1,length:3200,sampleRate:16000,getChannelData:()=>new Float32Array(3200).fill(.2)}}
+      async close(){}
     }
-    (window as any).webkitSpeechRecognition=FakeSpeechRecognition;
-
-    class FailIfWhisperRuns{
+    (window as any).AudioContext=FakeAudioContext;
+    class FakeWorker{
       onmessage:any=null;
-      postMessage(){throw new Error('Whisper fallback should not run when browser speech recognition succeeds')}
+      postMessage(message:any){
+        if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{
+          id:message.id,type:'result',
+          text:'كليت جوج بيضات مسلوقين مع الخبز ومن بعد شربت قهوة بالحليب وما كليتش الحلو'
+        }}),10)
+      }
       terminate(){}
     }
-    (window as any).Worker=FailIfWhisperRuns;
+    (window as any).Worker=FakeWorker;
   });
-
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
-  await page.waitForTimeout(20);
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
+  await expect.poll(()=>receivedTranscript).toContain('كليت جوج بيضات مسلوقين');
+  await expect(page.getByTestId('voice-understanding-card')).toContainText('كليت جوج بيضات مسلوقين');
   await expect(page.getByText('بيض مسلوق',{exact:true})).toBeVisible();
+  await expect(page.getByText('خبز',{exact:true})).toBeVisible();
+  await expect(page.getByText('قهوة بالحليب',{exact:true})).toBeVisible();
+  await expect(page.getByText('الحلو',{exact:true})).toHaveCount(0);
+});
+
+test('Arabic Whisper semantic failure keeps the full message out of autocomplete search',async({page})=>{
+  const raw='الصباح كليت حاجة ما عرفتش اسمها وشربت شي حاجة سخونة';
+  await page.route('**/api/voice-checkin',async route=>{
+    const body=JSON.parse(route.request().postData()||'{}');
+    expect(body.transcript).toBe(raw);
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+      coachFeedback:{title:'تمام',message:'لم أفهم بما يكفي',type:'praise',badge:'Voice',habitScore:80},
+      extractedData:{mealItems:[],mealTitle:'',mealCategory:'',mealContext:''}
+    })});
+  });
+  await page.addInitScript((rawText)=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    class FakeRecorder{
+      static isTypeSupported(){return true}
+      state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
+      constructor(_stream:any){}
+      start(){this.state='recording'}
+      stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'],{type:'audio/webm'})});this.onstop?.()}
+    }
+    ;(window as any).MediaRecorder=FakeRecorder;
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
+    class FakeAudioContext{
+      async decodeAudioData(){return {numberOfChannels:1,length:1600,sampleRate:16000,getChannelData:()=>new Float32Array(1600).fill(.2)}}
+      async close(){}
+    }
+    ;(window as any).AudioContext=FakeAudioContext;
+    class FakeWorker{
+      onmessage:any=null;
+      postMessage(message:any){if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{id:message.id,type:'result',text:rawText}}),10)}
+      terminate(){}
+    }
+    ;(window as any).Worker=FakeWorker;
+  },raw);
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
+  await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
+  await expect(page.getByTestId('voice-understanding-card')).toContainText(raw);
+  await expect(page.getByTestId('voice-understanding-card')).toContainText('لم نفهم الرسالة');
+  await expect(page.locator(`input[value="${raw}"]`)).toHaveCount(0);
+});
+
+test('Arabic Whisper transcript is sent once as one complete message',async({page})=>{
+  const raw='الصباح كليت المسمن مع العسل ومن بعد شربت أتاي';
+  let calls=0;
+  await page.route('**/api/voice-checkin',async route=>{
+    calls++;
+    const body=JSON.parse(route.request().postData()||'{}');
+    expect(body.transcript).toBe(raw);
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+      coachFeedback:{title:'تمام',message:'فهمت',type:'praise',badge:'Voice',habitScore:90},
+      extractedData:{mealItems:['مسمن بالعسل','أتاي'],mealTitle:'مسمن بالعسل · أتاي',mealCategory:'breakfast'}
+    })});
+  });
+  await page.addInitScript((rawText)=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    class FakeRecorder{
+      static isTypeSupported(){return true}
+      state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
+      constructor(_stream:any){}
+      start(){this.state='recording'}
+      stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'],{type:'audio/webm'})});this.onstop?.()}
+    }
+    ;(window as any).MediaRecorder=FakeRecorder;
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
+    class FakeAudioContext{
+      async decodeAudioData(){return {numberOfChannels:1,length:1600,sampleRate:16000,getChannelData:()=>new Float32Array(1600).fill(.2)}}
+      async close(){}
+    }
+    ;(window as any).AudioContext=FakeAudioContext;
+    class FakeWorker{
+      onmessage:any=null;
+      postMessage(message:any){if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{id:message.id,type:'result',text:rawText}}),10)}
+      terminate(){}
+    }
+    ;(window as any).Worker=FakeWorker;
+  },raw);
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
+  await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
+  await expect.poll(()=>calls).toBe(1);
+  await expect(page.getByText('مسمن بالعسل',{exact:true})).toBeVisible();
+  await expect(page.getByText('أتاي',{exact:true})).toBeVisible();
 });
 
 
