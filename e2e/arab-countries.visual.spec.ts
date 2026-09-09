@@ -599,3 +599,41 @@ test('Voice diagnostics reveal local Whisper fallback when browser speech API is
   await page.getByRole('button',{name:'Start recording'}).click();
   await expect(page.getByTestId('voice-diagnostic')).toContainText('local Whisper fallback');
 });
+
+
+test('Voice understands a full Darija message semantically with multiple foods',async({page})=>{
+  await page.route('**/api/voice-checkin',async route=>{
+    const body=JSON.parse(route.request().postData()||'{}');
+    expect(body.transcript).toContain('كليت');
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+      coachFeedback:{title:'تمام',message:'تم فهم الرسالة كاملة',type:'praise',badge:'Voice',habitScore:90},
+      extractedData:{
+        mealItems:['بيض مسلوق','خبز','قهوة بالحليب'],
+        mealTitle:'بيض مسلوق · خبز · قهوة بالحليب',
+        mealCategory:'breakfast',
+        mealContext:'قال المستخدم أنه أكل قليلاً'
+      }
+    })});
+  });
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    class FakeSpeechRecognition{
+      lang='';interimResults=false;continuous=false;onresult:any=null;onerror:any=null;onend:any=null;
+      start(){}
+      stop(){setTimeout(()=>{this.onresult?.({results:[[{transcript:'كليت جوج بيضات مسلوقين مع الخبز ومن بعد شربت قهوة بالحليب وما كليتش الحلو'}]]});this.onend?.()},20)}
+    }
+    (window as any).webkitSpeechRecognition=FakeSpeechRecognition;
+  });
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
+  await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
+  await expect(page.getByText('بيض مسلوق',{exact:true})).toBeVisible();
+  await expect(page.getByText('خبز',{exact:true})).toBeVisible();
+  await expect(page.getByText('قهوة بالحليب',{exact:true})).toBeVisible();
+  await expect(page.getByText('الحلو',{exact:true})).toHaveCount(0);
+});
