@@ -19,6 +19,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
   const [error,setError]=React.useState('');
   const [seconds,setSeconds]=React.useState(0);
   const [diagnostic,setDiagnostic]=React.useState('');
+  const [lastTranscript,setLastTranscript]=React.useState('');
   const recorderRef=React.useRef<MediaRecorder|null>(null);
   const streamRef=React.useRef<MediaStream|null>(null);
   const chunksRef=React.useRef<Blob[]>([]);
@@ -49,6 +50,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
   const start=async()=>{
     setError('');
     setDiagnostic('');
+    setLastTranscript('');
     cancelRef.current=false;
     speechTextRef.current='';
     speechDoneRef.current=null;
@@ -128,6 +130,8 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
         try{
           const text=await transcribeAudio(blob,language);
           if(!text)throw new Error('empty transcript');
+          setLastTranscript(text);
+          setDiagnostic(ar?'تم النسخ بـ Whisper — جارٍ فهم الرسالة':'Whisper transcription ready — understanding message');
           onTranscript(text);
         }catch{
           setError(ar?'لم نستطع فهم التسجيل. جرّب مرة أخرى أو اكتبها يدوياً.':'We could not understand the recording. Try again or type it manually.');
@@ -167,6 +171,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
         </button>
         <p className="mt-4 text-sm font-black text-[#4A4C46]">{processing?(ar?'نفهم التسجيل على جهازك…':'Understanding it on your device…'):recording?String(seconds)+'s':(ar?'اضغط وابدأ الكلام':'Tap and start speaking')}</p>
         {processing&&<p className="mt-2 text-[11px] text-[#8A867E]">{ar?'أول مرة قد تحتاج وقتاً لتحميل نموذج Whisper المجاني.':'The first use may take a moment while the free Whisper model downloads.'}</p>}
+        {lastTranscript&&<div data-testid="voice-raw-transcript" className="mt-4 w-full rounded-2xl bg-[#F3F0E9] px-4 py-3 text-start"><p className="text-[10px] font-black uppercase tracking-[.12em] text-[#8A867E]">{ar?'نص Whisper الخام':'Raw Whisper transcript'}</p><p className="mt-1 text-xs font-semibold text-[#343631]" dir="auto">{lastTranscript}</p></div>}
         {diagnostic&&<p data-testid="voice-diagnostic" className="mt-4 rounded-2xl bg-white px-4 py-3 text-[11px] font-bold text-[#6D6A63] border border-[#E6E1D8]">{diagnostic}</p>}
         {error&&<p className="mt-3 rounded-2xl bg-[#FCE9E5] px-4 py-3 text-xs font-bold text-[#9B453A]">{error}</p>}
       </div>
