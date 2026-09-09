@@ -113,3 +113,18 @@ export function getRegionalFoodSeeds(country:string|null|undefined,category?:Mom
     .filter(group=>(!group.regions||group.regions.includes(region))&&(!category||group.category===category))
     .map(group=>({name:group.canonicalEn,category:group.category||'lunch'} as {name:string;category:MomentCategory}));
 }
+
+
+export function extractFoodPhraseFromVoice(value:string):string{
+  const raw=value.trim().replace(/\s+/g,' ');
+  if(!raw)return '';
+  let normalized=raw;
+  const prefixes=[
+    /^(?:انا\s+)?(?:كليت|كلت|اكلت|أكلت|كنكل|كنت\s+كنكل|فطرت|تعشيت|تغديت)\s+/i,
+    /^(?:انا\s+)?(?:شربت|خديت|خذيت|درت)\s+/i,
+    /^(?:كان\s+عندي|عندي)\s+/i,
+    /^(?:i\s+(?:had|ate|drank)|had|ate|drank)\s+/i,
+  ];
+  for(const pattern of prefixes)normalized=normalized.replace(pattern,'');
+  return normalized.trim();
+}
