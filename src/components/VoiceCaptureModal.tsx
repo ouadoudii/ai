@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowLeft, LoaderCircle, Mic2, Square, X } from 'lucide-react';
 import { transcribeAudio } from '../utils/localAi';
 import { useLanguage } from '../i18n';
+import { mergeSpeechSegments } from '../utils/speechTranscript';
 
 interface Props{
   isOpen:boolean;
@@ -74,7 +75,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
             else finalSegmentsRef.current.set(i,segment);
           }
           const finals=[...finalSegmentsRef.current.entries()].sort((a,b)=>a[0]-b[0]).map(([,text])=>text);
-          speechTextRef.current=[...finals,interim].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+          speechTextRef.current=mergeSpeechSegments([...finals,interim].filter(Boolean));
         };
         speechDoneRef.current=new Promise<void>(resolve=>{speechDoneResolveRef.current=resolve});
         recognition.onend=()=>{
