@@ -90,8 +90,9 @@ app.post('/api/transcribe-audio', async (req, res) => {
     const form=new FormData();
     form.append('file',new Blob([audio],{type:contentType}),`voice.${ext}`);
     form.append('model','whisper-large-v3');
-    form.append('response_format','json');
+    form.append('response_format','verbose_json');
     form.append('temperature','0');
+    form.append('language','ar');
     form.append('prompt','تفريغ حرفي دقيق للكلام كما قيل، دون ترجمة أو إعادة صياغة. قد يكون الكلام بالعربية الفصحى أو الدارجة المغربية أو الجزائرية أو التونسية أو الليبية أو المصرية أو السودانية أو الشامية أو الفلسطينية أو الأردنية أو اللبنانية أو السورية أو العراقية أو الخليجية أو السعودية أو العمانية أو اليمنية، وقد يتضمن كلمات فرنسية أو إنجليزية وأسماء أطعمة ومشروبات محلية. حافظ على الكلمات الأصلية كما نطقها المتحدث.');
     const upstream=await fetch('https://api.groq.com/openai/v1/audio/transcriptions',{
       method:'POST',headers:{Authorization:`Bearer ${apiKey}`},body:form
