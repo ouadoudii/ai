@@ -20,7 +20,6 @@ const extraMomentCategories:MomentCategory[]=['snack','coffee','dessert'];
 const mainMealCategories:MomentCategory[]=['breakfast','lunch','dinner'];
 const enLabels:Record<MomentCategory,string>={breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',snack:'Snack',coffee:'Coffee',dessert:'Dessert',drinks:'Drinks',travel:'Travel'};
 const arLabels:Record<MomentCategory,string>={breakfast:'الفطور',lunch:'الغداء',dinner:'العشاء',snack:'وجبة خفيفة',coffee:'قهوة',dessert:'حلويات',drinks:'مشروبات',travel:'سفر'};
-const categoryForHour=(hour:number):MomentCategory=>hour<11?'breakfast':hour<15?'lunch':hour<18?'snack':'dinner';
 export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSave,editingMoment,initialCategory,completedMealCategories=new Set()})=>{
   const {language}=useLanguage(); const ar=language==='ar'; const labels=ar?arLabels:enLabels; const hour=new Date().getHours();
   const [showMainMeals,setShowMainMeals]=React.useState(false);
