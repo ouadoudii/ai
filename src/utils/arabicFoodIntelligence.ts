@@ -85,12 +85,11 @@ export function resolveArabFoodAlias(value:string,country?:string|null){
   const q=normalizeFoodSearchText(value);
   if(!q)return null;
   const region=getArabFoodRegion(country);
-  const matches=aliasIndex.filter(({key})=>key===q||key.includes(q)||q.includes(key));
+  const matches=aliasIndex.filter(({key})=>key===q);
   const scored=matches.map(match=>{
     const regional=!match.group.regions||match.group.regions.includes(region);
     const exact=match.key===q;
-    const contained=q.includes(match.key);
-    return {...match,score:(regional?100000:0)+(exact?10000:0)+(contained?1000:0)+match.key.length};
+    return {...match,score:(regional?100000:0)+(exact?10000:0)+match.key.length};
   }).sort((a,b)=>b.score-a.score);
   return scored[0]?.group||null;
 }
