@@ -685,3 +685,39 @@ test('Voice semantic failure never dumps the raw sentence into meal search',asyn
   await expect(page.getByTestId('voice-understanding-card')).toContainText('لم نفهم الرسالة');
   await expect(page.locator('input[value="اكلت اكلت الحوت اكلت اللحم"]')).toHaveCount(0);
 });
+
+
+test('Android speech recognition does not concatenate repeated interim hypotheses',async({page})=>{
+  let transcript='';
+  await page.route('**/api/voice-checkin',async route=>{
+    transcript=JSON.parse(route.request().postData()||'{}').transcript||'';
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+      coachFeedback:{title:'تمام',message:'فهمت',type:'praise',badge:'Voice',habitScore:90},
+      extractedData:{mealItems:['مسمن بالعسل'],mealTitle:'مسمن بالعسل',mealCategory:'breakfast'}
+    })});
+  });
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    class FakeSpeechRecognition{
+      lang='';interimResults=false;continuous=false;onresult:any=null;onerror:any=null;onend:any=null;
+      start(){
+        setTimeout(()=>this.onresult?.({resultIndex:0,results:Object.assign([[{transcript:'الصباح كليت'}]],{0:Object.assign([{transcript:'الصباح كليت'}],{isFinal:false})})}),10);
+        setTimeout(()=>this.onresult?.({resultIndex:0,results:Object.assign([[{transcript:'الصباح كليت المسمن'}]],{0:Object.assign([{transcript:'الصباح كليت المسمن'}],{isFinal:false})})}),20);
+        setTimeout(()=>this.onresult?.({resultIndex:0,results:Object.assign([[{transcript:'الصباح كليت المسمن مع العسل'}]],{0:Object.assign([{transcript:'الصباح كليت المسمن مع العسل'}],{isFinal:true})})}),30);
+      }
+      stop(){setTimeout(()=>this.onend?.(),40)}
+    }
+    (window as any).webkitSpeechRecognition=FakeSpeechRecognition;
+  });
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
+  await page.waitForTimeout(60);
+  await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
+  await expect.poll(()=>transcript).toBe('الصباح كليت المسمن مع العسل');
+  await expect(page.getByTestId('voice-understanding-card')).toContainText('الصباح كليت المسمن مع العسل');
+});
