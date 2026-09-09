@@ -17,6 +17,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
   const [processing,setProcessing]=React.useState(false);
   const [error,setError]=React.useState('');
   const [seconds,setSeconds]=React.useState(0);
+  const [diagnostic,setDiagnostic]=React.useState('');
   const recorderRef=React.useRef<MediaRecorder|null>(null);
   const streamRef=React.useRef<MediaStream|null>(null);
   const chunksRef=React.useRef<Blob[]>([]);
@@ -45,6 +46,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
 
   const start=async()=>{
     setError('');
+    setDiagnostic('');
     cancelRef.current=false;
     speechTextRef.current='';
     speechDoneRef.current=null;
@@ -52,12 +54,14 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
 
     const SpeechRecognitionCtor=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
     if(SpeechRecognitionCtor){
+      setDiagnostic(ar?'المسار: تعرف صوت المتصفح (ar-MA)':'Path: browser speech recognition');
       try{
         const recognition=new SpeechRecognitionCtor();
         recognition.lang=ar?'ar-MA':'en-US';
         recognition.interimResults=true;
         recognition.continuous=true;
         recognition.onresult=(event:any)=>{
+          setDiagnostic(ar?'تم استلام كلام من المتصفح':'Browser speech result received');
           let text='';
           for(let i=0;i<event.results.length;i++)text+=String(event.results[i][0]?.transcript||'')+' ';
           speechTextRef.current=text.trim();
@@ -73,6 +77,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
           else setError(ar?'لم نفهم الكلام. جرّب مرة أخرى وتكلم بوضوح.':'We could not understand that. Try again and speak clearly.');
         };
         recognition.onerror=(event:any)=>{
+          setDiagnostic((ar?'خطأ تعرف الصوت: ':'Speech recognition error: ')+String(event?.error||'unknown'));
           speechDoneResolveRef.current?.();
           speechDoneResolveRef.current=null;
           setRecording(false);
@@ -88,6 +93,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
       }catch{}
     }
 
+    setDiagnostic(ar?'المسار: Whisper محلي':'Path: local Whisper fallback');
     if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError(ar?'التسجيل الصوتي غير مدعوم في هذا المتصفح.':'Voice recording is not supported in this browser.');
       return;
@@ -105,6 +111,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
         cleanup();
         setRecording(false);
         if(cancelled||!blob.size)return;
+        setDiagnostic(ar?'بدأ Whisper المحلي':'Local Whisper started');
         setProcessing(true);
         try{
           const text=await transcribeAudio(blob,language);
@@ -148,7 +155,8 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
         </button>
         <p className="mt-4 text-sm font-black text-[#4A4C46]">{processing?(ar?'نفهم التسجيل على جهازك…':'Understanding it on your device…'):recording?String(seconds)+'s':(ar?'اضغط وابدأ الكلام':'Tap and start speaking')}</p>
         {processing&&<p className="mt-2 text-[11px] text-[#8A867E]">{ar?'أول مرة قد تحتاج وقتاً لتحميل نموذج Whisper المجاني.':'The first use may take a moment while the free Whisper model downloads.'}</p>}
-        {error&&<p className="mt-4 rounded-2xl bg-[#FCE9E5] px-4 py-3 text-xs font-bold text-[#9B453A]">{error}</p>}
+        {diagnostic&&<p data-testid="voice-diagnostic" className="mt-4 rounded-2xl bg-white px-4 py-3 text-[11px] font-bold text-[#6D6A63] border border-[#E6E1D8]">{diagnostic}</p>}
+        {error&&<p className="mt-3 rounded-2xl bg-[#FCE9E5] px-4 py-3 text-xs font-bold text-[#9B453A]">{error}</p>}
       </div>
     </section>
   </div>;
