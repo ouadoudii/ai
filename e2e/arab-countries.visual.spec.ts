@@ -444,6 +444,14 @@ test('Voice capture handles denied microphone permission without trapping the us
 });
 
 test('Voice capture starts, stops, transcribes and prefills the meal editor',async({page})=>{
+  await page.route('**/api/voice-checkin',async route=>{
+    const body=JSON.parse(route.request().postData()||'{}');
+    expect(body.transcript).toBe('boiled eggs');
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+      coachFeedback:{title:'Got it',message:'Understood',type:'praise',badge:'Voice',habitScore:90},
+      extractedData:{mealItems:['boiled eggs'],mealTitle:'boiled eggs',mealCategory:'breakfast'}
+    })});
+  });
   await page.addInitScript(()=>{
     delete (window as any).SpeechRecognition;delete (window as any).webkitSpeechRecognition;localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
     class FakeRecorder{
@@ -473,7 +481,9 @@ test('Voice capture starts, stops, transcribes and prefills the meal editor',asy
   await page.getByRole('button',{name:'Start recording'}).click();
   await expect(page.getByRole('button',{name:'Stop recording'})).toBeVisible();
   await page.getByRole('button',{name:'Stop recording'}).click();
-  await expect(page.locator('input[value="boiled eggs"]')).toBeVisible();
+  await expect(page.getByTestId('voice-understanding-card')).toContainText('boiled eggs');
+  await expect(page.getByText('boiled eggs',{exact:true})).toBeVisible();
+  await expect(page.locator('input[value="boiled eggs"]')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
 });
 
