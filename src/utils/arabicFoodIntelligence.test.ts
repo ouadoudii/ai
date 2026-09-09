@@ -1,5 +1,5 @@
-import { extractFoodPhraseFromVoice, describe,expect,it} from 'vitest';
-import {foodSearchMatches,getArabFoodRegion,getRegionalFoodSeeds,normalizeArabicFoodText,resolveArabFoodAlias} from './arabicFoodIntelligence';
+import { describe,expect,it} from 'vitest';
+import {extractFoodPhraseFromVoice,foodSearchMatches,getArabFoodRegion,getRegionalFoodSeeds,normalizeArabicFoodText,resolveArabFoodAlias} from './arabicFoodIntelligence';
 
 describe('Arabic food intelligence',()=>{
   it('normalizes Arabic spelling variants and diacritics',()=>{
