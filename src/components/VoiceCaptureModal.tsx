@@ -130,7 +130,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
         try{
           let text='';
           if(ar){
-            setDiagnostic('Whisper Large V3 Turbo — server');
+            setDiagnostic('Whisper Large V3 — server');
             try{text=await transcribeAudioServer(blob)}
             catch{
               setDiagnostic('Server unavailable — local Whisper fallback');
