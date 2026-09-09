@@ -449,18 +449,18 @@ test('Voice capture starts, stops, transcribes and prefills the meal editor',asy
     class FakeRecorder{
       static isTypeSupported(){return true}
       state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
-      constructor(stream){this.stream=stream}
+      constructor(_stream:any){}
       start(){this.state='recording'}
       stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'],{type:'audio/webm'})});this.onstop?.()}
     }
-    window.MediaRecorder=FakeRecorder;
+    (window as any).MediaRecorder=FakeRecorder;
     Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
     class FakeWorker{
-      constructor(){this.onmessage=null}
-      postMessage(message){if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{id:message.id,type:'result',text:'boiled eggs'}}),0)}
+      onmessage:any=null;
+      postMessage(message:any){if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{id:message.id,type:'result',text:'boiled eggs'}}),0)}
       terminate(){}
     }
-    window.Worker=FakeWorker;
+    (window as any).Worker=FakeWorker;
   });
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
@@ -468,7 +468,7 @@ test('Voice capture starts, stops, transcribes and prefills the meal editor',asy
   await page.getByRole('button',{name:'Start recording'}).click();
   await expect(page.getByRole('button',{name:'Stop recording'})).toBeVisible();
   await page.getByRole('button',{name:'Stop recording'}).click();
-  await expect(page.getByDisplayValue('boiled eggs')).toBeVisible();
+  await expect(page.locator('input').filter({has:page.locator('xpath=..')}).getByDisplayValue?.('boiled eggs') ?? page.locator('input[value="boiled eggs"]')).toBeVisible();
   await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
 });
 
@@ -477,7 +477,7 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
     localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
     class FakeRecorder{
       state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
-      constructor(stream){}
+      constructor(_stream:any){}
       start(){this.state='recording'}
       stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'])});this.onstop?.()}
     }
