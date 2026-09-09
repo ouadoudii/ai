@@ -165,6 +165,7 @@ Wenn keine Mahlzeit erwähnt wird, lasse mealItems leer bzw. mealTitle leer. For
             extractedData: {
               type: Type.OBJECT,
               properties: {
+                mealDetected: { type: Type.BOOLEAN },
                 mealTitle: { type: Type.STRING },
                 mealItems: { type: Type.ARRAY, items: { type: Type.STRING } },
                 mealCategory: { type: Type.STRING },
@@ -175,9 +176,10 @@ Wenn keine Mahlzeit erwähnt wird, lasse mealItems leer bzw. mealTitle leer. For
                 hungerBefore: { type: Type.NUMBER },
                 fullnessAfter: { type: Type.NUMBER },
               },
+              required: ['mealDetected','mealTitle','mealItems','mealCategory','mealContext'],
             },
           },
-          required: ['coachTitle', 'coachResponse', 'badge', 'habitScore'],
+          required: ['coachTitle', 'coachResponse', 'badge', 'habitScore', 'extractedData'],
         },
       },
     });
