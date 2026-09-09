@@ -519,10 +519,9 @@ test('Voice uses browser Arabic speech recognition before Whisper fallback',asyn
 
     class FakeSpeechRecognition{
       lang='';interimResults=false;continuous=false;onresult:any=null;onerror:any=null;
-      start(){
-        setTimeout(()=>this.onresult?.({results:[[{transcript:'كليت بيض مسلوق'}]]}),0);
-      }
-      stop(){}
+      onend:any=null;
+      start(){}
+      stop(){setTimeout(()=>{this.onresult?.({results:[[{transcript:'كليت بيض مسلوق'}]]});this.onend?.()},50)}
     }
     (window as any).webkitSpeechRecognition=FakeSpeechRecognition;
 
