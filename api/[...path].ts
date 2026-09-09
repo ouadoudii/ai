@@ -89,11 +89,10 @@ app.post('/api/transcribe-audio', async (req, res) => {
     const ext=contentType.includes('ogg')?'ogg':contentType.includes('wav')?'wav':contentType.includes('mp4')?'m4a':'webm';
     const form=new FormData();
     form.append('file',new Blob([audio],{type:contentType}),`voice.${ext}`);
-    form.append('model','whisper-large-v3-turbo');
-    form.append('language','ar');
+    form.append('model','whisper-large-v3');
     form.append('response_format','json');
     form.append('temperature','0');
-    form.append('prompt','تفريغ حرفي للكلام العربي كما قيل. قد تكون اللهجة مغربية أو جزائرية أو تونسية أو ليبية أو مصرية أو سودانية أو شامية أو عراقية أو خليجية أو يمنية، وقد تتضمن أسماء أطعمة ومشروبات وكلمات فرنسية أو إنجليزية. لا تترجم ولا تعيد الصياغة.');
+    form.append('prompt','تفريغ حرفي دقيق للكلام كما قيل، دون ترجمة أو إعادة صياغة. قد يكون الكلام بالعربية الفصحى أو الدارجة المغربية أو الجزائرية أو التونسية أو الليبية أو المصرية أو السودانية أو الشامية أو الفلسطينية أو الأردنية أو اللبنانية أو السورية أو العراقية أو الخليجية أو السعودية أو العمانية أو اليمنية، وقد يتضمن كلمات فرنسية أو إنجليزية وأسماء أطعمة ومشروبات محلية. حافظ على الكلمات الأصلية كما نطقها المتحدث.');
     const upstream=await fetch('https://api.groq.com/openai/v1/audio/transcriptions',{
       method:'POST',headers:{Authorization:`Bearer ${apiKey}`},body:form
     });
@@ -104,7 +103,7 @@ app.post('/api/transcribe-audio', async (req, res) => {
     const data=await upstream.json() as {text?:unknown};
     const text=cleanText(data?.text,LIMITS.transcript);
     if(!text)return res.status(502).json({error:'Empty transcription'});
-    return res.json({text,engine:'whisper-large-v3-turbo'});
+    return res.json({text,engine:'whisper-large-v3'});
   }catch{
     return res.status(502).json({error:'Server transcription unavailable'});
   }
