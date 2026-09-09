@@ -20,6 +20,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
   const recorderRef=React.useRef<MediaRecorder|null>(null);
   const streamRef=React.useRef<MediaStream|null>(null);
   const chunksRef=React.useRef<Blob[]>([]);
+  const cancelRef=React.useRef(false);
 
   const cleanup=React.useCallback(()=>{
     streamRef.current?.getTracks().forEach(track=>track.stop());
@@ -38,6 +39,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
 
   const start=async()=>{
     setError('');
+    cancelRef.current=false;
     if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError(ar?'التسجيل الصوتي غير مدعوم في هذا المتصفح.':'Voice recording is not supported in this browser.');
       return;
@@ -51,9 +53,10 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
       recorder.ondataavailable=e=>{if(e.data.size)chunksRef.current.push(e.data)};
       recorder.onstop=async()=>{
         const blob=new Blob(chunksRef.current,{type:recorder.mimeType||'audio/webm'});
+        const cancelled=cancelRef.current;
         cleanup();
         setRecording(false);
-        if(!blob.size)return;
+        if(cancelled||!blob.size)return;
         setProcessing(true);
         try{
           const text=await transcribeAudio(blob,language);
@@ -75,16 +78,14 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
     if(recorderRef.current?.state==='recording')recorderRef.current.stop();
   };
 
-  const back=()=>{
-    if(recording)stop();
-    else {cleanup();onBack()}
-  };
+  const leave=(fn:()=>void)=>{cancelRef.current=true;if(recorderRef.current?.state==='recording')recorderRef.current.stop();else cleanup();setRecording(false);fn()};
+  const back=()=>leave(onBack);
 
   return <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-[#25231F]/55 backdrop-blur-md" role="dialog" aria-modal="true">
     <section className="w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] bg-[#FCFAF6] p-5 sm:p-6 shadow-2xl">
       <div className="flex items-center justify-between">
         <button type="button" onClick={back} className="w-10 h-10 rounded-full bg-white border border-[#E6E1D8] flex items-center justify-center" aria-label={ar?'رجوع':'Back'}><ArrowLeft className={`w-4 h-4 ${ar?'rotate-180':''}`}/></button>
-        <button type="button" onClick={()=>{cleanup();onClose()}} className="w-10 h-10 rounded-full bg-white border border-[#E6E1D8] flex items-center justify-center" aria-label={ar?'إغلاق':'Close'}><X className="w-4 h-4"/></button>
+        <button type="button" onClick={()=>leave(onClose)} className="w-10 h-10 rounded-full bg-white border border-[#E6E1D8] flex items-center justify-center" aria-label={ar?'إغلاق':'Close'}><X className="w-4 h-4"/></button>
       </div>
       <div className="mt-5 text-center">
         <h2 className="text-2xl font-display font-black text-[#252824]">{ar?'قل ماذا أكلت':'Tell me what you had'}</h2>
