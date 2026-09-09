@@ -23,6 +23,8 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
   const cancelRef=React.useRef(false);
   const speechRef=React.useRef<any>(null);
   const speechTextRef=React.useRef('');
+  const speechDoneRef=React.useRef<Promise<void>|null>(null);
+  const speechDoneResolveRef=React.useRef<(()=>void)|null>(null);
 
   const cleanup=React.useCallback(()=>{
     streamRef.current?.getTracks().forEach(track=>track.stop());
@@ -45,6 +47,8 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
     setError('');
     cancelRef.current=false;
     speechTextRef.current='';
+    speechDoneRef.current=null;
+    speechDoneResolveRef.current=null;
     if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError(ar?'التسجيل الصوتي غير مدعوم في هذا المتصفح.':'Voice recording is not supported in this browser.');
       return;
@@ -67,7 +71,9 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
             for(let i=0;i<event.results.length;i++)text+=String(event.results[i][0]?.transcript||'')+' ';
             speechTextRef.current=text.trim();
           };
-          recognition.onerror=()=>{};
+          speechDoneRef.current=new Promise<void>(resolve=>{speechDoneResolveRef.current=resolve});
+          recognition.onend=()=>{speechDoneResolveRef.current?.();speechDoneResolveRef.current=null};
+          recognition.onerror=()=>{speechDoneResolveRef.current?.();speechDoneResolveRef.current=null};
           recognition.start();
           speechRef.current=recognition;
         }catch{}
@@ -76,6 +82,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
       recorder.onstop=async()=>{
         const blob=new Blob(chunksRef.current,{type:recorder.mimeType||'audio/webm'});
         const cancelled=cancelRef.current;
+        if(!cancelled&&speechDoneRef.current){await Promise.race([speechDoneRef.current,new Promise<void>(resolve=>setTimeout(resolve,700))])}
         const browserText=speechTextRef.current.trim();
         cleanup();
         setRecording(false);
