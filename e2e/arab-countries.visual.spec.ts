@@ -476,6 +476,7 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
   await page.addInitScript(()=>{
     localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
     class FakeRecorder{
+      static isTypeSupported(){return true}
       state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
       constructor(_stream:any){}
       start(){this.state='recording'}
