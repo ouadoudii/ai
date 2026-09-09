@@ -101,7 +101,7 @@ test('language switch translates the complete capture and food flow both ways',a
   await expect(dialog.getByText('ما اللحظة التي تريد تسجيلها؟')).toBeVisible();
   await expect(dialog.getByRole('button',{name:/صورة/})).toBeVisible();
   await expect(dialog.getByRole('button',{name:/احكِ لي/})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/اختيار سريع/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/اختيار سريع/})).toHaveCount(0);
 
   await dialog.getByRole('button',{name:'English',exact:true}).click();
   await expect(page.locator('html')).toHaveAttribute('lang','en');
@@ -110,7 +110,7 @@ test('language switch translates the complete capture and food flow both ways',a
   await expect(dialog.getByText('What would you like to capture?')).toBeVisible();
   await expect(dialog.getByRole('button',{name:/Photo/})).toBeVisible();
   await expect(dialog.getByRole('button',{name:/Tell me/})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/Quick check/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/Quick check/})).toHaveCount(0);
   await expect(dialog.getByText('Coffee',{exact:true})).toBeVisible();
   await expect(dialog.getByText('قهوة',{exact:true})).toHaveCount(0);
   await expect(dialog.getByText(/اختر الأسهل|لحظة سريعة|ما اللحظة/)).toHaveCount(0);
@@ -138,6 +138,26 @@ test('language switch translates the complete capture and food flow both ways',a
   await expect(page.getByRole('button',{name:/حفظ الوجبة/})).toBeVisible();
   await expect(page.getByText(/What did you have|Save meal|Choose by picture/)).toHaveCount(0);
   await page.screenshot({path:testInfo.outputPath('language-switch-03-arabic-food.png'),fullPage:true});
+});
+
+
+test('Add menu keeps only photo and voice, with working back navigation',async({page})=>{
+  await page.addInitScript(()=>{localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true')});
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  const dialog=page.getByRole('dialog');
+  await expect(dialog.getByRole('button',{name:/Photo/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/Tell me/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/Quick check/})).toHaveCount(0);
+  await dialog.getByRole('button',{name:/Photo/}).click();
+  await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
+  await page.getByRole('button',{name:'Back'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/Tell me/})).toBeVisible();
+  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
+  await expect(page.getByRole('heading',{name:/Tell me what you had/})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
+  await page.getByRole('button',{name:'Back'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
 });
 
 test('English switch changes the real capture UI to LTR',async({page},testInfo)=>{
