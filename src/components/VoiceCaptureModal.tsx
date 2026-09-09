@@ -26,6 +26,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
   const speechTextRef=React.useRef('');
   const speechDoneRef=React.useRef<Promise<void>|null>(null);
   const speechDoneResolveRef=React.useRef<(()=>void)|null>(null);
+  const finalSegmentsRef=React.useRef<Map<number,string>>(new Map());
 
   const cleanup=React.useCallback(()=>{
     streamRef.current?.getTracks().forEach(track=>track.stop());
@@ -51,6 +52,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
     speechTextRef.current='';
     speechDoneRef.current=null;
     speechDoneResolveRef.current=null;
+    finalSegmentsRef.current.clear();
 
     const SpeechRecognitionCtor=(window as any).webkitSpeechRecognition||(window as any).SpeechRecognition;
     if(SpeechRecognitionCtor){
@@ -62,9 +64,17 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
         recognition.continuous=true;
         recognition.onresult=(event:any)=>{
           setDiagnostic(ar?'تم استلام كلام من المتصفح':'Browser speech result received');
-          let text='';
-          for(let i=0;i<event.results.length;i++)text+=String(event.results[i][0]?.transcript||'')+' ';
-          speechTextRef.current=text.trim();
+          let interim='';
+          const startIndex=Number.isFinite(event.resultIndex)?event.resultIndex:0;
+          for(let i=startIndex;i<event.results.length;i++){
+            const result=event.results[i];
+            const segment=String(result?.[0]?.transcript||'').trim();
+            if(!segment)continue;
+            if(result?.isFinal===false)interim=segment;
+            else finalSegmentsRef.current.set(i,segment);
+          }
+          const finals=[...finalSegmentsRef.current.entries()].sort((a,b)=>a[0]-b[0]).map(([,text])=>text);
+          speechTextRef.current=[...finals,interim].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
         };
         speechDoneRef.current=new Promise<void>(resolve=>{speechDoneResolveRef.current=resolve});
         recognition.onend=()=>{
