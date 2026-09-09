@@ -482,7 +482,7 @@ test('Voice capture starts, stops, transcribes and prefills the meal editor',asy
   await expect(page.getByRole('button',{name:'Stop recording'})).toBeVisible();
   await page.getByRole('button',{name:'Stop recording'}).click();
   await expect(page.getByTestId('voice-understanding-card')).toContainText('boiled eggs');
-  await expect(page.getByText('boiled eggs',{exact:true})).toBeVisible();
+  await expect(page.getByText('boiled eggs',{exact:true}).last()).toBeVisible();
   await expect(page.locator('input[value="boiled eggs"]')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
 });
