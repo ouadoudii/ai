@@ -1,4 +1,4 @@
-import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0';
+import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1';
 
 const FOOD_LABELS=[
   'boiled eggs','fried eggs','omelette','eggs with tomato','chicken tagine','beef tagine with prunes',
@@ -11,10 +11,10 @@ let transcriber=null;
 
 async function loadPipeline(task,model){
   const device=self.navigator?.gpu?'webgpu':'wasm';
-  try{return await pipeline(task,model,{device,progress_callback:p=>self.postMessage({type:'status',status:p?.status||'loading',file:p?.file||''})})}
+  try{return await pipeline(task,model,{device,dtype:'q8',progress_callback:p=>self.postMessage({type:'status',status:p?.status||'loading',file:p?.file||''})})}
   catch(err){
     if(device==='wasm')throw err;
-    return await pipeline(task,model,{device:'wasm',progress_callback:p=>self.postMessage({type:'status',status:p?.status||'loading',file:p?.file||''})});
+    return await pipeline(task,model,{device:'wasm',dtype:'q8',progress_callback:p=>self.postMessage({type:'status',status:p?.status||'loading',file:p?.file||''})});
   }
 }
 
