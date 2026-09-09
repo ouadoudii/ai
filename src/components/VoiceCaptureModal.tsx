@@ -52,7 +52,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
     speechDoneRef.current=null;
     speechDoneResolveRef.current=null;
 
-    const SpeechRecognitionCtor=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
+    const SpeechRecognitionCtor=(window as any).webkitSpeechRecognition||(window as any).SpeechRecognition;
     if(SpeechRecognitionCtor){
       setDiagnostic(ar?'المسار: تعرف صوت المتصفح (ar-MA)':'Path: browser speech recognition');
       try{
