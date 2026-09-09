@@ -56,7 +56,8 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
     finalSegmentsRef.current.clear();
 
     const SpeechRecognitionCtor=(window as any).webkitSpeechRecognition||(window as any).SpeechRecognition;
-    if(SpeechRecognitionCtor){
+    const preferLocalWhisper=ar;
+    if(SpeechRecognitionCtor&&!preferLocalWhisper){
       setDiagnostic(ar?'المسار: تعرف صوت المتصفح (ar-MA)':'Path: browser speech recognition');
       try{
         const recognition=new SpeechRecognitionCtor();
@@ -104,7 +105,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
       }catch{}
     }
 
-    setDiagnostic(ar?'المسار: Whisper محلي':'Path: local Whisper fallback');
+    setDiagnostic(ar?'المسار: Whisper محلي للعربية':'Path: local Whisper fallback');
     if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError(ar?'التسجيل الصوتي غير مدعوم في هذا المتصفح.':'Voice recording is not supported in this browser.');
       return;
