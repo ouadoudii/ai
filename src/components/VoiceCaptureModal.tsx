@@ -21,11 +21,15 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
   const streamRef=React.useRef<MediaStream|null>(null);
   const chunksRef=React.useRef<Blob[]>([]);
   const cancelRef=React.useRef(false);
+  const speechRef=React.useRef<any>(null);
+  const speechTextRef=React.useRef('');
 
   const cleanup=React.useCallback(()=>{
     streamRef.current?.getTracks().forEach(track=>track.stop());
     streamRef.current=null;
     recorderRef.current=null;
+    try{speechRef.current?.stop?.()}catch{}
+    speechRef.current=null;
   },[]);
 
   React.useEffect(()=>()=>cleanup(),[cleanup]);
@@ -40,6 +44,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
   const start=async()=>{
     setError('');
     cancelRef.current=false;
+    speechTextRef.current='';
     if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError(ar?'التسجيل الصوتي غير مدعوم في هذا المتصفح.':'Voice recording is not supported in this browser.');
       return;
@@ -50,13 +55,36 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
       chunksRef.current=[];
       const recorder=new MediaRecorder(stream);
       recorderRef.current=recorder;
+      const SpeechRecognitionCtor=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
+      if(SpeechRecognitionCtor){
+        try{
+          const recognition=new SpeechRecognitionCtor();
+          recognition.lang=ar?'ar-MA':'en-US';
+          recognition.interimResults=true;
+          recognition.continuous=true;
+          recognition.onresult=(event:any)=>{
+            let text='';
+            for(let i=0;i<event.results.length;i++)text+=String(event.results[i][0]?.transcript||'')+' ';
+            speechTextRef.current=text.trim();
+          };
+          recognition.onerror=()=>{};
+          recognition.start();
+          speechRef.current=recognition;
+        }catch{}
+      }
       recorder.ondataavailable=e=>{if(e.data.size)chunksRef.current.push(e.data)};
       recorder.onstop=async()=>{
         const blob=new Blob(chunksRef.current,{type:recorder.mimeType||'audio/webm'});
         const cancelled=cancelRef.current;
+        const browserText=speechTextRef.current.trim();
         cleanup();
         setRecording(false);
-        if(cancelled||!blob.size)return;
+        if(cancelled)return;
+        if(browserText){
+          onTranscript(browserText);
+          return;
+        }
+        if(!blob.size)return;
         setProcessing(true);
         try{
           const text=await transcribeAudio(blob,language);
@@ -75,6 +103,7 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
   };
 
   const stop=()=>{
+    try{speechRef.current?.stop?.()}catch{}
     if(recorderRef.current?.state==='recording')recorderRef.current.stop();
   };
 
