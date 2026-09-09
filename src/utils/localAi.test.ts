@@ -121,7 +121,7 @@ describe('local browser AI client',()=>{
 
   it('fails clearly when the browser cannot decode recorded audio',async()=>{
     class BrokenAudioContext extends FakeAudioContext{
-      async decodeAudioData(){throw new Error('decode failed')}
+      async decodeAudioData(_data:ArrayBuffer):Promise<AudioBuffer>{throw new Error('decode failed')}
     }
     vi.stubGlobal('window',{AudioContext:BrokenAudioContext});
     vi.resetModules();
