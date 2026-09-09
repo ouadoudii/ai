@@ -313,6 +313,10 @@ test('daily check-in meal picker recognizes Moroccan Arabic foods',async({page})
   const checkin=page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/}).first();
   await checkin.click();
   const input=page.getByPlaceholder('ماذا أكلت؟ ابحث أو اكتب…');
+  if(!await input.isVisible().catch(()=>false)){
+    await page.getByRole('button',{name:/خطوة أخيرة/}).click();
+  }
+  await expect(input).toBeVisible();
   const cases=['بيض','بيض ومطيشة','حريرة','طاجين','رفيسة','بسطيلة','بيصارة','زعلوك','تكتوكة'];
   for(const typed of cases){
     await input.fill(typed);
