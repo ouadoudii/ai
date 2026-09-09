@@ -28,7 +28,14 @@ jobs:
         run: npm run quality:deploy
 
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: |
+          # GitHub's Ubuntu image can include Google's Chrome apt source.
+          # Playwright does not need that repository, and transient metadata
+          # mismatches there must not block our browser quality gate.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/google-chrome.sources
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          npx playwright install --with-deps chromium
 
       - name: Real-browser Arabic visual journeys
         run: npm run test:visual
