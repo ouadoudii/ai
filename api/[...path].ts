@@ -186,6 +186,24 @@ Wenn keine Mahlzeit erwähnt wird, lasse mealItems leer bzw. mealTitle leer. For
     });
 
     const parsed = JSON.parse(response.text || '{}');
+    const extracted = parsed.extractedData && typeof parsed.extractedData === 'object' ? parsed.extractedData : {};
+    let mealItems = Array.isArray(extracted.mealItems)
+      ? extracted.mealItems.map((v:any)=>cleanText(v,120)).filter(Boolean)
+      : [];
+    // Gemini occasionally returns a useful mealTitle but an empty mealItems array.
+    // Preserve semantic extraction by splitting a concise title rather than falsely
+    // telling the user that a clearly understood food message was not understood.
+    if (!mealItems.length && typeof extracted.mealTitle === 'string' && extracted.mealTitle.trim()) {
+      mealItems = extracted.mealTitle.split(/[·،,;+]/).map((v:string)=>cleanText(v,120)).filter(Boolean);
+    }
+    const normalizedExtracted = {
+      ...extracted,
+      mealDetected: mealItems.length > 0 || extracted.mealDetected === true,
+      mealItems,
+      mealTitle: cleanText(extracted.mealTitle,240) || mealItems.join(' · '),
+      mealCategory: cleanText(extracted.mealCategory,32),
+      mealContext: cleanText(extracted.mealContext,500),
+    };
     return res.json({
       coachFeedback: {
         title: String(parsed.coachTitle || 'Danke für dein Teilen! 💚').slice(0, 160),
@@ -194,7 +212,7 @@ Wenn keine Mahlzeit erwähnt wird, lasse mealItems leer bzw. mealTitle leer. For
         habitScore: Math.min(100, Math.max(0, Number(parsed.habitScore) || 88)),
         type: 'praise',
       },
-      extractedData: parsed.extractedData && typeof parsed.extractedData === 'object' ? parsed.extractedData : {},
+      extractedData: normalizedExtracted,
     });
   } catch (error) {
     console.error('Error in /api/voice-checkin:', error);
