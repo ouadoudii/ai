@@ -482,7 +482,7 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
       start(){this.state='recording'}
       stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'])});this.onstop?.()}
     }
-    window.MediaRecorder=FakeRecorder;
+    (window as unknown as {MediaRecorder:unknown}).MediaRecorder=FakeRecorder;
     Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
   });
   await page.goto('/');
