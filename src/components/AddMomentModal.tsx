@@ -14,13 +14,13 @@ import { getFoodVisuals, localizeFoodVisualName, type FoodVisual } from '../util
 import { useLanguage } from '../i18n';
 import { getAvailableMealCategories } from '../utils/phaseAvailability';
 
-interface AddMomentModalProps { isOpen:boolean; onClose:()=>void; onSave:(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>void; editingMoment?:FoodMoment|null; initialCategory?:MomentCategory|null; }
+interface AddMomentModalProps { isOpen:boolean; onClose:()=>void; onSave:(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>void; editingMoment?:FoodMoment|null; initialCategory?:MomentCategory|null; completedMealCategories?:Set<MomentCategory>; }
 const categories:MomentCategory[]=['breakfast','lunch','dinner','snack','coffee','dessert'];
 const enLabels:Record<MomentCategory,string>={breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',snack:'Snack',coffee:'Coffee',dessert:'Dessert',drinks:'Drinks',travel:'Travel'};
 const arLabels:Record<MomentCategory,string>={breakfast:'الفطور',lunch:'الغداء',dinner:'العشاء',snack:'وجبة خفيفة',coffee:'قهوة',dessert:'حلويات',drinks:'مشروبات',travel:'سفر'};
 const categoryForHour=(hour:number):MomentCategory=>hour<11?'breakfast':hour<15?'lunch':hour<18?'snack':'dinner';
-export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSave,editingMoment,initialCategory})=>{
-  const {language}=useLanguage(); const ar=language==='ar'; const labels=ar?arLabels:enLabels; const hour=new Date().getHours(); const visibleCategories=getAvailableMealCategories(hour,categories);
+export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onSave,editingMoment,initialCategory,completedMealCategories=new Set()})=>{
+  const {language}=useLanguage(); const ar=language==='ar'; const labels=ar?arLabels:enLabels; const hour=new Date().getHours(); const visibleCategories=getAvailableMealCategories(hour,categories).filter(item=>editingMoment||initialCategory===item||!completedMealCategories.has(item));
   const [category,setCategory]=React.useState<MomentCategory>('lunch');
   const [imageUrl,setImageUrl]=React.useState('');
   const [title,setTitle]=React.useState('');
