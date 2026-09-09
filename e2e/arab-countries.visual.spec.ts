@@ -541,3 +541,61 @@ test('Voice uses browser Arabic speech recognition before Whisper fallback',asyn
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
   await expect(page.locator('input[value="كليت بيض مسلوق"]')).toBeVisible();
 });
+
+
+test('Voice diagnostics reveal browser recognition path and errors',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    class FakeSpeechRecognition{
+      lang='';interimResults=false;continuous=false;onresult:any=null;onerror:any=null;onend:any=null;
+      start(){setTimeout(()=>this.onerror?.({error:'no-speech'}),20)}
+      stop(){this.onend?.()}
+    }
+    (window as any).webkitSpeechRecognition=FakeSpeechRecognition;
+  });
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
+  await expect(page.getByTestId('voice-diagnostic')).toContainText('ar-MA');
+  await expect(page.getByTestId('voice-diagnostic')).toContainText('no-speech');
+});
+
+test('Voice diagnostics reveal local Whisper fallback when browser speech API is missing',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','en');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    delete (window as any).SpeechRecognition;
+    delete (window as any).webkitSpeechRecognition;
+    class FakeRecorder{
+      static isTypeSupported(){return true}
+      state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
+      constructor(_stream:any){}
+      start(){this.state='recording'}
+      stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'],{type:'audio/webm'})});this.onstop?.()}
+    }
+    (window as any).MediaRecorder=FakeRecorder;
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
+    class FakeAudioContext{
+      async decodeAudioData(){return {numberOfChannels:1,length:1600,sampleRate:16000,getChannelData:()=>new Float32Array(1600).fill(.2)}}
+      async close(){}
+    }
+    (window as any).AudioContext=FakeAudioContext;
+    class FakeWorker{
+      onmessage:any=null;
+      postMessage(message:any){if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{id:message.id,type:'result',text:'coffee'}}),20)}
+      terminate(){}
+    }
+    (window as any).Worker=FakeWorker;
+  });
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
+  await page.getByRole('button',{name:'Start recording'}).click();
+  await expect(page.getByTestId('voice-diagnostic')).toContainText('local Whisper fallback');
+});
