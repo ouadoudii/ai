@@ -468,7 +468,7 @@ test('Voice capture starts, stops, transcribes and prefills the meal editor',asy
   await page.getByRole('button',{name:'Start recording'}).click();
   await expect(page.getByRole('button',{name:'Stop recording'})).toBeVisible();
   await page.getByRole('button',{name:'Stop recording'}).click();
-  await expect(page.locator('input').filter({has:page.locator('xpath=..')}).getByDisplayValue?.('boiled eggs') ?? page.locator('input[value="boiled eggs"]')).toBeVisible();
+  await expect(page.locator('input[value="boiled eggs"]')).toBeVisible();
   await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
 });
 
