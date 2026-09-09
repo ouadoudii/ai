@@ -49,6 +49,45 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
     speechTextRef.current='';
     speechDoneRef.current=null;
     speechDoneResolveRef.current=null;
+
+    const SpeechRecognitionCtor=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
+    if(SpeechRecognitionCtor){
+      try{
+        const recognition=new SpeechRecognitionCtor();
+        recognition.lang=ar?'ar-MA':'en-US';
+        recognition.interimResults=true;
+        recognition.continuous=true;
+        recognition.onresult=(event:any)=>{
+          let text='';
+          for(let i=0;i<event.results.length;i++)text+=String(event.results[i][0]?.transcript||'')+' ';
+          speechTextRef.current=text.trim();
+        };
+        speechDoneRef.current=new Promise<void>(resolve=>{speechDoneResolveRef.current=resolve});
+        recognition.onend=()=>{
+          speechDoneResolveRef.current?.();
+          speechDoneResolveRef.current=null;
+          if(cancelRef.current)return;
+          const text=speechTextRef.current.trim();
+          setRecording(false);
+          if(text)onTranscript(text);
+          else setError(ar?'لم نفهم الكلام. جرّب مرة أخرى وتكلم بوضوح.':'We could not understand that. Try again and speak clearly.');
+        };
+        recognition.onerror=(event:any)=>{
+          speechDoneResolveRef.current?.();
+          speechDoneResolveRef.current=null;
+          setRecording(false);
+          if(cancelRef.current)return;
+          const code=String(event?.error||'');
+          if(code==='not-allowed'||code==='service-not-allowed')setError(ar?'نحتاج إذن الميكروفون للتسجيل.':'Microphone permission is needed to record.');
+          else setError(ar?'تعذر التعرف على الكلام. جرّب مرة أخرى.':'Speech recognition failed. Try again.');
+        };
+        recognition.start();
+        speechRef.current=recognition;
+        setRecording(true);
+        return;
+      }catch{}
+    }
+
     if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError(ar?'التسجيل الصوتي غير مدعوم في هذا المتصفح.':'Voice recording is not supported in this browser.');
       return;
@@ -59,39 +98,13 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
       chunksRef.current=[];
       const recorder=new MediaRecorder(stream);
       recorderRef.current=recorder;
-      const SpeechRecognitionCtor=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
-      if(SpeechRecognitionCtor){
-        try{
-          const recognition=new SpeechRecognitionCtor();
-          recognition.lang=ar?'ar-MA':'en-US';
-          recognition.interimResults=true;
-          recognition.continuous=true;
-          recognition.onresult=(event:any)=>{
-            let text='';
-            for(let i=0;i<event.results.length;i++)text+=String(event.results[i][0]?.transcript||'')+' ';
-            speechTextRef.current=text.trim();
-          };
-          speechDoneRef.current=new Promise<void>(resolve=>{speechDoneResolveRef.current=resolve});
-          recognition.onend=()=>{speechDoneResolveRef.current?.();speechDoneResolveRef.current=null};
-          recognition.onerror=()=>{speechDoneResolveRef.current?.();speechDoneResolveRef.current=null};
-          recognition.start();
-          speechRef.current=recognition;
-        }catch{}
-      }
       recorder.ondataavailable=e=>{if(e.data.size)chunksRef.current.push(e.data)};
       recorder.onstop=async()=>{
         const blob=new Blob(chunksRef.current,{type:recorder.mimeType||'audio/webm'});
         const cancelled=cancelRef.current;
-        if(!cancelled&&speechDoneRef.current){await Promise.race([speechDoneRef.current,new Promise<void>(resolve=>setTimeout(resolve,700))])}
-        const browserText=speechTextRef.current.trim();
         cleanup();
         setRecording(false);
-        if(cancelled)return;
-        if(browserText){
-          onTranscript(browserText);
-          return;
-        }
-        if(!blob.size)return;
+        if(cancelled||!blob.size)return;
         setProcessing(true);
         try{
           const text=await transcribeAudio(blob,language);
@@ -108,9 +121,11 @@ export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscr
       setError(ar?'نحتاج إذن الميكروفون للتسجيل.':'Microphone permission is needed to record.');
     }
   };
-
   const stop=()=>{
-    try{speechRef.current?.stop?.()}catch{}
+    if(speechRef.current){
+      try{speechRef.current.stop()}catch{}
+      return;
+    }
     if(recorderRef.current?.state==='recording')recorderRef.current.stop();
   };
 
