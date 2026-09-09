@@ -8,6 +8,7 @@ dotenv.config();
 const app = express();
 app.disable('x-powered-by');
 app.use(applyApiSecurityHeaders);
+app.use('/api/transcribe-audio', express.raw({ type: ['audio/*','application/octet-stream'], limit: '20mb' }));
 app.use(express.json({ limit: '256kb', strict: true }));
 app.use('/api', rateLimit);
 
@@ -75,6 +76,37 @@ Never add health claims, calories, brands, commentary, instructions, or personal
   } catch (error) {
     console.warn('Food autocomplete unavailable');
     return res.json({ suggestions: [] });
+  }
+});
+
+app.post('/api/transcribe-audio', async (req, res) => {
+  try {
+    const apiKey=process.env.GROQ_API_KEY;
+    if(!apiKey)return res.status(503).json({error:'Server transcription is not configured'});
+    const audio=Buffer.isBuffer(req.body)?req.body:Buffer.alloc(0);
+    if(!audio.length)return publicError(res,400,'Missing audio');
+    const contentType=String(req.headers['content-type']||'audio/webm').split(';')[0];
+    const ext=contentType.includes('ogg')?'ogg':contentType.includes('wav')?'wav':contentType.includes('mp4')?'m4a':'webm';
+    const form=new FormData();
+    form.append('file',new Blob([audio],{type:contentType}),`voice.${ext}`);
+    form.append('model','whisper-large-v3-turbo');
+    form.append('language','ar');
+    form.append('response_format','json');
+    form.append('temperature','0');
+    form.append('prompt','تفريغ حرفي للكلام العربي كما قيل. قد تكون اللهجة مغربية أو جزائرية أو تونسية أو ليبية أو مصرية أو سودانية أو شامية أو عراقية أو خليجية أو يمنية، وقد تتضمن أسماء أطعمة ومشروبات وكلمات فرنسية أو إنجليزية. لا تترجم ولا تعيد الصياغة.');
+    const upstream=await fetch('https://api.groq.com/openai/v1/audio/transcriptions',{
+      method:'POST',headers:{Authorization:`Bearer ${apiKey}`},body:form
+    });
+    if(!upstream.ok){
+      console.warn('Server transcription unavailable',upstream.status);
+      return res.status(upstream.status===429?429:502).json({error:'Server transcription unavailable'});
+    }
+    const data=await upstream.json() as {text?:unknown};
+    const text=cleanText(data?.text,LIMITS.transcript);
+    if(!text)return res.status(502).json({error:'Empty transcription'});
+    return res.json({text,engine:'whisper-large-v3-turbo'});
+  }catch{
+    return res.status(502).json({error:'Server transcription unavailable'});
   }
 });
 
