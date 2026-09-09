@@ -498,3 +498,47 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
   await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
   await expect(page.getByRole('heading',{name:'What did you have?'})).toHaveCount(0);
 });
+
+
+test('Voice uses browser Arabic speech recognition before Whisper fallback',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+
+    class FakeRecorder{
+      static isTypeSupported(){return true}
+      state='inactive';mimeType='audio/webm';ondataavailable=null;onstop=null;
+      constructor(_stream:any){}
+      start(){this.state='recording'}
+      stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'],{type:'audio/webm'})});this.onstop?.()}
+    }
+    (window as any).MediaRecorder=FakeRecorder;
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
+
+    class FakeSpeechRecognition{
+      lang='';interimResults=false;continuous=false;onresult:any=null;onerror:any=null;
+      start(){
+        setTimeout(()=>this.onresult?.({results:[[{transcript:'كليت بيض مسلوق'}]]}),0);
+      }
+      stop(){}
+    }
+    (window as any).webkitSpeechRecognition=FakeSpeechRecognition;
+
+    class FailIfWhisperRuns{
+      onmessage:any=null;
+      postMessage(){throw new Error('Whisper fallback should not run when browser speech recognition succeeds')}
+      terminate(){}
+    }
+    (window as any).Worker=FailIfWhisperRuns;
+  });
+
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
+  await page.waitForTimeout(20);
+  await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
+  await expect(page.locator('input[value="كليت بيض مسلوق"]')).toBeVisible();
+});
