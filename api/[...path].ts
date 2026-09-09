@@ -1,7 +1,7 @@
 import express from 'express';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
-import { LIMITS, applyApiSecurityHeaders, cleanText, publicError, rateLimit, safeArray } from './security';
+import { LIMITS, applyApiSecurityHeaders, cleanText, publicError, rateLimit, safeArray } from './security.js';
 
 dotenv.config();
 
