@@ -17,7 +17,7 @@ beforeAll(()=>{
 afterAll(()=>{(globalThis as any).localStorage=oldStorage});
 
 const noop=()=>{};
-const today=getLocalDateKey();
+const today='2026-09-08';
 
 function check(phase:TimeOfDayPhase,index:number):DailyCheckIn{
   return {id:`user-${phase}-${index}`,date:today,time:phase==='morning'?'08:00':phase==='midday'?'13:00':'21:30',timeOfDay:phase,wellbeing:{energyLevel:3,mood:'satisfied',stressLevel:2},createdAt:Date.now()+index};
