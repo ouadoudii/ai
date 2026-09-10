@@ -36,6 +36,26 @@ describe('buildVoiceJournalEntries', () => {
     expect(midday?.food).toMatchObject({ mealTitle:'كسكس بالخضرة', category:'lunch', hungerBefore:4 });
   });
 
+  it('merges multiple primary meal fragments assigned to the same day slot instead of losing earlier foods', () => {
+    const result = buildVoiceJournalEntries({
+      coachFeedback: feedback,
+      extractedData: { meals:[
+        { category:'breakfast', timeOfDay:'morning', time:'08:10', mealTitle:'بيض مسلوق', mealItems:['بيض مسلوق'], hungerBefore:4, fullnessAfter:0 },
+        { category:'breakfast', timeOfDay:'morning', time:'08:10', mealTitle:'خبز وزيت الزيتون', mealItems:['خبز','زيت الزيتون'], hungerBefore:0, fullnessAfter:3 },
+      ], wellbeingEntries:[] },
+    }, 'فطرت بيض مسلوق وخبز وزيت الزيتون', 'ar', new Date('2026-09-10T09:00:00'));
+
+    expect(result.moments).toHaveLength(2);
+    expect(result.checkIns).toHaveLength(1);
+    expect(result.checkIns[0]).toMatchObject({ timeOfDay:'morning', time:'08:10' });
+    expect(result.checkIns[0].food).toMatchObject({
+      category:'breakfast',
+      mealTitle:'بيض مسلوق · خبز وزيت الزيتون',
+      hungerBefore:4,
+      fullnessAfter:3,
+    });
+  });
+
   it('deduplicates identical meals returned twice by semantic extraction', () => {
     const duplicate = { category:'breakfast', timeOfDay:'morning', time:'08:15', mealTitle:'أومليت بالجبن', mealItems:['أومليت بالجبن'], hungerBefore:3, fullnessAfter:4 };
     const result = buildVoiceJournalEntries({
