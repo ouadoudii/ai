@@ -44,17 +44,17 @@ export interface CoachFeedback {
 export interface FoodMoment {
   id: string;
   title: string;
-  label: string; // The core moment.label (e.g. "Frühstück", "Mittagessen", etc.)
+  label: string;
   category: MomentCategory;
-  date: string; // YYYY-MM-DD
-  time: string; // HH:MM
+  date: string;
+  time: string;
   location: string;
   locationCategory: 'home' | 'restaurant' | 'cafe' | 'travel' | 'takeaway';
   imageUrl: string;
-  rating: number; // 1-5
+  rating: number;
   mood: FoodMood;
-  hungerLevel?: number; // 1-5 (1: hardly hungry, 5: ravenous)
-  fullnessLevel?: number; // 1-5 (1: still hungry, 3: comfortable, 5: overstuffed)
+  hungerLevel?: number;
+  fullnessLevel?: number;
   eatingPace?: EatingPace;
   distraction?: DistractionLevel;
   energyAfter?: EnergyLevelAfter;
@@ -62,19 +62,13 @@ export interface FoodMoment {
   notes?: string;
   tags: string[];
   isFavorite?: boolean;
-  nutrition?: {
-    calories?: number;
-    protein?: number;
-    carbs?: number;
-    fat?: number;
-  };
+  nutrition?: { calories?: number; protein?: number; carbs?: number; fat?: number; };
   price?: string;
-  companions?: string; // With who
+  companions?: string;
   createdAt: number;
 }
 
 export type ActiveTab = 'today' | 'coach' | 'type_analysis' | 'timeline' | 'calendar' | 'stats' | 'favorites';
-
 export type TimeOfDayPhase = 'morning' | 'midday' | 'evening';
 
 export interface DailyCheckIn {
@@ -83,22 +77,22 @@ export interface DailyCheckIn {
   time: string;
   timeOfDay: TimeOfDayPhase;
   sleep?: {
-    durationHours: number;
-    quality: number; // 1-5
-    wakeFeeling: 'refreshed' | 'normal' | 'tired' | 'exhausted';
+    durationHours?: number;
+    quality?: number;
+    wakeFeeling?: 'refreshed' | 'normal' | 'tired' | 'exhausted';
   };
   food?: {
     mealTitle: string;
     category: MomentCategory;
-    hungerBefore: number; // 1-5
-    fullnessAfter: number; // 1-5
-    eatingPace: EatingPace;
-    distraction: DistractionLevel;
+    hungerBefore?: number;
+    fullnessAfter?: number;
+    eatingPace?: EatingPace;
+    distraction?: DistractionLevel;
   };
   wellbeing: {
-    energyLevel: number; // 1-5
-    mood: FoodMood;
-    stressLevel: number; // 1-5
+    energyLevel?: number;
+    mood?: FoodMood;
+    stressLevel?: number;
     waterGlasses?: number;
     note?: string;
     voiceTranscription?: string;
@@ -121,18 +115,12 @@ export interface NutritionTypeProfile {
   typeName: string;
   subtitle: string;
   badge: string;
-  confidenceScore: number; // 0-100%
+  confidenceScore: number;
   unlocked: boolean;
   dataPointsNeeded: number;
   dataPointsCurrent: number;
   description: string;
-  traits: {
-    name: string;
-    score: number;
-    max: number;
-    label: string;
-    color: string;
-  }[];
+  traits: { name: string; score: number; max: number; label: string; color: string; }[];
   dos: string[];
   donts: string[];
   recommendedFocus: string;
@@ -149,7 +137,6 @@ export interface CoachingGoal {
   unit: string;
   category: 'mindful' | 'nutrition' | 'habits';
   completed: boolean;
-  icon: string;
 }
 
 export interface CoachChatMessage {
@@ -169,4 +156,3 @@ export interface FilterState {
   minRating: number;
   selectedTag: string | 'all';
 }
-
