@@ -137,6 +137,7 @@ export interface CoachingGoal {
   unit: string;
   category: 'mindful' | 'nutrition' | 'habits';
   completed: boolean;
+  icon: string;
 }
 
 export interface CoachChatMessage {
