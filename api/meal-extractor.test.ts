@@ -37,6 +37,21 @@ describe('deterministic multilingual meal extraction', () => {
     expect(result.mealItems).toContain('أتاي بالنعناع');
   });
 
+  it.each([
+    ['فطرت بيض وخبز', 'breakfast'],
+    ['اتفطرت بيض وخبز', 'breakfast'],
+    ['تغديت كسكس وسلطة', 'lunch'],
+    ['اتغديت فراخ ورز', 'lunch'],
+    ['غديت طاجين وخبز', 'lunch'],
+    ['تعشيت شوربة وسلطة', 'dinner'],
+    ['اتعشيت سمك ورز', 'dinner'],
+    ['عشيت حريرة وخبز', 'dinner'],
+  ])('classifies Arabic dialect meal-time verb %s as %s', (speech, expected) => {
+    const result = extractMealItemsDeterministic(speech);
+    expect(result.mealDetected).toBe(true);
+    expect(result.mealCategory).toBe(expected);
+  });
+
   it('supports mixed Arabic, French and English', () => {
     const result = extractMealItemsDeterministic('تعشيت poulet grilled مع salade وشربت coffee au lait');
     expect(result.mealItems).toContain('دجاج مشوي');
@@ -47,6 +62,7 @@ describe('deterministic multilingual meal extraction', () => {
   it('supports Egyptian and Levantine vocabulary', () => {
     const egypt = extractMealItemsDeterministic('اتغديت فراخ مشوية ورز وسلطة');
     expect(egypt.mealItems).toEqual(expect.arrayContaining(['دجاج مشوي', 'أرز', 'سلطة']));
+    expect(egypt.mealCategory).toBe('lunch');
     const levant = extractMealItemsDeterministic('اكلت حمص وخبز وشربت شاي');
     expect(levant.mealItems).toEqual(expect.arrayContaining(['حمص', 'خبز', 'شاي']));
   });
