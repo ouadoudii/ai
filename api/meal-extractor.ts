@@ -21,7 +21,7 @@ const FOOD_RULES: FoodRule[] = [
   ] },
   { aliases: ['المسمن','مسمن','msemen','msemmen'], label: 'مسمن', additions: [
     { aliases: ['بالعسل','مع العسل','au miel','with honey'], label: 'بالعسل' },
-    { aliases: ['بالجبن','مع الجبن','au fromage','with cheese'], label: 'بالجبن' },
+    { aliases: ['بالجبن','مع الجبن','بالفرماج','مع الفرماج','au fromage','with cheese'], label: 'بالجبن' },
   ] },
   { aliases: ['أتاي','اتاي','atay'], label: 'أتاي', additions: [
     { aliases: ['بالنعناع','نعناع','à la menthe','mint'], label: 'بالنعناع' },
@@ -34,7 +34,10 @@ const FOOD_RULES: FoodRule[] = [
     { aliases: ['بالحليب','مع الحليب','au lait','with milk','milk coffee'], label: 'بالحليب' },
     { aliases: ['بلا سكر','بدون سكر','sans sucre','no sugar'], label: 'بلا سكر' },
   ] },
-  { aliases: ['الخبز','خبز','khobz','bread','pain'], label: 'خبز' },
+  { aliases: ['الخبز','خبز','خبزة','الخبزة','خبيزة','الخبيزة','khobz','khobza','khbeza','khbiza','bread','pain'], label: 'خبز', additions: [
+    { aliases: ['بالجبن','مع الجبن','بالفرماج','مع الفرماج','فرماج','fromage','au fromage','with cheese','cheese'], label: 'بالجبن' },
+    { aliases: ['بزيت الزيتون','مع زيت الزيتون','زيت الزيتون','huile d olive','olive oil'], label: 'بزيت الزيتون' },
+  ] },
   { aliases: ['حريرة','الحريرة','harira'], label: 'حريرة' },
   { aliases: ['كسكس','كوسكوس','couscous'], label: 'كسكس' },
   { aliases: ['طاجين','تاجين','tajine','tagine'], label: 'طاجين' },
@@ -63,7 +66,7 @@ const FOOD_RULES: FoodRule[] = [
   { aliases: ['تفاح','تفاحة','apple','pomme'], label: 'تفاح' },
   { aliases: ['موز','موزة','banana','banane'], label: 'موز' },
   { aliases: ['برتقال','برتقالة','orange'], label: 'برتقال' },
-  { aliases: ['جبن','جبنة','fromage','cheese'], label: 'جبن' },
+  { aliases: ['جبن','جبنة','فرماج','fromage','cheese'], label: 'جبن' },
   { aliases: ['كرواسون','croissant'], label: 'كرواسون' },
   { aliases: ['ساندويتش','سندويتش','sandwich'], label: 'ساندويتش' },
   { aliases: ['بيتزا','pizza'], label: 'بيتزا' },
@@ -162,6 +165,9 @@ export function extractMealItemsDeterministic(transcript: string): MealExtractio
 
   if (items.some((item) => item === 'قهوة بالحليب' || item === 'شاي بالحليب')) {
     items = items.filter((item) => item !== 'حليب');
+  }
+  if (items.some((item) => item === 'خبز بالجبن')) {
+    items = items.filter((item) => item !== 'جبن');
   }
 
   return {
