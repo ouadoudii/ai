@@ -89,6 +89,11 @@ const NEGATIONS = [
   "je n'ai pas mangé","je n ai pas mange","je n'ai pas bu","je n ai pas bu",'pas mangé','pas mange','pas bu'
 ];
 
+const POSITIVE_CONSUMPTION_VERBS = [
+  'كليت','كلت','اكلت','أكلت','شربت','خديت','خدت','فطرت','تغديت','تعشيت',
+  'ate','drank','had','mange','mangé','bu'
+];
+
 function normalize(value: string): string {
   return value.toLowerCase().normalize('NFKD')
     .replace(/[\u064b-\u065f\u0670]/g, '').replace(/[أإآٱ]/g, 'ا')
@@ -123,12 +128,37 @@ function contextAround(normalized: string, alias: string, radius = 5): string {
   return words.slice(Math.max(0, index - radius), Math.min(words.length, index + width + radius)).join(' ');
 }
 
+function lastSequenceIndex(words: string[], phrase: string): number {
+  const parts = normalize(phrase).split(' ');
+  let last = -1;
+  for (let i = 0; i <= words.length - parts.length; i += 1) {
+    if (parts.every((part, offset) => words[i + offset] === part)) last = i;
+  }
+  return last;
+}
+
 function isNegated(normalized: string, alias: string): boolean {
   const words = normalized.split(' ');
   const index = findAliasIndex(normalized, alias);
   if (index < 0) return false;
-  const before = words.slice(Math.max(0, index - 5), index).join(' ');
-  return NEGATIONS.some((negation) => before.includes(normalize(negation)));
+
+  const before = words.slice(0, index);
+  let lastNegationStart = -1;
+  let lastNegationEnd = -1;
+  for (const negation of NEGATIONS) {
+    const start = lastSequenceIndex(before, negation);
+    if (start >= lastNegationStart) {
+      lastNegationStart = start;
+      lastNegationEnd = start < 0 ? -1 : start + normalize(negation).split(' ').length - 1;
+    }
+  }
+  if (lastNegationStart < 0) return false;
+
+  let lastPositiveVerb = -1;
+  for (let i = lastNegationEnd + 1; i < before.length; i += 1) {
+    if (POSITIVE_CONSUMPTION_VERBS.some((verb) => tokenMatches(before[i], normalize(verb)))) lastPositiveVerb = i;
+  }
+  return lastPositiveVerb < 0;
 }
 
 function quantityFor(normalized: string, alias: string): string | null {
