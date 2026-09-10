@@ -21,51 +21,14 @@ const ar: Record<string,string> = {
 'Chilaquiles':'تشيلاكيلس','Huevos rancheros':'بيض رانشيروس','Quesadilla':'كيساديا','Pozole':'بوزولي','Burrito':'بوريتو','Enchiladas':'إنشيلادا','Guacamole and tortilla chips':'غواكامولي مع رقائق التورتيلا',
 'Sauerteig Toast':'توست العجين المخمر','Sauerteig-Toast':'توست العجين المخمر','Avocado Sauerteig Toast':'توست العجين المخمر بالأفوكادو','Avocado-Sauerteig-Toast':'توست العجين المخمر بالأفوكادو','Neapolitanische Pizza':'بيتزا نابولية','Neapolitanische Pizza Margherita':'بيتزا مارغريتا النابولية'
 };
-
 function normalize(name:string):string{return normalizeFoodSearchText(name.replace(/[\u2026…]/g,''));}
 const normalizedAr=new Map(Object.entries(ar).map(([key,value])=>[normalize(key),value]));
 const normalizedEn=new Map(Object.entries(ar).map(([key,value])=>[normalize(value),key]));
 const latin=/[A-Za-zÀ-ÖØ-öø-ÿ]/;
 const categoryFallback:Record<MomentCategory,string>={breakfast:'وجبة فطور سابقة',lunch:'وجبة غداء سابقة',dinner:'وجبة عشاء سابقة',snack:'وجبة خفيفة سابقة',coffee:'مشروب سابق',dessert:'حلوى سابقة',drinks:'مشروب سابق',travel:'وجبة سابقة'};
-
-function inferLegacyArabic(name:string):string|null{
-  const n=normalize(name);
-  if((n.includes('neapolitan')||n.includes('napolitan'))&&n.includes('pizza'))return n.includes('margherita')?'بيتزا مارغريتا النابولية':'بيتزا نابولية';
-  if(n.includes('sauerteig')&&n.includes('toast'))return n.includes('avocado')||n.includes('avokado')?'توست العجين المخمر بالأفوكادو':'توست العجين المخمر';
-  if(n.includes('margherita')&&n.includes('pizza'))return 'بيتزا مارغريتا';
-  if(n.includes('pizza'))return 'بيتزا';
-  if(n.includes('toast'))return 'توست';
-  if(n.includes('couscous')||n.includes('cous cous'))return 'كسكس';
-  if(n.includes('tagine')||n.includes('tajine'))return 'طاجين';
-  if(n.includes('harira'))return 'حريرة';
-  return null;
-}
-
-export function localizeFoodName(name:string, language:AppLanguage):string {
-  if(language!=='ar')return name;
-  const alias=resolveArabFoodAlias(name);
-  return ar[name] || normalizedAr.get(normalize(name)) || alias?.canonicalAr || inferLegacyArabic(name) || name;
-}
-
-export function localizeStoredFoodName(name:string, category:MomentCategory, language:AppLanguage):string {
-  if(language==='en'){
-    const alias=resolveArabFoodAlias(name);
-    const translated=normalizedEn.get(normalize(name)) || alias?.canonicalEn;
-    if(translated)return translated;
-    if(/[\u0600-\u06FF]/.test(name)){
-      const fallback:Record<MomentCategory,string>={breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',snack:'Snack',coffee:'Coffee',dessert:'Dessert',drinks:'Drink',travel:'Meal'};
-      return fallback[category];
-    }
-    return name;
-  }
-  const localized=localizeFoodName(name,'ar');
-  return latin.test(localized) ? categoryFallback[category] : localized;
-}
-
-export function localizeFoodSuggestions(items:FoodSuggestion[], language:AppLanguage, query=''):FoodSuggestion[] {
-  const q=query.trim();
-  return items.map(item=>({...item,name:localizeFoodName(item.name,language)})).filter(item=>!q||foodSearchMatches(item.name,q));
-}
-
+function inferLegacyArabic(name:string):string|null{const n=normalize(name);if((n.includes('neapolitan')||n.includes('napolitan'))&&n.includes('pizza'))return n.includes('margherita')?'بيتزا مارغريتا النابولية':'بيتزا نابولية';if(n.includes('sauerteig')&&n.includes('toast'))return n.includes('avocado')||n.includes('avokado')?'توست العجين المخمر بالأفوكادو':'توست العجين المخمر';if(n.includes('margherita')&&n.includes('pizza'))return 'بيتزا مارغريتا';if(n.includes('pizza'))return 'بيتزا';if(n.includes('toast'))return 'توست';if(n.includes('couscous')||n.includes('cous cous'))return 'كسكس';if(n.includes('tagine')||n.includes('tajine'))return 'طاجين';if(n.includes('harira'))return 'حريرة';return null;}
+export function localizeFoodName(name:string, language:AppLanguage):string {if(language!=='ar')return name;const alias=resolveArabFoodAlias(name);return ar[name] || normalizedAr.get(normalize(name)) || alias?.canonicalAr || inferLegacyArabic(name) || name;}
+export function localizeStoredFoodName(name:string, category:MomentCategory, language:AppLanguage):string {if(language!=='ar'){const alias=resolveArabFoodAlias(name);const translated=normalizedEn.get(normalize(name)) || alias?.canonicalEn;if(translated)return translated;if(/[\u0600-\u06FF]/.test(name)){const fallback:Record<MomentCategory,string>={breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',snack:'Snack',coffee:'Coffee',dessert:'Dessert',drinks:'Drink',travel:'Meal'};return fallback[category];}return name;}const localized=localizeFoodName(name,'ar');return latin.test(localized) ? categoryFallback[category] : localized;}
+export function localizeFoodSuggestions(items:FoodSuggestion[], language:AppLanguage, query=''):FoodSuggestion[] {const q=query.trim();return items.map(item=>({...item,name:localizeFoodName(item.name,language)})).filter(item=>!q||foodSearchMatches(item.name,q));}
 export function hasArabicFoodLabel(name:string):boolean { return /[\u0600-\u06FF]/.test(localizeFoodName(name,'ar')); }
 export function hasLatinLetters(value:string):boolean { return latin.test(value); }
