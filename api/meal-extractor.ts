@@ -76,8 +76,7 @@ const QUANTITIES = [
   'واحد','واحدة','وحدة','جوج','زوج','اثنين','اتنين','ثنين','ثلاث','ثلاثة','ثلاثه','أربع','اربعة','خمسة',
   'نص','نصف','شوية','قليل','كثير','كاس','كأس','كوب','فنجان','حبة','حبتين','قطعة','قطعتين',
   'one','two','three','four','half','cup','cups','glass','glasses','piece','pieces',
-  'un','une','deux','trois','quatre','demi','verre','tasse','pièce','piece',
-  '1','2','3','4','5'
+  'un','une','deux','trois','quatre','demi','verre','tasse','pièce','piece','1','2','3','4','5'
 ];
 
 const NEGATIONS = [
@@ -88,55 +87,53 @@ const NEGATIONS = [
 ];
 
 function normalize(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u064b-\u065f\u0670]/g, '')
-    .replace(/[أإآٱ]/g, 'ا')
-    .replace(/ى/g, 'ي')
-    .replace(/ؤ/g, 'و')
-    .replace(/ئ/g, 'ي')
-    .replace(/ة/g, 'ه')
-    .replace(/[،,.;:!?؟()\[\]{}"“”]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return value.toLowerCase().normalize('NFKD')
+    .replace(/[\u064b-\u065f\u0670]/g, '').replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي').replace(/ة/g, 'ه')
+    .replace(/[،,.;:!?؟()\[\]{}"“”]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function tokenMatches(word: string, needle: string): boolean {
+  if (word === needle) return true;
+  return /^و[\u0600-\u06ff]+$/.test(word) && word.slice(1) === needle;
+}
+
+function findAliasIndex(normalized: string, alias: string): number {
+  const words = normalized.split(' ');
+  const aliasWords = normalize(alias).split(' ');
+  if (aliasWords.length === 1) return words.findIndex((word) => tokenMatches(word, aliasWords[0]));
+  for (let i = 0; i <= words.length - aliasWords.length; i += 1) {
+    if (aliasWords.every((part, offset) => offset === 0 ? tokenMatches(words[i + offset], part) : words[i + offset] === part)) return i;
+  }
+  return -1;
 }
 
 function includesAlias(normalized: string, alias: string): boolean {
-  const needle = normalize(alias);
-  if (!needle) return false;
-  const padded = ` ${normalized} `;
-  return padded.includes(` ${needle} `) || (needle.includes(' ') && normalized.includes(needle));
+  return findAliasIndex(normalized, alias) >= 0;
 }
 
-function contextAround(normalized: string, alias: string, radius = 7): string {
+function contextAround(normalized: string, alias: string, radius = 5): string {
   const words = normalized.split(' ');
-  const aliasWords = normalize(alias).split(' ');
-  const first = aliasWords[0];
-  const index = words.findIndex((w) => w === first);
+  const index = findAliasIndex(normalized, alias);
   if (index < 0) return normalized;
-  return words.slice(Math.max(0, index - radius), Math.min(words.length, index + aliasWords.length + radius)).join(' ');
+  const width = normalize(alias).split(' ').length;
+  return words.slice(Math.max(0, index - radius), Math.min(words.length, index + width + radius)).join(' ');
 }
 
 function isNegated(normalized: string, alias: string): boolean {
   const words = normalized.split(' ');
-  const first = normalize(alias).split(' ')[0];
-  const index = words.findIndex((w) => w === first);
+  const index = findAliasIndex(normalized, alias);
   if (index < 0) return false;
   const before = words.slice(Math.max(0, index - 5), index).join(' ');
   return NEGATIONS.some((negation) => before.includes(normalize(negation)));
 }
 
-function quantityFor(context: string, alias: string): string | null {
-  const words = context.split(' ');
-  const index = words.findIndex((w) => w === normalize(alias).split(' ')[0]);
-  if (index < 0) return null;
-  const before = words.slice(Math.max(0, index - 3), index);
-  for (let i = before.length - 1; i >= 0; i -= 1) {
-    const candidate = before[i];
-    if (QUANTITIES.some((q) => normalize(q) === candidate)) return candidate;
-  }
-  return null;
+function quantityFor(normalized: string, alias: string): string | null {
+  const words = normalized.split(' ');
+  const index = findAliasIndex(normalized, alias);
+  if (index <= 0) return null;
+  const immediate = words[index - 1];
+  return QUANTITIES.some((q) => normalize(q) === immediate) ? immediate : null;
 }
 
 function detectMealCategory(normalized: string): string {
@@ -151,17 +148,20 @@ export function extractMealItemsDeterministic(transcript: string): MealExtractio
   const normalized = normalize(transcript || '');
   if (!normalized) return { mealDetected: false, mealTitle: '', mealItems: [], mealCategory: '', mealContext: '' };
 
-  const items: string[] = [];
+  let items: string[] = [];
   for (const rule of FOOD_RULES) {
     const alias = rule.aliases.find((candidate) => includesAlias(normalized, candidate));
     if (!alias || isNegated(normalized, alias)) continue;
-
     const context = contextAround(normalized, alias);
     const prep = rule.preps?.find((p) => p.aliases.some((a) => includesAlias(context, a)))?.label;
     const addition = rule.additions?.find((p) => p.aliases.some((a) => includesAlias(context, a)))?.label;
-    const quantity = quantityFor(context, alias);
+    const quantity = quantityFor(normalized, alias);
     const item = [quantity, rule.label, prep, addition].filter(Boolean).join(' ');
     if (item && !items.includes(item)) items.push(item);
+  }
+
+  if (items.some((item) => item === 'قهوة بالحليب' || item === 'شاي بالحليب')) {
+    items = items.filter((item) => item !== 'حليب');
   }
 
   return {
