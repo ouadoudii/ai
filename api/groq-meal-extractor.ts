@@ -41,17 +41,24 @@ function normalizeResult(value: any): SemanticMealExtraction | null {
 
 export async function extractMealWithGroq(
   transcript: string,
-  context: { timeOfDay?: string; currentHour?: number } = {},
+  context: { timeOfDay?: string; currentHour?: number; language?: 'ar' | 'en' } = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<SemanticMealExtraction | null> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return null;
 
+  const arabicUi = context.language === 'ar';
+  const languageInstruction = arabicUi
+    ? 'UI language is Arabic. Return mealTitle and every mealItems entry in natural Arabic/Darija suitable for an Arabic UI. Do not translate meal item names into English. Keep a foreign brand or dish name only when there is no natural Arabic rendering.'
+    : 'UI language is English. Return mealTitle and every mealItems entry in concise natural English, while preserving established foreign dish names when appropriate.';
+
   const system = `You extract foods and drinks from natural speech for a food journal.
 Understand meaning, not a dictionary. The user may speak Moroccan, Algerian, Tunisian, Libyan, Egyptian, Sudanese, Levantine, Iraqi, Gulf, Yemeni or Modern Standard Arabic, and may mix Arabic with Darija, French, English or transliteration.
-Recognize arbitrary real dishes and ingredients even if they are rare, regional, homemade, misspelled or absent from any predefined list. Examples include rfissa/رفيسة, mrouzia/مروزية, maakouda/معقودة, bissara/بيصارة, koshari/كشري, molokhia/ملوخية, mansaf/منسف, maqluba/مقلوبة, kabsa/كبسة and completely unseen dishes.
-Use the full sentence to repair obvious ASR spelling variants conservatively. Preserve useful quantity, preparation and ingredient details. If several consumed foods/drinks are mentioned, return each as a separate item. If several meal moments are mentioned, include all of them. Exclude anything explicitly negated or merely planned/wanted rather than consumed. Never invent a food that the transcript does not support.
-Return concise meal items in the script/language that best matches the transcript. mealCategory may be breakfast, lunch, dinner, snack, coffee, dessert, or empty if unclear. mealContext should contain only useful non-food context, otherwise empty.`;
+Recognize arbitrary real dishes and ingredients even if they are rare, regional, homemade, misspelled or absent from any predefined list. Examples are illustrative only and are not a whitelist.
+${languageInstruction}
+Use the full sentence to repair obvious ASR spelling variants conservatively. Preserve useful quantity, preparation and ingredient details. If several consumed foods/drinks are mentioned, return each as a separate item. If several meal moments are mentioned, include all of them. Exclude anything explicitly negated or merely planned/wanted rather than consumed.
+If an ASR fragment is unclear, garbled, or does not confidently identify a real food or drink, omit that fragment rather than guessing. Never turn an unclear phrase into a descriptive pseudo-food such as "something that cures sugar", "something healthy", or a translated health claim. Never infer an ingredient solely from a health effect. Do not invent foods.
+mealCategory may be breakfast, lunch, dinner, snack, coffee, dessert, or empty if unclear. mealContext should contain only useful non-food context, otherwise empty.`;
 
   const response = await fetchImpl('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
