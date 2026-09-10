@@ -4,7 +4,7 @@ import { buildVoiceJournalEntries } from './voiceJournalApply';
 const feedback = { title:'ok', message:'ok', type:'praise' as const, badge:'voice' };
 
 describe('buildVoiceJournalEntries', () => {
-  it('creates separate meal moments and separate wellbeing observations from one free voice note', () => {
+  it('creates separate meal moments and assigns primary meals to their matching day check-ins', () => {
     const result = buildVoiceJournalEntries({
       coachFeedback: feedback,
       extractedData: {
@@ -31,7 +31,38 @@ describe('buildVoiceJournalEntries', () => {
     const midday = result.checkIns.find(c => c.timeOfDay === 'midday');
     expect(morning?.sleep).toMatchObject({ durationHours:7.5, quality:4, wakeFeeling:'tired' });
     expect(morning?.wellbeing).toMatchObject({ energyLevel:2, voiceTranscription:'free transcript' });
+    expect(morning?.food).toMatchObject({ mealTitle:'بيض وخبز', category:'breakfast', hungerBefore:3, fullnessAfter:4 });
     expect(midday?.wellbeing).toMatchObject({ energyLevel:4, mood:'energized', stressLevel:2, waterGlasses:3 });
+    expect(midday?.food).toMatchObject({ mealTitle:'كسكس بالخضرة', category:'lunch', hungerBefore:4 });
+  });
+
+  it('derives the day slot from breakfast/lunch/dinner even when the model leaves timeOfDay empty', () => {
+    const result = buildVoiceJournalEntries({
+      coachFeedback: feedback,
+      extractedData: {
+        meals: [
+          { category:'breakfast', timeOfDay:'', time:'', mealTitle:'مسمن بالعسل', mealItems:['مسمن بالعسل'], hungerBefore:0, fullnessAfter:0 },
+          { category:'lunch', timeOfDay:'', time:'', mealTitle:'العدس بالقلياء', mealItems:['العدس بالقلياء'], hungerBefore:0, fullnessAfter:0 },
+          { category:'dinner', timeOfDay:'', time:'', mealTitle:'حريرة', mealItems:['حريرة'], hungerBefore:0, fullnessAfter:0 },
+        ],
+        wellbeingEntries: [],
+      },
+    }, 'الفطور مسمن، الغدا العدس، العشا حريرة', 'ar', new Date('2026-09-10T16:00:00'));
+
+    expect(result.checkIns.map(c => c.timeOfDay).sort()).toEqual(['evening','midday','morning']);
+    expect(result.checkIns.find(c => c.timeOfDay==='morning')?.food?.category).toBe('breakfast');
+    expect(result.checkIns.find(c => c.timeOfDay==='midday')?.food?.category).toBe('lunch');
+    expect(result.checkIns.find(c => c.timeOfDay==='evening')?.food?.category).toBe('dinner');
+  });
+
+  it('keeps snacks as moments without falsely completing a main meal slot', () => {
+    const result = buildVoiceJournalEntries({
+      coachFeedback: feedback,
+      extractedData: { meals:[{category:'snack',timeOfDay:'midday',time:'',mealTitle:'تفاحة',mealItems:['تفاحة'],hungerBefore:0,fullnessAfter:0}], wellbeingEntries:[] },
+    }, 'كليت تفاحة كسناك', 'ar', new Date('2026-09-10T14:00:00'));
+    expect(result.moments).toHaveLength(1);
+    expect(result.moments[0].category).toBe('snack');
+    expect(result.checkIns).toHaveLength(0);
   });
 
   it('does not fabricate unmentioned wellbeing values', () => {
@@ -44,9 +75,10 @@ describe('buildVoiceJournalEntries', () => {
     expect(result.checkIns[0].wellbeing).not.toHaveProperty('mood');
   });
 
-  it('keeps backwards compatibility with a legacy single meal payload', () => {
+  it('keeps backwards compatibility with a legacy single meal payload and assigns it to the right slot', () => {
     const result = buildVoiceJournalEntries({ coachFeedback: feedback, extractedData:{ mealTitle:'حريرة', mealItems:['حريرة'], mealCategory:'dinner' } }, 'تعشيت حريرة', 'ar', new Date('2026-09-10T20:00:00'));
     expect(result.moments).toHaveLength(1);
     expect(result.moments[0]).toMatchObject({ category:'dinner', title:'حريرة' });
+    expect(result.checkIns.find(c=>c.timeOfDay==='evening')?.food).toMatchObject({ mealTitle:'حريرة', category:'dinner' });
   });
 });

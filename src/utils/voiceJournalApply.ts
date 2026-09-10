@@ -17,6 +17,14 @@ function categoryFor(meal: VoiceMealEntry): MomentCategory {
   return 'snack';
 }
 
+function phaseForPrimaryMeal(meal: VoiceMealEntry, category: MomentCategory): TimeOfDayPhase | null {
+  const explicit = validPhase(meal.timeOfDay);
+  if (category === 'breakfast') return explicit || 'morning';
+  if (category === 'lunch') return explicit || 'midday';
+  if (category === 'dinner') return explicit || 'evening';
+  return null;
+}
+
 function foodMood(value: string): FoodMood | undefined {
   return ['energized','satisfied','light','indulgent','comfort','joyful'].includes(value) ? value as FoodMood : undefined;
 }
@@ -72,12 +80,42 @@ export function buildVoiceJournalEntries(
     } satisfies FoodMoment;
   });
 
-  type PartialCheck = { phase: TimeOfDayPhase; energyLevel?:number; mood?:FoodMood; stressLevel?:number; waterGlasses?:number; note?:string; sleep?:DailyCheckIn['sleep'] };
+  type PartialCheck = {
+    phase: TimeOfDayPhase;
+    energyLevel?:number;
+    mood?:FoodMood;
+    stressLevel?:number;
+    waterGlasses?:number;
+    note?:string;
+    sleep?:DailyCheckIn['sleep'];
+    food?:DailyCheckIn['food'];
+    time?:string;
+  };
   const grouped = new Map<TimeOfDayPhase, PartialCheck>();
   const ensure = (phase: TimeOfDayPhase) => {
     if (!grouped.has(phase)) grouped.set(phase,{phase});
     return grouped.get(phase)!;
   };
+
+  // Main meals are not only journal moments: they also complete the matching
+  // morning/midday/evening slot. Snacks, desserts and drinks remain moments
+  // so they never falsely complete a main-meal check-in.
+  for (const meal of meals) {
+    if (!Array.isArray(meal.mealItems) || meal.mealItems.length === 0) continue;
+    const category = categoryFor(meal);
+    const phase = phaseForPrimaryMeal(meal, category);
+    if (!phase) continue;
+    const target = ensure(phase);
+    const hungerBefore = clampScore(meal.hungerBefore);
+    const fullnessAfter = clampScore(meal.fullnessAfter);
+    target.food = {
+      mealTitle: meal.mealTitle || meal.mealItems.join(' · '),
+      category,
+      ...(hungerBefore !== undefined ? { hungerBefore } : {}),
+      ...(fullnessAfter !== undefined ? { fullnessAfter } : {}),
+    };
+    if (/^\d{2}:\d{2}$/.test(meal.time || '')) target.time = meal.time;
+  }
 
   const wellbeing: VoiceWellbeingEntry[] = Array.isArray(data.wellbeingEntries) ? data.wellbeingEntries : [];
   for (const entry of wellbeing) {
@@ -109,9 +147,10 @@ export function buildVoiceJournalEntries(
   const checkIns = Array.from(grouped.values()).map((entry,index) => ({
     id: `voice-checkin-${base}-${index}`,
     date,
-    time: '',
+    time: entry.time || '',
     timeOfDay: entry.phase,
     ...(entry.sleep ? { sleep: entry.sleep } : {}),
+    ...(entry.food ? { food: entry.food } : {}),
     wellbeing: {
       ...(entry.energyLevel !== undefined ? { energyLevel: entry.energyLevel } : {}),
       ...(entry.mood ? { mood: entry.mood } : {}),
