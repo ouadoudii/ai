@@ -1,10 +1,14 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import handler from './voice-checkin';
 
 const originalGeminiKey = process.env.GEMINI_API_KEY;
+const originalGroqKey = process.env.GROQ_API_KEY;
 afterEach(() => {
+  vi.unstubAllGlobals();
   if (originalGeminiKey === undefined) delete process.env.GEMINI_API_KEY;
   else process.env.GEMINI_API_KEY = originalGeminiKey;
+  if (originalGroqKey === undefined) delete process.env.GROQ_API_KEY;
+  else process.env.GROQ_API_KEY = originalGroqKey;
 });
 
 function createResponse() {
@@ -19,9 +23,44 @@ function createResponse() {
   return { res, get statusCode() { return statusCode; }, get body() { return body; }, headers };
 }
 
+function groqResponse(extracted: any) {
+  return {
+    ok: true,
+    json: async () => ({ choices: [{ message: { content: JSON.stringify(extracted) } }] }),
+  } as Response;
+}
+
 describe('voice check-in endpoint', () => {
-  it('returns structured Darija meal items even when Gemini is unavailable', async () => {
+  it('uses semantic AI for a new dish that is absent from the static dictionary', async () => {
     delete process.env.GEMINI_API_KEY;
+    process.env.GROQ_API_KEY = 'test-key';
+    const fetchMock = vi.fn(async () => groqResponse({
+      mealDetected: true,
+      mealTitle: 'رفيسة بالدجاج والزبيب',
+      mealItems: ['رفيسة بالدجاج والزبيب'],
+      mealCategory: 'lunch',
+      mealContext: '',
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const response = createResponse();
+    const req: any = {
+      method: 'POST',
+      headers: { 'x-forwarded-for': '203.0.113.20' },
+      ip: '203.0.113.20',
+      body: { transcript: 'كليت رفيسة بالدجاج والزبيب', timeOfDay: 'midday', currentHour: 13 },
+    };
+
+    await handler(req, response.res);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.extractedData.extractionEngine).toBe('groq-semantic');
+    expect(response.body.extractedData.mealItems).toEqual(['رفيسة بالدجاج والزبيب']);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('keeps deterministic extraction only as fallback when semantic providers are unavailable', async () => {
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.GROQ_API_KEY;
     const response = createResponse();
     const req: any = {
       method: 'POST',
@@ -46,8 +85,9 @@ describe('voice check-in endpoint', () => {
     expect(response.headers.get('x-content-type-options')).toBe('nosniff');
   });
 
-  it('recognizes the exact live transcript خبيزة بالفرماج when Gemini is unavailable', async () => {
+  it('recognizes the exact live transcript خبيزة بالفرماج in fallback mode', async () => {
     delete process.env.GEMINI_API_KEY;
+    delete process.env.GROQ_API_KEY;
     const response = createResponse();
     const req: any = {
       method: 'POST',
@@ -68,8 +108,9 @@ describe('voice check-in endpoint', () => {
     expect(response.body.extractedData.mealTitle).toBe('خبز بالجبن');
   });
 
-  it('keeps negated foods out of the endpoint response', async () => {
+  it('keeps negated foods out of the fallback response', async () => {
     delete process.env.GEMINI_API_KEY;
+    delete process.env.GROQ_API_KEY;
     const response = createResponse();
     const req: any = {
       method: 'POST',
