@@ -2,6 +2,8 @@ import { FoodMoment, DailyCheckIn, NutritionTypeProfile, CoachFeedback } from '.
 import { analyzeNutritionType as fallbackAnalyze } from './utils/nutritionTypeEngine';
 import { getCoachChatResponse as fallbackChat } from './utils/coachEngine';
 
+export type VoiceLanguage = 'ar' | 'en' | 'de';
+
 export interface VoiceMealEntry {
   category: string;
   timeOfDay: string;
@@ -50,7 +52,7 @@ async function blobToBase64(blob:Blob):Promise<string>{
   });
 }
 
-export async function transcribeRecordedAudio(blob:Blob,language:'ar'|'en'):Promise<string>{
+export async function transcribeRecordedAudio(blob:Blob,language:VoiceLanguage):Promise<string>{
   const audioBase64=await blobToBase64(blob);
   const res=await fetch('/api/transcribe-audio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audioBase64,mimeType:blob.type||'audio/webm',language})});
   if(!res.ok)throw new Error(`Transcription API returned status ${res.status}`);
@@ -60,7 +62,7 @@ export async function transcribeRecordedAudio(blob:Blob,language:'ar'|'en'):Prom
   return text;
 }
 
-export async function processVoiceCheckIn(transcript:string,timeOfDay:string,userArchetype?:string,language:'ar'|'en'='en'):Promise<VoiceCheckInResult>{
+export async function processVoiceCheckIn(transcript:string,timeOfDay:string,userArchetype?:string,language:VoiceLanguage='en'):Promise<VoiceCheckInResult>{
   try {
     const currentHour=new Date().getHours();
     const res=await fetch('/api/voice-checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript,timeOfDay,userArchetype,currentHour,language})});
@@ -68,7 +70,12 @@ export async function processVoiceCheckIn(transcript:string,timeOfDay:string,use
     return await res.json();
   } catch(error) {
     console.warn('Backend /api/voice-checkin not reachable, using client fallback:',error);
-    return {coachFeedback:language==='ar'?{title:'تسجلات الرسالة الصوتية 💚',message:'سمعتك وسجلت الرسالة. تقدر تصحح التفاصيل يدوياً.',type:'praise',badge:'تسجيل بالصوت',habitScore:92}:{title:'Voice note captured 💚',message:`Thanks for sharing. Cary captured “${transcript.slice(0,80)}...” for your journal.`,type:'praise',badge:'Cary Check-in',habitScore:92},extractedData:{}};
+    const feedback = language==='ar'
+      ? {title:'تسجلات الرسالة الصوتية 💚',message:'سمعتك وسجلت الرسالة. تقدر تصحح التفاصيل يدوياً.',type:'praise' as const,badge:'تسجيل بالصوت',habitScore:92}
+      : language==='de'
+        ? {title:'Sprachnotiz gespeichert 💚',message:`Danke fürs Teilen. Cary hat „${transcript.slice(0,80)}...“ für dein Tagebuch gespeichert.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92}
+        : {title:'Voice note captured 💚',message:`Thanks for sharing. Cary captured “${transcript.slice(0,80)}...” for your journal.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92};
+    return {coachFeedback:feedback,extractedData:{}};
   }
 }
 
