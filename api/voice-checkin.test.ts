@@ -46,6 +46,28 @@ describe('voice check-in endpoint', () => {
     expect(response.headers.get('x-content-type-options')).toBe('nosniff');
   });
 
+  it('recognizes the exact live transcript خبيزة بالفرماج when Gemini is unavailable', async () => {
+    delete process.env.GEMINI_API_KEY;
+    const response = createResponse();
+    const req: any = {
+      method: 'POST',
+      headers: { 'x-forwarded-for': '203.0.113.12' },
+      ip: '203.0.113.12',
+      body: {
+        transcript: 'كليت خبيزة بالفرماج.',
+        timeOfDay: 'morning',
+        currentHour: 9,
+      },
+    };
+
+    await handler(req, response.res);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.extractedData.mealDetected).toBe(true);
+    expect(response.body.extractedData.mealItems).toEqual(['خبز بالجبن']);
+    expect(response.body.extractedData.mealTitle).toBe('خبز بالجبن');
+  });
+
   it('keeps negated foods out of the endpoint response', async () => {
     delete process.env.GEMINI_API_KEY;
     const response = createResponse();

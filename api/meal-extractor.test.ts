@@ -10,6 +10,26 @@ describe('deterministic multilingual meal extraction', () => {
     expect(result.mealItems).toContain('قهوة بالحليب');
   });
 
+  it('recognizes the exact live Darija phrase خبيزة بالفرماج', () => {
+    const result = extractMealItemsDeterministic('كليت خبيزة بالفرماج.');
+    expect(result.mealDetected).toBe(true);
+    expect(result.mealItems).toEqual(['خبز بالجبن']);
+    expect(result.mealTitle).toBe('خبز بالجبن');
+  });
+
+  it.each([
+    'كليت خبزة بالفرماج',
+    'كليت الخبيزة بالفرماج',
+    'كليت khobza fromage',
+    'j ai mangé pain au fromage',
+    'I had bread with cheese',
+  ])('recognizes bread-with-cheese variant: %s', (speech) => {
+    const result = extractMealItemsDeterministic(speech);
+    expect(result.mealDetected).toBe(true);
+    expect(result.mealItems).toContain('خبز بالجبن');
+    expect(result.mealItems).not.toContain('جبن');
+  });
+
   it('understands Moroccan breakfast foods', () => {
     const result = extractMealItemsDeterministic('فالفطور خديت مسمن بالعسل وأتاي بالنعناع');
     expect(result.mealCategory).toBe('breakfast');
@@ -35,6 +55,12 @@ describe('deterministic multilingual meal extraction', () => {
     const result = extractMealItemsDeterministic('كليت مسمن بالعسل ولكن ما شربتش قهوة');
     expect(result.mealItems).toContain('مسمن بالعسل');
     expect(result.mealItems).not.toContain('قهوة');
+  });
+
+  it('does not add negated Darija bread with cheese', () => {
+    const result = extractMealItemsDeterministic('ما كليتش خبيزة بالفرماج وشربت أتاي');
+    expect(result.mealItems).not.toContain('خبز بالجبن');
+    expect(result.mealItems).toContain('أتاي');
   });
 
   it('keeps a beverage while preserving a negated modifier', () => {

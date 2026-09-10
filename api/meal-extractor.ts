@@ -21,7 +21,7 @@ const FOOD_RULES: FoodRule[] = [
   ] },
   { aliases: ['المسمن','مسمن','msemen','msemmen'], label: 'مسمن', additions: [
     { aliases: ['بالعسل','مع العسل','au miel','with honey'], label: 'بالعسل' },
-    { aliases: ['بالجبن','مع الجبن','au fromage','with cheese'], label: 'بالجبن' },
+    { aliases: ['بالجبن','مع الجبن','بالفرماج','مع الفرماج','au fromage','with cheese'], label: 'بالجبن' },
   ] },
   { aliases: ['أتاي','اتاي','atay'], label: 'أتاي', additions: [
     { aliases: ['بالنعناع','نعناع','à la menthe','mint'], label: 'بالنعناع' },
@@ -34,7 +34,10 @@ const FOOD_RULES: FoodRule[] = [
     { aliases: ['بالحليب','مع الحليب','au lait','with milk','milk coffee'], label: 'بالحليب' },
     { aliases: ['بلا سكر','بدون سكر','sans sucre','no sugar'], label: 'بلا سكر' },
   ] },
-  { aliases: ['الخبز','خبز','khobz','bread','pain'], label: 'خبز' },
+  { aliases: ['الخبز','خبز','خبزة','الخبزة','خبيزة','الخبيزة','khobz','khobza','khbeza','khbiza','bread','pain'], label: 'خبز', additions: [
+    { aliases: ['بالجبن','مع الجبن','بالفرماج','مع الفرماج','فرماج','fromage','au fromage','with cheese','cheese'], label: 'بالجبن' },
+    { aliases: ['بزيت الزيتون','مع زيت الزيتون','زيت الزيتون','huile d olive','olive oil'], label: 'بزيت الزيتون' },
+  ] },
   { aliases: ['حريرة','الحريرة','harira'], label: 'حريرة' },
   { aliases: ['كسكس','كوسكوس','couscous'], label: 'كسكس' },
   { aliases: ['طاجين','تاجين','tajine','tagine'], label: 'طاجين' },
@@ -63,7 +66,7 @@ const FOOD_RULES: FoodRule[] = [
   { aliases: ['تفاح','تفاحة','apple','pomme'], label: 'تفاح' },
   { aliases: ['موز','موزة','banana','banane'], label: 'موز' },
   { aliases: ['برتقال','برتقالة','orange'], label: 'برتقال' },
-  { aliases: ['جبن','جبنة','fromage','cheese'], label: 'جبن' },
+  { aliases: ['جبن','جبنة','فرماج','fromage','cheese'], label: 'جبن' },
   { aliases: ['كرواسون','croissant'], label: 'كرواسون' },
   { aliases: ['ساندويتش','سندويتش','sandwich'], label: 'ساندويتش' },
   { aliases: ['بيتزا','pizza'], label: 'بيتزا' },
@@ -84,6 +87,11 @@ const NEGATIONS = [
   'لم آكل','لم اكل','لم أشرب','لم اشرب','ما أكلت','ما اكلت','ما شربت','مو آكل','مو اكل','مو شارب',
   "didn't eat","did not eat","didn't drink","did not drink",'not eating','not drinking',
   "je n'ai pas mangé","je n ai pas mange","je n'ai pas bu","je n ai pas bu",'pas mangé','pas mange','pas bu'
+];
+
+const POSITIVE_CONSUMPTION_VERBS = [
+  'كليت','كلت','اكلت','أكلت','شربت','خديت','خدت','فطرت','تغديت','تعشيت',
+  'ate','drank','had','mange','mangé','bu'
 ];
 
 function normalize(value: string): string {
@@ -120,12 +128,37 @@ function contextAround(normalized: string, alias: string, radius = 5): string {
   return words.slice(Math.max(0, index - radius), Math.min(words.length, index + width + radius)).join(' ');
 }
 
+function lastSequenceIndex(words: string[], phrase: string): number {
+  const parts = normalize(phrase).split(' ');
+  let last = -1;
+  for (let i = 0; i <= words.length - parts.length; i += 1) {
+    if (parts.every((part, offset) => words[i + offset] === part)) last = i;
+  }
+  return last;
+}
+
 function isNegated(normalized: string, alias: string): boolean {
   const words = normalized.split(' ');
   const index = findAliasIndex(normalized, alias);
   if (index < 0) return false;
-  const before = words.slice(Math.max(0, index - 5), index).join(' ');
-  return NEGATIONS.some((negation) => before.includes(normalize(negation)));
+
+  const before = words.slice(0, index);
+  let lastNegationStart = -1;
+  let lastNegationEnd = -1;
+  for (const negation of NEGATIONS) {
+    const start = lastSequenceIndex(before, negation);
+    if (start >= lastNegationStart) {
+      lastNegationStart = start;
+      lastNegationEnd = start < 0 ? -1 : start + normalize(negation).split(' ').length - 1;
+    }
+  }
+  if (lastNegationStart < 0) return false;
+
+  let lastPositiveVerb = -1;
+  for (let i = lastNegationEnd + 1; i < before.length; i += 1) {
+    if (POSITIVE_CONSUMPTION_VERBS.some((verb) => tokenMatches(before[i], normalize(verb)))) lastPositiveVerb = i;
+  }
+  return lastPositiveVerb < 0;
 }
 
 function quantityFor(normalized: string, alias: string): string | null {
@@ -162,6 +195,9 @@ export function extractMealItemsDeterministic(transcript: string): MealExtractio
 
   if (items.some((item) => item === 'قهوة بالحليب' || item === 'شاي بالحليب')) {
     items = items.filter((item) => item !== 'حليب');
+  }
+  if (items.some((item) => item === 'خبز بالجبن')) {
+    items = items.filter((item) => item !== 'جبن');
   }
 
   return {
