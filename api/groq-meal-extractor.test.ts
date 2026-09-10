@@ -18,17 +18,21 @@ function responseWith(result: unknown, ok = true) {
 describe('Groq semantic meal extraction', () => {
   it('accepts a completely unseen regional dish without a static dictionary entry', async () => {
     process.env.GROQ_API_KEY = 'test-key';
-    const fetchMock = vi.fn(async () => responseWith({
-      mealDetected: true,
-      mealTitle: 'رفيسة بالدجاج والزبيب',
-      mealItems: ['رفيسة بالدجاج والزبيب'],
-      mealCategory: 'lunch',
-      mealContext: '',
-    }));
+    let requestBody = '';
+    const fetchMock = vi.fn(async (_url: string, options?: RequestInit) => {
+      requestBody = String(options?.body || '');
+      return responseWith({
+        mealDetected: true,
+        mealTitle: 'رفيسة بالدجاج والزبيب',
+        mealItems: ['رفيسة بالدجاج والزبيب'],
+        mealCategory: 'lunch',
+        mealContext: '',
+      });
+    });
 
     const result = await extractMealWithGroq('كليت رفيسة بالدجاج والزبيب', { timeOfDay: 'midday', currentHour: 13 }, fetchMock as any);
     expect(result?.mealItems).toEqual(['رفيسة بالدجاج والزبيب']);
-    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    const body = JSON.parse(requestBody);
     expect(body.model).toBe('openai/gpt-oss-20b');
     expect(body.response_format.type).toBe('json_schema');
     expect(body.response_format.json_schema.strict).toBe(true);
