@@ -31,23 +31,27 @@ function groqResponse(extracted: any) {
 }
 
 describe('voice check-in endpoint', () => {
-  it('uses semantic AI for a new dish that is absent from the static dictionary', async () => {
+  it('uses semantic AI for a new dish that is absent from the static dictionary and passes Arabic UI language', async () => {
     delete process.env.GEMINI_API_KEY;
     process.env.GROQ_API_KEY = 'test-key';
-    const fetchMock = vi.fn(async () => groqResponse({
-      mealDetected: true,
-      mealTitle: 'رفيسة بالدجاج والزبيب',
-      mealItems: ['رفيسة بالدجاج والزبيب'],
-      mealCategory: 'lunch',
-      mealContext: '',
-    }));
+    let requestBody = '';
+    const fetchMock = vi.fn(async (_url: string, options?: RequestInit) => {
+      requestBody = String(options?.body || '');
+      return groqResponse({
+        mealDetected: true,
+        mealTitle: 'رفيسة بالدجاج والزبيب',
+        mealItems: ['رفيسة بالدجاج والزبيب'],
+        mealCategory: 'lunch',
+        mealContext: '',
+      });
+    });
     vi.stubGlobal('fetch', fetchMock);
     const response = createResponse();
     const req: any = {
       method: 'POST',
       headers: { 'x-forwarded-for': '203.0.113.20' },
       ip: '203.0.113.20',
-      body: { transcript: 'كليت رفيسة بالدجاج والزبيب', timeOfDay: 'midday', currentHour: 13 },
+      body: { transcript: 'كليت رفيسة بالدجاج والزبيب', timeOfDay: 'midday', currentHour: 13, language: 'ar' },
     };
 
     await handler(req, response.res);
@@ -55,7 +59,8 @@ describe('voice check-in endpoint', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body.extractedData.extractionEngine).toBe('groq-semantic');
     expect(response.body.extractedData.mealItems).toEqual(['رفيسة بالدجاج والزبيب']);
-    expect(fetchMock).toHaveBeenCalledOnce();
+    const body = JSON.parse(requestBody);
+    expect(body.messages[0].content).toContain('UI language is Arabic');
   });
 
   it('keeps deterministic extraction only as fallback when semantic providers are unavailable', async () => {
@@ -70,6 +75,7 @@ describe('voice check-in endpoint', () => {
         transcript: 'كليت جوج بيضات مسلوقين مع الخبز ومن بعد شربت قهوة بالحليب',
         timeOfDay: 'morning',
         currentHour: 8,
+        language: 'ar',
       },
     };
 
@@ -97,6 +103,7 @@ describe('voice check-in endpoint', () => {
         transcript: 'كليت خبيزة بالفرماج.',
         timeOfDay: 'morning',
         currentHour: 9,
+        language: 'ar',
       },
     };
 
@@ -116,7 +123,7 @@ describe('voice check-in endpoint', () => {
       method: 'POST',
       headers: { 'x-forwarded-for': '203.0.113.11' },
       ip: '203.0.113.11',
-      body: { transcript: 'كليت مسمن بالعسل ولكن ما شربتش قهوة' },
+      body: { transcript: 'كليت مسمن بالعسل ولكن ما شربتش قهوة', language: 'ar' },
     };
 
     await handler(req, response.res);
