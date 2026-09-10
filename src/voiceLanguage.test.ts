@@ -10,7 +10,6 @@ describe('voice check-in language', () => {
       body = JSON.parse(String(options?.body || '{}'));
       return { ok: true, json: async () => ({ coachFeedback: {}, extractedData: { mealItems: ['رفيسة'] } }) } as Response;
     }));
-
     await processVoiceCheckIn('j ai mangé rfissa', 'midday', undefined, 'ar');
     expect(body.language).toBe('ar');
   });
@@ -21,8 +20,17 @@ describe('voice check-in language', () => {
       body = JSON.parse(String(options?.body || '{}'));
       return { ok: true, json: async () => ({ coachFeedback: {}, extractedData: { mealItems: ['rfissa'] } }) } as Response;
     }));
-
     await processVoiceCheckIn('I ate rfissa', 'midday', undefined, 'en');
     expect(body.language).toBe('en');
+  });
+
+  it('forwards German UI language instead of silently treating it as English', async () => {
+    let body: any;
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, options?: RequestInit) => {
+      body = JSON.parse(String(options?.body || '{}'));
+      return { ok: true, json: async () => ({ coachFeedback: {}, extractedData: { mealItems: ['Kartoffelsuppe'] } }) } as Response;
+    }));
+    await processVoiceCheckIn('Zum Mittag hatte ich Kartoffelsuppe', 'midday', undefined, 'de');
+    expect(body.language).toBe('de');
   });
 });
