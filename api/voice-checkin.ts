@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { GoogleGenAI, Type } from '@google/genai';
 import { extractMealItemsDeterministic } from './meal-extractor.js';
-import { LIMITS, cleanText, publicError } from './security.js';
+import { LIMITS, applyApiSecurityHeaders, cleanText, publicError, rateLimit } from './security.js';
 
 let genAiClient: GoogleGenAI | null = null;
 function getGeminiClient(): GoogleGenAI | null {
@@ -21,30 +21,28 @@ function fallbackFeedback(transcript: string, mealDetected: boolean) {
     return {
       title: mealDetected ? 'تسجلات الوجبة 💚' : 'كاري معاك 💚',
       message: mealDetected ? 'فهمت شنو كلّيتي وسجلته. تقدر تزيد أي تفصيل بغيتي.' : 'سمعتك وسجلت كلامك. إذا ذكرت الأكل أو الشرب نقدر نحوله مباشرة لعناصر الوجبة.',
-      badge: 'تسجيل بالصوت',
-      habitScore: 88,
-      type: 'praise',
+      badge: 'تسجيل بالصوت', habitScore: 88, type: 'praise',
     };
   }
   return {
     title: mealDetected ? 'Meal captured 💚' : 'Cary is with you 💚',
     message: mealDetected ? 'I understood the foods and drinks you mentioned and captured them.' : 'I captured what you said. Mention any food or drink and I can structure it for you.',
-    badge: 'Voice check-in',
-    habitScore: 88,
-    type: 'praise',
+    badge: 'Voice check-in', habitScore: 88, type: 'praise',
   };
 }
 
 export default async function handler(req: Request, res: Response) {
+  applyApiSecurityHeaders(req, res, () => {});
+  let allowed = false;
+  rateLimit(req, res, () => { allowed = true; });
+  if (!allowed) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const transcript = cleanText(req.body?.transcript, LIMITS.transcript);
     const timeOfDay = cleanText(req.body?.timeOfDay, 32) || 'today';
     const userArchetype = cleanText(req.body?.userArchetype, 64) || 'intuitive';
-    const currentHour = Number.isFinite(Number(req.body?.currentHour))
-      ? Math.min(23, Math.max(0, Number(req.body.currentHour)))
-      : 12;
+    const currentHour = Number.isFinite(Number(req.body?.currentHour)) ? Math.min(23, Math.max(0, Number(req.body.currentHour))) : 12;
     if (!transcript) return publicError(res, 400, 'Invalid transcript');
 
     const deterministic = extractMealItemsDeterministic(transcript);
@@ -52,13 +50,7 @@ export default async function handler(req: Request, res: Response) {
     if (!ai) {
       return res.status(200).json({
         coachFeedback: fallbackFeedback(transcript, deterministic.mealDetected),
-        extractedData: {
-          ...deterministic,
-          sleepHours: null,
-          energyLevel: null,
-          mood: '',
-          extractionEngine: 'deterministic-fallback',
-        },
+        extractedData: { ...deterministic, sleepHours: null, energyLevel: null, mood: '', extractionEngine: 'deterministic-fallback' },
       });
     }
 
@@ -72,21 +64,12 @@ export default async function handler(req: Request, res: Response) {
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              coachTitle: { type: Type.STRING },
-              coachResponse: { type: Type.STRING },
-              badge: { type: Type.STRING },
-              habitScore: { type: Type.NUMBER },
+              coachTitle: { type: Type.STRING }, coachResponse: { type: Type.STRING }, badge: { type: Type.STRING }, habitScore: { type: Type.NUMBER },
               extractedData: {
                 type: Type.OBJECT,
                 properties: {
-                  mealDetected: { type: Type.BOOLEAN },
-                  mealTitle: { type: Type.STRING },
-                  mealItems: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  mealCategory: { type: Type.STRING },
-                  mealContext: { type: Type.STRING },
-                  sleepHours: { type: Type.NUMBER },
-                  energyLevel: { type: Type.NUMBER },
-                  mood: { type: Type.STRING },
+                  mealDetected: { type: Type.BOOLEAN }, mealTitle: { type: Type.STRING }, mealItems: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  mealCategory: { type: Type.STRING }, mealContext: { type: Type.STRING }, sleepHours: { type: Type.NUMBER }, energyLevel: { type: Type.NUMBER }, mood: { type: Type.STRING },
                 },
                 required: ['mealDetected', 'mealTitle', 'mealItems', 'mealCategory', 'mealContext'],
               },
@@ -98,9 +81,7 @@ export default async function handler(req: Request, res: Response) {
 
       const parsed = JSON.parse(response.text || '{}');
       const aiExtracted = parsed?.extractedData && typeof parsed.extractedData === 'object' ? parsed.extractedData : {};
-      const aiItems = Array.isArray(aiExtracted.mealItems)
-        ? aiExtracted.mealItems.map((v: unknown) => cleanText(v, 120)).filter(Boolean)
-        : [];
+      const aiItems = Array.isArray(aiExtracted.mealItems) ? aiExtracted.mealItems.map((v: unknown) => cleanText(v, 120)).filter(Boolean) : [];
       const mealItems = aiItems.length ? aiItems : deterministic.mealItems;
       const mealTitle = cleanText(aiExtracted.mealTitle, 240) || (mealItems as string[]).join(' · ');
       const normalized = {
@@ -118,22 +99,15 @@ export default async function handler(req: Request, res: Response) {
           title: cleanText(parsed.coachTitle, 160) || fallbackFeedback(transcript, normalized.mealDetected).title,
           message: cleanText(parsed.coachResponse, 1200) || fallbackFeedback(transcript, normalized.mealDetected).message,
           badge: cleanText(parsed.badge, 80) || fallbackFeedback(transcript, normalized.mealDetected).badge,
-          habitScore: Math.min(100, Math.max(0, Number(parsed.habitScore) || 88)),
-          type: 'praise',
+          habitScore: Math.min(100, Math.max(0, Number(parsed.habitScore) || 88)), type: 'praise',
         },
         extractedData: normalized,
       });
-    } catch (error) {
+    } catch {
       console.warn('Gemini voice extraction unavailable; deterministic recovery used');
       return res.status(200).json({
         coachFeedback: fallbackFeedback(transcript, deterministic.mealDetected),
-        extractedData: {
-          ...deterministic,
-          sleepHours: null,
-          energyLevel: null,
-          mood: '',
-          extractionEngine: 'deterministic-recovery',
-        },
+        extractedData: { ...deterministic, sleepHours: null, energyLevel: null, mood: '', extractionEngine: 'deterministic-recovery' },
       });
     }
   } catch (error) {
