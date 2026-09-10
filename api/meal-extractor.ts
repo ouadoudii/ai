@@ -170,9 +170,12 @@ function quantityFor(normalized: string, alias: string): string | null {
 }
 
 function detectMealCategory(normalized: string): string {
-  if (['فطور','الفطور','فطار','breakfast','petit déjeuner','petit dejeuner'].some((v) => normalized.includes(normalize(v)))) return 'breakfast';
-  if (['غداء','الغداء','غدا','lunch','déjeuner','dejeuner'].some((v) => normalized.includes(normalize(v)))) return 'lunch';
-  if (['عشاء','العشاء','عشا','dinner','dîner','diner'].some((v) => normalized.includes(normalize(v)))) return 'dinner';
+  const breakfast = ['فطور','الفطور','فطار','فطرت','اتفطرت','تفطرت','breakfast','petit déjeuner','petit dejeuner'];
+  const lunch = ['غداء','الغداء','غدا','غديت','تغديت','اتغديت','تغديت','lunch','déjeuner','dejeuner'];
+  const dinner = ['عشاء','العشاء','عشا','عشيت','تعشيت','اتعشيت','dinner','dîner','diner'];
+  if (breakfast.some((v) => normalized.includes(normalize(v)))) return 'breakfast';
+  if (lunch.some((v) => normalized.includes(normalize(v)))) return 'lunch';
+  if (dinner.some((v) => normalized.includes(normalize(v)))) return 'dinner';
   if (['سناك','وجبة خفيفة','snack','goûter','gouter'].some((v) => normalized.includes(normalize(v)))) return 'snack';
   return '';
 }
