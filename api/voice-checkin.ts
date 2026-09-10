@@ -47,7 +47,7 @@ async function extractWithGemini(transcript: string, timeOfDay: string, currentH
 export default async function handler(req: Request, res: Response) {
   applyApiSecurityHeaders(req,res,()=>{}); let allowed=false; rateLimit(req,res,()=>{allowed=true}); if(!allowed)return; if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
   try {
-    const transcript=cleanText(req.body?.transcript,LIMITS.transcript); const timeOfDay=cleanText(req.body?.timeOfDay,32)||'today'; const userArchetype=cleanText(req.body?.userArchetype,64)||'intuitive'; const currentHour=Number.isFinite(Number(req.body?.currentHour))?Math.min(23,Math.max(0,Number(req.body.currentHour))):12; const language:req.body extends never ? never : 'ar'|'en' = req.body?.language==='en'?'en':'ar';
+    const transcript=cleanText(req.body?.transcript,LIMITS.transcript); const timeOfDay=cleanText(req.body?.timeOfDay,32)||'today'; const userArchetype=cleanText(req.body?.userArchetype,64)||'intuitive'; const currentHour=Number.isFinite(Number(req.body?.currentHour))?Math.min(23,Math.max(0,Number(req.body.currentHour))):12; const language:'ar'|'en'=req.body?.language==='en'?'en':'ar';
     if(!transcript)return publicError(res,400,'Invalid transcript');
     const deterministic=extractMealItemsDeterministic(transcript);
     try { const groq=await extractMealWithGroq(transcript,{timeOfDay,currentHour,language}); if(groq&&(groq.mealDetected||groq.mealItems.length>0)){const normalized=normalizeSemantic(groq,deterministic,'groq-semantic'); return res.status(200).json({coachFeedback:fallbackFeedback(transcript,normalized.mealDetected),extractedData:{...normalized,sleepHours:null,energyLevel:null,mood:''}});} } catch { console.warn('Groq semantic extraction unavailable'); }
