@@ -52,28 +52,35 @@ export async function transcribeRecordedAudio(blob:Blob,language:'ar'|'en'):Prom
 export async function processVoiceCheckIn(
   transcript: string,
   timeOfDay: string,
-  userArchetype?: string
+  userArchetype?: string,
+  language: 'ar'|'en' = 'en'
 ): Promise<VoiceCheckInResult> {
   try {
     const currentHour = new Date().getHours();
     const res = await fetch('/api/voice-checkin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript, timeOfDay, userArchetype, currentHour }),
+      body: JSON.stringify({ transcript, timeOfDay, userArchetype, currentHour, language }),
     });
     if (!res.ok) throw new Error(`API returned status ${res.status}`);
     return await res.json();
   } catch (error) {
     console.warn('Backend /api/voice-checkin not reachable, using client fallback:', error);
     return {
-      coachFeedback: {
-        title: 'Sprachnachricht erfasst 💚',
-        message: `Danke für dein Teilen! „${transcript.slice(0, 80)}...“ — Cary nimmt diesen Check-in in dein längerfristiges Muster auf.`,
+      coachFeedback: language === 'ar' ? {
+        title: 'تسجلات الرسالة الصوتية 💚',
+        message: 'سمعتك وسجلت الرسالة. تقدر تصحح أو تزيد تفاصيل الوجبة يدوياً.',
+        type: 'praise',
+        badge: 'تسجيل بالصوت',
+        habitScore: 92,
+      } : {
+        title: 'Voice note captured 💚',
+        message: `Thanks for sharing. Cary captured “${transcript.slice(0, 80)}...” for your journal.`,
         type: 'praise',
         badge: 'Cary Check-in',
         habitScore: 92,
       },
-      extractedData: { energyLevel: 4, mood: 'energized' },
+      extractedData: {},
     };
   }
 }
@@ -105,7 +112,7 @@ export async function askGeminiCoach(
       body: JSON.stringify({ query, moments, checkIns, userArchetype }),
     });
     if (!res.ok) throw new Error(`API returned status ${res.status}`);
-    const data = await res.json();
+    const data=await res.json();
     return data.reply || 'Ich bin immer für dich da. Wie kann ich dich heute unterstützen?';
   } catch (error) {
     console.warn('Backend /api/coach-chat not reachable, using local response fallback:', error);
