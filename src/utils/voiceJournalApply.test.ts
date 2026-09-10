@@ -36,6 +36,32 @@ describe('buildVoiceJournalEntries', () => {
     expect(midday?.food).toMatchObject({ mealTitle:'كسكس بالخضرة', category:'lunch', hungerBefore:4 });
   });
 
+  it('deduplicates identical meals returned twice by semantic extraction', () => {
+    const duplicate = { category:'breakfast', timeOfDay:'morning', time:'08:15', mealTitle:'أومليت بالجبن', mealItems:['أومليت بالجبن'], hungerBefore:3, fullnessAfter:4 };
+    const result = buildVoiceJournalEntries({
+      coachFeedback: feedback,
+      extractedData: { meals:[duplicate,{...duplicate}], wellbeingEntries:[] },
+    }, 'فطرت أومليت بالجبن', 'ar', new Date('2026-09-10T09:00:00'));
+
+    expect(result.moments).toHaveLength(1);
+    expect(result.moments[0]).toMatchObject({title:'أومليت بالجبن',category:'breakfast',time:'08:15'});
+    expect(result.checkIns).toHaveLength(1);
+    expect(result.checkIns[0].food).toMatchObject({mealTitle:'أومليت بالجبن',category:'breakfast'});
+  });
+
+  it('keeps repeated dishes when they are genuinely separate meals at different times', () => {
+    const result = buildVoiceJournalEntries({
+      coachFeedback: feedback,
+      extractedData: { meals:[
+        { category:'snack', timeOfDay:'morning', time:'10:00', mealTitle:'قهوة', mealItems:['قهوة'], hungerBefore:0, fullnessAfter:0 },
+        { category:'snack', timeOfDay:'midday', time:'16:00', mealTitle:'قهوة', mealItems:['قهوة'], hungerBefore:0, fullnessAfter:0 },
+      ], wellbeingEntries:[] },
+    }, 'شربت قهوة الصباح وقهوة فالعشية', 'ar', new Date('2026-09-10T17:00:00'));
+
+    expect(result.moments).toHaveLength(2);
+    expect(result.moments.map(m=>m.time)).toEqual(['10:00','16:00']);
+  });
+
   it('derives the day slot from breakfast/lunch/dinner even when the model leaves timeOfDay empty', () => {
     const result = buildVoiceJournalEntries({
       coachFeedback: feedback,
