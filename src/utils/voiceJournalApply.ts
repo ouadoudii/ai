@@ -25,6 +25,25 @@ function phaseForPrimaryMeal(meal: VoiceMealEntry, category: MomentCategory): Ti
   return null;
 }
 
+function normalizeMealIdentity(value: string): string {
+  return value.trim().toLocaleLowerCase().replace(/[،,.;:!?؟]/g, ' ').replace(/\s+/g, ' ');
+}
+
+function dedupeMeals(meals: VoiceMealEntry[]): VoiceMealEntry[] {
+  const seen = new Set<string>();
+  const unique: VoiceMealEntry[] = [];
+  for (const meal of meals) {
+    if (!Array.isArray(meal.mealItems) || meal.mealItems.length === 0) continue;
+    const title = meal.mealTitle || meal.mealItems.join(' · ');
+    const items = meal.mealItems.map(normalizeMealIdentity).sort().join('|');
+    const key = [categoryFor(meal), validPhase(meal.timeOfDay) || '', meal.time || '', normalizeMealIdentity(title), items].join('::');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(meal);
+  }
+  return unique;
+}
+
 function foodMood(value: string): FoodMood | undefined {
   return ['energized','satisfied','light','indulgent','comfort','joyful'].includes(value) ? value as FoodMood : undefined;
 }
@@ -50,14 +69,15 @@ export function buildVoiceJournalEntries(
   const data = result.extractedData || {};
   const date = getLocalDateKey(now);
   const base = now.getTime();
-  const meals: VoiceMealEntry[] = Array.isArray(data.meals) && data.meals.length
+  const rawMeals: VoiceMealEntry[] = Array.isArray(data.meals) && data.meals.length
     ? data.meals
     : (Array.isArray(data.mealItems) && data.mealItems.length ? [{
         category: data.mealCategory || '', timeOfDay: '', time: '', mealTitle: data.mealTitle || data.mealItems.join(' · '), mealItems: data.mealItems,
         hungerBefore: data.hungerBefore || 0, fullnessAfter: data.fullnessAfter || 0,
       }] : []);
+  const meals = dedupeMeals(rawMeals);
 
-  const moments = meals.filter(meal => Array.isArray(meal.mealItems) && meal.mealItems.length > 0).map((meal,index) => {
+  const moments = meals.map((meal,index) => {
     const category = categoryFor(meal);
     return {
       id: `voice-moment-${base}-${index}`,
@@ -101,7 +121,6 @@ export function buildVoiceJournalEntries(
   // morning/midday/evening slot. Snacks, desserts and drinks remain moments
   // so they never falsely complete a main-meal check-in.
   for (const meal of meals) {
-    if (!Array.isArray(meal.mealItems) || meal.mealItems.length === 0) continue;
     const category = categoryFor(meal);
     const phase = phaseForPrimaryMeal(meal, category);
     if (!phase) continue;
