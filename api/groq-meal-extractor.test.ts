@@ -30,25 +30,47 @@ describe('Groq semantic meal extraction', () => {
       });
     });
 
-    const result = await extractMealWithGroq('كليت رفيسة بالدجاج والزبيب', { timeOfDay: 'midday', currentHour: 13 }, fetchMock as any);
+    const result = await extractMealWithGroq('كليت رفيسة بالدجاج والزبيب', { timeOfDay: 'midday', currentHour: 13, language: 'ar' }, fetchMock as any);
     expect(result?.mealItems).toEqual(['رفيسة بالدجاج والزبيب']);
     const body = JSON.parse(requestBody);
     expect(body.model).toBe('openai/gpt-oss-20b');
     expect(body.response_format.type).toBe('json_schema');
     expect(body.response_format.json_schema.strict).toBe(true);
+    expect(body.messages[0].content).toContain('UI language is Arabic');
+    expect(body.messages[0].content).toContain('Do not translate meal item names into English');
+  });
+
+  it('tells the model to omit uncertain ASR fragments instead of inventing descriptive foods', async () => {
+    process.env.GROQ_API_KEY = 'test-key';
+    let requestBody = '';
+    const fetchMock = vi.fn(async (_url: string, options?: RequestInit) => {
+      requestBody = String(options?.body || '');
+      return responseWith({
+        mealDetected: true,
+        mealTitle: 'بيض مسلوق · خبز · كرواسون · خضرة',
+        mealItems: ['بيضتان مسلوقتان', 'خبز', 'كرواسون', 'خضرة'],
+        mealCategory: 'lunch',
+        mealContext: '',
+      });
+    });
+
+    await extractMealWithGroq('وكلت فيها واحد جوج بيضات مسلوقين وكلت واحد الخبيزة وشربت واحد الكاس ديالته بشفيه السكر بلاك ومن ثم كلت واحد كروسون وبقيت شوية تل الغداء كلت الخضرة', { language: 'ar' }, fetchMock as any);
+    const body = JSON.parse(requestBody);
+    expect(body.messages[0].content).toContain('If an ASR fragment is unclear');
+    expect(body.messages[0].content).toContain('Never turn an unclear phrase into a descriptive pseudo-food');
   });
 
   it('supports several arbitrary foods from mixed dialect/languages', async () => {
     process.env.GROQ_API_KEY = 'test-key';
     const fetchMock = vi.fn(async () => responseWith({
       mealDetected: true,
-      mealTitle: 'مقلوبة · labneh · café au lait',
-      mealItems: ['مقلوبة بالدجاج', 'لبنة', 'café au lait'],
+      mealTitle: 'مقلوبة · لبنة · قهوة بالحليب',
+      mealItems: ['مقلوبة بالدجاج', 'لبنة', 'قهوة بالحليب'],
       mealCategory: 'dinner',
       mealContext: '',
     }));
-    const result = await extractMealWithGroq('تعشيت مقلوبة بالدجاج ومعاها labneh وشربت café au lait', {}, fetchMock as any);
-    expect(result?.mealItems).toEqual(['مقلوبة بالدجاج', 'لبنة', 'café au lait']);
+    const result = await extractMealWithGroq('تعشيت مقلوبة بالدجاج ومعاها labneh وشربت café au lait', { language: 'ar' }, fetchMock as any);
+    expect(result?.mealItems).toEqual(['مقلوبة بالدجاج', 'لبنة', 'قهوة بالحليب']);
   });
 
   it('preserves semantic negation from the model output', async () => {
@@ -60,7 +82,7 @@ describe('Groq semantic meal extraction', () => {
       mealCategory: '',
       mealContext: '',
     }));
-    const result = await extractMealWithGroq('كليت بيصارة ولكن ما كليتش معقودة', {}, fetchMock as any);
+    const result = await extractMealWithGroq('كليت بيصارة ولكن ما كليتش معقودة', { language: 'ar' }, fetchMock as any);
     expect(result?.mealItems).toEqual(['بيصارة']);
   });
 
