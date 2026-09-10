@@ -3,186 +3,22 @@ import { ArrowLeft, LoaderCircle, Mic2, Square, X } from 'lucide-react';
 import { transcribeAudio, transcribeAudioServer } from '../utils/localAi';
 import { useLanguage } from '../i18n';
 import { mergeSpeechSegments } from '../utils/speechTranscript';
+import { browserSpeechLocale, voiceCopy } from '../utils/speechLanguage';
 
-interface Props{
-  isOpen:boolean;
-  onClose:()=>void;
-  onBack:()=>void;
-  onTranscript:(text:string)=>void;
-}
+interface Props{isOpen:boolean;onClose:()=>void;onBack:()=>void;onTranscript:(text:string)=>void;}
 
 export const VoiceCaptureModal:React.FC<Props>=({isOpen,onClose,onBack,onTranscript})=>{
-  const {language}=useLanguage();
-  const ar=language==='ar';
-  const [recording,setRecording]=React.useState(false);
-  const [processing,setProcessing]=React.useState(false);
-  const [error,setError]=React.useState('');
-  const [seconds,setSeconds]=React.useState(0);
-  const [diagnostic,setDiagnostic]=React.useState('');
-  const [lastTranscript,setLastTranscript]=React.useState('');
-  const recorderRef=React.useRef<MediaRecorder|null>(null);
-  const streamRef=React.useRef<MediaStream|null>(null);
-  const chunksRef=React.useRef<Blob[]>([]);
-  const cancelRef=React.useRef(false);
-  const speechRef=React.useRef<any>(null);
-  const speechTextRef=React.useRef('');
-  const speechDoneRef=React.useRef<Promise<void>|null>(null);
-  const speechDoneResolveRef=React.useRef<(()=>void)|null>(null);
-  const finalSegmentsRef=React.useRef<Map<number,string>>(new Map());
-
-  const cleanup=React.useCallback(()=>{
-    streamRef.current?.getTracks().forEach(track=>track.stop());
-    streamRef.current=null;
-    recorderRef.current=null;
-    try{speechRef.current?.stop?.()}catch{}
-    speechRef.current=null;
-  },[]);
-
-  React.useEffect(()=>()=>cleanup(),[cleanup]);
-  React.useEffect(()=>{
-    if(!recording){setSeconds(0);return}
-    const timer=window.setInterval(()=>setSeconds(s=>s+1),1000);
-    return()=>window.clearInterval(timer);
-  },[recording]);
-
+  const {language}=useLanguage();const ar=language==='ar';const copy=voiceCopy(language);
+  const [recording,setRecording]=React.useState(false);const [processing,setProcessing]=React.useState(false);const [error,setError]=React.useState('');const [seconds,setSeconds]=React.useState(0);const [diagnostic,setDiagnostic]=React.useState('');const [lastTranscript,setLastTranscript]=React.useState('');
+  const recorderRef=React.useRef<MediaRecorder|null>(null);const streamRef=React.useRef<MediaStream|null>(null);const chunksRef=React.useRef<Blob[]>([]);const cancelRef=React.useRef(false);const speechRef=React.useRef<any>(null);const speechTextRef=React.useRef('');const speechDoneResolveRef=React.useRef<(()=>void)|null>(null);const finalSegmentsRef=React.useRef<Map<number,string>>(new Map());
+  const cleanup=React.useCallback(()=>{streamRef.current?.getTracks().forEach(track=>track.stop());streamRef.current=null;recorderRef.current=null;try{speechRef.current?.stop?.()}catch{}speechRef.current=null},[]);
+  React.useEffect(()=>()=>cleanup(),[cleanup]);React.useEffect(()=>{if(!recording){setSeconds(0);return}const timer=window.setInterval(()=>setSeconds(s=>s+1),1000);return()=>window.clearInterval(timer)},[recording]);
   if(!isOpen)return null;
-
-  const start=async()=>{
-    setError('');
-    setDiagnostic('');
-    setLastTranscript('');
-    cancelRef.current=false;
-    speechTextRef.current='';
-    speechDoneRef.current=null;
-    speechDoneResolveRef.current=null;
-    finalSegmentsRef.current.clear();
-
-    const SpeechRecognitionCtor=(window as any).webkitSpeechRecognition||(window as any).SpeechRecognition;
-    const preferLocalWhisper=ar;
-    if(SpeechRecognitionCtor&&!preferLocalWhisper){
-      setDiagnostic(ar?'المسار: تعرف صوت المتصفح (ar-MA)':'Path: browser speech recognition');
-      try{
-        const recognition=new SpeechRecognitionCtor();
-        recognition.lang=ar?'ar-MA':'en-US';
-        recognition.interimResults=true;
-        recognition.continuous=true;
-        recognition.onresult=(event:any)=>{
-          setDiagnostic(ar?'تم استلام كلام من المتصفح':'Browser speech result received');
-          let interim='';
-          const startIndex=Number.isFinite(event.resultIndex)?event.resultIndex:0;
-          for(let i=startIndex;i<event.results.length;i++){
-            const result=event.results[i];
-            const segment=String(result?.[0]?.transcript||'').trim();
-            if(!segment)continue;
-            if(result?.isFinal===false)interim=segment;
-            else finalSegmentsRef.current.set(i,segment);
-          }
-          const finals=[...finalSegmentsRef.current.entries()].sort((a,b)=>a[0]-b[0]).map(([,text])=>text);
-          speechTextRef.current=mergeSpeechSegments([...finals,interim].filter(Boolean));
-        };
-        speechDoneRef.current=new Promise<void>(resolve=>{speechDoneResolveRef.current=resolve});
-        recognition.onend=()=>{
-          speechDoneResolveRef.current?.();
-          speechDoneResolveRef.current=null;
-          if(cancelRef.current)return;
-          const text=speechTextRef.current.trim();
-          setRecording(false);
-          if(text)onTranscript(text);
-          else setError(ar?'لم نفهم الكلام. جرّب مرة أخرى وتكلم بوضوح.':'We could not understand that. Try again and speak clearly.');
-        };
-        recognition.onerror=(event:any)=>{
-          setDiagnostic((ar?'خطأ تعرف الصوت: ':'Speech recognition error: ')+String(event?.error||'unknown'));
-          speechDoneResolveRef.current?.();
-          speechDoneResolveRef.current=null;
-          setRecording(false);
-          if(cancelRef.current)return;
-          const code=String(event?.error||'');
-          if(code==='not-allowed'||code==='service-not-allowed')setError(ar?'نحتاج إذن الميكروفون للتسجيل.':'Microphone permission is needed to record.');
-          else setError(ar?'تعذر التعرف على الكلام. جرّب مرة أخرى.':'Speech recognition failed. Try again.');
-        };
-        recognition.start();
-        speechRef.current=recognition;
-        setRecording(true);
-        return;
-      }catch{}
-    }
-
-    setDiagnostic(ar?'المسار: Whisper محلي للعربية':'Path: local Whisper fallback');
-    if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
-      setError(ar?'التسجيل الصوتي غير مدعوم في هذا المتصفح.':'Voice recording is not supported in this browser.');
-      return;
-    }
-    try{
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      streamRef.current=stream;
-      chunksRef.current=[];
-      const recorder=new MediaRecorder(stream);
-      recorderRef.current=recorder;
-      recorder.ondataavailable=e=>{if(e.data.size)chunksRef.current.push(e.data)};
-      recorder.onstop=async()=>{
-        const blob=new Blob(chunksRef.current,{type:recorder.mimeType||'audio/webm'});
-        const cancelled=cancelRef.current;
-        cleanup();
-        setRecording(false);
-        if(cancelled||!blob.size)return;
-        setDiagnostic(ar?'بدأ Whisper المحلي':'Local Whisper started');
-        setProcessing(true);
-        try{
-          let text='';
-          if(ar){
-            setDiagnostic('Whisper Large V3 — server');
-            try{text=await transcribeAudioServer(blob)}
-            catch{
-              setDiagnostic('Server unavailable — local Whisper fallback');
-              text=await transcribeAudio(blob,language);
-            }
-          }else text=await transcribeAudio(blob,language);
-          if(!text)throw new Error('empty transcript');
-          setLastTranscript(text);
-          setDiagnostic(ar?'تم النسخ بـ Whisper — جارٍ فهم الرسالة':'Whisper transcription ready — understanding message');
-          onTranscript(text);
-        }catch{
-          setError(ar?'لم نستطع فهم التسجيل. جرّب مرة أخرى أو اكتبها يدوياً.':'We could not understand the recording. Try again or type it manually.');
-        }finally{setProcessing(false)}
-      };
-      recorder.start(250);
-      setRecording(true);
-    }catch{
-      cleanup();
-      setError(ar?'نحتاج إذن الميكروفون للتسجيل.':'Microphone permission is needed to record.');
-    }
-  };
-  const stop=()=>{
-    if(speechRef.current){
-      try{speechRef.current.stop()}catch{}
-      return;
-    }
-    if(recorderRef.current?.state==='recording')recorderRef.current.stop();
-  };
-
-  const leave=(fn:()=>void)=>{cancelRef.current=true;if(recorderRef.current?.state==='recording')recorderRef.current.stop();else cleanup();setRecording(false);fn()};
-  const back=()=>leave(onBack);
-
-  return <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-[#25231F]/55 backdrop-blur-md" role="dialog" aria-modal="true">
-    <section className="w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] bg-[#FCFAF6] p-5 sm:p-6 shadow-2xl">
-      <div className="flex items-center justify-between">
-        <button type="button" onClick={back} className="w-10 h-10 rounded-full bg-white border border-[#E6E1D8] flex items-center justify-center" aria-label={ar?'رجوع':'Back'}><ArrowLeft className={`w-4 h-4 ${ar?'rotate-180':''}`}/></button>
-        <button type="button" onClick={()=>leave(onClose)} className="w-10 h-10 rounded-full bg-white border border-[#E6E1D8] flex items-center justify-center" aria-label={ar?'إغلاق':'Close'}><X className="w-4 h-4"/></button>
-      </div>
-      <div className="mt-5 text-center">
-        <h2 className="text-2xl font-display font-black text-[#252824]">{ar?'قل ماذا أكلت':'Tell me what you had'}</h2>
-        <p className="mt-2 text-sm text-[#77736B]">{ar?'تحدث بطريقتك — العربية أو الدارجة أو الإنجليزية.':'Speak naturally — Arabic, Darija or English.'}</p>
-      </div>
-      <div className="mt-7 flex flex-col items-center">
-        <button type="button" disabled={processing} onClick={recording?stop:start} className={`w-24 h-24 rounded-full grid place-items-center text-white shadow-xl transition ${recording?'bg-[#C94C3F]':'bg-[#293D34]'} disabled:opacity-60`} aria-label={recording?(ar?'إيقاف التسجيل':'Stop recording'):(ar?'ابدأ التسجيل':'Start recording')}>
-          {processing?<LoaderCircle className="w-8 h-8 animate-spin"/>:recording?<Square className="w-8 h-8 fill-current"/>:<Mic2 className="w-9 h-9"/>}
-        </button>
-        <p className="mt-4 text-sm font-black text-[#4A4C46]">{processing?(ar?'نفهم التسجيل على جهازك…':'Understanding it on your device…'):recording?String(seconds)+'s':(ar?'اضغط وابدأ الكلام':'Tap and start speaking')}</p>
-        {processing&&<p className="mt-2 text-[11px] text-[#8A867E]">{ar?'أول مرة قد تحتاج وقتاً لتحميل نموذج Whisper المجاني.':'The first use may take a moment while the free Whisper model downloads.'}</p>}
-        {lastTranscript&&<div data-testid="voice-raw-transcript" className="mt-4 w-full rounded-2xl bg-[#F3F0E9] px-4 py-3 text-start"><p className="text-[10px] font-black uppercase tracking-[.12em] text-[#8A867E]">{ar?'نص Whisper الخام':'Raw Whisper transcript'}</p><p className="mt-1 text-xs font-semibold text-[#343631]" dir="auto">{lastTranscript}</p></div>}
-        {diagnostic&&<p data-testid="voice-diagnostic" className="mt-4 rounded-2xl bg-white px-4 py-3 text-[11px] font-bold text-[#6D6A63] border border-[#E6E1D8]">{diagnostic}</p>}
-        {error&&<p className="mt-3 rounded-2xl bg-[#FCE9E5] px-4 py-3 text-xs font-bold text-[#9B453A]">{error}</p>}
-      </div>
-    </section>
-  </div>;
+  const start=async()=>{setError('');setDiagnostic('');setLastTranscript('');cancelRef.current=false;speechTextRef.current='';speechDoneResolveRef.current=null;finalSegmentsRef.current.clear();
+    const SpeechRecognitionCtor=(window as any).webkitSpeechRecognition||(window as any).SpeechRecognition;const preferLocalWhisper=ar;
+    if(SpeechRecognitionCtor&&!preferLocalWhisper){setDiagnostic(language==='de'?'Pfad: Browser-Spracherkennung (de-DE)':'Path: browser speech recognition');try{const recognition=new SpeechRecognitionCtor();recognition.lang=browserSpeechLocale(language);recognition.interimResults=true;recognition.continuous=true;recognition.onresult=(event:any)=>{setDiagnostic(language==='de'?'Sprache vom Browser erkannt':'Browser speech result received');let interim='';const startIndex=Number.isFinite(event.resultIndex)?event.resultIndex:0;for(let i=startIndex;i<event.results.length;i++){const result=event.results[i];const segment=String(result?.[0]?.transcript||'').trim();if(!segment)continue;if(result?.isFinal===false)interim=segment;else finalSegmentsRef.current.set(i,segment)}const finals=[...finalSegmentsRef.current.entries()].sort((a,b)=>a[0]-b[0]).map(([,text])=>text);speechTextRef.current=mergeSpeechSegments([...finals,interim].filter(Boolean))};recognition.onend=()=>{speechDoneResolveRef.current?.();speechDoneResolveRef.current=null;if(cancelRef.current)return;const text=speechTextRef.current.trim();setRecording(false);if(text)onTranscript(text);else setError(copy.noSpeech)};recognition.onerror=(event:any)=>{setDiagnostic((language==='de'?'Spracherkennungsfehler: ':'Speech recognition error: ')+String(event?.error||'unknown'));speechDoneResolveRef.current?.();speechDoneResolveRef.current=null;setRecording(false);if(cancelRef.current)return;const code=String(event?.error||'');setError(code==='not-allowed'||code==='service-not-allowed'?copy.permission:copy.failed)};recognition.start();speechRef.current=recognition;setRecording(true);return}catch{}}
+    setDiagnostic(ar?'المسار: Whisper محلي للعربية':language==='de'?'Pfad: lokales Whisper-Fallback':'Path: local Whisper fallback');if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){setError(copy.unsupported);return}
+    try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});streamRef.current=stream;chunksRef.current=[];const recorder=new MediaRecorder(stream);recorderRef.current=recorder;recorder.ondataavailable=e=>{if(e.data.size)chunksRef.current.push(e.data)};recorder.onstop=async()=>{const blob=new Blob(chunksRef.current,{type:recorder.mimeType||'audio/webm'});const cancelled=cancelRef.current;cleanup();setRecording(false);if(cancelled||!blob.size)return;setProcessing(true);try{let text='';if(ar){setDiagnostic('Whisper Large V3 — server');try{text=await transcribeAudioServer(blob)}catch{setDiagnostic('Server unavailable — local Whisper fallback');text=await transcribeAudio(blob,language)}}else text=await transcribeAudio(blob,language);if(!text)throw new Error('empty transcript');setLastTranscript(text);setDiagnostic(language==='de'?'Whisper-Transkript bereit — Nachricht wird verstanden':ar?'تم النسخ بـ Whisper — جارٍ فهم الرسالة':'Whisper transcription ready — understanding message');onTranscript(text)}catch{setError(language==='de'?'Die Aufnahme konnte nicht verstanden werden. Versuch es erneut oder gib sie manuell ein.':ar?'لم نستطع فهم التسجيل. جرّب مرة أخرى أو اكتبها يدوياً.':'We could not understand the recording. Try again or type it manually.')}finally{setProcessing(false)}};recorder.start(250);setRecording(true)}catch{cleanup();setError(copy.permission)}};
+  const stop=()=>{if(speechRef.current){try{speechRef.current.stop()}catch{}return}if(recorderRef.current?.state==='recording')recorderRef.current.stop()};const leave=(fn:()=>void)=>{cancelRef.current=true;if(recorderRef.current?.state==='recording')recorderRef.current.stop();else cleanup();setRecording(false);fn()};const back=()=>leave(onBack);
+  return <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-[#25231F]/55 backdrop-blur-md" role="dialog" aria-modal="true"><section className="w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] bg-[#FCFAF6] p-5 sm:p-6 shadow-2xl"><div className="flex items-center justify-between"><button type="button" onClick={back} className="w-10 h-10 rounded-full bg-white border border-[#E6E1D8] flex items-center justify-center" aria-label={copy.back}><ArrowLeft className={`w-4 h-4 ${ar?'rotate-180':''}`}/></button><button type="button" onClick={()=>leave(onClose)} className="w-10 h-10 rounded-full bg-white border border-[#E6E1D8] flex items-center justify-center" aria-label={copy.close}><X className="w-4 h-4"/></button></div><div className="mt-5 text-center"><h2 className="text-2xl font-display font-black text-[#252824]">{copy.title}</h2><p className="mt-2 text-sm text-[#77736B]">{copy.subtitle}</p></div><div className="mt-7 flex flex-col items-center"><button type="button" disabled={processing} onClick={recording?stop:start} className={`w-24 h-24 rounded-full grid place-items-center text-white shadow-xl transition ${recording?'bg-[#C94C3F]':'bg-[#293D34]'} disabled:opacity-60`} aria-label={recording?copy.stop:copy.start}>{processing?<LoaderCircle className="w-8 h-8 animate-spin"/>:recording?<Square className="w-8 h-8 fill-current"/>:<Mic2 className="w-9 h-9"/>}</button><p className="mt-4 text-sm font-black text-[#4A4C46]">{processing?copy.processing:recording?String(seconds)+'s':copy.idle}</p>{lastTranscript&&<div data-testid="voice-raw-transcript" className="mt-4 w-full rounded-2xl bg-[#F3F0E9] px-4 py-3 text-start"><p className="mt-1 text-xs font-semibold text-[#343631]" dir="auto">{lastTranscript}</p></div>}{diagnostic&&<p data-testid="voice-diagnostic" className="mt-4 rounded-2xl bg-white px-4 py-3 text-[11px] font-bold text-[#6D6A63] border border-[#E6E1D8]">{diagnostic}</p>}{error&&<p className="mt-3 rounded-2xl bg-[#FCE9E5] px-4 py-3 text-xs font-bold text-[#9B453A]">{error}</p>}</div></section></div>;
 };
