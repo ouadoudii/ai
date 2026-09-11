@@ -33,6 +33,15 @@ describe('dish-specific photo matching',()=>{
     }
   });
 
+  it('tolerates voice and keyboard accent/apostrophe variants',()=>{
+    expect(getDishPhoto('toast a l avocat avec oeuf','breakfast')?.title).toMatch(/Avocado/i);
+    expect(getDishPhoto('bol d acai avec banane','breakfast')?.title).toMatch(/Açai/i);
+    expect(getDishPhoto('poke bowl saumon','lunch')?.title).toMatch(/Poké/i);
+    expect(getDishPhoto('pates a la truffe au parmesan','dinner')?.title).toMatch(/Tagliatelle/i);
+    expect(getDishPhoto('gateau au fromage pistache','dessert')?.title).toMatch(/Cheesecake/i);
+    expect(getDishPhoto('توستٌ بالأفوكادو','breakfast')?.title).toMatch(/Avocado/i);
+  });
+
   it('does not attach unrelated category photos',()=>{
     expect(getDishPhoto('Chicken tagine with preserved lemon','lunch')).toBeNull();
     expect(getDishPhoto('طاجين الدجاج بالحامض المصير','lunch')).toBeNull();
@@ -48,6 +57,7 @@ describe('dish-specific photo matching',()=>{
     expect(getDishPhoto('Truffle tagliatelle','lunch')).toBeNull();
     expect(getDishPhoto('Lachs Poké Bowl','dinner')).toBeNull();
     expect(getDishPhoto('Pâtes à la truffe','lunch')).toBeNull();
+    expect(getDishPhoto('pates a la truffe','lunch')).toBeNull();
   });
 
   it('validates matched URLs',()=>{
@@ -61,5 +71,6 @@ describe('dish-specific photo matching',()=>{
     expect(isDishPhotoMatch('بوكي السلمون','lunch',pokePhoto!.url)).toBe(true);
     expect(isDishPhotoMatch('Lachs Poké Bowl','lunch',pokePhoto!.url)).toBe(true);
     expect(isDishPhotoMatch('Poké bowl saumon','lunch',pokePhoto!.url)).toBe(true);
+    expect(isDishPhotoMatch('poke bowl saumon','lunch',pokePhoto!.url)).toBe(true);
   });
 });
