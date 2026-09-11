@@ -9,7 +9,9 @@ const photoByTitle=(fragment:string)=>PRESET_PHOTOS.find(p=>normalize(p.title).i
 const rules:Array<{category:MomentCategory; terms:string[]; photo:()=>DishPhoto|undefined}> = [
   {category:'breakfast',terms:['avocado toast','avocado sourdough toast','توست بالأفوكادو','توست العجين المخمر بالأفوكادو'],photo:()=>photoByTitle('Avocado Sauerteig Toast')},
   {category:'breakfast',terms:['smoothie bowl','acai smoothie bowl','açai smoothie bowl','وعاء سموذي'],photo:()=>photoByTitle('Açai Smoothie Bowl')},
+  {category:'lunch',terms:['poke bowl','poké bowl','salmon poke bowl','salmon poké bowl','rainbow poke bowl','rainbow poké bowl','بوكي بول','وعاء بوكي','بوكي السلمون','بول السلمون'],photo:()=>photoByTitle('Bunte Poké Bowl')},
   {category:'dinner',terms:['pizza','margherita pizza','neapolitan pizza','بيتزا','بيتزا مارغريتا','بيتزا نابولية'],photo:()=>photoByTitle('Neapolitanische Pizza')},
+  {category:'dinner',terms:['tagliatelle','truffle tagliatelle','truffle pasta','pasta with truffle','تاليوليني','تاغلياتيلي','باستا بالكمأة','معكرونة بالكمأة'],photo:()=>photoByTitle('Trüffel Tagliatelle')},
   {category:'dessert',terms:['cheesecake','pistachio cheesecake','تشيز كيك'],photo:()=>photoByTitle('Pistazien Cheesecake')},
 ];
 
