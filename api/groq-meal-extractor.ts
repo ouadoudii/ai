@@ -106,19 +106,20 @@ function normalizeResult(value: any): SemanticMealExtraction | null {
 
 export async function extractMealWithGroq(
   transcript: string,
-  context: { timeOfDay?: string; currentHour?: number; language?: 'ar' | 'en' } = {},
+  context: { timeOfDay?: string; currentHour?: number; language?: 'ar' | 'en' | 'de' } = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<SemanticMealExtraction | null> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return null;
 
-  const arabicUi = context.language === 'ar';
-  const languageInstruction = arabicUi
+  const languageInstruction = context.language === 'ar'
     ? 'UI language is Arabic. Return meal names/items and free-text notes in natural Arabic/Darija. Do not translate them into English.'
-    : 'UI language is English. Return meal names/items and notes in concise natural English while preserving established foreign dish names.';
+    : context.language === 'de'
+      ? 'UI language is German. Return meal names/items and free-text notes in concise natural German while preserving established foreign dish names.'
+      : 'UI language is English. Return meal names/items and notes in concise natural English while preserving established foreign dish names.';
 
   const system = `You convert one free-form voice note into structured journal events for a food, sleep, energy and wellbeing app.
-Understand the COMPLETE message before extracting anything. The user may jump between breakfast, lunch, dinner, snacks, drinks, sleep, energy, mood, stress, hunger, fullness and water in any order. They may speak Moroccan/Algerian/Tunisian Darija, Egyptian, Levantine, Gulf, Iraqi, Yemeni, Sudanese, MSA, French, English or mixtures/transliteration.
+Understand the COMPLETE message before extracting anything. The user may jump between breakfast, lunch, dinner, snacks, drinks, sleep, energy, mood, stress, hunger, fullness and water in any order. They may speak Moroccan/Algerian/Tunisian Darija, Egyptian, Levantine, Gulf, Iraqi, Yemeni, Sudanese, MSA, German, French, English or mixtures/transliteration.
 ${languageInstruction}
 For meals: create one meals[] entry PER distinct meal moment. Assign breakfast/lunch/dinner/snack/coffee/dessert/drinks from explicit words and temporal context such as this morning, at lunch, later, in the evening, after dinner. Do not merge breakfast and lunch into one entry. Preserve quantities, preparation and ingredients. timeOfDay must be morning/midday/evening or empty. time is HH:MM only when explicitly stated or strongly implied; otherwise empty.
 For wellbeing: create wellbeingEntries[] for explicitly mentioned energy, mood, stress or water, assigning morning/midday/evening when the sentence makes it clear. Map qualitative intensity conservatively to 1-5 (very low=1, low/tired=2, neutral/okay=3, good=4, very high/excellent=5). Use 0 when not mentioned. mood should be a short normalized value such as energized, satisfied, light, comfort, joyful or empty; use note for wording that does not fit.
