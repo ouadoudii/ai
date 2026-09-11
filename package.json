@@ -11,7 +11,7 @@
     "lint": "tsc --noEmit",
     "quality:arab-users": "vitest run src/arabUserScenarios.test.tsx src/uxUserJourney.test.tsx src/targetedCheckInPhase.test.tsx src/arabicUserJourney.test.tsx src/arabicFoodNames.test.ts",
     "quality:deploy": "npm run lint && npm run quality:arab-users && npm test",
-    "test:visual": "playwright test e2e/arab-countries.visual.spec.ts --grep-invert \"daily check-in AI autocomplete understands composed Arabic dishes|AI meal autocomplete handles Darija, typos, preparation and mixed-language input|AI meal autocomplete degrades gracefully when API fails|Voice capture starts, stops, transcribes and prefills the meal editor|Arabic Whisper understands a full Darija message semantically with multiple foods and negation|Arabic Whisper transcript is sent once as one complete message\" && playwright test e2e/free-voice-journal.visual.spec.ts && playwright test e2e/meal-autocomplete-gated.visual.spec.ts"
+    "test:visual": "playwright test e2e/arab-countries.visual.spec.ts --grep-invert \"daily check-in AI autocomplete understands composed Arabic dishes|AI meal autocomplete handles Darija, typos, preparation and mixed-language input|AI meal autocomplete degrades gracefully when API fails|Voice capture starts, stops, transcribes and prefills the meal editor|Arabic Whisper understands a full Darija message semantically with multiple foods and negation|Arabic Whisper transcript is sent once as one complete message\" && playwright test e2e/free-voice-journal.visual.spec.ts && playwright test e2e/meal-autocomplete-gated.visual.spec.ts && playwright test e2e/capture-accessibility.visual.spec.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
