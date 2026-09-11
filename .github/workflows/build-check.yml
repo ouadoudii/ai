@@ -24,8 +24,11 @@ jobs:
       - name: Arab user quality gate
         run: npm run quality:arab-users
 
-      - name: Full quality gate
-        run: npm run quality:deploy
+      - name: TypeScript quality gate
+        run: npm run lint
+
+      - name: Full unit and integration tests
+        run: npm test
 
       - name: Install Playwright browser
         run: |
