@@ -5,13 +5,14 @@ import {defineConfig,devices} from '@playwright/test';
 // browser specs test the flows themselves rather than the wall clock. Choose
 // a synthetic timezone that makes the browser's local time roughly noon for
 // every CI start hour; dedicated unit tests cover the actual phase thresholds.
+const TARGET_BROWSER_HOUR=12;
 const utcHour=new Date().getUTCHours();
-const offsetToNoon=12-utcHour;
-const deterministicTimezone=offsetToNoon===0
+const offsetToTarget=TARGET_BROWSER_HOUR-utcHour;
+const deterministicTimezone=offsetToTarget===0
   ? 'Etc/GMT'
-  : offsetToNoon>0
-    ? `Etc/GMT-${offsetToNoon}`
-    : `Etc/GMT+${Math.abs(offsetToNoon)}`;
+  : offsetToTarget>0
+    ? `Etc/GMT-${offsetToTarget}`
+    : `Etc/GMT+${Math.abs(offsetToTarget)}`;
 
 export default defineConfig({
   testDir:'./e2e',
