@@ -20,7 +20,8 @@ export function assertSafeGeneratedFiles(files: Array<{ path: string; content: s
     if (!path || path.includes('..') || path.startsWith('.git/')) {
       throw new Error(`Unsafe generated path: ${file.path}`);
     }
-    if (FORBIDDEN_PATHS.some((pattern) => pattern.test(path))) {
+    const isEnvExample = /(^|\/)\.env\.example$/i.test(path);
+    if (!isEnvExample && FORBIDDEN_PATHS.some((pattern) => pattern.test(path))) {
       throw new Error(`Secret-bearing file is forbidden: ${path}`);
     }
     if (SECRET_PATTERNS.some((pattern) => pattern.test(file.content))) {
