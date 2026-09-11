@@ -114,7 +114,14 @@ function normalize(value: string): string {
 
 function tokenMatches(word: string, needle: string): boolean {
   if (word === needle) return true;
-  return /^و[\u0600-\u06ff]+$/.test(word) && word.slice(1) === needle;
+  if (!/^[\u0600-\u06ff]+$/.test(word) || !/^[\u0600-\u06ff]+$/.test(needle)) return false;
+
+  const withoutConjunction = word.startsWith('و') ? word.slice(1) : word;
+  if (withoutConjunction === needle) return true;
+
+  const withoutArticle = withoutConjunction.startsWith('ال') ? withoutConjunction.slice(2) : withoutConjunction;
+  const needleWithoutArticle = needle.startsWith('ال') ? needle.slice(2) : needle;
+  return withoutArticle === needleWithoutArticle;
 }
 
 function findAliasIndex(normalized: string, alias: string): number {
