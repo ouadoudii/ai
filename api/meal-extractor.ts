@@ -262,6 +262,12 @@ function detectMealCategory(normalized: string): string {
     'ftour','fطور','fatoor','foutour','الصبح','الصباح','صباحا','morning','this morning','morgens','am morgen','heute morgen','frühstück','fruhstuck','ce matin','matin',
     'breakfast','petit déjeuner','petit dejeuner'
   ];
+  const snack = [
+    'سناك','وجبة خفيفة','العصر','بعد الظهر',
+    'afternoon','this afternoon',
+    'nachmittags','heute nachmittag',
+    'après-midi','apres-midi','cet après-midi','cet apres-midi','goûter','gouter'
+  ];
   const lunch = [
     'غداء','الغداء','غدا','غديت','تغديت','اتغديت','تغديت','ghda','ghada','lghda','الظهر','وقت الظهر','نص النهار','بنص النهار','الزوال',
     'noon','midday','at noon','mittags','heute mittag','mittagessen','midi','à midi','a midi','lunch','déjeuner','dejeuner'
@@ -271,9 +277,9 @@ function detectMealCategory(normalized: string): string {
     'evening','tonight','abends','heute abend','abendessen','ce soir','soir','dinner','dîner','diner'
   ];
   if (breakfast.some((v) => normalized.includes(normalize(v)))) return 'breakfast';
+  if (snack.some((v) => normalized.includes(normalize(v)))) return 'snack';
   if (lunch.some((v) => normalized.includes(normalize(v)))) return 'lunch';
   if (dinner.some((v) => normalized.includes(normalize(v)))) return 'dinner';
-  if (['سناك','وجبة خفيفة','snack','goûter','gouter'].some((v) => normalized.includes(normalize(v)))) return 'snack';
   return detectMealCategoryFromClock(normalized);
 }
 
