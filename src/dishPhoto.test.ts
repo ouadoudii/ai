@@ -17,6 +17,22 @@ describe('dish-specific photo matching',()=>{
     expect(getDishPhoto('باستا بالكمأة والبارميزان','dinner')?.title).toMatch(/Tagliatelle/i);
   });
 
+  it('matches German and French names for every supported dish photo',()=>{
+    const cases = [
+      ['Avocado Sauerteig Toast mit Ei','Toast à l’avocat avec œuf','breakfast',/Avocado/i],
+      ['Açai Bowl mit Banane','Bol d’açaï avec banane','breakfast',/Açai/i],
+      ['Lachs Poké Bowl mit Edamame','Poké bowl saumon avec edamame','lunch',/Poké/i],
+      ['Neapolitanische Pizza mit Basilikum','Pizza napolitaine au basilic','dinner',/Pizza/i],
+      ['Trüffelpasta mit Parmesan','Pâtes à la truffe au parmesan','dinner',/Tagliatelle/i],
+      ['Pistazien Käsekuchen','Cheesecake à la pistache','dessert',/Cheesecake/i],
+    ] as const;
+
+    for (const [german,french,category,title] of cases) {
+      expect(getDishPhoto(german,category)?.title).toMatch(title);
+      expect(getDishPhoto(french,category)?.title).toMatch(title);
+    }
+  });
+
   it('does not attach unrelated category photos',()=>{
     expect(getDishPhoto('Chicken tagine with preserved lemon','lunch')).toBeNull();
     expect(getDishPhoto('طاجين الدجاج بالحامض المصير','lunch')).toBeNull();
@@ -30,6 +46,8 @@ describe('dish-specific photo matching',()=>{
     expect(getDishPhoto('Cheesecake','dinner')).toBeNull();
     expect(getDishPhoto('Salmon poke bowl','dinner')).toBeNull();
     expect(getDishPhoto('Truffle tagliatelle','lunch')).toBeNull();
+    expect(getDishPhoto('Lachs Poké Bowl','dinner')).toBeNull();
+    expect(getDishPhoto('Pâtes à la truffe','lunch')).toBeNull();
   });
 
   it('validates matched URLs',()=>{
@@ -41,5 +59,7 @@ describe('dish-specific photo matching',()=>{
     const pokePhoto=getDishPhoto('Salmon poke bowl','lunch');
     expect(pokePhoto).not.toBeNull();
     expect(isDishPhotoMatch('بوكي السلمون','lunch',pokePhoto!.url)).toBe(true);
+    expect(isDishPhotoMatch('Lachs Poké Bowl','lunch',pokePhoto!.url)).toBe(true);
+    expect(isDishPhotoMatch('Poké bowl saumon','lunch',pokePhoto!.url)).toBe(true);
   });
 });
