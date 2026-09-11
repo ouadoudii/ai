@@ -81,6 +81,35 @@ describe('voice check-in endpoint', () => {
     expect(JSON.parse(requestBody).messages[0].content).toContain('UI language is Arabic');
   });
 
+  it('keeps German voice extraction and feedback in German', async () => {
+    delete process.env.GEMINI_API_KEY;
+    process.env.GROQ_API_KEY = 'test-key';
+    let requestBody = '';
+    const fetchMock = vi.fn(async (_url:string,options?:RequestInit)=>{
+      requestBody=String(options?.body||'');
+      return groqResponse({mealDetected:true,mealTitle:'Vollkornbrot mit Frischkäse',mealItems:['Vollkornbrot mit Frischkäse'],mealCategory:'breakfast',mealContext:'',meals:[{category:'breakfast',timeOfDay:'morning',time:'08:00',mealTitle:'Vollkornbrot mit Frischkäse',mealItems:['Vollkornbrot mit Frischkäse'],hungerBefore:0,fullnessAfter:0}],...wellbeingEmpty});
+    });
+    vi.stubGlobal('fetch',fetchMock);
+    const response=createResponse();
+    await handler({method:'POST',headers:{'x-forwarded-for':'203.0.113.40'},ip:'203.0.113.40',body:{transcript:'Zum Frühstück hatte ich um acht Vollkornbrot mit Frischkäse',timeOfDay:'morning',currentHour:9,language:'de'}} as any,response.res);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.extractedData.extractionEngine).toBe('groq-semantic');
+    expect(response.body.extractedData.mealItems).toEqual(['Vollkornbrot mit Frischkäse']);
+    expect(response.body.coachFeedback.title).toContain('Sprachnotiz');
+    expect(response.body.coachFeedback.badge).toBe('Sprach-Check-in');
+    expect(JSON.parse(requestBody).messages[0].content).toContain('UI language is German');
+  });
+
+  it('returns German fallback feedback when AI providers are unavailable', async () => {
+    delete process.env.GEMINI_API_KEY;delete process.env.GROQ_API_KEY;
+    const response=createResponse();
+    await handler({method:'POST',headers:{'x-forwarded-for':'203.0.113.41'},ip:'203.0.113.41',body:{transcript:'Heute Morgen hatte ich Brot und Kaffee',timeOfDay:'morning',currentHour:8,language:'de'}} as any,response.res);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.extractedData.extractionEngine).toBe('deterministic-fallback');
+    expect(response.body.coachFeedback.title).toMatch(/Sprachnotiz|Cary ist bei dir/);
+    expect(response.body.coachFeedback.badge).toBe('Sprach-Check-in');
+  });
+
   it('keeps deterministic extraction as fallback when semantic providers are unavailable', async () => {
     delete process.env.GEMINI_API_KEY;delete process.env.GROQ_API_KEY;
     const response=createResponse();
