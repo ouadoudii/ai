@@ -15,8 +15,12 @@ describe('meal slot detection from spoken clock times', () => {
     expect(result.mealCategory).toBe(expectedCategory);
   });
 
-  it('keeps an explicit meal name stronger than a conflicting clock time', () => {
-    const result = extractMealItemsDeterministic('Frühstück um 13 Uhr mit Brot');
-    expect(result.mealCategory).toBe('breakfast');
+  it.each([
+    ['Frühstück um 13 Uhr mit Brot', 'breakfast'],
+    ['Mittagessen um 9 Uhr mit Reis', 'lunch'],
+    ['Abendessen um 12 Uhr mit Fisch', 'dinner'],
+  ])('keeps explicit German meal names stronger than a conflicting clock time: %s', (speech, expectedCategory) => {
+    const result = extractMealItemsDeterministic(speech);
+    expect(result.mealCategory).toBe(expectedCategory);
   });
 });
