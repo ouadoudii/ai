@@ -170,7 +170,7 @@ function quantityFor(normalized: string, alias: string): string | null {
 }
 
 function detectMealCategory(normalized: string): string {
-  const breakfast = ['فطور','الفطور','فطار','فطرت','اتفطرت','تفطرت','breakfast','petit déjeuner','petit dejeuner'];
+  const breakfast = ['فطور','الفطور','فطار','فطرت','اتفطرت','تفطرت','ترويقة','ترويقه','ترويقت','تريقت','ريوق','الريوق','ريوك','الريوك','breakfast','petit déjeuner','petit dejeuner'];
   const lunch = ['غداء','الغداء','غدا','غديت','تغديت','اتغديت','تغديت','lunch','déjeuner','dejeuner'];
   const dinner = ['عشاء','العشاء','عشا','عشيت','تعشيت','اتعشيت','dinner','dîner','diner'];
   if (breakfast.some((v) => normalized.includes(normalize(v)))) return 'breakfast';
