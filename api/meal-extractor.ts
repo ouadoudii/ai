@@ -79,7 +79,16 @@ const QUANTITIES = [
   'واحد','واحدة','وحدة','جوج','زوج','اثنين','اتنين','ثنين','ثلاث','ثلاثة','ثلاثه','أربع','اربعة','خمسة',
   'نص','نصف','شوية','قليل','كثير','كاس','كأس','كوب','فنجان','حبة','حبتين','قطعة','قطعتين',
   'one','two','three','four','half','cup','cups','glass','glasses','piece','pieces',
-  'un','une','deux','trois','quatre','demi','verre','tasse','pièce','piece','1','2','3','4','5'
+  'un','une','deux','trois','quatre','demi','verre','tasse','pièce','piece',
+  'ein','eine','einen','einem','einer','eins','zwei','drei','vier','fünf','funf','halb','halbe','halben','tasse','tassen','glas','gläser','glaser','stück','stuck','stücke','stucke',
+  '1','2','3','4','5','١','٢','٣','٤','٥','۱','۲','۳','۴','۵'
+];
+
+const QUANTITY_CONNECTORS = [
+  'قطعة','قطع','حبة','حبات','كوب','اكواب','أكواب','كاس','كأس','كؤوس','فنجان','فناجين',
+  'piece','pieces','cup','cups','glass','glasses',
+  'pièce','piece','pièces','pieces','tasse','tasses','verre','verres',
+  'stück','stuck','stücke','stucke','tasse','tassen','glas','gläser','glaser'
 ];
 
 const NEGATIONS = [
@@ -161,12 +170,23 @@ function isNegated(normalized: string, alias: string): boolean {
   return lastPositiveVerb < 0;
 }
 
-function quantityFor(normalized: string, alias: string): string | null {
+function quantityFor(normalized: string, alias: string, rule: FoodRule): string | null {
   const words = normalized.split(' ');
   const index = findAliasIndex(normalized, alias);
   if (index <= 0) return null;
+
+  const isQuantity = (value: string) => QUANTITIES.some((q) => normalize(q) === value);
   const immediate = words[index - 1];
-  return QUANTITIES.some((q) => normalize(q) === immediate) ? immediate : null;
+  if (isQuantity(immediate)) return immediate;
+
+  if (index > 1 && isQuantity(words[index - 2])) {
+    const modifier = words[index - 1];
+    const isPreparationModifier = rule.preps?.some((prep) => prep.aliases.some((candidate) => normalize(candidate) === modifier)) ?? false;
+    const isQuantityConnector = QUANTITY_CONNECTORS.some((connector) => normalize(connector) === modifier);
+    if (isPreparationModifier || isQuantityConnector) return words[index - 2];
+  }
+
+  return null;
 }
 
 function detectMealCategory(normalized: string): string {
@@ -201,7 +221,7 @@ export function extractMealItemsDeterministic(transcript: string): MealExtractio
     const context = contextAround(normalized, alias);
     const prep = rule.preps?.find((p) => p.aliases.some((a) => includesAlias(context, a)))?.label;
     const addition = rule.additions?.find((p) => p.aliases.some((a) => includesAlias(context, a)))?.label;
-    const quantity = quantityFor(normalized, alias);
+    const quantity = quantityFor(normalized, alias, rule);
     const item = [quantity, rule.label, prep, addition].filter(Boolean).join(' ');
     if (item && !items.includes(item)) items.push(item);
   }
