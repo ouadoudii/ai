@@ -19,6 +19,7 @@ import { VoiceCaptureModal } from './components/VoiceCaptureModal';
 import { processVoiceCheckIn } from './apiClient';
 import { getLocalDateKey } from './utils/dateKey';
 import { getDishPhoto } from './utils/dishPhoto';
+import { getCheckInMomentCopy } from './utils/checkInMomentLocalization';
 import { trackUx } from './utils/uxAnalytics';
 import { buildVoiceJournalEntries } from './utils/voiceJournalApply';
 import { useLanguage } from './i18n';
@@ -66,7 +67,7 @@ export default function App(){
     if(checkinStartedAt.current){trackUx({eventName:'flow_finished',surface:'checkin',language,durationMs:Date.now()-checkinStartedAt.current,outcome:'completed',metadata:{phase:checkInData.timeOfDay,has_photo:false}});checkinStartedAt.current=null;}
     const now=Date.now();const newCheckIn:DailyCheckIn={...checkInData,id:`user-checkin-${now}`,createdAt:now};
     setCheckIns(prev=>[newCheckIn,...prev.filter(c=>!(c.date===checkInData.date&&c.timeOfDay===checkInData.timeOfDay&&!SEEDED_CHECKIN_IDS.has(c.id)))]);
-    if(checkInData.food?.mealTitle){const category=checkInData.food.category;const matchedPhoto=getDishPhoto(checkInData.food.mealTitle,category);const newMoment:FoodMoment={id:`moment-${now}`,title:checkInData.food.mealTitle,label:category==='breakfast'?'Breakfast':category==='lunch'?'Lunch':'Dinner',category,date:checkInData.date,time:checkInData.time,location:'Not specified',locationCategory:'home',imageUrl:matchedPhoto?.url||'',rating:5,mood:checkInData.wellbeing.mood||'satisfied',hungerLevel:checkInData.food.hungerBefore,fullnessLevel:checkInData.food.fullnessAfter,eatingPace:checkInData.food.eatingPace,distraction:checkInData.food.distraction,energyAfter:(checkInData.wellbeing.energyLevel||3)>=4?'energized':'neutral',coachFeedback:{title:'Captured',message:checkInData.coachSummary||'Saved for future pattern comparisons.',type:'praise',badge:'Check-in'},notes:checkInData.wellbeing.note,tags:['Check-in',checkInData.timeOfDay],createdAt:now};setMoments(prev=>[newMoment,...prev]);}
+    if(checkInData.food?.mealTitle){const category=checkInData.food.category;const matchedPhoto=getDishPhoto(checkInData.food.mealTitle,category);const copy=getCheckInMomentCopy(language,category);const newMoment:FoodMoment={id:`moment-${now}`,title:checkInData.food.mealTitle,label:copy.label,category,date:checkInData.date,time:checkInData.time,location:copy.location,locationCategory:'home',imageUrl:matchedPhoto?.url||'',rating:5,mood:checkInData.wellbeing.mood||'satisfied',hungerLevel:checkInData.food.hungerBefore,fullnessLevel:checkInData.food.fullnessAfter,eatingPace:checkInData.food.eatingPace,distraction:checkInData.food.distraction,energyAfter:(checkInData.wellbeing.energyLevel||3)>=4?'energized':'neutral',coachFeedback:{title:copy.captured,message:checkInData.coachSummary||copy.fallbackSummary,type:'praise',badge:copy.badge},notes:checkInData.wellbeing.note,tags:[copy.badge,checkInData.timeOfDay],createdAt:now};setMoments(prev=>[newMoment,...prev]);}
   };
 
   const applyVoiceJournal=React.useCallback((result:Awaited<ReturnType<typeof processVoiceCheckIn>>,transcript:string)=>{
