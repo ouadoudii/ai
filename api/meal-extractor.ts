@@ -100,6 +100,13 @@ const NEGATIONS = [
 
 const NEGATIVE_DETERMINERS = ['kein','keine','keinen','keinem','keiner','keines'];
 
+const DIRECT_NEGATION_PREFIXES = [
+  'بدون','بلا','من غير',
+  'no','without',
+  'sans','pas de','pas du','pas des',
+  'ohne'
+];
+
 const NEGATION_SCOPE_RESETS = [
   'ولكن','لكن','بس','غير',
   'but','however','instead',
@@ -162,13 +169,21 @@ function lastSequenceIndex(words: string[], phrase: string): number {
   return last;
 }
 
+function hasDirectNegationPrefix(words: string[], index: number): boolean {
+  return DIRECT_NEGATION_PREFIXES.some((prefix) => {
+    const parts = normalize(prefix).split(' ');
+    if (index < parts.length) return false;
+    return parts.every((part, offset) => words[index - parts.length + offset] === part);
+  });
+}
+
 function isNegated(normalized: string, alias: string): boolean {
   const words = normalized.split(' ');
   const index = findAliasIndex(normalized, alias);
   if (index < 0) return false;
 
   const previousWord = index > 0 ? words[index - 1] : '';
-  if (NEGATIVE_DETERMINERS.includes(previousWord)) return true;
+  if (NEGATIVE_DETERMINERS.includes(previousWord) || hasDirectNegationPrefix(words, index)) return true;
 
   const before = words.slice(0, index);
   let lastNegationStart = -1;
