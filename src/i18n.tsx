@@ -25,9 +25,12 @@ const fallbackT=(key:string)=>dictionary[key]?.en??key;
 
 export const resolveInitialLanguage=(saved:string|null,locales:string[]):AppLanguage=>{
   if(saved==='ar'||saved==='de'||saved==='en')return saved;
-  const normalized=locales.map(locale=>locale.toLowerCase());
-  if(normalized.some(locale=>locale==='de'||locale.startsWith('de-')))return 'de';
-  if(normalized.some(locale=>locale==='ar'||locale.startsWith('ar-')))return 'ar';
+  for(const locale of locales){
+    const normalized=locale.toLowerCase();
+    if(normalized==='de'||normalized.startsWith('de-'))return 'de';
+    if(normalized==='ar'||normalized.startsWith('ar-'))return 'ar';
+    if(normalized==='en'||normalized.startsWith('en-'))return 'en';
+  }
   return 'en';
 };
 
