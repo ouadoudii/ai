@@ -84,6 +84,13 @@ const QUANTITIES = [
   '1','2','3','4','5','١','٢','٣','٤','٥','۱','۲','۳','۴','۵'
 ];
 
+const QUANTITY_CONNECTORS = [
+  'قطعة','قطع','حبة','حبات','كوب','اكواب','أكواب','كاس','كأس','كؤوس','فنجان','فناجين',
+  'piece','pieces','cup','cups','glass','glasses',
+  'pièce','piece','pièces','pieces','tasse','tasses','verre','verres',
+  'stück','stuck','stücke','stucke','tasse','tassen','glas','gläser','glaser'
+];
+
 const NEGATIONS = [
   'ما كليتش','ماكلتش','ما اكلتش','ما أكلتش','ما كلتش','ما شربتش','مش كلت','مش أكلت','مش اكلت','مش شربت',
   'لم آكل','لم اكل','لم أشرب','لم اشرب','ما أكلت','ما اكلت','ما شربت','مو آكل','مو اكل','مو شارب',
@@ -175,7 +182,8 @@ function quantityFor(normalized: string, alias: string, rule: FoodRule): string 
   if (index > 1 && isQuantity(words[index - 2])) {
     const modifier = words[index - 1];
     const isPreparationModifier = rule.preps?.some((prep) => prep.aliases.some((candidate) => normalize(candidate) === modifier)) ?? false;
-    if (isPreparationModifier) return words[index - 2];
+    const isQuantityConnector = QUANTITY_CONNECTORS.some((connector) => normalize(connector) === modifier);
+    if (isPreparationModifier || isQuantityConnector) return words[index - 2];
   }
 
   return null;
