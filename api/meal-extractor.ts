@@ -100,6 +100,13 @@ const NEGATIONS = [
 
 const NEGATIVE_DETERMINERS = ['kein','keine','keinen','keinem','keiner','keines'];
 
+const NEGATION_SCOPE_RESETS = [
+  'ولكن','لكن','بس','غير',
+  'but','however','instead',
+  'mais','par contre','plutôt','plutot',
+  'aber','jedoch','sondern'
+];
+
 const POSITIVE_CONSUMPTION_VERBS = [
   'كليت','كلت','اكلت','أكلت','شربت','خديت','خدت','فطرت','تغديت','تعشيت',
   'ate','drank','had','mange','mangé','bu'
@@ -174,6 +181,12 @@ function isNegated(normalized: string, alias: string): boolean {
     }
   }
   if (lastNegationStart < 0) return false;
+
+  let lastScopeReset = -1;
+  for (const reset of NEGATION_SCOPE_RESETS) {
+    lastScopeReset = Math.max(lastScopeReset, lastSequenceIndex(before, reset));
+  }
+  if (lastScopeReset > lastNegationEnd) return false;
 
   let lastPositiveVerb = -1;
   for (let i = lastNegationEnd + 1; i < before.length; i += 1) {
