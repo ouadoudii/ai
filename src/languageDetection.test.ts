@@ -10,6 +10,12 @@ describe('resolveInitialLanguage',()=>{
     expect(resolveInitialLanguage(null,['fr-FR','ar-MA','en-US'])).toBe('ar');
   });
 
+  it('respects browser preference order when multiple supported languages are present',()=>{
+    expect(resolveInitialLanguage(null,['ar-MA','de-DE','en-US'])).toBe('ar');
+    expect(resolveInitialLanguage(null,['de-DE','ar-MA','en-US'])).toBe('de');
+    expect(resolveInitialLanguage(null,['en-US','ar-MA','de-DE'])).toBe('en');
+  });
+
   it('keeps an explicit saved language even when the browser prefers another language',()=>{
     expect(resolveInitialLanguage('en',['de-DE'])).toBe('en');
     expect(resolveInitialLanguage('de',['ar-MA'])).toBe('de');
