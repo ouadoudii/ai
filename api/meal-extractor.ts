@@ -14,7 +14,7 @@ type FoodRule = {
 };
 
 const FOOD_RULES: FoodRule[] = [
-  { aliases: ['بيضات','بيضة','بيض','bayd','beyd','beid','egg','eggs','oeuf','oeufs','ei','eier'], label: 'بيض', preps: [
+  { aliases: ['بيضات','بيضة','بيض','bayd','beyd','beid','egg','eggs','oeuf','oeufs','ei','eier','eiern'], label: 'بيض', preps: [
     { aliases: ['مسلوقين','مسلوقة','مسلوق','boiled','bouilli','bouillis','gekocht','gekochte','gekochtes','gekochten'], label: 'مسلوق' },
     { aliases: ['مقليين','مقلية','مقلي','fried','frit','frits','gebraten','spiegelei'], label: 'مقلي' },
     { aliases: ['أومليت','اومليت','omelette','omelet','omelett'], label: 'أومليت' },
