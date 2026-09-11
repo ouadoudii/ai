@@ -225,17 +225,30 @@ function normalizeClockDigits(value: string): string {
 
 function detectMealCategoryFromClock(normalized: string): string {
   const clockText = normalizeClockDigits(normalized);
-  const patterns = [
-    /(?:^|\s)(?:um|at)\s+(\d{1,2})(?::(\d{2}))?\s*(?:uhr|h)?(?:\s|$)/,
-    /(?:^|\s)a\u0300\s+(\d{1,2})(?::(\d{2}))?\s*h?(?:\s|$)/,
-    /(?:^|\s)الساعه\s+(\d{1,2})(?::(\d{2}))?(?:\s|$)/,
-  ];
-  const match = patterns.map((pattern) => clockText.match(pattern)).find(Boolean);
-  if (!match) return '';
+  const meridiemMatch = clockText.match(/(?:^|\s)(?:(?:at|الساعه)\s+)?(\d{1,2})(?:\s+(\d{2}))?\s*(am|pm|صباحا|صباح|مساء)(?:\s|$)/);
 
-  const hour = Number(match[1]);
-  const minute = Number(match[2] || '0');
-  if (!Number.isInteger(hour) || hour < 0 || hour > 23 || minute < 0 || minute > 59) return '';
+  let hour: number;
+  let minute: number;
+  if (meridiemMatch) {
+    hour = Number(meridiemMatch[1]);
+    minute = Number(meridiemMatch[2] || '0');
+    const meridiem = meridiemMatch[3];
+    if (!Number.isInteger(hour) || hour < 1 || hour > 12 || minute < 0 || minute > 59) return '';
+    if ((meridiem === 'am' || meridiem === 'صباحا' || meridiem === 'صباح') && hour === 12) hour = 0;
+    if ((meridiem === 'pm' || meridiem === 'مساء') && hour < 12) hour += 12;
+  } else {
+    const patterns = [
+      /(?:^|\s)(?:um|at)\s+(\d{1,2})(?::(\d{2}))?\s*(?:uhr|h)?(?:\s|$)/,
+      /(?:^|\s)a\u0300\s+(\d{1,2})(?::(\d{2}))?\s*h?(?:\s|$)/,
+      /(?:^|\s)الساعه\s+(\d{1,2})(?::(\d{2}))?(?:\s|$)/,
+    ];
+    const match = patterns.map((pattern) => clockText.match(pattern)).find(Boolean);
+    if (!match) return '';
+    hour = Number(match[1]);
+    minute = Number(match[2] || '0');
+    if (!Number.isInteger(hour) || hour < 0 || hour > 23 || minute < 0 || minute > 59) return '';
+  }
+
   if (hour >= 5 && hour < 11) return 'breakfast';
   if (hour >= 11 && hour < 16) return 'lunch';
   if (hour === 16) return 'snack';
