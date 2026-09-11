@@ -98,6 +98,8 @@ const NEGATIONS = [
   "je n'ai pas mangé","je n ai pas mange","je n'ai pas bu","je n ai pas bu",'pas mangé','pas mange','pas bu'
 ];
 
+const NEGATIVE_DETERMINERS = ['kein','keine','keinen','keinem','keiner','keines'];
+
 const POSITIVE_CONSUMPTION_VERBS = [
   'كليت','كلت','اكلت','أكلت','شربت','خديت','خدت','فطرت','تغديت','تعشيت',
   'ate','drank','had','mange','mangé','bu'
@@ -150,6 +152,9 @@ function isNegated(normalized: string, alias: string): boolean {
   const words = normalized.split(' ');
   const index = findAliasIndex(normalized, alias);
   if (index < 0) return false;
+
+  const previousWord = index > 0 ? words[index - 1] : '';
+  if (NEGATIVE_DETERMINERS.includes(previousWord)) return true;
 
   const before = words.slice(0, index);
   let lastNegationStart = -1;
