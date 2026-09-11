@@ -214,25 +214,54 @@ function quantityFor(normalized: string, alias: string, rule: FoodRule): string 
   return null;
 }
 
+function normalizeClockDigits(value: string): string {
+  const arabicIndic = '٠١٢٣٤٥٦٧٨٩';
+  const easternArabicIndic = '۰۱۲۳۴۵۶۷۸۹';
+  return value.replace(/[٠-٩۰-۹]/g, (digit) => {
+    const arabicIndex = arabicIndic.indexOf(digit);
+    return String(arabicIndex >= 0 ? arabicIndex : easternArabicIndic.indexOf(digit));
+  });
+}
+
+function detectMealCategoryFromClock(normalized: string): string {
+  const clockText = normalizeClockDigits(normalized);
+  const patterns = [
+    /(?:^|\s)(?:um|at)\s+(\d{1,2})(?::(\d{2}))?\s*(?:uhr|h)?(?:\s|$)/,
+    /(?:^|\s)a\u0300\s+(\d{1,2})(?::(\d{2}))?\s*h?(?:\s|$)/,
+    /(?:^|\s)الساعه\s+(\d{1,2})(?::(\d{2}))?(?:\s|$)/,
+  ];
+  const match = patterns.map((pattern) => clockText.match(pattern)).find(Boolean);
+  if (!match) return '';
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2] || '0');
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23 || minute < 0 || minute > 59) return '';
+  if (hour >= 5 && hour < 11) return 'breakfast';
+  if (hour >= 11 && hour < 16) return 'lunch';
+  if (hour === 16) return 'snack';
+  if (hour >= 17 || hour < 3) return 'dinner';
+  return '';
+}
+
 function detectMealCategory(normalized: string): string {
   const breakfast = [
     'فطور','الفطور','فطار','فطرت','اتفطرت','تفطرت','ترويقة','ترويقه','ترويقت','تريقت','ريوق','الريوق','ريوك','الريوك',
-    'الصبح','الصباح','صباحا','morning','this morning','morgens','am morgen','heute morgen','ce matin','matin',
+    'الصبح','الصباح','صباحا','morning','this morning','morgens','am morgen','heute morgen','frühstück','fruhstuck','ce matin','matin',
     'breakfast','petit déjeuner','petit dejeuner'
   ];
   const lunch = [
     'غداء','الغداء','غدا','غديت','تغديت','اتغديت','تغديت','الظهر','وقت الظهر','نص النهار','بنص النهار','الزوال',
-    'noon','midday','at noon','mittags','heute mittag','midi','à midi','a midi','lunch','déjeuner','dejeuner'
+    'noon','midday','at noon','mittags','heute mittag','mittagessen','midi','à midi','a midi','lunch','déjeuner','dejeuner'
   ];
   const dinner = [
     'عشاء','العشاء','عشا','عشيت','تعشيت','اتعشيت','بالليل','الليل','المساء','المسا',
-    'evening','tonight','abends','heute abend','ce soir','soir','dinner','dîner','diner'
+    'evening','tonight','abends','heute abend','abendessen','ce soir','soir','dinner','dîner','diner'
   ];
   if (breakfast.some((v) => normalized.includes(normalize(v)))) return 'breakfast';
   if (lunch.some((v) => normalized.includes(normalize(v)))) return 'lunch';
   if (dinner.some((v) => normalized.includes(normalize(v)))) return 'dinner';
   if (['سناك','وجبة خفيفة','snack','goûter','gouter'].some((v) => normalized.includes(normalize(v)))) return 'snack';
-  return '';
+  return detectMealCategoryFromClock(normalized);
 }
 
 export function extractMealItemsDeterministic(transcript: string): MealExtraction {
