@@ -14,10 +14,10 @@ type FoodRule = {
 };
 
 const FOOD_RULES: FoodRule[] = [
-  { aliases: ['بيضات','بيضة','بيض','egg','eggs','oeuf','oeufs'], label: 'بيض', preps: [
-    { aliases: ['مسلوقين','مسلوقة','مسلوق','boiled','bouilli','bouillis'], label: 'مسلوق' },
-    { aliases: ['مقليين','مقلية','مقلي','fried','frit','frits'], label: 'مقلي' },
-    { aliases: ['أومليت','اومليت','omelette','omelet'], label: 'أومليت' },
+  { aliases: ['بيضات','بيضة','بيض','egg','eggs','oeuf','oeufs','ei','eier'], label: 'بيض', preps: [
+    { aliases: ['مسلوقين','مسلوقة','مسلوق','boiled','bouilli','bouillis','gekocht','gekochte','gekochtes','gekochten'], label: 'مسلوق' },
+    { aliases: ['مقليين','مقلية','مقلي','fried','frit','frits','gebraten','spiegelei'], label: 'مقلي' },
+    { aliases: ['أومليت','اومليت','omelette','omelet','omelett'], label: 'أومليت' },
   ] },
   { aliases: ['المسمن','مسمن','msemen','msemmen'], label: 'مسمن', additions: [
     { aliases: ['بالعسل','مع العسل','au miel','with honey'], label: 'بالعسل' },
@@ -26,53 +26,53 @@ const FOOD_RULES: FoodRule[] = [
   { aliases: ['أتاي','اتاي','atay'], label: 'أتاي', additions: [
     { aliases: ['بالنعناع','نعناع','à la menthe','mint'], label: 'بالنعناع' },
   ] },
-  { aliases: ['شاي','tea','thé','the'], label: 'شاي', additions: [
+  { aliases: ['شاي','tea','thé','the','tee'], label: 'شاي', additions: [
     { aliases: ['بالنعناع','نعناع','à la menthe','mint'], label: 'بالنعناع' },
-    { aliases: ['بالحليب','مع الحليب','au lait','with milk'], label: 'بالحليب' },
+    { aliases: ['بالحليب','مع الحليب','au lait','with milk','mit milch'], label: 'بالحليب' },
   ] },
-  { aliases: ['قهوة','قهوا','coffee','café','cafe'], label: 'قهوة', additions: [
-    { aliases: ['بالحليب','مع الحليب','au lait','with milk','milk coffee'], label: 'بالحليب' },
-    { aliases: ['بلا سكر','بدون سكر','sans sucre','no sugar'], label: 'بلا سكر' },
+  { aliases: ['قهوة','قهوا','coffee','café','cafe','kaffee'], label: 'قهوة', additions: [
+    { aliases: ['بالحليب','مع الحليب','au lait','with milk','milk coffee','mit milch'], label: 'بالحليب' },
+    { aliases: ['بلا سكر','بدون سكر','sans sucre','no sugar','ohne zucker'], label: 'بلا سكر' },
   ] },
-  { aliases: ['الخبز','خبز','خبزة','الخبزة','خبيزة','الخبيزة','khobz','khobza','khbeza','khbiza','bread','pain'], label: 'خبز', additions: [
-    { aliases: ['بالجبن','مع الجبن','بالفرماج','مع الفرماج','فرماج','fromage','au fromage','with cheese','cheese'], label: 'بالجبن' },
-    { aliases: ['بزيت الزيتون','مع زيت الزيتون','زيت الزيتون','huile d olive','olive oil'], label: 'بزيت الزيتون' },
+  { aliases: ['الخبز','خبز','خبزة','الخبزة','خبيزة','الخبيزة','khobz','khobza','khbeza','khbiza','bread','pain','brot'], label: 'خبز', additions: [
+    { aliases: ['بالجبن','مع الجبن','بالفرماج','مع الفرماج','فرماج','fromage','au fromage','with cheese','cheese','mit käse','mit kase'], label: 'بالجبن' },
+    { aliases: ['بزيت الزيتون','مع زيت الزيتون','زيت الزيتون','huile d olive','olive oil','mit olivenöl','mit olivenol'], label: 'بزيت الزيتون' },
   ] },
   { aliases: ['حريرة','الحريرة','harira'], label: 'حريرة' },
   { aliases: ['كسكس','كوسكوس','couscous'], label: 'كسكس' },
   { aliases: ['طاجين','تاجين','tajine','tagine'], label: 'طاجين' },
-  { aliases: ['شوربة','شربة','soupe','soup'], label: 'شوربة' },
-  { aliases: ['دجاج','فراخ','جاج','chicken','poulet'], label: 'دجاج', preps: [
-    { aliases: ['مشوي','مشوية','grilled','grillé','grille'], label: 'مشوي' },
-    { aliases: ['مقلي','fried','frit'], label: 'مقلي' },
+  { aliases: ['شوربة','شربة','soupe','soup','suppe'], label: 'شوربة' },
+  { aliases: ['دجاج','فراخ','جاج','chicken','poulet','hähnchen','hahnchen'], label: 'دجاج', preps: [
+    { aliases: ['مشوي','مشوية','grilled','grillé','grille','gegrillt'], label: 'مشوي' },
+    { aliases: ['مقلي','fried','frit','gebraten'], label: 'مقلي' },
   ] },
-  { aliases: ['لحم','لحمة','meat','viande'], label: 'لحم', preps: [
-    { aliases: ['مشوي','grilled','grillé','grille'], label: 'مشوي' },
+  { aliases: ['لحم','لحمة','meat','viande','fleisch'], label: 'لحم', preps: [
+    { aliases: ['مشوي','grilled','grillé','grille','gegrillt'], label: 'مشوي' },
   ] },
-  { aliases: ['سمك','حوت','fish','poisson'], label: 'سمك', preps: [
-    { aliases: ['مشوي','grilled','grillé','grille'], label: 'مشوي' },
-    { aliases: ['مقلي','fried','frit'], label: 'مقلي' },
+  { aliases: ['سمك','حوت','fish','poisson','fisch'], label: 'سمك', preps: [
+    { aliases: ['مشوي','grilled','grillé','grille','gegrillt'], label: 'مشوي' },
+    { aliases: ['مقلي','fried','frit','gebraten'], label: 'مقلي' },
   ] },
-  { aliases: ['رز','أرز','ارز','rice','riz'], label: 'أرز' },
-  { aliases: ['سلطة','salad','salade'], label: 'سلطة' },
-  { aliases: ['بطاطا','بطاطس','potato','potatoes','pomme de terre','pommes de terre'], label: 'بطاطا', preps: [
-    { aliases: ['مقلية','مقلي','fries','frites','fried'], label: 'مقلية' },
-    { aliases: ['مسلوقة','مسلوق','boiled'], label: 'مسلوقة' },
+  { aliases: ['رز','أرز','ارز','rice','riz','reis'], label: 'أرز' },
+  { aliases: ['سلطة','salad','salade','salat'], label: 'سلطة' },
+  { aliases: ['بطاطا','بطاطس','potato','potatoes','pomme de terre','pommes de terre','kartoffel','kartoffeln'], label: 'بطاطا', preps: [
+    { aliases: ['مقلية','مقلي','fries','frites','fried','pommes','gebraten'], label: 'مقلية' },
+    { aliases: ['مسلوقة','مسلوق','boiled','gekocht'], label: 'مسلوقة' },
   ] },
-  { aliases: ['ياغورت','يوغورت','زبادي','yaourt','yogurt'], label: 'ياغورت' },
-  { aliases: ['حليب','milk','lait'], label: 'حليب' },
-  { aliases: ['ماء','الماء','water','eau'], label: 'ماء' },
-  { aliases: ['تمر','تمور','dates','dattes'], label: 'تمر' },
-  { aliases: ['تفاح','تفاحة','apple','pomme'], label: 'تفاح' },
+  { aliases: ['ياغورت','يوغورت','زبادي','yaourt','yogurt','joghurt'], label: 'ياغورت' },
+  { aliases: ['حليب','milk','lait','milch'], label: 'حليب' },
+  { aliases: ['ماء','الماء','water','eau','wasser'], label: 'ماء' },
+  { aliases: ['تمر','تمور','dates','dattes','datteln'], label: 'تمر' },
+  { aliases: ['تفاح','تفاحة','apple','pomme','apfel'], label: 'تفاح' },
   { aliases: ['موز','موزة','banana','banane'], label: 'موز' },
   { aliases: ['برتقال','برتقالة','orange'], label: 'برتقال' },
-  { aliases: ['جبن','جبنة','فرماج','fromage','cheese'], label: 'جبن' },
+  { aliases: ['جبن','جبنة','فرماج','fromage','cheese','käse','kase'], label: 'جبن' },
   { aliases: ['كرواسون','croissant'], label: 'كرواسون' },
   { aliases: ['ساندويتش','سندويتش','sandwich'], label: 'ساندويتش' },
   { aliases: ['بيتزا','pizza'], label: 'بيتزا' },
-  { aliases: ['مكرونة','معكرونة','pasta','pâtes','pates'], label: 'مكرونة' },
-  { aliases: ['عدس','lentils','lentilles'], label: 'عدس' },
-  { aliases: ['حمص','chickpeas','pois chiches'], label: 'حمص' },
+  { aliases: ['مكرونة','معكرونة','pasta','pâtes','pates','nudeln'], label: 'مكرونة' },
+  { aliases: ['عدس','lentils','lentilles','linsen'], label: 'عدس' },
+  { aliases: ['حمص','chickpeas','pois chiches','kichererbsen'], label: 'حمص' },
 ];
 
 const QUANTITIES = [
