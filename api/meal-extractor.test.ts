@@ -135,4 +135,24 @@ describe('deterministic multilingual meal extraction', () => {
     const result = extractMealItemsDeterministic('I had two eggs fried, bread and tea with milk');
     expect(result.mealItems).toEqual(expect.arrayContaining(['two بيض مقلي', 'خبز', 'شاي بالحليب']));
   });
+
+  it.each([
+    ['morgens hatte ich zwei Eier und Brot', 'zwei بيض'],
+    ['morgens hatte ich zwei gekochte Eier und Brot', 'zwei بيض مسلوق'],
+    ['abends hatte ich drei Kartoffeln und Salat', 'drei بطاطا'],
+  ])('preserves natural German quantities from voice: %s', (speech, expectedItem) => {
+    const result = extractMealItemsDeterministic(speech);
+    expect(result.mealDetected).toBe(true);
+    expect(result.mealItems).toContain(expectedItem);
+  });
+
+  it.each([
+    ['فطرت ٢ بيضات وخبز', '٢ بيض'],
+    ['فطرت ۳ بيضات وخبز', '۳ بيض'],
+    ['تعشيت ٤ قطع دجاج ورز', '٤ دجاج'],
+  ])('preserves Arabic-script numeric quantities from voice: %s', (speech, expectedItem) => {
+    const result = extractMealItemsDeterministic(speech);
+    expect(result.mealDetected).toBe(true);
+    expect(result.mealItems).toContain(expectedItem);
+  });
 });
