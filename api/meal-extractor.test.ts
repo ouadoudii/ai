@@ -64,6 +64,25 @@ describe('deterministic multilingual meal extraction', () => {
     expect(result.mealCategory).toBe('breakfast');
   });
 
+  it.each([
+    ['الصبح كليت بيض وخبز', 'breakfast'],
+    ['وقت الظهر كليت كسكس وسلطة', 'lunch'],
+    ['بالليل كليت شوربة وخبز', 'dinner'],
+    ['morgens hatte ich Eier und Brot', 'breakfast'],
+    ['mittags hatte ich Couscous und Salat', 'lunch'],
+    ['abends hatte ich Suppe und Brot', 'dinner'],
+    ['this morning I had eggs and bread', 'breakfast'],
+    ['at noon I had couscous and salad', 'lunch'],
+    ['tonight I had soup and bread', 'dinner'],
+    ['ce matin j ai mangé des oeufs avec pain', 'breakfast'],
+    ['à midi j ai mangé couscous et salade', 'lunch'],
+    ['ce soir j ai mangé soupe avec pain', 'dinner'],
+  ])('assigns natural daypart phrase %s to %s', (speech, expected) => {
+    const result = extractMealItemsDeterministic(speech);
+    expect(result.mealDetected).toBe(true);
+    expect(result.mealCategory).toBe(expected);
+  });
+
   it('supports mixed Arabic, French and English', () => {
     const result = extractMealItemsDeterministic('تعشيت poulet grilled مع salade وشربت coffee au lait');
     expect(result.mealItems).toContain('دجاج مشوي');
