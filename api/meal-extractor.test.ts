@@ -52,6 +52,18 @@ describe('deterministic multilingual meal extraction', () => {
     expect(result.mealCategory).toBe(expected);
   });
 
+  it.each([
+    'ترويقت بيض وخبز',
+    'عملت ترويقة حمص وخبز وشاي',
+    'تريقت بيض وجبن',
+    'بالريوق أكلت تمر وشربت حليب',
+    'بالريوك أكلت بيض وخبز',
+  ])('maps Levantine and Gulf breakfast wording to breakfast: %s', (speech) => {
+    const result = extractMealItemsDeterministic(speech);
+    expect(result.mealDetected).toBe(true);
+    expect(result.mealCategory).toBe('breakfast');
+  });
+
   it('supports mixed Arabic, French and English', () => {
     const result = extractMealItemsDeterministic('تعشيت poulet grilled مع salade وشربت coffee au lait');
     expect(result.mealItems).toContain('دجاج مشوي');
