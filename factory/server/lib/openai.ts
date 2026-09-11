@@ -11,13 +11,23 @@ const SYSTEM_PROMPT = `You are the builder inside a strict App Factory. Turn one
 Hard rules:
 - Use a simple Vite + React + TypeScript stack unless the product clearly requires another web stack.
 - Produce complete text files only, never binaries.
-- Include package.json, README.md, .gitignore, .env.example, factory.json, a GitHub Actions quality workflow, unit/integration tests, and Playwright browser tests for critical user journeys.
-- factory.json must contain {"active":true,"lastImprovedAt":null} plus app metadata.
+- Include package.json, README.md, .gitignore, .env.example, meaningful unit/integration tests, and Playwright browser tests under e2e/ for critical user journeys.
+- package.json must include working scripts named lint, test, test:e2e, and build.
 - Never include real credentials or secret values. Environment variables may appear only as names/placeholders in .env.example.
-- Add scripts so one quality command runs type/lint checks, unit/integration tests, browser tests, and a production build.
-- Tests must verify meaningful behavior, not placeholder assertions.
+- Never skip, weaken, delete, or bypass tests merely to make the project pass.
 - The UI must be understandable on mobile without onboarding knowledge.
-- Prefer a focused, usable MVP over many half-built features.`;
+- Prefer a focused, usable MVP over many half-built features.
+The Factory itself will inject factory.json and the immutable GitHub Actions quality workflow after generation.`;
+
+function extractResponseText(data: unknown) {
+  const output = (data as { output?: Array<{ content?: Array<{ type?: string; text?: string }> }> }).output ?? [];
+  for (const item of output) {
+    for (const content of item.content ?? []) {
+      if (content.type === 'output_text' && content.text) return content.text;
+    }
+  }
+  return '';
+}
 
 export async function generateAppBlueprint(idea: string): Promise<AppBlueprint> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -53,19 +63,13 @@ export async function generateAppBlueprint(idea: string): Promise<AppBlueprint> 
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: `Business idea:\n${idea}` },
       ],
-      text: {
-        format: {
-          type: 'json_schema',
-          name: 'app_factory_blueprint',
-          strict: true,
-          schema,
-        },
-      },
+      text: { format: { type: 'json_schema', name: 'app_factory_blueprint', strict: true, schema } },
     }),
   });
 
-  if (!response.ok) throw new Error(`OpenAI generation failed (${response.status}).`);
-  const data = await response.json() as { output_text?: string };
-  if (!data.output_text) throw new Error('OpenAI returned no structured blueprint.');
-  return JSON.parse(data.output_text) as AppBlueprint;
+  if (!response.ok) throw new Error(`OpenAI generation failed (${response.status}): ${(await response.text()).slice(0, 300)}`);
+  const data = await response.json();
+  const outputText = extractResponseText(data);
+  if (!outputText) throw new Error('OpenAI returned no structured blueprint.');
+  return JSON.parse(outputText) as AppBlueprint;
 }
