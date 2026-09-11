@@ -1,0 +1,32 @@
+const FORBIDDEN_PATHS = [
+  /^\.env($|\.)/i,
+  /(^|\/)\.env($|\.)/i,
+  /(^|\/)id_rsa$/i,
+  /(^|\/)credentials?\.(json|ya?ml|txt)$/i,
+];
+
+const SECRET_PATTERNS = [
+  /sk-[A-Za-z0-9_-]{20,}/,
+  /github_pat_[A-Za-z0-9_]{20,}/,
+  /ghp_[A-Za-z0-9]{20,}/,
+  /gsk_[A-Za-z0-9]{20,}/,
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+];
+
+export function assertSafeGeneratedFiles(files: Array<{ path: string; content: string }>) {
+  const seen = new Set<string>();
+  for (const file of files) {
+    const path = file.path.replace(/^\/+/, '');
+    if (!path || path.includes('..') || path.startsWith('.git/')) {
+      throw new Error(`Unsafe generated path: ${file.path}`);
+    }
+    if (FORBIDDEN_PATHS.some((pattern) => pattern.test(path))) {
+      throw new Error(`Secret-bearing file is forbidden: ${path}`);
+    }
+    if (SECRET_PATTERNS.some((pattern) => pattern.test(file.content))) {
+      throw new Error(`Generated file appears to contain a secret: ${path}`);
+    }
+    if (seen.has(path)) throw new Error(`Duplicate generated path: ${path}`);
+    seen.add(path);
+  }
+}

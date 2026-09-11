@@ -1,0 +1,48 @@
+name: App Factory quality gate
+
+on:
+  push:
+    branches: [factory/bootstrap]
+    paths:
+      - 'factory/**'
+      - '.github/workflows/factory-build-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'factory/**'
+      - '.github/workflows/factory-build-check.yml'
+  workflow_dispatch:
+
+jobs:
+  factory-quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: factory
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Type check
+        run: npm run lint
+      - name: Unit and security tests
+        run: npm test
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Real-browser intake journeys
+        run: npm run test:e2e
+      - name: Production build
+        run: npm run build
+      - name: Upload browser traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-browser-report
+          path: |
+            factory/test-results/
+            factory/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
