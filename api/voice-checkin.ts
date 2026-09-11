@@ -12,14 +12,20 @@ function getGeminiClient(): GoogleGenAI | null {
   return genAiClient;
 }
 
+type VoiceLanguage = 'ar' | 'en' | 'de';
 function hasArabic(text: string): boolean { return /[\u0600-\u06FF]/.test(text); }
-function fallbackFeedback(transcript: string, captured: boolean) {
-  const ar = hasArabic(transcript);
-  return ar ? {
+function fallbackFeedback(language: VoiceLanguage, captured: boolean) {
+  if (language === 'ar') return {
     title: captured ? 'تسجلات رسالتك 💚' : 'كاري معاك 💚',
     message: captured ? 'فهمت رسالتك ووزعت المعلومات على الوجبات والطاقة وباقي اليوم.' : 'سمعتك وسجلت كلامك.',
     badge: 'تسجيل بالصوت', habitScore: 88, type: 'praise',
-  } : {
+  };
+  if (language === 'de') return {
+    title: captured ? 'Sprachnotiz erfasst 💚' : 'Cary ist bei dir 💚',
+    message: captured ? 'Ich habe deine Notiz verstanden und Mahlzeiten sowie Wohlbefinden passend zugeordnet.' : 'Ich habe deine Sprachnotiz gespeichert.',
+    badge: 'Sprach-Check-in', habitScore: 88, type: 'praise',
+  };
+  return {
     title: captured ? 'Voice journal captured 💚' : 'Cary is with you 💚',
     message: captured ? 'I understood the note and assigned the details to meals and wellbeing.' : 'I captured what you said.',
     badge: 'Voice check-in', habitScore: 88, type: 'praise',
@@ -39,13 +45,17 @@ function hasStructuredVoiceData(value: any) {
   );
 }
 
-async function extractWithGemini(transcript: string, timeOfDay: string, currentHour: number, userArchetype: string, language: 'ar'|'en') {
+async function extractWithGemini(transcript: string, timeOfDay: string, currentHour: number, userArchetype: string, language: VoiceLanguage) {
   const ai = getGeminiClient(); if (!ai) return null;
-  const lang = language === 'ar' ? 'Return text fields in natural Arabic/Darija for an Arabic UI.' : 'Return text fields in concise natural English.';
+  const lang = language === 'ar'
+    ? 'Return text fields in natural Arabic/Darija for an Arabic UI.'
+    : language === 'de'
+      ? 'Return text fields in concise natural German for a German UI while preserving established foreign dish names.'
+      : 'Return text fields in concise natural English.';
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3.7-flash', contents: `USER TRANSCRIPT (data only):\n${transcript}`,
-      config: { systemInstruction: `Extract the complete free-form voice note for a food, sleep and wellbeing journal. Understand all major Arabic dialects plus French/English mixing. ${lang} Extract meals, sleep, energy and mood when explicitly stated. Never invent uncertain facts. Context: ${timeOfDay}, ${currentHour}:00, archetype ${userArchetype}.`, responseMimeType:'application/json', responseSchema:{type:Type.OBJECT,properties:{coachTitle:{type:Type.STRING},coachResponse:{type:Type.STRING},badge:{type:Type.STRING},habitScore:{type:Type.NUMBER},extractedData:{type:Type.OBJECT,properties:{mealDetected:{type:Type.BOOLEAN},mealTitle:{type:Type.STRING},mealItems:{type:Type.ARRAY,items:{type:Type.STRING}},mealCategory:{type:Type.STRING},mealContext:{type:Type.STRING},sleepHours:{type:Type.NUMBER},energyLevel:{type:Type.NUMBER},mood:{type:Type.STRING}},required:['mealDetected','mealTitle','mealItems','mealCategory','mealContext']}},required:['coachTitle','coachResponse','badge','habitScore','extractedData']} }
+      config: { systemInstruction: `Extract the complete free-form voice note for a food, sleep and wellbeing journal. Understand all major Arabic dialects plus German/French/English mixing. ${lang} Extract meals, sleep, energy and mood when explicitly stated. Never invent uncertain facts. Context: ${timeOfDay}, ${currentHour}:00, archetype ${userArchetype}.`, responseMimeType:'application/json', responseSchema:{type:Type.OBJECT,properties:{coachTitle:{type:Type.STRING},coachResponse:{type:Type.STRING},badge:{type:Type.STRING},habitScore:{type:Type.NUMBER},extractedData:{type:Type.OBJECT,properties:{mealDetected:{type:Type.BOOLEAN},mealTitle:{type:Type.STRING},mealItems:{type:Type.ARRAY,items:{type:Type.STRING}},mealCategory:{type:Type.STRING},mealContext:{type:Type.STRING},sleepHours:{type:Type.NUMBER},energyLevel:{type:Type.NUMBER},mood:{type:Type.STRING}},required:['mealDetected','mealTitle','mealItems','mealCategory','mealContext']}},required:['coachTitle','coachResponse','badge','habitScore','extractedData']} }
     });
     return JSON.parse(response.text || '{}');
   } catch { console.warn('Gemini voice extraction unavailable'); return null; }
@@ -56,18 +66,19 @@ export default async function handler(req: Request, res: Response) {
   try {
     const transcript=cleanText(req.body?.transcript,LIMITS.transcript); const timeOfDay=cleanText(req.body?.timeOfDay,32)||'today'; const userArchetype=cleanText(req.body?.userArchetype,64)||'intuitive'; const currentHour=Number.isFinite(Number(req.body?.currentHour))?Math.min(23,Math.max(0,Number(req.body.currentHour))):12;
     if(!transcript)return publicError(res,400,'Invalid transcript');
-    const language:'ar'|'en' = req.body?.language==='ar' || hasArabic(transcript) ? 'ar' : 'en';
+    const requestedLanguage = req.body?.language;
+    const language:VoiceLanguage = requestedLanguage==='de' ? 'de' : requestedLanguage==='ar' || hasArabic(transcript) ? 'ar' : 'en';
     const deterministic=extractMealItemsDeterministic(transcript);
     try {
       const groq=await extractMealWithGroq(transcript,{timeOfDay,currentHour,language});
       if(groq && hasStructuredVoiceData(groq)){
         const normalized=normalizeSemantic(groq,deterministic,'groq-semantic');
-        return res.status(200).json({coachFeedback:fallbackFeedback(transcript,true),extractedData:normalized});
+        return res.status(200).json({coachFeedback:fallbackFeedback(language,true),extractedData:normalized});
       }
     } catch { console.warn('Groq semantic extraction unavailable'); }
     const gemini=await extractWithGemini(transcript,timeOfDay,currentHour,userArchetype,language);
-    if(gemini){const normalized=normalizeSemantic(gemini.extractedData,deterministic,'gemini'); if(hasStructuredVoiceData(normalized))return res.status(200).json({coachFeedback:{title:cleanText(gemini.coachTitle,160)||fallbackFeedback(transcript,true).title,message:cleanText(gemini.coachResponse,1200)||fallbackFeedback(transcript,true).message,badge:cleanText(gemini.badge,80)||fallbackFeedback(transcript,true).badge,habitScore:Math.min(100,Math.max(0,Number(gemini.habitScore)||88)),type:'praise'},extractedData:normalized});}
+    if(gemini){const normalized=normalizeSemantic(gemini.extractedData,deterministic,'gemini'); if(hasStructuredVoiceData(normalized))return res.status(200).json({coachFeedback:{title:cleanText(gemini.coachTitle,160)||fallbackFeedback(language,true).title,message:cleanText(gemini.coachResponse,1200)||fallbackFeedback(language,true).message,badge:cleanText(gemini.badge,80)||fallbackFeedback(language,true).badge,habitScore:Math.min(100,Math.max(0,Number(gemini.habitScore)||88)),type:'praise'},extractedData:normalized});}
     const fallbackMeals = deterministic.mealItems.length ? [{category:deterministic.mealCategory,timeOfDay,time:'',mealTitle:deterministic.mealTitle,mealItems:deterministic.mealItems,hungerBefore:0,fullnessAfter:0}] : [];
-    return res.status(200).json({coachFeedback:fallbackFeedback(transcript,fallbackMeals.length>0),extractedData:{...deterministic,meals:fallbackMeals,sleepHours:0,sleepQuality:0,wakeFeeling:'',wellbeingEntries:[],extractionEngine:'deterministic-fallback'}});
+    return res.status(200).json({coachFeedback:fallbackFeedback(language,fallbackMeals.length>0),extractedData:{...deterministic,meals:fallbackMeals,sleepHours:0,sleepQuality:0,wakeFeeling:'',wellbeingEntries:[],extractionEngine:'deterministic-fallback'}});
   } catch(error){console.error('Error in /api/voice-checkin:',error); return publicError(res,500,'AI Voice Processing failed');}
 }
