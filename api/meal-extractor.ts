@@ -246,16 +246,16 @@ function detectMealCategoryFromClock(normalized: string): string {
 function detectMealCategory(normalized: string): string {
   const breakfast = [
     'فطور','الفطور','فطار','فطرت','اتفطرت','تفطرت','ترويقة','ترويقه','ترويقت','تريقت','ريوق','الريوق','ريوك','الريوك',
-    'الصبح','الصباح','صباحا','morning','this morning','morgens','am morgen','heute morgen','ce matin','matin',
+    'الصبح','الصباح','صباحا','morning','this morning','morgens','am morgen','heute morgen','frühstück','fruhstuck','ce matin','matin',
     'breakfast','petit déjeuner','petit dejeuner'
   ];
   const lunch = [
     'غداء','الغداء','غدا','غديت','تغديت','اتغديت','تغديت','الظهر','وقت الظهر','نص النهار','بنص النهار','الزوال',
-    'noon','midday','at noon','mittags','heute mittag','midi','à midi','a midi','lunch','déjeuner','dejeuner'
+    'noon','midday','at noon','mittags','heute mittag','mittagessen','midi','à midi','a midi','lunch','déjeuner','dejeuner'
   ];
   const dinner = [
     'عشاء','العشاء','عشا','عشيت','تعشيت','اتعشيت','بالليل','الليل','المساء','المسا',
-    'evening','tonight','abends','heute abend','ce soir','soir','dinner','dîner','diner'
+    'evening','tonight','abends','heute abend','abendessen','ce soir','soir','dinner','dîner','diner'
   ];
   if (breakfast.some((v) => normalized.includes(normalize(v)))) return 'breakfast';
   if (lunch.some((v) => normalized.includes(normalize(v)))) return 'lunch';
