@@ -27,6 +27,12 @@ jobs:
       - name: TypeScript quality gate
         run: npm run lint
 
+      - name: German language regression
+        run: npx vitest run src/germanLanguage.test.tsx
+
+      - name: English leakage regression
+        run: npx vitest run src/englishLiveUi.test.ts
+
       - name: Full unit and integration tests
         run: npm test
 
