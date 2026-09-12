@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { extractMealWithGroq } from './groq-meal-extractor';
+import { extractMealWithGroq } from '../../api/groq-meal-extractor';
 
 const originalGroqKey = process.env.GROQ_API_KEY;
 afterEach(() => {

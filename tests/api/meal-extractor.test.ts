@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractMealItemsDeterministic } from './meal-extractor';
+import { extractMealItemsDeterministic } from '../../api/meal-extractor';
 
 describe('deterministic multilingual meal extraction', () => {
   it('extracts Darija quantities, preparation and multiple items', () => {
