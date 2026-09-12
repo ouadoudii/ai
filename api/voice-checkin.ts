@@ -18,7 +18,8 @@ function normalizeDeterministicFallbackTranscript(text: string): string {
   return text
     .replace(/\bpas\s+d[’']/gi, 'sans ')
     .replace(/œ/gi, 'oe')
-    .replace(/[’']/g, ' ');
+    .replace(/[’']/g, ' ')
+    .replace(/[-‐‑‒–—―]/g, ' ');
 }
 function fallbackFeedback(language: VoiceLanguage, captured: boolean) {
   if (language === 'ar') return {
