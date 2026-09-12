@@ -32,6 +32,10 @@ function requestedVoiceLanguage(req: Request): VoiceLanguage | null {
   return value === 'ar' || value === 'en' || value === 'de' || value === 'fr' ? value : null;
 }
 
+function hasArabicScript(text: string) {
+  return /[\u0600-\u06FF]/.test(text);
+}
+
 async function groqTranscribe(audio: Buffer, contentType: string, forcedLanguage: VoiceLanguage | null) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error('not-configured');
@@ -84,10 +88,25 @@ export default async function handler(req: Request, res: Response) {
     const preferredLanguage = requestedVoiceLanguage(req);
 
     // First let Whisper identify the language itself. This performs better for
-    // Darija and mixed-language speech. If auto-detection fails, retry in the
-    // language the user selected instead of always forcing Arabic.
+    // Darija and mixed-language speech. If an Arabic voice session comes back
+    // entirely in Latin script, run one Arabic-constrained recovery pass: auto
+    // detection can otherwise misclassify Darija as French/English and turn food
+    // names into unrelated Latin words. Keep the auto result unless the recovery
+    // actually restores Arabic script, so genuine mixed/French speech is not
+    // replaced just because the UI language is Arabic.
     try {
       const auto = await groqTranscribe(audio, contentType, null);
+      if (preferredLanguage === 'ar' && !hasArabicScript(auto.text)) {
+        try {
+          const recovered = await groqTranscribe(audio, contentType, 'ar');
+          if (hasArabicScript(recovered.text)) {
+            return res.status(200).json({ text: recovered.text, engine: 'whisper-large-v3-ar-recovery', detectedLanguage: recovered.language });
+          }
+        } catch {
+          // Recovery is best-effort. A usable auto transcript is better than
+          // failing the request because the second pass was unavailable.
+        }
+      }
       return res.status(200).json({ text: auto.text, engine: 'whisper-large-v3-auto', detectedLanguage: auto.language });
     } catch (firstError) {
       const retryLanguage = preferredLanguage || 'ar';
