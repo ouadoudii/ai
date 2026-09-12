@@ -76,12 +76,50 @@ const score = (value: unknown, max = 5) => {
   return Number.isFinite(n) ? Math.max(0, Math.min(max, n)) : 0;
 };
 
+function normalizeEnumProbe(value: unknown, max = 32) {
+  return (cleanText(value, max) || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, '')
+    .replace(/[’']/g, ' ')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeMealCategory(value: unknown) {
+  const original = cleanText(value, 32) || '';
+  const probe = normalizeEnumProbe(value);
+  const aliases: Record<string, string> = {
+    breakfast: 'breakfast', 'petit dejeuner': 'breakfast', fruhstuck: 'breakfast', 'فطور': 'breakfast', 'الفطور': 'breakfast',
+    lunch: 'lunch', dejeuner: 'lunch', mittagessen: 'lunch', 'غداء': 'lunch', 'الغداء': 'lunch', 'غدا': 'lunch', 'الغدا': 'lunch',
+    dinner: 'dinner', diner: 'dinner', abendessen: 'dinner', 'عشاء': 'dinner', 'العشاء': 'dinner', 'عشا': 'dinner', 'العشا': 'dinner',
+    snack: 'snack', collation: 'snack', zwischenmahlzeit: 'snack', 'سناك': 'snack', 'وجبة خفيفة': 'snack',
+    coffee: 'coffee', cafe: 'coffee', kaffee: 'coffee', 'قهوة': 'coffee',
+    dessert: 'dessert', nachtisch: 'dessert', 'حلوى': 'dessert',
+    drinks: 'drinks', drink: 'drinks', beverages: 'drinks', boissons: 'drinks', getranke: 'drinks', 'مشروبات': 'drinks',
+  };
+  return aliases[probe] || original;
+}
+
+function normalizeTimeOfDay(value: unknown) {
+  const original = cleanText(value, 16) || '';
+  const probe = normalizeEnumProbe(value, 16);
+  const aliases: Record<string, string> = {
+    morning: 'morning', matin: 'morning', morgen: 'morning', 'صباح': 'morning', 'الصباح': 'morning',
+    midday: 'midday', noon: 'midday', midi: 'midday', mittag: 'midday', 'ظهر': 'midday', 'الظهر': 'midday',
+    evening: 'evening', night: 'evening', soir: 'evening', abend: 'evening', 'مساء': 'evening', 'المساء': 'evening', 'ليل': 'evening', 'الليل': 'evening',
+  };
+  return aliases[probe] || original;
+}
+
 function normalizeResult(value: any): SemanticMealExtraction | null {
   if (!value || typeof value !== 'object') return null;
   const meals: SemanticVoiceMeal[] = Array.isArray(value.meals) ? value.meals.map((meal: any) => {
     const mealItems = Array.isArray(meal?.mealItems) ? meal.mealItems.map((item: unknown) => cleanText(item, 120)).filter(Boolean).slice(0, 20) : [];
     return {
-      category: cleanText(meal?.category, 32) || '', timeOfDay: cleanText(meal?.timeOfDay, 16) || '', time: cleanText(meal?.time, 8) || '',
+      category: normalizeMealCategory(meal?.category), timeOfDay: normalizeTimeOfDay(meal?.timeOfDay), time: cleanText(meal?.time, 8) || '',
       mealTitle: cleanText(meal?.mealTitle, 240) || mealItems.join(' · '), mealItems,
       hungerBefore: score(meal?.hungerBefore), fullnessAfter: score(meal?.fullnessAfter),
     };
@@ -92,14 +130,14 @@ function normalizeResult(value: any): SemanticMealExtraction | null {
   const mealItems = legacyItems.length ? legacyItems : flatItems;
   const first = meals[0];
   const wellbeingEntries: SemanticWellbeingEntry[] = Array.isArray(value.wellbeingEntries) ? value.wellbeingEntries.map((entry: any) => ({
-    timeOfDay: cleanText(entry?.timeOfDay, 16) || '', energyLevel: score(entry?.energyLevel), mood: cleanText(entry?.mood, 40) || '',
+    timeOfDay: normalizeTimeOfDay(entry?.timeOfDay), energyLevel: score(entry?.energyLevel), mood: cleanText(entry?.mood, 40) || '',
     stressLevel: score(entry?.stressLevel), waterGlasses: score(entry?.waterGlasses, 30), note: cleanText(entry?.note, 300) || '',
   })).filter((entry: SemanticWellbeingEntry) => entry.energyLevel > 0 || entry.stressLevel > 0 || entry.waterGlasses > 0 || Boolean(entry.mood || entry.note)).slice(0, 8) : [];
 
   return {
     mealDetected: meals.length > 0 || (mealItems.length > 0 && value.mealDetected !== false),
     mealTitle: cleanText(value.mealTitle, 240) || first?.mealTitle || mealItems.join(' · '), mealItems,
-    mealCategory: cleanText(value.mealCategory, 32) || first?.category || '', mealContext: cleanText(value.mealContext, 500) || '', meals,
+    mealCategory: normalizeMealCategory(value.mealCategory) || first?.category || '', mealContext: cleanText(value.mealContext, 500) || '', meals,
     sleepHours: score(value.sleepHours, 24), sleepQuality: score(value.sleepQuality), wakeFeeling: cleanText(value.wakeFeeling, 32) || '', wellbeingEntries,
   };
 }

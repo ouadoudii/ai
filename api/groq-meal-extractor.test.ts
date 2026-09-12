@@ -86,6 +86,27 @@ describe('Groq semantic voice journal extraction', () => {
     expect(JSON.parse(requestBody).messages[0].content).toContain('omit it rather than guessing');
   });
 
+  it('normalizes multilingual provider labels to the canonical journal enums', async () => {
+    process.env.GROQ_API_KEY = 'test-key';
+    const fetchMock = vi.fn(async () => responseWith({
+      mealDetected: true, mealTitle: 'بيض وخبز', mealItems: ['بيض', 'خبز'], mealCategory: 'الفُطُور', mealContext: '',
+      meals: [
+        { category: 'الفُطُور', timeOfDay: 'الصَّبَاح', time: '', mealTitle: 'بيض وخبز', mealItems: ['بيض', 'خبز'], hungerBefore: 0, fullnessAfter: 0 },
+        { category: 'Déjeuner', timeOfDay: 'midi', time: '', mealTitle: 'couscous', mealItems: ['couscous'], hungerBefore: 0, fullnessAfter: 0 },
+        { category: 'Abendessen', timeOfDay: 'Abend', time: '', mealTitle: 'Suppe', mealItems: ['Suppe'], hungerBefore: 0, fullnessAfter: 0 },
+      ],
+      ...emptyWellbeing,
+      wellbeingEntries: [{ timeOfDay: 'المَسَاء', energyLevel: 3, mood: 'okay', stressLevel: 0, waterGlasses: 0, note: '' }],
+    }));
+
+    const result = await extractMealWithGroq('فالفطور بيض وخبز، déjeuner couscous، Abendessen Suppe', { language: 'ar' }, fetchMock as any);
+    expect(result?.mealCategory).toBe('breakfast');
+    expect(result?.meals.map(meal => [meal.category, meal.timeOfDay])).toEqual([
+      ['breakfast', 'morning'], ['lunch', 'midday'], ['dinner', 'evening'],
+    ]);
+    expect(result?.wellbeingEntries[0]?.timeOfDay).toBe('evening');
+  });
+
   it('returns null on provider failure so endpoint recovery remains possible', async () => {
     process.env.GROQ_API_KEY = 'test-key';
     const fetchMock = vi.fn(async () => responseWith({}, false));
