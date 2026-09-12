@@ -6,12 +6,12 @@ afterEach(() => {
 });
 
 describe('recorded audio transcription client', () => {
-  it('sends the original audio blob with its audio content type', async () => {
+  it('sends the original audio blob, its content type and the selected voice language', async () => {
     const audio = new Blob(['voice-bytes'], { type: 'audio/webm;codecs=opus' });
     const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
       expect(init?.method).toBe('POST');
       expect(init?.body).toBe(audio);
-      expect(init?.headers).toEqual({ 'Content-Type': 'audio/webm;codecs=opus' });
+      expect(init?.headers).toEqual({ 'Content-Type': 'audio/webm;codecs=opus', 'X-Voice-Language': 'ar' });
       expect(typeof init?.body).not.toBe('string');
       return new Response(JSON.stringify({ text: 'بيض مسلوق وقهوة' }), {
         status: 200,
@@ -24,19 +24,23 @@ describe('recorded audio transcription client', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/transcribe-audio', expect.any(Object));
   });
 
-  it('uses audio/webm when the recorder blob has no MIME type', async () => {
+  it.each([
+    ['en', 'coffee and toast'],
+    ['de', 'Kaffee und Brot'],
+    ['fr', 'café et tartine'],
+  ] as const)('preserves %s as the voice-language hint for retry transcription', async (language, transcript) => {
     const audio = new Blob(['voice-bytes']);
     const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
       expect(init?.body).toBe(audio);
-      expect(init?.headers).toEqual({ 'Content-Type': 'audio/webm' });
-      return new Response(JSON.stringify({ text: 'coffee and toast' }), {
+      expect(init?.headers).toEqual({ 'Content-Type': 'audio/webm', 'X-Voice-Language': language });
+      return new Response(JSON.stringify({ text: transcript }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(transcribeRecordedAudio(audio, 'en')).resolves.toBe('coffee and toast');
+    await expect(transcribeRecordedAudio(audio, language)).resolves.toBe(transcript);
   });
 
   it('rejects an empty recording before making a network request', async () => {
