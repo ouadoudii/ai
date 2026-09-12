@@ -2,7 +2,7 @@ import { FoodMoment, DailyCheckIn, NutritionTypeProfile, CoachFeedback } from '.
 import { analyzeNutritionType as fallbackAnalyze } from './utils/nutritionTypeEngine';
 import { getCoachChatResponse as fallbackChat } from './utils/coachEngine';
 
-export type VoiceLanguage = 'ar' | 'en' | 'de';
+export type VoiceLanguage = 'ar' | 'en' | 'de' | 'fr';
 
 export interface VoiceMealEntry {
   category: string;
@@ -42,10 +42,10 @@ export interface VoiceCheckInResult {
   };
 }
 
-export async function transcribeRecordedAudio(blob:Blob,_language:VoiceLanguage):Promise<string>{
+export async function transcribeRecordedAudio(blob:Blob,language:VoiceLanguage):Promise<string>{
   if (!blob.size) throw new Error('Empty audio');
   const contentType=blob.type||'audio/webm';
-  const res=await fetch('/api/transcribe-audio',{method:'POST',headers:{'Content-Type':contentType},body:blob});
+  const res=await fetch('/api/transcribe-audio',{method:'POST',headers:{'Content-Type':contentType,'X-Voice-Language':language},body:blob});
   if(!res.ok)throw new Error(`Transcription API returned status ${res.status}`);
   const data=await res.json();
   const text=typeof data?.text==='string'?data.text.trim():'';
@@ -65,7 +65,9 @@ export async function processVoiceCheckIn(transcript:string,timeOfDay:string,use
       ? {title:'تسجلات الرسالة الصوتية 💚',message:'سمعتك وسجلت الرسالة. تقدر تصحح التفاصيل يدوياً.',type:'praise' as const,badge:'تسجيل بالصوت',habitScore:92}
       : language==='de'
         ? {title:'Sprachnotiz gespeichert 💚',message:`Danke fürs Teilen. Cary hat „${transcript.slice(0,80)}...“ für dein Tagebuch gespeichert.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92}
-        : {title:'Voice note captured 💚',message:`Thanks for sharing. Cary captured “${transcript.slice(0,80)}...” for your journal.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92};
+        : language==='fr'
+          ? {title:'Note vocale enregistrée 💚',message:`Merci pour ce partage. Cary a enregistré « ${transcript.slice(0,80)}... » dans ton journal.`,type:'praise' as const,badge:'Check-in vocal',habitScore:92}
+          : {title:'Voice note captured 💚',message:`Thanks for sharing. Cary captured “${transcript.slice(0,80)}...” for your journal.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92};
     return {coachFeedback:feedback,extractedData:{}};
   }
 }
