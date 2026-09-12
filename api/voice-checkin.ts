@@ -66,8 +66,19 @@ const GERMAN_DETERMINISTIC_LABELS: Array<[string, string]> = [
   ['ساندويتش', 'Sandwich'], ['بيتزا', 'Pizza'], ['مكرونة', 'Nudeln'], ['عدس', 'Linsen'], ['حمص', 'Kichererbsen'], ['أومليت', 'Omelett'],
 ];
 
+const ENGLISH_DETERMINISTIC_LABELS: Array<[string, string]> = [
+  ['قهوة بالحليب', 'coffee with milk'], ['قهوة بلا سكر', 'coffee without sugar'], ['شاي بالحليب', 'tea with milk'], ['شاي بالنعناع', 'mint tea'],
+  ['خبز بالجبن', 'bread with cheese'], ['خبز بزيت الزيتون', 'bread with olive oil'], ['بيض مسلوق', 'boiled eggs'], ['بيض مقلي', 'fried eggs'],
+  ['دجاج مشوي', 'grilled chicken'], ['دجاج مقلي', 'fried chicken'], ['لحم مشوي', 'grilled meat'], ['سمك مشوي', 'grilled fish'], ['سمك مقلي', 'fried fish'],
+  ['بطاطا مقلية', 'fries'], ['بطاطا مسلوقة', 'boiled potatoes'], ['مسمن بالعسل', 'msemen with honey'], ['مسمن بالجبن', 'msemen with cheese'], ['أتاي بالنعناع', 'atay with mint'],
+  ['بيض', 'eggs'], ['مسمن', 'msemen'], ['أتاي', 'atay'], ['شاي', 'tea'], ['قهوة', 'coffee'], ['خبز', 'bread'], ['حريرة', 'harira'], ['كسكس', 'couscous'], ['طاجين', 'tajine'],
+  ['شوربة', 'soup'], ['دجاج', 'chicken'], ['لحم', 'meat'], ['سمك', 'fish'], ['أرز', 'rice'], ['سلطة', 'salad'], ['بطاطا', 'potatoes'], ['ياغورت', 'yogurt'],
+  ['حليب', 'milk'], ['ماء', 'water'], ['تمر', 'dates'], ['تفاح', 'apple'], ['موز', 'banana'], ['برتقال', 'orange'], ['جبن', 'cheese'], ['كرواسون', 'croissant'],
+  ['ساندويتش', 'sandwich'], ['بيتزا', 'pizza'], ['مكرونة', 'pasta'], ['عدس', 'lentils'], ['حمص', 'chickpeas'], ['أومليت', 'omelette'],
+];
+
 function localizeDeterministicMeal(extraction: ReturnType<typeof extractMealItemsDeterministic>, language: VoiceLanguage) {
-  const labels = language === 'fr' ? FRENCH_DETERMINISTIC_LABELS : language === 'de' ? GERMAN_DETERMINISTIC_LABELS : null;
+  const labels = language === 'fr' ? FRENCH_DETERMINISTIC_LABELS : language === 'de' ? GERMAN_DETERMINISTIC_LABELS : language === 'en' ? ENGLISH_DETERMINISTIC_LABELS : null;
   if (!labels || !extraction.mealItems.length) return extraction;
   const localize = (item: string) => labels.reduce((value, [source, target]) => value.replace(source, target), item);
   const mealItems = extraction.mealItems.map(localize);
