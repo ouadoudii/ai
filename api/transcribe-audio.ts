@@ -36,6 +36,12 @@ function hasArabicScript(text: string) {
   return /[\u0600-\u06FF]/.test(text);
 }
 
+function transcriptionPrompt(forcedLanguage: VoiceLanguage | null) {
+  const base = 'اكتب الكلام كما قيل حرفياً بلا ترجمة. افهم الدارجة المغربية والجزائرية والتونسية والليبية والمصرية والسودانية والشامية والعراقية والخليجية واليمنية، وكذلك العربية الفصحى والكلام المختلط بالفرنسية أو الإنجليزية. انتبه خصوصاً لأسماء الأكل والشرب والكميات وطريقة التحضير مثل: بيض، بيض مسلوق، بيض مقلي، مسمن، بغرير، حريرة، طاجين، كسكس، رفيسة، بسطيلة، بيصارة، زعلوك، تكتوكة، أتاي، قهوة بالحليب، خبز، زيت الزيتون. لا تعيد الصياغة.';
+  if (forcedLanguage !== 'ar') return base;
+  return `${base} هذه محاولة استرجاع عربية: اكتب كل الكلمات العربية والدارجة بالحروف العربية حتى لو كان النطق عامياً أو سبق أن ظهر بحروف لاتينية/Arabizi مثل klit, khobz, bayd, atay, 3dess, 7lib أو 9ahwa. احتفظ فقط بالكلمات الفرنسية أو الإنجليزية الحقيقية بلغتها الأصلية، ولا تحوّلها إلى كلمات عربية مختلفة.`;
+}
+
 async function groqTranscribe(audio: Buffer, contentType: string, forcedLanguage: VoiceLanguage | null) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error('not-configured');
@@ -46,10 +52,7 @@ async function groqTranscribe(audio: Buffer, contentType: string, forcedLanguage
   form.append('response_format', 'verbose_json');
   form.append('temperature', '0');
   if (forcedLanguage) form.append('language', forcedLanguage);
-  form.append(
-    'prompt',
-    'اكتب الكلام كما قيل حرفياً بلا ترجمة. افهم الدارجة المغربية والجزائرية والتونسية والليبية والمصرية والسودانية والشامية والعراقية والخليجية واليمنية، وكذلك العربية الفصحى والكلام المختلط بالفرنسية أو الإنجليزية. انتبه خصوصاً لأسماء الأكل والشرب والكميات وطريقة التحضير مثل: بيض، بيض مسلوق، بيض مقلي، مسمن، بغرير، حريرة، طاجين، كسكس، رفيسة، بسطيلة، بيصارة، زعلوك، تكتوكة، أتاي، قهوة بالحليب، خبز، زيت الزيتون. لا تعيد الصياغة.'
-  );
+  form.append('prompt', transcriptionPrompt(forcedLanguage));
 
   const upstream = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
     method: 'POST',
