@@ -81,4 +81,46 @@ describe('French voice fallback contractions', () => {
     expect(response.body.extractedData.mealCategory).toBe(expectedCategory);
     expect(response.body.extractedData.mealItems).toEqual(expect.arrayContaining(expectedItems));
   });
+
+  it('returns French coach feedback when the voice language is French', async () => {
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.GROQ_API_KEY;
+    const response = createResponse();
+
+    await handler({
+      method: 'POST',
+      headers: { 'x-forwarded-for': '203.0.113.74' },
+      ip: '203.0.113.74',
+      body: { transcript: 'au petit-déjeuner j’ai mangé une banane', timeOfDay: 'morning', currentHour: 9, language: 'fr' },
+    } as any, response.res);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.extractedData.extractionEngine).toBe('deterministic-fallback');
+    expect(response.body.extractedData.mealCategory).toBe('breakfast');
+    expect(response.body.coachFeedback).toMatchObject({
+      title: 'Note vocale enregistrée 💚',
+      message: 'J’ai compris ta note et classé les repas et le bien-être au bon endroit.',
+      badge: 'Check-in vocal',
+    });
+  });
+
+  it('keeps French feedback for a valid note that contains no recognized meal', async () => {
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.GROQ_API_KEY;
+    const response = createResponse();
+
+    await handler({
+      method: 'POST',
+      headers: { 'x-forwarded-for': '203.0.113.75' },
+      ip: '203.0.113.75',
+      body: { transcript: 'je me sens bien aujourd’hui', timeOfDay: 'today', currentHour: 15, language: 'fr' },
+    } as any, response.res);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.coachFeedback).toMatchObject({
+      title: 'Cary est avec toi 💚',
+      message: 'J’ai enregistré ta note vocale.',
+      badge: 'Check-in vocal',
+    });
+  });
 });
