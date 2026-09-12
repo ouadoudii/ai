@@ -100,12 +100,15 @@ describe('voice check-in endpoint', () => {
     expect(JSON.parse(requestBody).messages[0].content).toContain('UI language is German');
   });
 
-  it('returns German fallback feedback when AI providers are unavailable', async () => {
+  it('returns localized German fallback meal names when AI providers are unavailable', async () => {
     delete process.env.GEMINI_API_KEY;delete process.env.GROQ_API_KEY;
     const response=createResponse();
-    await handler({method:'POST',headers:{'x-forwarded-for':'203.0.113.41'},ip:'203.0.113.41',body:{transcript:'Heute Morgen hatte ich Brot und Kaffee',timeOfDay:'morning',currentHour:8,language:'de'}} as any,response.res);
+    await handler({method:'POST',headers:{'x-forwarded-for':'203.0.113.41'},ip:'203.0.113.41',body:{transcript:'Heute Morgen hatte ich Brot und Kaffee mit Milch',timeOfDay:'morning',currentHour:8,language:'de'}} as any,response.res);
     expect(response.statusCode).toBe(200);
     expect(response.body.extractedData.extractionEngine).toBe('deterministic-fallback');
+    expect(response.body.extractedData.mealItems).toEqual(expect.arrayContaining(['Brot','Kaffee mit Milch']));
+    expect(response.body.extractedData.mealTitle).toContain('Brot');
+    expect(response.body.extractedData.mealTitle).not.toMatch(/[\u0600-\u06FF]/);
     expect(response.body.coachFeedback.title).toMatch(/Sprachnotiz|Cary ist bei dir/);
     expect(response.body.coachFeedback.badge).toBe('Sprach-Check-in');
   });
