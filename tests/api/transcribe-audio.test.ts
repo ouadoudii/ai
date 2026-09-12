@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import handler from './transcribe-audio';
+import handler from '../../api/transcribe-audio';
 
 const originalGroqKey = process.env.GROQ_API_KEY;
 
@@ -50,6 +50,34 @@ describe('server audio transcription', () => {
       engine: 'whisper-large-v3-ar-recovery',
       detectedLanguage: 'Arabic',
     });
+  });
+
+  it('uses a stronger script-preserving prompt only for the Arabic recovery pass', async () => {
+    process.env.GROQ_API_KEY = 'test-key';
+    const seenPrompts: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, options?: RequestInit) => {
+      const form = options?.body as FormData;
+      seenPrompts.push(String(form.get('prompt') || ''));
+      if (seenPrompts.length === 1) return upstream('klit 3dess w 7lib w 9ahwa', 'French');
+      return upstream('كليت عدس وحليب وقهوة', 'Arabic');
+    }));
+
+    const response = createResponse();
+    await handler({
+      method: 'POST',
+      headers: { 'content-type': 'audio/webm', 'x-voice-language': 'ar' },
+      body: Buffer.from('fake-audio'),
+    } as any, response.res);
+
+    expect(response.statusCode).toBe(200);
+    expect(seenPrompts).toHaveLength(2);
+    expect(seenPrompts[0]).not.toContain('هذه محاولة استرجاع عربية');
+    expect(seenPrompts[1]).toContain('هذه محاولة استرجاع عربية');
+    expect(seenPrompts[1]).toContain('3dess');
+    expect(seenPrompts[1]).toContain('7lib');
+    expect(seenPrompts[1]).toContain('9ahwa');
+    expect(seenPrompts[1]).toContain('احتفظ فقط بالكلمات الفرنسية أو الإنجليزية الحقيقية بلغتها الأصلية');
+    expect(response.body.text).toBe('كليت عدس وحليب وقهوة');
   });
 
   it('keeps a genuine Latin-script auto transcript if the Arabic recovery pass does not restore Arabic', async () => {
