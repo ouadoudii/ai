@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import handler from './voice-checkin';
+import handler from '../api/voice-checkin';
 
 const originalGeminiKey = process.env.GEMINI_API_KEY;
 const originalGroqKey = process.env.GROQ_API_KEY;
