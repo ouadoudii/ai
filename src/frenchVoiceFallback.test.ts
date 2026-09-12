@@ -59,4 +59,26 @@ describe('French voice fallback contractions', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body.extractedData.mealItems).toEqual(expect.arrayContaining(['deux بيض مسلوق', 'خبز']));
   });
+
+  it.each([
+    ['au petit-déjeuner j’ai mangé deux œufs avec du pain', 'breakfast', ['deux بيض', 'خبز']],
+    ['l’après-midi j’ai mangé une pomme', 'snack', ['une تفاح']],
+    ['cet après‑midi j’ai mangé une banane', 'snack', ['une موز']],
+  ])('understands hyphenated French meal-time speech: %s', async (transcript, expectedCategory, expectedItems) => {
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.GROQ_API_KEY;
+    const response = createResponse();
+
+    await handler({
+      method: 'POST',
+      headers: { 'x-forwarded-for': '203.0.113.73' },
+      ip: '203.0.113.73',
+      body: { transcript, timeOfDay: 'today', currentHour: 12, language: 'en' },
+    } as any, response.res);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.extractedData.extractionEngine).toBe('deterministic-fallback');
+    expect(response.body.extractedData.mealCategory).toBe(expectedCategory);
+    expect(response.body.extractedData.mealItems).toEqual(expect.arrayContaining(expectedItems));
+  });
 });
