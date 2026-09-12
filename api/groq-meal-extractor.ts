@@ -77,7 +77,7 @@ const score = (value: unknown, max = 5) => {
 };
 
 function normalizeEnumProbe(value: unknown, max = 32) {
-  return cleanText(value, max)
+  return (cleanText(value, max) || '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
