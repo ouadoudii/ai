@@ -106,7 +106,7 @@ function normalizeResult(value: any): SemanticMealExtraction | null {
 
 export async function extractMealWithGroq(
   transcript: string,
-  context: { timeOfDay?: string; currentHour?: number; language?: 'ar' | 'en' | 'de' } = {},
+  context: { timeOfDay?: string; currentHour?: number; language?: 'ar' | 'en' | 'de' | 'fr' } = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<SemanticMealExtraction | null> {
   const apiKey = process.env.GROQ_API_KEY;
@@ -116,7 +116,9 @@ export async function extractMealWithGroq(
     ? 'UI language is Arabic. Return meal names/items and free-text notes in natural Arabic/Darija. Do not translate them into English.'
     : context.language === 'de'
       ? 'UI language is German. Return meal names/items and free-text notes in concise natural German while preserving established foreign dish names.'
-      : 'UI language is English. Return meal names/items and notes in concise natural English while preserving established foreign dish names.';
+      : context.language === 'fr'
+        ? 'UI language is French. Return meal names/items and free-text notes in concise natural French while preserving established foreign dish names.'
+        : 'UI language is English. Return meal names/items and notes in concise natural English while preserving established foreign dish names.';
 
   const system = `You convert one free-form voice note into structured journal events for a food, sleep, energy and wellbeing app.
 Understand the COMPLETE message before extracting anything. The user may jump between breakfast, lunch, dinner, snacks, drinks, sleep, energy, mood, stress, hunger, fullness and water in any order. They may speak Moroccan/Algerian/Tunisian Darija, Egyptian, Levantine, Gulf, Iraqi, Yemeni, Sudanese, MSA, German, French, English or mixtures/transliteration.
