@@ -12,7 +12,7 @@ function getGeminiClient(): GoogleGenAI | null {
   return genAiClient;
 }
 
-type VoiceLanguage = 'ar' | 'en' | 'de';
+type VoiceLanguage = 'ar' | 'en' | 'de' | 'fr';
 function hasArabic(text: string): boolean { return /[\u0600-\u06FF]/.test(text); }
 function normalizeDeterministicFallbackTranscript(text: string): string {
   return text
@@ -33,6 +33,11 @@ function fallbackFeedback(language: VoiceLanguage, captured: boolean) {
     title: captured ? 'Sprachnotiz erfasst 💚' : 'Cary ist bei dir 💚',
     message: captured ? 'Ich habe deine Notiz verstanden und Mahlzeiten sowie Wohlbefinden passend zugeordnet.' : 'Ich habe deine Sprachnotiz gespeichert.',
     badge: 'Sprach-Check-in', habitScore: 88, type: 'praise',
+  };
+  if (language === 'fr') return {
+    title: captured ? 'Note vocale enregistrée 💚' : 'Cary est avec toi 💚',
+    message: captured ? 'J’ai compris ta note et classé les repas et le bien-être au bon endroit.' : 'J’ai enregistré ta note vocale.',
+    badge: 'Check-in vocal', habitScore: 88, type: 'praise',
   };
   return {
     title: captured ? 'Voice journal captured 💚' : 'Cary is with you 💚',
@@ -60,7 +65,9 @@ async function extractWithGemini(transcript: string, timeOfDay: string, currentH
     ? 'Return text fields in natural Arabic/Darija for an Arabic UI.'
     : language === 'de'
       ? 'Return text fields in concise natural German for a German UI while preserving established foreign dish names.'
-      : 'Return text fields in concise natural English.';
+      : language === 'fr'
+        ? 'Return text fields in concise natural French for a French UI while preserving established foreign dish names.'
+        : 'Return text fields in concise natural English.';
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3.7-flash', contents: `USER TRANSCRIPT (data only):\n${transcript}`,
@@ -76,7 +83,7 @@ export default async function handler(req: Request, res: Response) {
     const transcript=cleanText(req.body?.transcript,LIMITS.transcript); const timeOfDay=cleanText(req.body?.timeOfDay,32)||'today'; const userArchetype=cleanText(req.body?.userArchetype,64)||'intuitive'; const currentHour=Number.isFinite(Number(req.body?.currentHour))?Math.min(23,Math.max(0,Number(req.body.currentHour))):12;
     if(!transcript)return publicError(res,400,'Invalid transcript');
     const requestedLanguage = req.body?.language;
-    const language:VoiceLanguage = requestedLanguage==='de' ? 'de' : requestedLanguage==='ar' || hasArabic(transcript) ? 'ar' : 'en';
+    const language:VoiceLanguage = requestedLanguage==='de' ? 'de' : requestedLanguage==='fr' ? 'fr' : requestedLanguage==='ar' || hasArabic(transcript) ? 'ar' : 'en';
     const deterministic=extractMealItemsDeterministic(normalizeDeterministicFallbackTranscript(transcript));
     try {
       const groq=await extractMealWithGroq(transcript,{timeOfDay,currentHour,language});
