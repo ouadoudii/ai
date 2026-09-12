@@ -17,6 +17,7 @@ function hasArabic(text: string): boolean { return /[\u0600-\u06FF]/.test(text);
 function normalizeLanguageProbe(text: string): string {
   return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’']/g, ' ').replace(/\s+/g, ' ').trim();
 }
+// Language is normally supplied by the UI; inference keeps legacy and integration voice requests localized too.
 function inferVoiceLanguage(requestedLanguage: unknown, transcript: string): VoiceLanguage {
   if (requestedLanguage === 'ar' || requestedLanguage === 'de' || requestedLanguage === 'fr' || requestedLanguage === 'en') return requestedLanguage;
   if (hasArabic(transcript)) return 'ar';
