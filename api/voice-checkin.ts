@@ -109,9 +109,20 @@ function fallbackFeedback(language: VoiceLanguage, captured: boolean) {
 }
 
 function normalizeSemantic(extracted: any, deterministic: ReturnType<typeof extractMealItemsDeterministic>, engine: string) {
+  const meals = Array.isArray(extracted?.meals) ? extracted.meals : [];
+  const firstMeal = meals[0];
   const items = Array.isArray(extracted?.mealItems) ? extracted.mealItems.map((v: unknown) => cleanText(v, 120)).filter((v): v is string => Boolean(v)).slice(0, 20) : [];
-  const mealItems = items.length ? items : deterministic.mealItems;
-  return { ...extracted, mealDetected: mealItems.length > 0 || (Array.isArray(extracted?.meals) && extracted.meals.length > 0), mealItems, mealTitle: cleanText(extracted?.mealTitle, 240) || mealItems.join(' · '), mealCategory: cleanText(extracted?.mealCategory, 32) || deterministic.mealCategory, mealContext: cleanText(extracted?.mealContext, 500) || deterministic.mealContext, extractionEngine: engine };
+  const firstMealItems = Array.isArray(firstMeal?.mealItems) ? firstMeal.mealItems.map((v: unknown) => cleanText(v, 120)).filter((v): v is string => Boolean(v)).slice(0, 20) : [];
+  const mealItems = items.length ? items : firstMealItems.length ? firstMealItems : deterministic.mealItems;
+  return {
+    ...extracted,
+    mealDetected: mealItems.length > 0 || meals.length > 0,
+    mealItems,
+    mealTitle: cleanText(extracted?.mealTitle, 240) || cleanText(firstMeal?.mealTitle, 240) || mealItems.join(' · '),
+    mealCategory: cleanText(extracted?.mealCategory, 32) || cleanText(firstMeal?.category, 32) || deterministic.mealCategory,
+    mealContext: cleanText(extracted?.mealContext, 500) || deterministic.mealContext,
+    extractionEngine: engine,
+  };
 }
 
 function hasStructuredVoiceData(value: any) {
