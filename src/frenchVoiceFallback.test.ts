@@ -24,8 +24,8 @@ function createResponse() {
 
 describe('French voice fallback contractions', () => {
   it.each([
-    ["j'ai mangé du pain mais pas d'oeufs", ['خبز']],
-    ['j’ai mangé du pain mais pas d’œufs', ['خبز']],
+    ["j'ai mangé du pain mais pas d'oeufs", ['bread']],
+    ['j’ai mangé du pain mais pas d’œufs', ['bread']],
   ])('keeps consumed food while excluding a contracted French negation: %s', async (transcript, expected) => {
     delete process.env.GEMINI_API_KEY;
     delete process.env.GROQ_API_KEY;
@@ -41,7 +41,8 @@ describe('French voice fallback contractions', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body.extractedData.extractionEngine).toBe('deterministic-fallback');
     expect(response.body.extractedData.mealItems).toEqual(expected);
-    expect(response.body.extractedData.mealItems).not.toContain('بيض');
+    expect(response.body.extractedData.mealItems.join(' ')).not.toMatch(/[\u0600-\u06FF]/);
+    expect(response.body.extractedData.mealItems).not.toContain('eggs');
   });
 
   it('still recognizes French food after a curly apostrophe contraction', async () => {
@@ -57,13 +58,14 @@ describe('French voice fallback contractions', () => {
     } as any, response.res);
 
     expect(response.statusCode).toBe(200);
-    expect(response.body.extractedData.mealItems).toEqual(expect.arrayContaining(['deux بيض مسلوق', 'خبز']));
+    expect(response.body.extractedData.mealItems).toEqual(expect.arrayContaining(['deux boiled eggs', 'bread']));
+    expect(response.body.extractedData.mealItems.join(' ')).not.toMatch(/[\u0600-\u06FF]/);
   });
 
   it.each([
-    ['au petit-déjeuner j’ai mangé deux œufs avec du pain', 'breakfast', ['deux بيض', 'خبز']],
-    ['l’après-midi j’ai mangé une pomme', 'snack', ['une تفاح']],
-    ['cet après‑midi j’ai mangé une banane', 'snack', ['une موز']],
+    ['au petit-déjeuner j’ai mangé deux œufs avec du pain', 'breakfast', ['deux eggs', 'bread']],
+    ['l’après-midi j’ai mangé une pomme', 'snack', ['une apple']],
+    ['cet après‑midi j’ai mangé une banane', 'snack', ['une banana']],
   ])('understands hyphenated French meal-time speech: %s', async (transcript, expectedCategory, expectedItems) => {
     delete process.env.GEMINI_API_KEY;
     delete process.env.GROQ_API_KEY;
@@ -80,6 +82,7 @@ describe('French voice fallback contractions', () => {
     expect(response.body.extractedData.extractionEngine).toBe('deterministic-fallback');
     expect(response.body.extractedData.mealCategory).toBe(expectedCategory);
     expect(response.body.extractedData.mealItems).toEqual(expect.arrayContaining(expectedItems));
+    expect(response.body.extractedData.mealItems.join(' ')).not.toMatch(/[\u0600-\u06FF]/);
   });
 
   it('returns French coach feedback when the voice language is French', async () => {
