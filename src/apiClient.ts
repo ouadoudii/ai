@@ -42,19 +42,10 @@ export interface VoiceCheckInResult {
   };
 }
 
-async function blobToBase64(blob:Blob):Promise<string>{
+export async function transcribeRecordedAudio(blob:Blob,_language:VoiceLanguage):Promise<string>{
   if (!blob.size) throw new Error('Empty audio');
-  return await new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onerror=()=>reject(reader.error||new Error('Could not read audio'));
-    reader.onload=()=>{const value=String(reader.result||'');const comma=value.indexOf(',');resolve(comma>=0?value.slice(comma+1):value);};
-    reader.readAsDataURL(blob);
-  });
-}
-
-export async function transcribeRecordedAudio(blob:Blob,language:VoiceLanguage):Promise<string>{
-  const audioBase64=await blobToBase64(blob);
-  const res=await fetch('/api/transcribe-audio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audioBase64,mimeType:blob.type||'audio/webm',language})});
+  const contentType=blob.type||'audio/webm';
+  const res=await fetch('/api/transcribe-audio',{method:'POST',headers:{'Content-Type':contentType},body:blob});
   if(!res.ok)throw new Error(`Transcription API returned status ${res.status}`);
   const data=await res.json();
   const text=typeof data?.text==='string'?data.text.trim():'';
