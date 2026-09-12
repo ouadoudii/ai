@@ -3,7 +3,15 @@ import { PRESET_PHOTOS } from '../data/momentsData';
 
 type DishPhoto = { title:string; url:string; category:string };
 
-const normalize=(value:string)=>value.trim().toLocaleLowerCase().replace(/[–—-]/g,' ').replace(/\s+/g,' ');
+const normalize=(value:string)=>value
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f\u064B-\u065F\u0670]/g,'')
+  .trim()
+  .toLocaleLowerCase()
+  .replace(/[’'`´‘ʼʹ]/g,' ')
+  .replace(/[–—-]/g,' ')
+  .replace(/[^\p{L}\p{N}\s]/gu,' ')
+  .replace(/\s+/g,' ');
 const photoByTitle=(fragment:string)=>PRESET_PHOTOS.find(p=>normalize(p.title).includes(normalize(fragment))) as DishPhoto|undefined;
 
 const rules:Array<{category:MomentCategory; terms:string[]; photo:()=>DishPhoto|undefined}> = [
