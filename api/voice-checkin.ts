@@ -14,6 +14,25 @@ function getGeminiClient(): GoogleGenAI | null {
 
 type VoiceLanguage = 'ar' | 'en' | 'de' | 'fr';
 function hasArabic(text: string): boolean { return /[\u0600-\u06FF]/.test(text); }
+function normalizeLanguageProbe(text: string): string {
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’']/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function inferVoiceLanguage(requestedLanguage: unknown, transcript: string): VoiceLanguage {
+  if (requestedLanguage === 'ar' || requestedLanguage === 'de' || requestedLanguage === 'fr' || requestedLanguage === 'en') return requestedLanguage;
+  if (hasArabic(transcript)) return 'ar';
+  const probe = normalizeLanguageProbe(transcript);
+  const frenchSignals = [
+    'petit dejeuner', 'dejeuner', 'diner', 'j ai ', 'je suis ', 'ce matin', 'ce midi', 'ce soir', 'avec ', 'mange ', 'mangee ', 'mangeais ', 'bu ',
+  ];
+  const germanSignals = [
+    'fruhstuck', 'mittagessen', 'abendessen', 'ich habe ', 'ich hatte ', 'heute morgen', 'heute mittag', 'heute abend', 'gegessen', 'getrunken', 'mude', 'mit ',
+  ];
+  const frenchScore = frenchSignals.reduce((score, signal) => score + (probe.includes(signal) ? 1 : 0), 0);
+  const germanScore = germanSignals.reduce((score, signal) => score + (probe.includes(signal) ? 1 : 0), 0);
+  if (frenchScore > germanScore && frenchScore > 0) return 'fr';
+  if (germanScore > frenchScore && germanScore > 0) return 'de';
+  return 'en';
+}
 function normalizeDeterministicFallbackTranscript(text: string): string {
   return text
     .replace(/\bpas\s+d[’']/gi, 'sans ')
@@ -82,8 +101,7 @@ export default async function handler(req: Request, res: Response) {
   try {
     const transcript=cleanText(req.body?.transcript,LIMITS.transcript); const timeOfDay=cleanText(req.body?.timeOfDay,32)||'today'; const userArchetype=cleanText(req.body?.userArchetype,64)||'intuitive'; const currentHour=Number.isFinite(Number(req.body?.currentHour))?Math.min(23,Math.max(0,Number(req.body.currentHour))):12;
     if(!transcript)return publicError(res,400,'Invalid transcript');
-    const requestedLanguage = req.body?.language;
-    const language:VoiceLanguage = requestedLanguage==='de' ? 'de' : requestedLanguage==='fr' ? 'fr' : requestedLanguage==='ar' || hasArabic(transcript) ? 'ar' : 'en';
+    const language:VoiceLanguage = inferVoiceLanguage(req.body?.language, transcript);
     const deterministic=extractMealItemsDeterministic(normalizeDeterministicFallbackTranscript(transcript));
     try {
       const groq=await extractMealWithGroq(transcript,{timeOfDay,currentHour,language});
