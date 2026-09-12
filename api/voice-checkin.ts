@@ -14,6 +14,12 @@ function getGeminiClient(): GoogleGenAI | null {
 
 type VoiceLanguage = 'ar' | 'en' | 'de';
 function hasArabic(text: string): boolean { return /[\u0600-\u06FF]/.test(text); }
+function normalizeDeterministicFallbackTranscript(text: string): string {
+  return text
+    .replace(/\bpas\s+d[’']/gi, 'sans ')
+    .replace(/œ/gi, 'oe')
+    .replace(/[’']/g, ' ');
+}
 function fallbackFeedback(language: VoiceLanguage, captured: boolean) {
   if (language === 'ar') return {
     title: captured ? 'تسجلات رسالتك 💚' : 'كاري معاك 💚',
@@ -68,7 +74,7 @@ export default async function handler(req: Request, res: Response) {
     if(!transcript)return publicError(res,400,'Invalid transcript');
     const requestedLanguage = req.body?.language;
     const language:VoiceLanguage = requestedLanguage==='de' ? 'de' : requestedLanguage==='ar' || hasArabic(transcript) ? 'ar' : 'en';
-    const deterministic=extractMealItemsDeterministic(transcript);
+    const deterministic=extractMealItemsDeterministic(normalizeDeterministicFallbackTranscript(transcript));
     try {
       const groq=await extractMealWithGroq(transcript,{timeOfDay,currentHour,language});
       if(groq && hasStructuredVoiceData(groq)){
