@@ -43,6 +43,25 @@ function normalizeDeterministicFallbackTranscript(text: string): string {
     .replace(/\bpetit-déjeuner\b/gi, 'petit déjeuner')
     .replace(/\bpetit-dejeuner\b/gi, 'petit dejeuner');
 }
+
+const FRENCH_DETERMINISTIC_LABELS: Array<[string, string]> = [
+  ['قهوة بالحليب', 'café au lait'], ['قهوة بلا سكر', 'café sans sucre'], ['شاي بالحليب', 'thé au lait'], ['شاي بالنعناع', 'thé à la menthe'],
+  ['خبز بالجبن', 'pain au fromage'], ['خبز بزيت الزيتون', 'pain à l’huile d’olive'], ['بيض مسلوق', 'œufs durs'], ['بيض مقلي', 'œufs au plat'],
+  ['دجاج مشوي', 'poulet grillé'], ['دجاج مقلي', 'poulet frit'], ['لحم مشوي', 'viande grillée'], ['سمك مشوي', 'poisson grillé'], ['سمك مقلي', 'poisson frit'],
+  ['بطاطا مقلية', 'frites'], ['بطاطا مسلوقة', 'pommes de terre bouillies'], ['مسمن بالعسل', 'msemen au miel'], ['مسمن بالجبن', 'msemen au fromage'], ['أتاي بالنعناع', 'atay à la menthe'],
+  ['بيض', 'œufs'], ['مسمن', 'msemen'], ['أتاي', 'atay'], ['شاي', 'thé'], ['قهوة', 'café'], ['خبز', 'pain'], ['حريرة', 'harira'], ['كسكس', 'couscous'], ['طاجين', 'tajine'],
+  ['شوربة', 'soupe'], ['دجاج', 'poulet'], ['لحم', 'viande'], ['سمك', 'poisson'], ['أرز', 'riz'], ['سلطة', 'salade'], ['بطاطا', 'pommes de terre'], ['ياغورت', 'yaourt'],
+  ['حليب', 'lait'], ['ماء', 'eau'], ['تمر', 'dattes'], ['تفاح', 'pomme'], ['موز', 'banane'], ['برتقال', 'orange'], ['جبن', 'fromage'], ['كرواسون', 'croissant'],
+  ['ساندويتش', 'sandwich'], ['بيتزا', 'pizza'], ['مكرونة', 'pâtes'], ['عدس', 'lentilles'], ['حمص', 'pois chiches'], ['أومليت', 'omelette'],
+];
+
+function localizeDeterministicMeal(extraction: ReturnType<typeof extractMealItemsDeterministic>, language: VoiceLanguage) {
+  if (language !== 'fr' || !extraction.mealItems.length) return extraction;
+  const localize = (item: string) => FRENCH_DETERMINISTIC_LABELS.reduce((value, [source, target]) => value.replace(source, target), item);
+  const mealItems = extraction.mealItems.map(localize);
+  return { ...extraction, mealItems, mealTitle: mealItems.join(' · ') };
+}
+
 function fallbackFeedback(language: VoiceLanguage, captured: boolean) {
   if (language === 'ar') return {
     title: captured ? 'تسجلات رسالتك 💚' : 'كاري معاك 💚',
@@ -103,7 +122,7 @@ export default async function handler(req: Request, res: Response) {
     const transcript=cleanText(req.body?.transcript,LIMITS.transcript); const timeOfDay=cleanText(req.body?.timeOfDay,32)||'today'; const userArchetype=cleanText(req.body?.userArchetype,64)||'intuitive'; const currentHour=Number.isFinite(Number(req.body?.currentHour))?Math.min(23,Math.max(0,Number(req.body.currentHour))):12;
     if(!transcript)return publicError(res,400,'Invalid transcript');
     const language:VoiceLanguage = inferVoiceLanguage(req.body?.language, transcript);
-    const deterministic=extractMealItemsDeterministic(normalizeDeterministicFallbackTranscript(transcript));
+    const deterministic=localizeDeterministicMeal(extractMealItemsDeterministic(normalizeDeterministicFallbackTranscript(transcript)), language);
     try {
       const groq=await extractMealWithGroq(transcript,{timeOfDay,currentHour,language});
       if(groq && hasStructuredVoiceData(groq)){
