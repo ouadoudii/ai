@@ -4,6 +4,7 @@ import { DailyCheckIn,TimeOfDayPhase,FoodMood } from '../types';
 import { MealVisualPicker } from './MealVisualPicker';
 import { getLocalDateKey } from '../utils/dateKey';
 import { useLanguage } from '../i18n';
+import { dailyCheckInCopy } from '../dailyCheckInCopy';
 
 interface DailyCheckInModalProps {
   isOpen:boolean;
@@ -13,72 +14,9 @@ interface DailyCheckInModalProps {
   phase?:TimeOfDayPhase|null;
 }
 
-const copyByLanguage = {
-  en: {
-    phase: {
-      morning:['Your morning','How did your day begin?','One quick minute helps us understand your sleep and your start.'],
-      midday:['Your midday','How is your day going?','Capture your meal and body signals in a few seconds.'],
-      evening:['Your evening','How did today feel?','A quick moment about dinner and energy completes today’s picture.'],
-    },
-    close:'Close', sleepHours:'How long did you sleep?', hours:'h', sleepFeel:'How did your sleep feel?',
-    wakeFeel:'How did you feel when you woke up?', hungry:'How hungry were you?', full:'How full did you feel after?',
-    energy:'How is your energy right now?', mood:'What feels closest right now?',
-    noWrong:'There is no right or wrong answer. We collect real moments and look for what repeats over time.',
-    notNow:'Not now', back:'Back', next:'One more step', done:'Done',
-    summary:'Nice. This moment added another piece to your picture. The connections will get clearer over time.',
-    moods:[['energized','⚡','Energized'],['satisfied','🙂','Good'],['comfort','😌','Calm']],
-    wake:[['refreshed','☀️','Refreshed'],['normal','🙂','Okay'],['tired','🥱','Tired'],['exhausted','😴','Exhausted']],
-  },
-  de: {
-    phase: {
-      morning:['Dein Morgen','Wie hat dein Tag begonnen?','Eine kurze Minute hilft uns, deinen Schlaf und deinen Start zu verstehen.'],
-      midday:['Dein Mittag','Wie läuft dein Tag?','Halte deine Mahlzeit und Körpersignale in wenigen Sekunden fest.'],
-      evening:['Dein Abend','Wie hat sich dein Tag angefühlt?','Ein kurzer Moment zu Abendessen und Energie vervollständigt das Bild deines Tages.'],
-    },
-    close:'Schließen', sleepHours:'Wie lange hast du geschlafen?', hours:'Std.', sleepFeel:'Wie hat sich dein Schlaf angefühlt?',
-    wakeFeel:'Wie hast du dich beim Aufwachen gefühlt?', hungry:'Wie hungrig warst du?', full:'Wie satt hast du dich danach gefühlt?',
-    energy:'Wie ist deine Energie gerade?', mood:'Was passt gerade am besten?',
-    noWrong:'Es gibt keine richtige oder falsche Antwort. Wir sammeln echte Momente und schauen, was sich mit der Zeit wiederholt.',
-    notNow:'Nicht jetzt', back:'Zurück', next:'Noch ein Schritt', done:'Fertig',
-    summary:'Gut. Dieser Moment ergänzt dein Bild. Mit der Zeit werden Zusammenhänge klarer.',
-    moods:[['energized','⚡','Energiegeladen'],['satisfied','🙂','Gut'],['comfort','😌','Ruhig']],
-    wake:[['refreshed','☀️','Erholt'],['normal','🙂','Okay'],['tired','🥱','Müde'],['exhausted','😴','Erschöpft']],
-  },
-  fr: {
-    phase: {
-      morning:['Ton matin','Comment ta journée a-t-elle commencé ?','Une petite minute nous aide à comprendre ton sommeil et ton début de journée.'],
-      midday:['Ton midi','Comment se passe ta journée ?','Note ton repas et les signaux de ton corps en quelques secondes.'],
-      evening:['Ta soirée','Comment s’est passée ta journée ?','Un court moment sur le dîner et ton énergie complète l’image de ta journée.'],
-    },
-    close:'Fermer', sleepHours:'Combien de temps as-tu dormi ?', hours:'h', sleepFeel:'Comment as-tu dormi ?',
-    wakeFeel:'Comment t’es-tu senti au réveil ?', hungry:'À quel point avais-tu faim ?', full:'À quel point étais-tu rassasié après ?',
-    energy:'Comment est ton énergie maintenant ?', mood:'Qu’est-ce qui te correspond le mieux maintenant ?',
-    noWrong:'Il n’y a pas de bonne ou de mauvaise réponse. Nous recueillons des moments réels pour repérer ce qui se répète avec le temps.',
-    notNow:'Pas maintenant', back:'Retour', next:'Encore une étape', done:'Terminé',
-    summary:'Bien. Ce moment ajoute une pièce à ton tableau. Les liens deviendront plus clairs avec le temps.',
-    moods:[['energized','⚡','Énergique'],['satisfied','🙂','Bien'],['comfort','😌','Calme']],
-    wake:[['refreshed','☀️','Reposé'],['normal','🙂','Ça va'],['tired','🥱','Fatigué'],['exhausted','😴','Épuisé']],
-  },
-  ar: {
-    phase: {
-      morning:['صباحك','كيف بدأت يومك؟','دقيقة صغيرة تساعدنا نفهم نومك وبداية يومك.'],
-      midday:['منتصف يومك','كيف يسير يومك؟','سجّل وجبتك وإشارات جسمك بسرعة.'],
-      evening:['مساؤك','كيف كان يومك؟','لحظة قصيرة عن العشاء والطاقة تكمل صورة اليوم.'],
-    },
-    close:'إغلاق', sleepHours:'كم ساعة نمت؟', hours:'س', sleepFeel:'كيف كان نومك؟',
-    wakeFeel:'كيف شعرت عند الاستيقاظ؟', hungry:'قبل الأكل، كم كان جوعك؟', full:'وبعدها، كم شعرت بالشبع؟',
-    energy:'كيف طاقتك الآن؟', mood:'وأقرب شعور لك الآن؟',
-    noWrong:'لا توجد إجابة صحيحة أو خاطئة. نحن نجمع لحظات حقيقية لنرى ما يتكرر مع الوقت.',
-    notNow:'ليس الآن', back:'رجوع', next:'خطوة أخيرة', done:'تم',
-    summary:'جميل. هذه اللحظة أضافت جزءاً جديداً لصورتك. مع الوقت ستصبح الروابط أوضح.',
-    moods:[['energized','⚡','مليء بالطاقة'],['satisfied','🙂','مرتاح'],['comfort','😌','هادئ']],
-    wake:[['refreshed','☀️','منتعش'],['normal','🙂','عادي'],['tired','🥱','متعب'],['exhausted','😴','مرهق']],
-  },
-} as const;
-
 export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose,onSaveCheckIn,phase:requestedPhase})=>{
   const {language}=useLanguage();
-  const copy=copyByLanguage[language] ?? copyByLanguage.en;
+  const copy=dailyCheckInCopy[language] ?? dailyCheckInCopy.en;
   const ar=language==='ar';
   const hour=new Date().getHours();
   const timePhase:TimeOfDayPhase=requestedPhase||(hour>=5&&hour<11?'morning':hour>=11&&hour<16?'midday':'evening');
