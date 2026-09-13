@@ -1,6 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-async function seedPersonalPlan(page:Parameters<typeof test>[0]['page']){
+async function seedPersonalPlan(page:Page){
   await page.addInitScript(()=>{
     localStorage.setItem('rhythm_language_v1','de');
     localStorage.setItem('cary_access_mode_v1','guest');
