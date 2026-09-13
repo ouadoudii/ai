@@ -76,15 +76,16 @@ for (const copy of cases) {
 test('language selection persists across reload for every supported language', async ({ page }) => {
   await seedReturningGuest(page, 'en');
   await page.goto('/');
+  let current = cases[0];
 
   for (const copy of cases) {
-    const currentButton = page.getByRole('button', { name: cases.find(item => item.language === (await page.locator('html').getAttribute('lang')))?.chooseLanguage || 'Choose language' });
-    await currentButton.click();
+    await page.getByRole('button', { name: current.chooseLanguage, exact: true }).click();
     await page.locator(`[data-language-option="${copy.language}"]`).click();
     await expect(page.locator('html')).toHaveAttribute('lang', copy.language);
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('lang', copy.language);
     await expect(page.locator('html')).toHaveAttribute('dir', copy.dir);
     await expect(page.getByRole('button', { name: copy.chooseLanguage, exact: true })).toBeVisible();
+    current = copy;
   }
 });
