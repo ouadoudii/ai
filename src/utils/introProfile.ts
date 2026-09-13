@@ -92,3 +92,16 @@ export function saveIntroProfile(draft:IntroProfileDraft){
   try{localStorage.setItem(INTRO_PROFILE_STORAGE_KEY,JSON.stringify(profile))}catch{}
   return profile;
 }
+
+export function loadIntroProfile():IntroProfile|null{
+  try{
+    const raw=localStorage.getItem(INTRO_PROFILE_STORAGE_KEY);
+    if(!raw)return null;
+    const parsed=JSON.parse(raw) as Record<string,unknown>;
+    if(typeof parsed.confirmedAt!=='number'||typeof parsed.rawIntro!=='string')return null;
+    const safe=safeIntroProfileDraft(parsed,parsed.rawIntro);
+    return{...safe,confirmedAt:parsed.confirmedAt};
+  }catch{
+    return null;
+  }
+}

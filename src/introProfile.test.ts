@@ -1,7 +1,17 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createIntroProfileDraft, safeIntroProfileDraft } from './utils/introProfile';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createIntroProfileDraft, INTRO_PROFILE_STORAGE_KEY, loadIntroProfile, safeIntroProfileDraft } from './utils/introProfile';
 
-afterEach(()=>vi.restoreAllMocks());
+let storage:Map<string,string>;
+beforeEach(()=>{
+  storage=new Map();
+  vi.stubGlobal('localStorage',{
+    getItem:(key:string)=>storage.get(key)??null,
+    setItem:(key:string,value:string)=>{storage.set(key,String(value))},
+    removeItem:(key:string)=>{storage.delete(key)},
+    clear:()=>storage.clear(),
+  });
+});
+afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals()});
 
 describe('intro profile drafting',()=>{
   it('keeps only bounded user-editable profile and plan fields',()=>{
@@ -48,5 +58,16 @@ describe('intro profile drafting',()=>{
   it('rejects an unsupported phase instead of trusting model output',()=>{
     const draft=safeIntroProfileDraft({firstPlan:{phase:'night'}},'Something I want to understand.','en');
     expect(draft.firstPlan.phase).toBe('midday');
+  });
+
+  it('loads only a confirmed persisted profile for the home experience',()=>{
+    localStorage.setItem(INTRO_PROFILE_STORAGE_KEY,JSON.stringify({
+      summary:'Mehr Regelmäßigkeit',priorities:['regelmäßig essen'],preferences:['einfach'],rawIntro:'Ich möchte regelmäßiger essen.',confirmedAt:123,
+      firstPlan:{title:'Mittag beobachten',rationale:'Weil du Regelmäßigkeit möchtest.',focusAreas:['Mittagessen'],firstStep:'Mach einen kurzen Mittag-Check-in.',phase:'midday'}
+    }));
+    expect(loadIntroProfile()?.firstPlan.title).toBe('Mittag beobachten');
+    expect(loadIntroProfile()?.confirmedAt).toBe(123);
+    localStorage.setItem(INTRO_PROFILE_STORAGE_KEY,JSON.stringify({rawIntro:'unconfirmed'}));
+    expect(loadIntroProfile()).toBeNull();
   });
 });
