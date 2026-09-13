@@ -3,6 +3,7 @@ import type { AppLanguage } from '../i18n';
 export function browserSpeechLocale(language: AppLanguage): string {
   if (language === 'ar') return 'ar';
   if (language === 'de') return 'de-DE';
+  if (language === 'fr') return 'fr-FR';
   return 'en-US';
 }
 
@@ -18,6 +19,12 @@ export function voiceCopy(language: AppLanguage) {
     start:'Aufnahme starten', stop:'Aufnahme stoppen', idle:'Tippen und sprechen', processing:'Aufnahme wird verstanden…',
     permission:'Für die Aufnahme wird Mikrofonzugriff benötigt.', unsupported:'Sprachaufnahme wird von diesem Browser nicht unterstützt.',
     noSpeech:'Ich konnte dich nicht verstehen. Versuch es noch einmal und sprich deutlich.', failed:'Spracherkennung fehlgeschlagen. Versuch es noch einmal.'
+  };
+  if (language === 'fr') return {
+    back:'Retour', close:'Fermer', title:'Raconte-moi ce que tu as mangé', subtitle:'Parle naturellement en français.',
+    start:'Démarrer l’enregistrement', stop:'Arrêter l’enregistrement', idle:'Appuie et commence à parler', processing:'Nous comprenons ton enregistrement…',
+    permission:'L’accès au microphone est nécessaire pour enregistrer.', unsupported:'L’enregistrement vocal n’est pas pris en charge par ce navigateur.',
+    noSpeech:'Nous n’avons pas compris. Réessaie en parlant clairement.', failed:'La reconnaissance vocale a échoué. Réessaie.'
   };
   return {
     back:'Back', close:'Close', title:'Tell me what you had', subtitle:'Speak naturally — Arabic, Darija or English.',
