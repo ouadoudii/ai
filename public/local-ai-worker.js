@@ -35,11 +35,11 @@ self.onmessage=async(event)=>{
       if(!(audio instanceof Float32Array)||audio.length===0)throw new Error('Invalid decoded audio');
       transcriber ||= await loadPipeline('automatic-speech-recognition','onnx-community/whisper-small');
       const options={task:'transcribe',chunk_length_s:25,stride_length_s:5,return_timestamps:false};
-      if(language==='ar')options.language='ar';
+      if(language==='ar'||language==='en'||language==='de'||language==='fr')options.language=language;
       let output=await transcriber(audio,options);
       let text=String(output?.text||'').trim();
       if(!text&&language==='ar'){
-        output=await transcriber(audio,{task:'transcribe',chunk_length_s:20,stride_length_s:4});
+        output=await transcriber(audio,{task:'transcribe',language:'ar',chunk_length_s:20,stride_length_s:4});
         text=String(output?.text||'').trim();
       }
       self.postMessage({id,type:'result',text});
