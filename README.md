@@ -8,6 +8,8 @@ This contains everything you need to run your app locally.
 
 View your app in AI Studio: https://ai.studio/apps/f17c8429-4ddf-4366-87a8-ac9a9e526735
 
+Production app: https://ai-lyart-tau-91.vercel.app/
+
 ## Run Locally
 
 **Prerequisites:**  Node.js
