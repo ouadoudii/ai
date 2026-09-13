@@ -15,33 +15,42 @@ const cases: Array<{
   foodLabel: string;
   foodTitle: string;
   mealPlaceholder: string;
+  chooseByPicture: string;
+  pictureHelp: string;
+  photoSection: string;
+  addPhoto: string;
   addNote: string;
   saveMeal: string;
+  footer: string;
   close: string;
 }> = [
   {
     language: 'en', dir: 'ltr', today: 'Today', discoveries: 'Discoveries', moments: 'My moments',
     chooseLanguage: 'Choose language', captureTitle: 'What would you like to capture?', photo: 'Photo', speak: 'Tell me',
     foodLabel: 'Food', foodTitle: 'What did you have?', mealPlaceholder: 'Start typing… e.g. chicken pasta',
-    addNote: 'Add a note', saveMeal: 'Save meal', close: 'Close',
+    chooseByPicture: 'Choose by picture', pictureHelp: 'Or start typing to narrow the choices', photoSection: 'Photo', addPhoto: 'Add your photo',
+    addNote: 'Add a note', saveMeal: 'Save meal', footer: 'Type a little — we’ll help with the rest.', close: 'Close',
   },
   {
     language: 'ar', dir: 'rtl', today: 'اليوم', discoveries: 'اكتشافاتك', moments: 'لحظاتي',
     chooseLanguage: 'اختر اللغة', captureTitle: 'ما اللحظة التي تريد تسجيلها؟', photo: 'صورة', speak: 'احكِ لي',
     foodLabel: 'الطعام', foodTitle: 'ماذا أكلت؟', mealPlaceholder: 'ابدأ بالكتابة… مثلاً طاجين',
-    addNote: 'أضف ملاحظة', saveMeal: 'حفظ الوجبة', close: 'إغلاق',
+    chooseByPicture: 'اختر بالصورة', pictureHelp: 'أو ابدأ بالكتابة لتضييق الاختيارات', photoSection: 'الصورة', addPhoto: 'أضف صورتك',
+    addNote: 'أضف ملاحظة', saveMeal: 'حفظ الوجبة', footer: 'اكتب القليل فقط — سنساعدك في الباقي.', close: 'إغلاق',
   },
   {
     language: 'de', dir: 'ltr', today: 'Heute', discoveries: 'Entdeckungen', moments: 'Meine Momente',
     chooseLanguage: 'Sprache wählen', captureTitle: 'Was möchtest du festhalten?', photo: 'Foto', speak: 'Erzähl mir',
     foodLabel: 'Essen', foodTitle: 'Was hast du gegessen?', mealPlaceholder: 'Tippe los… z. B. Hähnchenpasta',
-    addNote: 'Notiz hinzufügen', saveMeal: 'Mahlzeit speichern', close: 'Schließen',
+    chooseByPicture: 'Nach Bild auswählen', pictureHelp: 'Oder tippe, um die Auswahl einzugrenzen', photoSection: 'Foto', addPhoto: 'Foto hinzufügen',
+    addNote: 'Notiz hinzufügen', saveMeal: 'Mahlzeit speichern', footer: 'Ein paar Wörter genügen — wir helfen beim Rest.', close: 'Schließen',
   },
   {
     language: 'fr', dir: 'ltr', today: 'Aujourd’hui', discoveries: 'Découvertes', moments: 'Mes moments',
     chooseLanguage: 'Choisir la langue', captureTitle: 'Que veux-tu enregistrer ?', photo: 'Photo', speak: 'Raconter',
     foodLabel: 'Repas', foodTitle: 'Qu’as-tu mangé ?', mealPlaceholder: 'Commence à écrire… ex. pâtes au poulet',
-    addNote: 'Ajouter une note', saveMeal: 'Enregistrer le repas', close: 'Fermer',
+    chooseByPicture: 'Choisir par image', pictureHelp: 'Ou commence à écrire pour affiner les choix', photoSection: 'Photo', addPhoto: 'Ajouter une photo',
+    addNote: 'Ajouter une note', saveMeal: 'Enregistrer le repas', footer: 'Quelques mots suffisent — nous t’aidons pour le reste.', close: 'Fermer',
   },
 ];
 
@@ -57,7 +66,7 @@ async function seedReturningGuest(page: any, language: AppLanguage) {
 }
 
 for (const copy of cases) {
-  test(`${copy.language} keeps the mobile shell and food capture flow in the selected language`, async ({ page }) => {
+  test(`${copy.language} keeps the mobile shell and full food capture flow in the selected language`, async ({ page }) => {
     await seedReturningGuest(page, copy.language);
     await page.goto('/');
 
@@ -77,8 +86,13 @@ for (const copy of cases) {
     await expect(page.getByText(copy.foodLabel, { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: copy.foodTitle, exact: true })).toBeVisible();
     await expect(page.getByPlaceholder(copy.mealPlaceholder)).toBeVisible();
+    await expect(page.getByText(copy.chooseByPicture, { exact: true })).toBeVisible();
+    await expect(page.getByText(copy.pictureHelp, { exact: true })).toBeVisible();
+    await expect(page.getByText(copy.photoSection, { exact: true })).toBeVisible();
+    await expect(page.getByText(copy.addPhoto, { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: copy.addNote, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: copy.saveMeal, exact: true })).toBeVisible();
+    await expect(page.getByText(copy.footer, { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: copy.close, exact: true })).toBeVisible();
   });
 }
