@@ -244,7 +244,7 @@ test('photo meal flow stores two selected dishes in one meal',async({page})=>{
 });
 
 
-test('fresh guest lands on home without an automatic capture interruption',async({page})=>{
+test('fresh guest sees only the intentional voice-first entry before manual capture',async({page})=>{
   await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
   await page.addInitScript(()=>{
     localStorage.clear();
@@ -255,10 +255,13 @@ test('fresh guest lands on home without an automatic capture interruption',async
   });
   await page.goto('/');
   await page.waitForTimeout(1200);
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  const voiceEntry=page.getByTestId('voice-first-entry-overlay');
+  await expect(voiceEntry).toBeVisible();
+  await expect(voiceEntry.getByRole('heading',{name:'احكي لي كيف كان يومك.',exact:true})).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await expect(page.locator('#root')).toHaveAttribute('inert','');
   await expect(page.getByTestId('primary-capture-button')).toBeVisible();
-  await page.getByTestId('primary-capture-button').click();
-  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/})).toHaveCount(0);
 });
 
 
