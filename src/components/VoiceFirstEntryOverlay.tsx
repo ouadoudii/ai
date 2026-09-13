@@ -10,24 +10,28 @@ export function voiceFirstEntryCopy(language:AppLanguage){
     prompt:'احكي لي كيف كان يومك.',
     helper:'الأكل، النوم، الطاقة أو المزاج — احكِ بطريقتك.',
     start:'ابدأ بالكلام',
+    skip:'متابعة بدون صوت',
     hint:'اضغط على الميكروفون وتكلم براحتك.'
   };
   if(language==='de')return{
     prompt:'Erzähl mir, wie dein Tag war.',
     helper:'Essen, Schlaf, Energie oder Stimmung — sprich einfach frei.',
     start:'Erzählen',
+    skip:'Ohne Spracheingabe weiter',
     hint:'Tippe aufs Mikro und sprich einfach los.'
   };
   if(language==='fr')return{
     prompt:'Raconte-moi ta journée.',
     helper:'Repas, sommeil, énergie ou humeur — parle simplement avec tes mots.',
     start:'Raconter',
+    skip:'Continuer sans parler',
     hint:'Appuie sur le micro et commence à parler.'
   };
   return{
     prompt:'Tell me how your day was.',
     helper:'Food, sleep, energy or mood — just say it in your own words.',
     start:'Tell me',
+    skip:'Continue without voice',
     hint:'Tap the microphone and start talking.'
   };
 }
@@ -38,6 +42,7 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart})=>{
   const {language}=useLanguage();
   const copy=voiceFirstEntryCopy(language);
   const micRef=React.useRef<HTMLButtonElement|null>(null);
+  const skipRef=React.useRef<HTMLButtonElement|null>(null);
   const [isOpen,setIsOpen]=React.useState(()=>{
     try{return localStorage.getItem(VOICE_FIRST_ENTRY_SEEN_KEY)!=='true'}catch{return true}
   });
@@ -55,9 +60,16 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart})=>{
     root?.setAttribute('aria-hidden','true');
     const frame=window.requestAnimationFrame(()=>micRef.current?.focus({preventScroll:true}));
     const keepFocus=(event:KeyboardEvent)=>{
-      if(event.key==='Tab'){
+      if(event.key!=='Tab')return;
+      const first=micRef.current;
+      const last=skipRef.current;
+      if(!first||!last)return;
+      if(event.shiftKey&&document.activeElement===first){
         event.preventDefault();
-        micRef.current?.focus({preventScroll:true});
+        last.focus({preventScroll:true});
+      }else if(!event.shiftKey&&document.activeElement===last){
+        event.preventDefault();
+        first.focus({preventScroll:true});
       }
     };
     document.addEventListener('keydown',keepFocus,true);
@@ -75,9 +87,12 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart})=>{
 
   if(!isOpen||!portalReady||typeof document==='undefined')return null;
 
-  const start=()=>{
+  const dismiss=()=>{
     try{localStorage.setItem(VOICE_FIRST_ENTRY_SEEN_KEY,'true')}catch{}
     setIsOpen(false);
+  };
+  const start=()=>{
+    dismiss();
     onStart();
   };
 
@@ -94,6 +109,7 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart})=>{
           </button>
         </div>
         <p className="mt-6 text-sm font-bold text-white/80">{copy.hint}</p>
+        <button ref={skipRef} data-testid="voice-first-entry-skip" type="button" onClick={dismiss} className="mt-5 min-h-11 rounded-full px-5 py-2 text-sm font-black text-white/85 underline decoration-white/40 underline-offset-4 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white/80">{copy.skip}</button>
       </section>
     </div>,
     document.body

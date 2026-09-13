@@ -7,14 +7,15 @@ describe('voice-first entry copy',()=>{
   });
 
   it.each([
-    ['de','Erzähl mir, wie dein Tag war.','Erzählen'],
-    ['en','Tell me how your day was.','Tell me'],
-    ['fr','Raconte-moi ta journée.','Raconter'],
-    ['ar','احكي لي كيف كان يومك.','ابدأ بالكلام'],
-  ] as const)('localizes the blocking voice prompt for %s',(language,prompt,start)=>{
+    ['de','Erzähl mir, wie dein Tag war.','Erzählen','Ohne Spracheingabe weiter'],
+    ['en','Tell me how your day was.','Tell me','Continue without voice'],
+    ['fr','Raconte-moi ta journée.','Raconter','Continuer sans parler'],
+    ['ar','احكي لي كيف كان يومك.','ابدأ بالكلام','متابعة بدون صوت'],
+  ] as const)('localizes the blocking voice prompt for %s',(language,prompt,start,skip)=>{
     const copy=voiceFirstEntryCopy(language);
     expect(copy.prompt).toBe(prompt);
     expect(copy.start).toBe(start);
+    expect(copy.skip).toBe(skip);
     expect(copy.helper.length).toBeGreaterThan(20);
     expect(copy.hint.length).toBeGreaterThan(10);
   });
