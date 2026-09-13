@@ -28,6 +28,7 @@ const languageName: Record<AppLanguage, string> = {
   en: 'English',
   ar: 'العربية',
   de: 'Deutsch',
+  fr: 'Français',
 };
 
 export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, onClose, onFood, onTellCary }) => {
@@ -111,15 +112,15 @@ export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, 
     >
       <section ref={dialogRef} className="w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] bg-[#FCFAF6] p-5 sm:p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="inline-flex items-center gap-1 rounded-full border border-[#DED8CF] bg-white p-1 shadow-sm" aria-label={t('chooseLanguage')}>
-            <Languages className="mx-1 h-4 w-4 text-[#718067]" />
-            {(['en', 'ar', 'de'] as AppLanguage[]).map((lang) => (
+          <div className="inline-flex max-w-[calc(100%-3rem)] items-center gap-1 overflow-x-auto rounded-full border border-[#DED8CF] bg-white p-1 shadow-sm" aria-label={t('chooseLanguage')}>
+            <Languages className="mx-1 h-4 w-4 shrink-0 text-[#718067]" />
+            {(['en', 'de', 'fr', 'ar'] as AppLanguage[]).map((lang) => (
               <button
                 type="button"
                 key={lang}
                 data-language-option="true"
                 onClick={() => changeLanguage(lang)}
-                className={`min-w-[68px] rounded-full px-2.5 py-2 text-xs font-black transition ${language === lang ? 'bg-[#526B48] text-white' : 'text-[#716D66] hover:bg-[#F0ECE4]'}`}
+                className={`min-w-[68px] shrink-0 rounded-full px-2.5 py-2 text-xs font-black transition ${language === lang ? 'bg-[#526B48] text-white' : 'text-[#716D66] hover:bg-[#F0ECE4]'}`}
                 aria-pressed={language === lang}
               >
                 {language === lang && <Check className="me-1 inline h-3 w-3" />}
