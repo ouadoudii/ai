@@ -31,5 +31,12 @@ test('French meal capture finds accented foods when typed without accents', asyn
   const input = page.getByPlaceholder('Commence à écrire… ex. pâtes au poulet');
   await expect(input).toBeVisible();
   await input.fill('creme bru');
-  await expect(page.getByRole('button', { name: 'Crème brûlée', exact: true })).toBeVisible();
+
+  const suggestion = page.getByRole('button', { name: /^Crème brûlée/ });
+  await expect(suggestion).toBeVisible();
+  await suggestion.click();
+  await expect(input).toHaveValue('');
+
+  await page.getByRole('button', { name: 'Enregistrer le repas', exact: true }).click();
+  await expect(page.getByText('Crème brûlée', { exact: true })).toBeVisible();
 });
