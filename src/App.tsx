@@ -94,7 +94,7 @@ export default function App(){
   const cancelMeal=()=>{setInitialMealCategory(null);setInitialMealText('');setInitialMealItems([]);setInitialMealNotes('');setInitialVoiceTranscript('');setVoiceUnderstandingFailed(false);setAddModalHasBack(false);if(mealStartedAt.current){trackUx({eventName:'flow_finished',surface:'meal_editor',language,durationMs:Date.now()-mealStartedAt.current,outcome:'cancelled'});mealStartedAt.current=null;}setIsAddModalOpen(false);setEditingMoment(null)};
   const backFromMeal=()=>{setIsAddModalOpen(false);setInitialMealText('');setInitialMealItems([]);setInitialMealNotes('');setInitialVoiceTranscript('');setVoiceUnderstandingFailed(false);setInitialMealCategory(null);setAddModalHasBack(false);setIsCaptureOpen(true)};
   const cancelCheckin=()=>{setRequestedPhase(null);if(checkinStartedAt.current){trackUx({eventName:'flow_finished',surface:'checkin',language,durationMs:Date.now()-checkinStartedAt.current,outcome:'cancelled'});checkinStartedAt.current=null;}setIsCheckInModalOpen(false);setIsMiddayCatchUpOpen(false)};
-  const handleDeleteMoment=(id:string)=>{setMoments(prev=>prev.filter(m=>m.id!==id);if(selectedMomentDetail?.id===id)setSelectedMomentDetail(null);};
+  const handleDeleteMoment=(id:string)=>{setMoments(prev=>prev.filter(m=>m.id!==id));if(selectedMomentDetail?.id===id)setSelectedMomentDetail(null);};
   const handleToggleFavorite=(id:string)=>{setMoments(prev=>prev.map(m=>m.id===id?{...m,isFavorite:!m.isFavorite}:m));if(selectedMomentDetail?.id===id)setSelectedMomentDetail(prev=>prev?{...prev,isFavorite:!prev.isFavorite}:null);};
   const go=(tab:ActiveTab)=>setActiveTab(tab==='type_analysis'?'type_analysis':'today');
 
