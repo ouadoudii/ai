@@ -16,7 +16,10 @@ async function seedFirstVoiceEntry(page:any,language:AppLanguage){
     localStorage.setItem('cary_onboarding_v2_complete','true');
     localStorage.setItem('nimmapp_moments_v1','[]');
     localStorage.setItem('nimmapp_checkins_v1','[]');
-    localStorage.removeItem('rhythm_voice_entry_seen_v1');
+    if(sessionStorage.getItem('voice_entry_test_seeded')!=='true'){
+      localStorage.removeItem('rhythm_voice_entry_seen_v1');
+      sessionStorage.setItem('voice_entry_test_seeded','true');
+    }
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   },{language});
 }
@@ -62,4 +65,5 @@ test('guest can continue without microphone and the entry does not interrupt aga
   await expect.poll(()=>page.evaluate(()=>localStorage.getItem('rhythm_voice_entry_seen_v1'))).toBe('true');
   await page.reload();
   await expect(page.getByTestId('voice-first-entry-overlay')).toHaveCount(0);
+  await expect(page.getByTestId('primary-capture-button')).toBeVisible();
 });
