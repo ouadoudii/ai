@@ -18,7 +18,20 @@ export default defineConfig({
   testDir:'./e2e',
   timeout:45_000,
   retries:1,
-  use:{baseURL:'http://127.0.0.1:4173',trace:'retain-on-failure',screenshot:'only-on-failure',video:'retain-on-failure',timezoneId:deterministicTimezone},
+  use:{
+    baseURL:'http://127.0.0.1:4173',
+    trace:'retain-on-failure',
+    screenshot:'only-on-failure',
+    video:'retain-on-failure',
+    timezoneId:deterministicTimezone,
+    storageState:{
+      cookies:[],
+      origins:[{
+        origin:'http://127.0.0.1:4173',
+        localStorage:[{name:'rhythm_voice_entry_seen_v1',value:'true'}],
+      }],
+    },
+  },
   webServer:{command:'npm run build && npm run preview -- --host 127.0.0.1 --port 4173',url:'http://127.0.0.1:4173',reuseExistingServer:false,timeout:120_000},
   projects:[{name:'android-arabic',use:{...devices['Pixel 7']}}],
   reporter:[['list'],['html',{outputFolder:'playwright-report',open:'never'}]],
