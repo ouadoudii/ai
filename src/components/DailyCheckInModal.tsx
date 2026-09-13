@@ -53,7 +53,8 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
         return;
       }
       if(event.key!=='Tab')return;
-      const focusable=Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(element=>element.offsetParent!==null);
+      const candidates=Array.from(dialog.querySelectorAll(FOCUSABLE_SELECTOR)) as HTMLElement[];
+      const focusable=candidates.filter(element=>element.offsetParent!==null);
       if(!focusable.length){
         event.preventDefault();
         dialog.focus();
