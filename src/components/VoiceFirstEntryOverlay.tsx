@@ -45,7 +45,7 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart})=>{
 
   React.useEffect(()=>setPortalReady(true),[]);
   React.useEffect(()=>{
-    if(!isOpen||typeof document==='undefined')return;
+    if(!isOpen||!portalReady||typeof document==='undefined')return;
     const root=document.getElementById('root');
     const previousOverflow=document.body.style.overflow;
     const previousAriaHidden=root?.getAttribute('aria-hidden');
@@ -53,11 +53,11 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart})=>{
     document.body.style.overflow='hidden';
     root?.setAttribute('inert','');
     root?.setAttribute('aria-hidden','true');
-    const frame=window.requestAnimationFrame(()=>micRef.current?.focus());
+    const frame=window.requestAnimationFrame(()=>micRef.current?.focus({preventScroll:true}));
     const keepFocus=(event:KeyboardEvent)=>{
       if(event.key==='Tab'){
         event.preventDefault();
-        micRef.current?.focus();
+        micRef.current?.focus({preventScroll:true});
       }
     };
     document.addEventListener('keydown',keepFocus,true);
@@ -71,7 +71,7 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart})=>{
         else root.setAttribute('aria-hidden',previousAriaHidden);
       }
     };
-  },[isOpen]);
+  },[isOpen,portalReady]);
 
   if(!isOpen||!portalReady||typeof document==='undefined')return null;
 
