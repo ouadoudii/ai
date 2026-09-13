@@ -51,17 +51,26 @@ for (const copy of cases) {
       localStorage.setItem('nimmapp_moments_v1', '[]');
       localStorage.setItem('nimmapp_checkins_v1', '[]');
       localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify({
-        summary: 'Profile', priorities: ['meal'], preferences: ['simple'], confirmedAt: Date.now(),
+        summary: 'Profile',
+        priorities: ['meal'],
+        preferences: ['simple'],
+        rawIntro: 'I want to understand my midday rhythm.',
+        confirmedAt: Date.now(),
         firstPlan: {
-          title: 'Plan', rationale: 'Rationale', focusAreas: ['meal'], firstStep: 'Check in',
-          checkInPrompt: 'How are you?', phase: 'midday'
+          title: 'Plan',
+          rationale: 'Rationale',
+          focusAreas: ['meal'],
+          firstStep: 'Check in',
+          phase: 'midday'
         }
       }));
       sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
     }, { language: copy.language });
 
     await page.goto('/');
-    await page.getByTestId('personal-plan-start').click();
+    const planStart = page.getByTestId('personal-plan-start');
+    await expect(planStart).toBeVisible();
+    await planStart.click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('heading', { name: copy.title, exact: true })).toBeVisible();
