@@ -85,6 +85,8 @@ test('gated AI meal autocomplete degrades gracefully when API fails', async ({ p
   await setArabicGuest(page);
   await page.route('**/api/food-autocomplete', async (route: any) => route.fulfill({ status: 500, contentType: 'application/json', body: '{}' }));
   const input = await openAvailableMealCheckin(page);
+  await input.fill('بيض مسلوق');
+  await expect(page.getByTestId('meal-recognized-food')).toBeVisible();
   await input.fill('بيض');
   await expect(page.getByTestId('meal-recognized-food')).toBeVisible();
   await input.fill('طبق غير معروف');
