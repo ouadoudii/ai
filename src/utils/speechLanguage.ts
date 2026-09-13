@@ -1,14 +1,14 @@
 import type { AppLanguage } from '../i18n';
 
 export function browserSpeechLocale(language: AppLanguage): string {
-  if (language === 'ar') return 'ar-MA';
+  if (language === 'ar') return 'ar';
   if (language === 'de') return 'de-DE';
   return 'en-US';
 }
 
 export function voiceCopy(language: AppLanguage) {
   if (language === 'ar') return {
-    back:'رجوع', close:'إغلاق', title:'قل ماذا أكلت', subtitle:'تحدث بطريقتك — العربية أو الدارجة أو الإنجليزية.',
+    back:'رجوع', close:'إغلاق', title:'قل ماذا أكلت', subtitle:'تحدث بطريقتك — العربية أو الدارجة أو أي لهجة عربية.',
     start:'ابدأ التسجيل', stop:'إيقاف التسجيل', idle:'اضغط وابدأ الكلام', processing:'نفهم التسجيل على جهازك…',
     permission:'نحتاج إذن الميكروفون للتسجيل.', unsupported:'التسجيل الصوتي غير مدعوم في هذا المتصفح.',
     noSpeech:'لم نفهم الكلام. جرّب مرة أخرى وتكلم بوضوح.', failed:'تعذر التعرف على الكلام. جرّب مرة أخرى.'
