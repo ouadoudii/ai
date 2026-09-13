@@ -30,7 +30,7 @@ test('confirmed profile makes the personal plan the primary mobile home action',
   await expect(plan).toBeVisible();
   await expect(plan).toContainText('Mittag und Energie beobachten');
   await expect(page.getByTestId('personal-plan-first-step')).toContainText('Mittag-Check-in');
-  await expect(page.getByTestId('personal-plan-start')).toBeVisible();
+  await expect(page.getByTestId('personal-plan-start')).toHaveText(/Mittag-Check-in starten/);
   await page.screenshot({path:testInfo.outputPath('personal-plan-home-mobile.png'),fullPage:true});
   await page.getByTestId('personal-plan-start').click();
   await expect(page.getByRole('dialog')).toBeVisible();
