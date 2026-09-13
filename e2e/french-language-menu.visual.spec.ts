@@ -1,11 +1,18 @@
 import { expect, test } from '@playwright/test';
 
-test('mobile language menu switches directly between French, Arabic, German and English', async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem('rhythm_language_v1', 'en');
+async function seedReturningGuest(page: any, language: 'en' | 'fr') {
+  await page.addInitScript(({ language }) => {
+    localStorage.setItem('rhythm_language_v1', language);
+    localStorage.setItem('cary_access_mode_v1', 'guest');
+    localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('nimmapp_moments_v1', '[]');
     localStorage.setItem('nimmapp_checkins_v1', '[]');
-  });
+    sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+  }, { language });
+}
+
+test('mobile language menu switches directly between French, Arabic, German and English', async ({ page }) => {
+  await seedReturningGuest(page, 'en');
 
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'Choose language' })).toBeVisible();
@@ -35,11 +42,7 @@ test('mobile language menu switches directly between French, Arabic, German and 
 });
 
 test('French selection persists after reload', async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem('rhythm_language_v1', 'fr');
-    localStorage.setItem('nimmapp_moments_v1', '[]');
-    localStorage.setItem('nimmapp_checkins_v1', '[]');
-  });
+  await seedReturningGuest(page, 'fr');
 
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
