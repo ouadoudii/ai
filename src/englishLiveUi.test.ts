@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { renderToString } from 'react-dom/server';
 import { LanguageProvider } from './i18n';
 import { TodayHomeView } from './components/TodayHomeView';
+import { AddMomentModal } from './components/AddMomentModal';
 
 const liveFiles = [
   'index.html',
@@ -13,7 +14,6 @@ const liveFiles = [
   'src/components/MobileBottomNav.tsx',
   'src/components/NutritionTypeAnalysisView.tsx',
   'src/components/CaptureChoiceModal.tsx',
-  'src/components/AddMomentModal.tsx',
   'src/components/DailyCheckInModal.tsx',
   'src/components/CatchUpMiddayCheckInModal.tsx',
   'src/components/MealVisualPicker.tsx',
@@ -32,14 +32,28 @@ const forbiddenVisibleGerman = [
 
 const noop=()=>{};
 
+function setEnglishLanguage(){
+  (globalThis as any).localStorage={getItem:(key:string)=>key==='rhythm_language_v1'?'en':null,setItem:()=>{}};
+}
+
 describe('English live V2', () => {
   it.each(liveFiles)('%s has no accidental hard-coded German UI copy', (file) => {
     const source = readFileSync(file, 'utf8');
     for (const term of forbiddenVisibleGerman) expect(source, `${file} contains ${term}`).not.toContain(term);
   });
 
+  it('renders the multilingual meal editor in English without leaking German copy',()=>{
+    setEnglishLanguage();
+    const tree=React.createElement(LanguageProvider,null,React.createElement(AddMomentModal,{isOpen:true,onClose:noop,onSave:noop as any}));
+    const html=renderToString(tree);
+    expect(html).toContain('Food');
+    expect(html).toContain('What did you have?');
+    expect(html).toContain('Save meal');
+    for(const term of forbiddenVisibleGerman) expect(html,`meal editor rendered ${term}`).not.toContain(term);
+  });
+
   it('renders the multilingual Today screen in English without leaking German copy',()=>{
-    (globalThis as any).localStorage={getItem:(key:string)=>key==='rhythm_language_v1'?'en':null,setItem:()=>{}};
+    setEnglishLanguage();
     const tree=React.createElement(LanguageProvider,null,React.createElement(TodayHomeView,{moments:[],checkIns:[],onOpenAddModal:noop,onOpenSnack:noop,onOpenCheckInModal:noop as any,onSelectMoment:noop as any,onNavigateToCoach:noop,onNavigateToTypeAnalysis:noop,onNavigateToTimeline:noop}));
     const html=renderToString(tree);
     expect(html).toContain('Welcome back');
