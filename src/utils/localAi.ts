@@ -69,7 +69,7 @@ async function decodeAudioTo16kMono(blob:Blob):Promise<Float32Array>{
   }
 }
 
-export async function transcribeAudio(blob:Blob,language:'ar'|'en'|'de'):Promise<string>{
+export async function transcribeAudio(blob:Blob,language:'ar'|'en'|'de'|'fr'):Promise<string>{
   const audio=await decodeAudioTo16kMono(blob);
   const result=await runLocalAi<{text:string}>({type:'audio',audio,language});
   return String(result.text||'').trim();
