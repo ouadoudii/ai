@@ -1,6 +1,7 @@
 import { AppLanguage } from '../i18n';
 
 export const INTRO_PROFILE_STORAGE_KEY='rhythm_intro_profile_v1';
+export const INTRO_PROFILE_SAVED_EVENT='rhythm:intro-profile-saved';
 
 export type PlanPhase='morning'|'midday'|'evening';
 
@@ -87,8 +88,21 @@ export async function createIntroProfileDraft(rawIntro:string,language:AppLangua
   }
 }
 
+export function loadIntroProfile():IntroProfile|null{
+  try{
+    const raw=localStorage.getItem(INTRO_PROFILE_STORAGE_KEY);
+    if(!raw)return null;
+    const parsed=JSON.parse(raw) as Record<string,unknown>;
+    if(typeof parsed.confirmedAt!=='number')return null;
+    return{...safeIntroProfileDraft(parsed,typeof parsed.rawIntro==='string'?parsed.rawIntro:''),confirmedAt:parsed.confirmedAt};
+  }catch{return null;}
+}
+
 export function saveIntroProfile(draft:IntroProfileDraft){
   const profile:IntroProfile={...safeIntroProfileDraft(draft,draft.rawIntro),confirmedAt:Date.now()};
-  try{localStorage.setItem(INTRO_PROFILE_STORAGE_KEY,JSON.stringify(profile))}catch{}
+  try{
+    localStorage.setItem(INTRO_PROFILE_STORAGE_KEY,JSON.stringify(profile));
+    window.dispatchEvent(new CustomEvent(INTRO_PROFILE_SAVED_EVENT,{detail:profile}));
+  }catch{}
   return profile;
 }
