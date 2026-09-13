@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeAutocomplete, rankLocalAutocomplete } from './utils/foodAutocomplete';
+import { mergeAutocompleteSuggestions, normalizeAutocomplete, rankLocalAutocomplete } from './utils/foodAutocomplete';
 
 describe('accent-insensitive food autocomplete', () => {
   it('folds Latin diacritics without changing the canonical suggestion text', () => {
@@ -13,7 +13,6 @@ describe('accent-insensitive food autocomplete', () => {
   });
 
   it('deduplicates equivalent accented and unaccented AI/local suggestions', () => {
-    const { mergeAutocompleteSuggestions } = require('./utils/foodAutocomplete');
     expect(mergeAutocompleteSuggestions(['Crème brûlée'], ['Creme brulee'], '')).toEqual(['Crème brûlée']);
   });
 });
