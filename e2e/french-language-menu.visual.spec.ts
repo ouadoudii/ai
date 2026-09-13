@@ -20,9 +20,9 @@ test('mobile language menu switches directly between French, Arabic, German and 
   await page.getByRole('button', { name: 'Choose language' }).click();
   await page.locator('[data-language-option="fr"]').click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  await expect(page.getByText('Découvertes', { exact: true })).toBeVisible();
-  await expect(page.getByText('Mes moments', { exact: true })).toBeVisible();
-  await expect(page.getByText('Langue', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Découvertes', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Mes moments', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Choisir la langue' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Choisir la langue' }).click();
   await page.locator('[data-language-option="ar"]').click();
@@ -32,13 +32,13 @@ test('mobile language menu switches directly between French, Arabic, German and 
   await page.getByRole('button', { name: 'اختر اللغة' }).click();
   await page.locator('[data-language-option="de"]').click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
-  await expect(page.getByText('Sprache', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sprache wählen' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Sprache wählen' }).click();
   await page.locator('[data-language-option="en"]').click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
-  await expect(page.getByText('Language', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Choose language' })).toBeVisible();
 });
 
 test('French selection persists after reload', async ({ page }) => {
@@ -46,8 +46,8 @@ test('French selection persists after reload', async ({ page }) => {
 
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  await expect(page.getByText('Découvertes', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Découvertes', exact: true })).toBeVisible();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  await expect(page.getByText('Langue', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Choisir la langue' })).toBeVisible();
 });
