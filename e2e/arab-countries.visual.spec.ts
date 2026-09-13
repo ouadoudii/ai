@@ -178,7 +178,6 @@ test('English switch changes the real capture UI to LTR',async({page},testInfo)=
   await page.screenshot({path:testInfo.outputPath('english-switch.png'),fullPage:true});
 });
 
-
 test('guest mode persists locally without requiring an account',async({page})=>{
   await page.addInitScript(()=>{
     localStorage.setItem('rhythm_language_v1','en');
@@ -257,7 +256,7 @@ test('fresh guest sees only the intentional voice-first entry before manual capt
   await page.waitForTimeout(1200);
   const voiceEntry=page.getByTestId('voice-first-entry-overlay');
   await expect(voiceEntry).toBeVisible();
-  await expect(voiceEntry.getByRole('heading',{name:'احكي لي كيف كان يومك.',exact:true})).toBeVisible();
+  await expect(voiceEntry.getByRole('heading',{name:'ما الذي أتى بك إلينا؟ احكِ لي قليلاً عنك.',exact:true})).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(1);
   await expect(page.locator('#root')).toHaveAttribute('inert','');
   await expect(page.getByTestId('primary-capture-button')).toBeVisible();
