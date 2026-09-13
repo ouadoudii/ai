@@ -1,7 +1,17 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createIntroProfileDraft, INTRO_PROFILE_STORAGE_KEY, loadIntroProfile, safeIntroProfileDraft } from './utils/introProfile';
 
-afterEach(()=>{vi.restoreAllMocks();localStorage.removeItem(INTRO_PROFILE_STORAGE_KEY)});
+let storage:Map<string,string>;
+beforeEach(()=>{
+  storage=new Map();
+  vi.stubGlobal('localStorage',{
+    getItem:(key:string)=>storage.get(key)??null,
+    setItem:(key:string,value:string)=>{storage.set(key,String(value))},
+    removeItem:(key:string)=>{storage.delete(key)},
+    clear:()=>storage.clear(),
+  });
+});
+afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals()});
 
 describe('intro profile drafting',()=>{
   it('keeps only bounded user-editable profile and plan fields',()=>{
