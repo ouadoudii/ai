@@ -1,7 +1,11 @@
 import { foodSearchMatches, normalizeFoodSearchText } from './arabicFoodIntelligence';
 
+function foldLatinDiacritics(value:string):string{
+  return value.normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+}
+
 export function normalizeAutocomplete(value:string):string{
-  return normalizeFoodSearchText(value);
+  return foldLatinDiacritics(normalizeFoodSearchText(value));
 }
 
 export function rankLocalAutocomplete(names:string[],query:string,limit=6):string[]{
