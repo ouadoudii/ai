@@ -9,6 +9,9 @@ const cases: Array<{
   discoveries: string;
   moments: string;
   chooseLanguage: string;
+  homeHeading: string;
+  captureDay: string;
+  recentMoments: string;
   captureTitle: string;
   photo: string;
   speak: string;
@@ -26,28 +29,32 @@ const cases: Array<{
 }> = [
   {
     language: 'en', dir: 'ltr', today: 'Today', discoveries: 'Discoveries', moments: 'My moments',
-    chooseLanguage: 'Choose language', captureTitle: 'What would you like to capture?', photo: 'Photo', speak: 'Tell me',
+    chooseLanguage: 'Choose language', homeHeading: 'Welcome back 👋', captureDay: 'Capture your day', recentMoments: 'Your recent moments',
+    captureTitle: 'What would you like to capture?', photo: 'Photo', speak: 'Tell me',
     foodLabel: 'Food', foodTitle: 'What did you have?', mealPlaceholder: 'Start typing… e.g. chicken pasta',
     chooseByPicture: 'Choose by picture', pictureHelp: 'Or start typing to narrow the choices', photoSection: 'Photo', addPhoto: 'Add your photo',
     addNote: 'Add a note', saveMeal: 'Save meal', footer: 'Type a little — we’ll help with the rest.', close: 'Close',
   },
   {
     language: 'ar', dir: 'rtl', today: 'اليوم', discoveries: 'اكتشافاتك', moments: 'لحظاتي',
-    chooseLanguage: 'اختر اللغة', captureTitle: 'ما اللحظة التي تريد تسجيلها؟', photo: 'صورة', speak: 'احكِ لي',
+    chooseLanguage: 'اختر اللغة', homeHeading: 'مرحباً بك 👋', captureDay: 'سجّل يومك', recentMoments: 'لحظاتك الأخيرة',
+    captureTitle: 'ما اللحظة التي تريد تسجيلها؟', photo: 'صورة', speak: 'احكِ لي',
     foodLabel: 'الطعام', foodTitle: 'ماذا أكلت؟', mealPlaceholder: 'ابدأ بالكتابة… مثلاً طاجين',
     chooseByPicture: 'اختر بالصورة', pictureHelp: 'أو ابدأ بالكتابة لتضييق الاختيارات', photoSection: 'الصورة', addPhoto: 'أضف صورتك',
     addNote: 'أضف ملاحظة', saveMeal: 'حفظ الوجبة', footer: 'اكتب القليل فقط — سنساعدك في الباقي.', close: 'إغلاق',
   },
   {
     language: 'de', dir: 'ltr', today: 'Heute', discoveries: 'Entdeckungen', moments: 'Meine Momente',
-    chooseLanguage: 'Sprache wählen', captureTitle: 'Was möchtest du festhalten?', photo: 'Foto', speak: 'Erzähl mir',
+    chooseLanguage: 'Sprache wählen', homeHeading: 'Willkommen zurück 👋', captureDay: 'Halte deinen Tag fest', recentMoments: 'Deine letzten Momente',
+    captureTitle: 'Was möchtest du festhalten?', photo: 'Foto', speak: 'Erzähl mir',
     foodLabel: 'Essen', foodTitle: 'Was hast du gegessen?', mealPlaceholder: 'Tippe los… z. B. Hähnchenpasta',
     chooseByPicture: 'Nach Bild auswählen', pictureHelp: 'Oder tippe, um die Auswahl einzugrenzen', photoSection: 'Foto', addPhoto: 'Foto hinzufügen',
     addNote: 'Notiz hinzufügen', saveMeal: 'Mahlzeit speichern', footer: 'Ein paar Wörter genügen — wir helfen beim Rest.', close: 'Schließen',
   },
   {
     language: 'fr', dir: 'ltr', today: 'Aujourd’hui', discoveries: 'Découvertes', moments: 'Mes moments',
-    chooseLanguage: 'Choisir la langue', captureTitle: 'Que veux-tu enregistrer ?', photo: 'Photo', speak: 'Raconter',
+    chooseLanguage: 'Choisir la langue', homeHeading: 'Bon retour 👋', captureDay: 'Note ta journée', recentMoments: 'Tes moments récents',
+    captureTitle: 'Que veux-tu enregistrer ?', photo: 'Photo', speak: 'Raconter',
     foodLabel: 'Repas', foodTitle: 'Qu’as-tu mangé ?', mealPlaceholder: 'Commence à écrire… ex. pâtes au poulet',
     chooseByPicture: 'Choisir par image', pictureHelp: 'Ou commence à écrire pour affiner les choix', photoSection: 'Photo', addPhoto: 'Ajouter une photo',
     addNote: 'Ajouter une note', saveMeal: 'Enregistrer le repas', footer: 'Quelques mots suffisent — nous t’aidons pour le reste.', close: 'Fermer',
@@ -72,6 +79,9 @@ for (const copy of cases) {
 
     await expect(page.locator('html')).toHaveAttribute('lang', copy.language);
     await expect(page.locator('html')).toHaveAttribute('dir', copy.dir);
+    await expect(page.getByRole('heading', { name: copy.homeHeading, exact: true })).toBeVisible();
+    await expect(page.getByText(copy.captureDay, { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: copy.recentMoments, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: copy.discoveries, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: copy.moments, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: copy.chooseLanguage, exact: true })).toBeVisible();
@@ -109,6 +119,7 @@ test('language selection persists across reload for every supported language', a
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('lang', copy.language);
     await expect(page.locator('html')).toHaveAttribute('dir', copy.dir);
+    await expect(page.getByRole('heading', { name: copy.homeHeading, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: copy.chooseLanguage, exact: true })).toBeVisible();
     current = copy;
   }
