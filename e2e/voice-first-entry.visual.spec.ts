@@ -49,7 +49,7 @@ test('closing profile voice capture returns to the required gate',async({page})=
   await expect(page.locator('[data-profile-onboarding="true"]')).toBeVisible();
   await page.getByRole('button',{name:'Schließen'}).click();
   await expect(page.getByTestId('voice-first-entry-overlay')).toBeVisible();
-  await expect(page.getByTestId('primary-capture-button')).not.toBeVisible();
+  await expect(page.locator('#root')).toHaveAttribute('inert','');
 });
 
 test('closing free writing returns to the required gate',async({page})=>{
@@ -59,7 +59,7 @@ test('closing free writing returns to the required gate',async({page})=>{
   await expect(page.getByTestId('profile-intro-modal')).toBeVisible();
   await page.getByRole('button',{name:'Zurück'}).click();
   await expect(page.getByTestId('voice-first-entry-overlay')).toBeVisible();
-  await expect(page.getByTestId('primary-capture-button')).not.toBeVisible();
+  await expect(page.locator('#root')).toHaveAttribute('inert','');
 });
 
 test('typing path creates a semantic personal plan and unlocks only after confirmation',async({page})=>{
@@ -102,6 +102,7 @@ test('quick form persists context and unlocks the app',async({page})=>{
   await page.getByTestId('onboarding-energy').fill('2');
   await page.getByTestId('onboarding-rhythm').selectOption('irregular');
   await page.getByTestId('onboarding-form-save').click();
+  await expect.poll(()=>page.evaluate(()=>Boolean(localStorage.getItem('rhythm_intro_profile_v1')))).toBe(true);
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('rhythm_intro_profile_v1')||'{}'));
   expect(saved.rawIntro).toContain('82 kg');
   expect(saved.rawIntro).toContain('Hunger gerade: 4/5');
