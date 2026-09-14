@@ -49,3 +49,19 @@ test('home stays generic when no confirmed profile exists',async({page})=>{
   await expect(page.getByTestId('personal-plan-home-card')).toHaveCount(0);
   await expect(page.getByTestId('primary-capture-button')).toBeVisible();
 });
+
+test('mobile My moments navigation opens the chronology instead of returning to Today',async({page},testInfo)=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','de');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    localStorage.setItem('rhythm_voice_entry_seen_v1','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+  });
+  await page.goto('/');
+  await page.getByTestId('mobile-moments-nav').click();
+  await expect(page.getByRole('heading',{name:'Tagebuch & Chronologie'})).toBeVisible();
+  await expect(page.getByText('Chronologisches Archiv')).toBeVisible();
+  await page.screenshot({path:testInfo.outputPath('mobile-moments-chronology.png'),fullPage:true});
+});
