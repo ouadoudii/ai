@@ -19,15 +19,46 @@ interface Props {
 export const LanguagePicker: React.FC<Props> = ({ open, onClose, surface }) => {
   const { language, setLanguage, t } = useLanguage();
   const panelRef = React.useRef<HTMLDivElement | null>(null);
+  const openerRef = React.useRef<HTMLElement | null>(null);
 
   React.useEffect(() => {
     if (!open) return;
+
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const panel = panelRef.current;
+    const focusable = () => Array.from(panel?.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? []);
+    const currentLanguage = panel?.querySelector<HTMLElement>(`[data-language-option="${language}"]`);
+    (currentLanguage ?? focusable()[0])?.focus();
+
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const items = focusable();
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
+
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      openerRef.current?.focus();
+    };
+  }, [open, onClose, language]);
 
   if (!open) return null;
 
