@@ -47,7 +47,7 @@ for(const copy of cases){
   });
 }
 
-test('voice-first microphone opens the dedicated profile recorder',async({page})=>{
+test('voice-first microphone opens the dedicated profile recorder without completing onboarding',async({page})=>{
   await seedFirstVoiceEntry(page,'de');
   await page.goto('/');
   await page.getByTestId('voice-first-entry-mic').click();
@@ -55,7 +55,18 @@ test('voice-first microphone opens the dedicated profile recorder',async({page})
   await expect(page.locator('#root')).not.toHaveAttribute('inert','');
   await expect(page.getByRole('heading',{name:'Erzähl mir ein bisschen von dir'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Aufnahme starten'})).toBeVisible();
-  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('rhythm_voice_entry_seen_v1'))).toBe('true');
+  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('rhythm_voice_entry_seen_v1'))).toBeNull();
+});
+
+test('aborted microphone onboarding is offered again on the next app launch',async({page})=>{
+  await seedFirstVoiceEntry(page,'de');
+  await page.goto('/');
+  await page.getByTestId('voice-first-entry-mic').click();
+  await page.getByRole('button',{name:'Schließen'}).click();
+  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('rhythm_voice_entry_seen_v1'))).toBeNull();
+  await page.reload();
+  await expect(page.getByTestId('voice-first-entry-overlay')).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Was führt dich zu uns? Erzähl ein bisschen von dir.',exact:true})).toBeVisible();
 });
 
 test('typing path creates a semantic personal plan and only saves after confirmation',async({page})=>{
@@ -79,6 +90,7 @@ test('typing path creates a semantic personal plan and only saves after confirma
   await page.goto('/');
   await page.getByTestId('voice-first-entry-type').click();
   await expect(page.getByRole('heading',{name:'Erzähl mir ein bisschen von dir'})).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('rhythm_voice_entry_seen_v1'))).toBeNull();
   await page.getByTestId('profile-intro-textarea').fill('Ich esse oft unregelmäßig und möchte verstehen, warum meine Energie nachmittags absackt. Einfache Routinen passen gut zu mir.');
   await page.getByTestId('profile-intro-build').click();
   await expect(page.getByRole('heading',{name:'So habe ich dich verstanden'})).toBeVisible();
@@ -100,6 +112,8 @@ test('typing path creates a semantic personal plan and only saves after confirma
   expect(saved.firstPlan.focusAreas).toEqual(['Mittagessen','Nachmittagsenergie']);
   expect(saved.rawIntro).toContain('unregelmäßig');
   expect(typeof saved.confirmedAt).toBe('number');
+  await page.reload();
+  await expect(page.getByTestId('voice-first-entry-overlay')).toHaveCount(0);
 });
 
 test('guest can continue without microphone and the entry does not interrupt again',async({page})=>{
