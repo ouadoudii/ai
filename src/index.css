@@ -67,20 +67,47 @@
 /* Cary visual refresh — warm, image-forward and mobile-first */
 :root {
   --cary-bg: #f7f2ea;
-  --cary-surface: rgba(255,255,255,.92);
+  --cary-surface: rgba(255,255,255,.94);
   --cary-ink: #1f2933;
   --cary-muted: #756f68;
   --cary-coral: #f06f5f;
   --cary-amber: #e7a43b;
   --cary-green: #356b5b;
+  --cary-mosaic-line: rgba(120, 91, 72, .055);
+  --cary-mosaic-coral: rgba(240, 111, 95, .055);
+  --cary-mosaic-green: rgba(53, 107, 91, .045);
 }
 
 html { background: var(--cary-bg); }
 body {
-  background:
+  background-color: var(--cary-bg);
+  background-image:
     radial-gradient(circle at 10% -10%, rgba(240,111,95,.13), transparent 30rem),
     radial-gradient(circle at 92% 8%, rgba(231,164,59,.12), transparent 28rem),
+    linear-gradient(30deg, var(--cary-mosaic-coral) 12%, transparent 12.5%, transparent 87%, var(--cary-mosaic-coral) 87.5%, var(--cary-mosaic-coral)),
+    linear-gradient(150deg, var(--cary-mosaic-green) 12%, transparent 12.5%, transparent 87%, var(--cary-mosaic-green) 87.5%, var(--cary-mosaic-green)),
+    linear-gradient(30deg, var(--cary-mosaic-line) 12%, transparent 12.5%, transparent 87%, var(--cary-mosaic-line) 87.5%, var(--cary-mosaic-line)),
+    linear-gradient(150deg, var(--cary-mosaic-line) 12%, transparent 12.5%, transparent 87%, var(--cary-mosaic-line) 87.5%, var(--cary-mosaic-line)),
+    linear-gradient(60deg, rgba(231,164,59,.04) 25%, transparent 25.5%, transparent 75%, rgba(231,164,59,.04) 75%, rgba(231,164,59,.04)),
     linear-gradient(180deg, #fbf8f3 0%, var(--cary-bg) 100%);
+  background-size:
+    auto,
+    auto,
+    56px 98px,
+    56px 98px,
+    56px 98px,
+    56px 98px,
+    56px 98px,
+    auto;
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    0 0,
+    28px 49px,
+    28px 49px,
+    0 0,
+    0 0;
   color: var(--cary-ink);
   min-height: 100vh;
 }
