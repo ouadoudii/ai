@@ -12,7 +12,31 @@ interface Props { moments:FoodMoment[]; checkIns:DailyCheckIn[]; onOpenAddModal:
 const demoM=(m:FoodMoment)=>/^moment-\d{1,2}$/.test(m.id);const demoC=(c:DailyCheckIn)=>/^checkin-\d{1,2}$/.test(c.id);
 const bg='/zellige-wall.svg';
 const phaseIcon:Record<TimeOfDayPhase,React.ReactNode>={morning:<Sun className="w-7 h-7"/>,midday:<Sunset className="w-7 h-7"/>,evening:<Moon className="w-7 h-7"/>};
-export const TodayHomeView:React.FC<Props>=({moments,checkIns,onOpenAddModal,onOpenSnack,onOpenCheckInModal,onSelectMoment,onNavigateToTypeAnalysis})=>{const {language,t}=useLanguage();const ar=language==='ar';const de=language==='de';const copy=(en:string,arText:string,deText:string)=>ar?arText:de?deText:en;const today=getLocalDateKey();const todayChecks=checkIns.filter(c=>c.date===today&&!demoC(c));const completed=new Set(todayChecks.map(c=>c.timeOfDay));const realMoments=moments.filter(m=>!demoM(m)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));const snackDone=realMoments.some(m=>m.date===today&&m.category==='snack');const insights=React.useMemo(()=>buildPatternInsights(moments,checkIns),[moments,checkIns]);const first=insights[0];const date=new Intl.DateTimeFormat(ar?'ar-MA':de?'de-DE':'en',{weekday:'long',day:'numeric',month:'long'}).format(new Date());const hour=new Date().getHours();const allPhases:Array<{key:TimeOfDayPhase;title:string;body:string;accent:string;soft:string}>=[{key:'morning',title:copy('Good morning','صباح الخير','Guten Morgen'),body:copy('How did your day begin?','كيف بدأ يومك؟','Wie hat dein Tag begonnen?'),accent:'#D99B1D',soft:'#FFF1CE'},{key:'midday',title:copy('Midday','منتصف اليوم','Mittag'),body:copy('Take a moment and capture what matters','خذ لحظة وسجّل ما يهم','Nimm dir einen Moment und halte fest, was wichtig ist'),accent:'#64823D',soft:'#E9F0D8'},{key:'evening',title:copy('Good evening','مساء الخير','Guten Abend'),body:copy('How did your day feel?','كيف كان يومك؟','Wie hat sich dein Tag angefühlt?'),accent:'#7565B0',soft:'#EEE9F7'}];const phases=allPhases.filter(p=>isPhaseAvailable(p.key,hour));
+const frenchTodayCopy:Record<string,string>={
+  'Good morning':'Bonjour',
+  'How did your day begin?':'Comment ta journée a-t-elle commencé ?',
+  'Midday':'Midi',
+  'Take a moment and capture what matters':'Prends un moment pour noter ce qui compte',
+  'Good evening':'Bonsoir',
+  'How did your day feel?':'Comment as-tu vécu ta journée ?',
+  'Welcome back 👋':'Bon retour 👋',
+  'Let’s understand your day a little better 🌿':'Comprenons un peu mieux ta journée 🌿',
+  'Capture your day':'Note ta journée',
+  'This moment is captured ✓':'Ce moment est enregistré ✓',
+  'Snack':'Collation',
+  'Snack captured ✓':'Collation enregistrée ✓',
+  'Add a snack if it was part of your day':'Ajoute une collation si elle faisait partie de ta journée',
+  'Your recent moments':'Tes moments récents',
+  'Add a moment':'Ajouter un moment',
+  'Another piece of the picture':'Une nouvelle pièce du puzzle',
+  'A moment helping us understand your rhythm':'Un moment qui nous aide à comprendre ton rythme',
+  'Start with one small moment':'Commence par un petit moment',
+  'A photo, your voice or a few taps is enough.':'Une photo, ta voix ou quelques gestes suffisent.',
+  'Every moment adds another piece':'Chaque moment ajoute une pièce',
+  'Something is starting to repeat':'Un schéma commence à se dessiner',
+  'Keep going your way. Useful connections will emerge from your real everyday life.':'Continue à ton rythme. Des liens utiles émergeront de ton quotidien réel.',
+};
+export const TodayHomeView:React.FC<Props>=({moments,checkIns,onOpenAddModal,onOpenSnack,onOpenCheckInModal,onSelectMoment,onNavigateToTypeAnalysis})=>{const {language,t}=useLanguage();const ar=language==='ar';const de=language==='de';const fr=language==='fr';const copy=(en:string,arText:string,deText:string)=>ar?arText:de?deText:fr?(frenchTodayCopy[en]||en):en;const today=getLocalDateKey();const todayChecks=checkIns.filter(c=>c.date===today&&!demoC(c));const completed=new Set(todayChecks.map(c=>c.timeOfDay));const realMoments=moments.filter(m=>!demoM(m)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));const snackDone=realMoments.some(m=>m.date===today&&m.category==='snack');const insights=React.useMemo(()=>buildPatternInsights(moments,checkIns),[moments,checkIns]);const first=insights[0];const date=new Intl.DateTimeFormat(ar?'ar-MA':de?'de-DE':fr?'fr-FR':'en',{weekday:'long',day:'numeric',month:'long'}).format(new Date());const hour=new Date().getHours();const allPhases:Array<{key:TimeOfDayPhase;title:string;body:string;accent:string;soft:string}>=[{key:'morning',title:copy('Good morning','صباح الخير','Guten Morgen'),body:copy('How did your day begin?','كيف بدأ يومك؟','Wie hat dein Tag begonnen?'),accent:'#D99B1D',soft:'#FFF1CE'},{key:'midday',title:copy('Midday','منتصف اليوم','Mittag'),body:copy('Take a moment and capture what matters','خذ لحظة وسجّل ما يهم','Nimm dir einen Moment und halte fest, was wichtig ist'),accent:'#64823D',soft:'#E9F0D8'},{key:'evening',title:copy('Good evening','مساء الخير','Guten Abend'),body:copy('How did your day feel?','كيف كان يومك؟','Wie hat sich dein Tag angefühlt?'),accent:'#7565B0',soft:'#EEE9F7'}];const phases=allPhases.filter(p=>isPhaseAvailable(p.key,hour));
 const openPhase=(phase:TimeOfDayPhase)=>{if(completed.has(phase)){trackUx({eventName:'phase_card_ignored_completed',surface:'today',language,metadata:{phase}});return;}trackUx({eventName:'phase_card_tapped',surface:'today',language,metadata:{phase,source:'personal_plan_or_phase_card'}});onOpenCheckInModal(phase)};
 const openSnack=()=>{if(snackDone){trackUx({eventName:'snack_card_ignored_completed',surface:'today',language});return;}trackUx({eventName:'snack_card_tapped',surface:'today',language});onOpenSnack()};
 const openAdd=()=>{trackUx({eventName:'add_tapped',surface:'today',language,metadata:{source:'recent_moments'}});onOpenAddModal()};
