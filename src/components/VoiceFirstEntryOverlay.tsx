@@ -4,6 +4,7 @@ import { Keyboard, Mic2 } from 'lucide-react';
 import { AppLanguage, useLanguage } from '../i18n';
 
 export const VOICE_FIRST_ENTRY_SEEN_KEY='rhythm_voice_entry_seen_v1';
+export const PROFILE_INTRO_KEY='rhythm_intro_profile_v1';
 
 export function voiceFirstEntryCopy(language:AppLanguage){
   if(language==='ar')return{
@@ -40,6 +41,10 @@ export function voiceFirstEntryCopy(language:AppLanguage){
   };
 }
 
+export function shouldShowVoiceFirstEntry(storage:Pick<Storage,'getItem'>){
+  return storage.getItem(VOICE_FIRST_ENTRY_SEEN_KEY)!=='true'&&!storage.getItem(PROFILE_INTRO_KEY);
+}
+
 interface Props{onStart:()=>void;onType:()=>void;}
 
 export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart,onType})=>{
@@ -49,7 +54,7 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart,onType})=>{
   const typeRef=React.useRef<HTMLButtonElement|null>(null);
   const skipRef=React.useRef<HTMLButtonElement|null>(null);
   const [isOpen,setIsOpen]=React.useState(()=>{
-    try{return localStorage.getItem(VOICE_FIRST_ENTRY_SEEN_KEY)!=='true'}catch{return true}
+    try{return shouldShowVoiceFirstEntry(localStorage)}catch{return true}
   });
   const [portalReady,setPortalReady]=React.useState(false);
 
@@ -87,8 +92,8 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart,onType})=>{
 
   if(!isOpen||!portalReady||typeof document==='undefined')return null;
 
-  const dismiss=()=>{
-    try{localStorage.setItem(VOICE_FIRST_ENTRY_SEEN_KEY,'true')}catch{}
+  const dismiss=(persist=false)=>{
+    if(persist){try{localStorage.setItem(VOICE_FIRST_ENTRY_SEEN_KEY,'true')}catch{}}
     setIsOpen(false);
   };
   const start=()=>{dismiss();onStart();};
@@ -108,7 +113,7 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart,onType})=>{
         </div>
         <p className="mx-auto mt-6 max-w-sm text-sm font-bold leading-6 text-white/80">{copy.hint}</p>
         <button ref={typeRef} data-testid="voice-first-entry-type" type="button" onClick={type} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/30 px-5 py-2 text-sm font-black text-white outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80"><Keyboard className="h-4 w-4"/>{copy.type}</button>
-        <div><button ref={skipRef} data-testid="voice-first-entry-skip" type="button" onClick={dismiss} className="mt-3 min-h-11 rounded-full px-5 py-2 text-sm font-black text-white/80 underline decoration-white/40 underline-offset-4 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white/80">{copy.skip}</button></div>
+        <div><button ref={skipRef} data-testid="voice-first-entry-skip" type="button" onClick={()=>dismiss(true)} className="mt-3 min-h-11 rounded-full px-5 py-2 text-sm font-black text-white/80 underline decoration-white/40 underline-offset-4 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white/80">{copy.skip}</button></div>
       </section>
     </div>,
     document.body
