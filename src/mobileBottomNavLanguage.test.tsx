@@ -28,6 +28,16 @@ describe('mobile bottom navigation language behavior',()=>{
     expect(html).not.toContain('My moments');
   });
 
+  it('marks only the active mobile destination as the current page for assistive technology',()=>{
+    const html=renderToString(
+      <LanguageProvider>
+        <MobileBottomNav activeTab="timeline" setActiveTab={noop} onCapture={noop} favoriteCount={0}/>
+      </LanguageProvider>,
+    );
+    expect(html.match(/aria-current="page"/g)).toHaveLength(1);
+    expect(html).toMatch(/aria-current="page"[^>]*data-testid="mobile-moments-nav"|data-testid="mobile-moments-nav"[^>]*aria-current="page"/);
+  });
+
   it('shows all supported languages in the direct picker instead of cycling',()=>{
     const html=renderToString(
       <LanguageProvider>
