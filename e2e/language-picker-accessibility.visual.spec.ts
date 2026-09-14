@@ -11,13 +11,16 @@ async function seedReturningGuest(page: any) {
   });
 }
 
-test('mobile language picker traps focus and restores it to the opener', async ({ page }) => {
+test('mobile language picker exposes dialog state, traps focus and restores it to the opener', async ({ page }) => {
   await seedReturningGuest(page);
   await page.goto('/');
 
   const opener = page.getByRole('button', { name: 'Choose language' });
   await expect(opener).toBeVisible();
+  await expect(opener).toHaveAttribute('aria-haspopup', 'dialog');
+  await expect(opener).toHaveAttribute('aria-expanded', 'false');
   await opener.click();
+  await expect(opener).toHaveAttribute('aria-expanded', 'true');
 
   const dialog = page.getByRole('dialog', { name: 'Choose language' });
   await expect(dialog).toBeVisible();
@@ -33,6 +36,7 @@ test('mobile language picker traps focus and restores it to the opener', async (
 
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
+  await expect(opener).toHaveAttribute('aria-expanded', 'false');
   await expect(opener).toBeFocused();
 
   await page.screenshot({ path: 'test-results/language-picker-accessibility-mobile.png', fullPage: true });
