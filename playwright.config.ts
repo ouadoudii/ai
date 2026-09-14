@@ -14,6 +14,26 @@ const deterministicTimezone=offsetToTarget===0
     ? `Etc/GMT-${offsetToTarget}`
     : `Etc/GMT+${Math.abs(offsetToTarget)}`;
 
+// Most browser specs exercise returning-user product flows. Give those tests
+// the same persisted intro profile a real returning user has. Dedicated
+// first-run specs explicitly remove this key before navigation, so the
+// mandatory onboarding gate remains covered and cannot be bypassed by the
+// legacy voice-entry marker.
+const returningUserIntroProfile=JSON.stringify({
+  summary:'Returning Playwright user',
+  priorities:[],
+  preferences:[],
+  rawIntro:'Returning Playwright user',
+  firstPlan:{
+    title:'Your first step',
+    rationale:'Returning Playwright user',
+    focusAreas:[],
+    firstStep:'Notice what stands out in your everyday rhythm.',
+    phase:'midday',
+  },
+  confirmedAt:1,
+});
+
 export default defineConfig({
   testDir:'./e2e',
   timeout:45_000,
@@ -28,7 +48,10 @@ export default defineConfig({
       cookies:[],
       origins:[{
         origin:'http://127.0.0.1:4173',
-        localStorage:[{name:'rhythm_voice_entry_seen_v1',value:'true'}],
+        localStorage:[
+          {name:'rhythm_voice_entry_seen_v1',value:'true'},
+          {name:'rhythm_intro_profile_v1',value:returningUserIntroProfile},
+        ],
       }],
     },
   },

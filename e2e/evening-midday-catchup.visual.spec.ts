@@ -9,7 +9,8 @@ test('evening check-in offers a missed midday moment before continuing',async({p
     localStorage.setItem('rhythm_voice_entry_seen_v1','true');
     localStorage.setItem('nimmapp_moments_v1','[]');
     localStorage.setItem('nimmapp_checkins_v1','[]');
-    localStorage.removeItem('rhythm_intro_profile_v1');
+    // Keep the valid returning-user intro profile from Playwright storageState.
+    // This test covers evening catch-up, not first-run onboarding.
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
 

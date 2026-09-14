@@ -1,7 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { Keyboard, Mic2 } from 'lucide-react';
+import { ClipboardList, Keyboard, Mic2 } from 'lucide-react';
 import { AppLanguage, useLanguage } from '../i18n';
+import { createIntroProfileDraft, saveIntroProfile } from '../utils/introProfile';
 
 export const VOICE_FIRST_ENTRY_SEEN_KEY='rhythm_voice_entry_seen_v1';
 export const PROFILE_INTRO_KEY='rhythm_intro_profile_v1';
@@ -9,56 +10,77 @@ export const PROFILE_INTRO_KEY='rhythm_intro_profile_v1';
 export function voiceFirstEntryCopy(language:AppLanguage){
   if(language==='ar')return{
     prompt:'ما الذي أتى بك إلينا؟ احكِ لي قليلاً عنك.',
-    helper:'تكلم بطريقتك — ما الذي تريد تغييره أو فهمه بشكل أفضل في يومك؟',
-    start:'ابدأ بالكلام',
-    type:'أفضل الكتابة',
-    skip:'أحكي لاحقاً',
-    hint:'سأحوّل ما تقوله إلى مسودة ملف يمكنك مراجعتها قبل الحفظ.'
+    helper:'قبل أن تبدأ، أحتاج أن أعرفك قليلاً. اختر الطريقة الأسهل لك.',
+    start:'ابدأ بالكلام',type:'أفضل الكتابة',form:'نموذج سريع',
+    hint:'يمكنك التحدث بحرية، الكتابة بحرية، أو الإجابة عن بعض الأسئلة القصيرة.',
+    formTitle:'أخبرني بسرعة عن وضعك الآن',formHelp:'لا نحتاج إلى الكمال — فقط نقطة بداية تساعد Cary على فهمك.',
+    goal:'ما الذي تريد تغييره أو فهمه؟',weight:'الوزن (اختياري)',hunger:'الجوع الآن',energy:'الطاقة الآن',rhythm:'نمط الأكل',
+    low:'منخفض',high:'مرتفع',regular:'منتظم غالباً',irregular:'غير منتظم غالباً',mixed:'يختلف من يوم لآخر',save:'ابدأ مع Cary',back:'رجوع',kg:'كغ'
   };
   if(language==='de')return{
     prompt:'Was führt dich zu uns? Erzähl ein bisschen von dir.',
-    helper:'Sprich einfach frei — was möchtest du verändern oder in deinem Alltag besser verstehen?',
-    start:'Erzählen',
-    type:'Lieber tippen',
-    skip:'Später erzählen',
-    hint:'Ich mache daraus einen Profil-Entwurf, den du vor dem Speichern prüfen kannst.'
+    helper:'Bevor du startest, möchte Cary dich kurz kennenlernen. Wähle den Weg, der für dich am leichtesten ist.',
+    start:'Erzählen',type:'Frei schreiben',form:'Kurzformular',
+    hint:'Du kannst frei reden, frei schreiben oder ein paar kurze Fragen beantworten.',
+    formTitle:'Gib Cary einen kurzen Ausgangspunkt',formHelp:'Es muss nicht perfekt sein. Ein paar Angaben reichen, damit dein Start persönlich wird.',
+    goal:'Was möchtest du verändern oder besser verstehen?',weight:'Gewicht (optional)',hunger:'Hunger gerade',energy:'Energie gerade',rhythm:'Essrhythmus',
+    low:'Niedrig',high:'Hoch',regular:'Meist regelmäßig',irregular:'Oft unregelmäßig',mixed:'Unterschiedlich',save:'Mit Cary starten',back:'Zurück',kg:'kg'
   };
   if(language==='fr')return{
     prompt:"Qu’est-ce qui t’amène ici ? Parle-moi un peu de toi.",
-    helper:"Parle librement — qu’aimerais-tu changer ou mieux comprendre dans ton quotidien ?",
-    start:'Raconter',
-    type:'Je préfère écrire',
-    skip:'Raconter plus tard',
-    hint:'J’en ferai un brouillon de profil que tu pourras vérifier avant de l’enregistrer.'
+    helper:'Avant de commencer, Cary a besoin de te connaître un peu. Choisis la façon la plus simple pour toi.',
+    start:'Raconter',type:'Écrire librement',form:'Formulaire rapide',
+    hint:'Tu peux parler librement, écrire librement ou répondre à quelques questions courtes.',
+    formTitle:'Donne à Cary un point de départ',formHelp:'Pas besoin que ce soit parfait. Quelques informations suffisent pour personnaliser ton départ.',
+    goal:'Que veux-tu changer ou mieux comprendre ?',weight:'Poids (facultatif)',hunger:'Faim maintenant',energy:'Énergie maintenant',rhythm:'Rythme des repas',
+    low:'Faible',high:'Élevé',regular:'Plutôt régulier',irregular:'Souvent irrégulier',mixed:'Variable',save:'Commencer avec Cary',back:'Retour',kg:'kg'
   };
   return{
     prompt:'What brings you here? Tell me a little about you.',
-    helper:'Just speak freely — what would you like to change or understand better in everyday life?',
-    start:'Tell me',
-    type:'I’d rather type',
-    skip:'Tell you later',
-    hint:'I’ll turn it into a profile draft you can review before anything is saved.'
+    helper:'Before you start, Cary needs a little context. Choose the easiest way for you.',
+    start:'Tell me',type:'Write freely',form:'Quick form',
+    hint:'You can speak freely, write freely, or answer a few short questions.',
+    formTitle:'Give Cary a quick starting point',formHelp:'It does not need to be perfect. A few details are enough to make your start personal.',
+    goal:'What would you like to change or understand better?',weight:'Weight (optional)',hunger:'Hunger right now',energy:'Energy right now',rhythm:'Eating rhythm',
+    low:'Low',high:'High',regular:'Mostly regular',irregular:'Often irregular',mixed:'Varies day to day',save:'Start with Cary',back:'Back',kg:'kg'
   };
 }
 
 export function shouldShowVoiceFirstEntry(storage:Pick<Storage,'getItem'>){
-  return storage.getItem(VOICE_FIRST_ENTRY_SEEN_KEY)!=='true'&&!storage.getItem(PROFILE_INTRO_KEY);
+  return !storage.getItem(PROFILE_INTRO_KEY);
 }
 
 interface Props{onStart:()=>void;onType:()=>void;}
+
+type FormState={goal:string;weight:string;hunger:number;energy:number;rhythm:'regular'|'irregular'|'mixed'};
 
 export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart,onType})=>{
   const {language}=useLanguage();
   const copy=voiceFirstEntryCopy(language);
   const micRef=React.useRef<HTMLButtonElement|null>(null);
-  const typeRef=React.useRef<HTMLButtonElement|null>(null);
-  const skipRef=React.useRef<HTMLButtonElement|null>(null);
-  const [isOpen,setIsOpen]=React.useState(()=>{
-    try{return shouldShowVoiceFirstEntry(localStorage)}catch{return true}
-  });
+  const formRef=React.useRef<HTMLButtonElement|null>(null);
+  const [isOpen,setIsOpen]=React.useState(()=>{try{return shouldShowVoiceFirstEntry(localStorage)}catch{return true}});
   const [portalReady,setPortalReady]=React.useState(false);
+  const [mode,setMode]=React.useState<'choice'|'form'>('choice');
+  const [saving,setSaving]=React.useState(false);
+  const [form,setForm]=React.useState<FormState>({goal:'',weight:'',hunger:3,energy:3,rhythm:'mixed'});
 
   React.useEffect(()=>setPortalReady(true),[]);
+  React.useEffect(()=>{
+    if(typeof document==='undefined')return;
+    const syncGate=()=>{
+      let hasProfile=false;
+      try{hasProfile=Boolean(localStorage.getItem(PROFILE_INTRO_KEY))}catch{}
+      if(hasProfile){setIsOpen(false);return;}
+      const downstream=Boolean(document.querySelector('[data-profile-onboarding="true"], [data-testid="profile-intro-modal"]'));
+      if(!downstream)setIsOpen(true);
+    };
+    const observer=new MutationObserver(syncGate);
+    observer.observe(document.body,{childList:true,subtree:true});
+    window.addEventListener('storage',syncGate);
+    return()=>{observer.disconnect();window.removeEventListener('storage',syncGate)};
+  },[]);
+
   React.useEffect(()=>{
     if(!isOpen||!portalReady||typeof document==='undefined')return;
     const root=document.getElementById('root');
@@ -68,54 +90,60 @@ export const VoiceFirstEntryOverlay:React.FC<Props>=({onStart,onType})=>{
     document.body.style.overflow='hidden';
     root?.setAttribute('inert','');
     root?.setAttribute('aria-hidden','true');
-    const frame=window.requestAnimationFrame(()=>micRef.current?.focus({preventScroll:true}));
+    const frame=window.requestAnimationFrame(()=>{if(mode==='choice')micRef.current?.focus({preventScroll:true})});
     const keepFocus=(event:KeyboardEvent)=>{
-      if(event.key!=='Tab')return;
-      const first=micRef.current;
-      const last=skipRef.current;
-      if(!first||!last)return;
+      if(mode!=='choice'||event.key!=='Tab')return;
+      const first=micRef.current;const last=formRef.current;if(!first||!last)return;
       if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus({preventScroll:true});}
       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus({preventScroll:true});}
     };
     document.addEventListener('keydown',keepFocus,true);
     return()=>{
-      window.cancelAnimationFrame(frame);
-      document.removeEventListener('keydown',keepFocus,true);
-      document.body.style.overflow=previousOverflow;
-      if(root){
-        if(!wasInert)root.removeAttribute('inert');
-        if(previousAriaHidden===null)root.removeAttribute('aria-hidden');
-        else root.setAttribute('aria-hidden',previousAriaHidden);
-      }
+      window.cancelAnimationFrame(frame);document.removeEventListener('keydown',keepFocus,true);document.body.style.overflow=previousOverflow;
+      if(root){if(!wasInert)root.removeAttribute('inert');if(previousAriaHidden===null)root.removeAttribute('aria-hidden');else root.setAttribute('aria-hidden',previousAriaHidden)}
     };
-  },[isOpen,portalReady]);
+  },[isOpen,portalReady,mode]);
 
   if(!isOpen||!portalReady||typeof document==='undefined')return null;
 
-  const dismiss=(persist=false)=>{
-    if(persist){try{localStorage.setItem(VOICE_FIRST_ENTRY_SEEN_KEY,'true')}catch{}}
-    setIsOpen(false);
+  const start=()=>{setIsOpen(false);onStart();};
+  const type=()=>{setIsOpen(false);onType();};
+  const submitForm=async()=>{
+    if(!form.goal.trim()||saving)return;
+    setSaving(true);
+    const rhythmLabel=form.rhythm==='regular'?copy.regular:form.rhythm==='irregular'?copy.irregular:copy.mixed;
+    const parts=[form.goal.trim(),`${copy.hunger}: ${form.hunger}/5`,`${copy.energy}: ${form.energy}/5`,`${copy.rhythm}: ${rhythmLabel}`];
+    if(form.weight.trim())parts.push(`${copy.weight}: ${form.weight.trim()} ${copy.kg}`);
+    const draft=await createIntroProfileDraft(parts.join('. '),language);
+    saveIntroProfile(draft);
+    setSaving(false);setIsOpen(false);
   };
-  const start=()=>{dismiss();onStart();};
-  const type=()=>{dismiss();onType();};
 
   return createPortal(
     <div data-testid="voice-first-entry-overlay" className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-[#211F1B]/72 px-5 py-8 backdrop-blur-xl" role="dialog" aria-modal="true" aria-labelledby="voice-first-entry-title" aria-describedby="voice-first-entry-description">
-      <section className="w-full max-w-md text-center" dir={language==='ar'?'rtl':'ltr'}>
-        <p className="text-xs font-black uppercase tracking-[0.28em] text-white/65">Rhythm</p>
-        <h1 id="voice-first-entry-title" className="mt-5 text-4xl font-display font-black leading-tight text-white sm:text-5xl">{copy.prompt}</h1>
-        <p id="voice-first-entry-description" className="mx-auto mt-4 max-w-sm text-base font-medium leading-7 text-white/75">{copy.helper}</p>
-        <div className="mt-10 flex justify-center">
-          <button ref={micRef} data-testid="voice-first-entry-mic" type="button" onClick={start} aria-label={copy.start} className="group relative grid h-32 w-32 place-items-center rounded-full bg-[#F4EEE4] text-[#293D34] shadow-[0_24px_80px_rgba(0,0,0,.38)] outline-none transition-transform active:scale-95 focus-visible:ring-4 focus-visible:ring-white/70">
-            <span aria-hidden="true" className="absolute inset-0 rounded-full border border-white/40 motion-safe:animate-ping"/>
-            <Mic2 className="relative h-12 w-12 stroke-[2.2] transition-transform group-hover:scale-105"/>
-          </button>
-        </div>
-        <p className="mx-auto mt-6 max-w-sm text-sm font-bold leading-6 text-white/80">{copy.hint}</p>
-        <button ref={typeRef} data-testid="voice-first-entry-type" type="button" onClick={type} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/30 px-5 py-2 text-sm font-black text-white outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80"><Keyboard className="h-4 w-4"/>{copy.type}</button>
-        <div><button ref={skipRef} data-testid="voice-first-entry-skip" type="button" onClick={()=>dismiss(true)} className="mt-3 min-h-11 rounded-full px-5 py-2 text-sm font-black text-white/80 underline decoration-white/40 underline-offset-4 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white/80">{copy.skip}</button></div>
+      <section className="w-full max-w-md" dir={language==='ar'?'rtl':'ltr'}>
+        {mode==='choice'?<div className="text-center">
+          <p className="text-xs font-black uppercase tracking-[0.28em] text-white/65">Cary</p>
+          <h1 id="voice-first-entry-title" className="mt-5 text-4xl font-display font-black leading-tight text-white sm:text-5xl">{copy.prompt}</h1>
+          <p id="voice-first-entry-description" className="mx-auto mt-4 max-w-sm text-base font-medium leading-7 text-white/75">{copy.helper}</p>
+          <div className="mt-8 flex justify-center"><button ref={micRef} data-testid="voice-first-entry-mic" type="button" onClick={start} aria-label={copy.start} className="group relative grid h-28 w-28 place-items-center rounded-full bg-[#F4EEE4] text-[#293D34] shadow-[0_24px_80px_rgba(0,0,0,.38)] outline-none transition-transform active:scale-95 focus-visible:ring-4 focus-visible:ring-white/70"><Mic2 className="relative h-11 w-11 stroke-[2.2]"/></button></div>
+          <p className="mx-auto mt-5 max-w-sm text-sm font-bold leading-6 text-white/80">{copy.hint}</p>
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button data-testid="voice-first-entry-type" type="button" onClick={type} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-white/30 px-4 py-3 text-sm font-black text-white outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80"><Keyboard className="h-4 w-4"/>{copy.type}</button>
+            <button ref={formRef} data-testid="voice-first-entry-form" type="button" onClick={()=>setMode('form')} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-white/30 px-4 py-3 text-sm font-black text-white outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80"><ClipboardList className="h-4 w-4"/>{copy.form}</button>
+          </div>
+        </div>:<div className="rounded-[30px] bg-[#FCFAF6] p-5 shadow-2xl sm:p-7">
+          <button type="button" onClick={()=>setMode('choice')} className="min-h-11 rounded-full px-2 text-sm font-black text-[#556057]">← {copy.back}</button>
+          <h1 id="voice-first-entry-title" className="mt-3 text-3xl font-display font-black leading-tight text-[#252824]">{copy.formTitle}</h1>
+          <p id="voice-first-entry-description" className="mt-2 text-sm font-medium leading-6 text-[#747067]">{copy.formHelp}</p>
+          <label className="mt-5 block text-sm font-black text-[#3D403A]">{copy.goal}<textarea data-testid="onboarding-goal" rows={3} value={form.goal} onChange={e=>setForm({...form,goal:e.target.value})} className="mt-2 w-full resize-none rounded-2xl border border-[#DDD5C9] bg-white px-4 py-3 font-medium outline-none focus:border-[#293D34]"/></label>
+          <label className="mt-4 block text-sm font-black text-[#3D403A]">{copy.weight}<div className="mt-2 flex items-center gap-2"><input data-testid="onboarding-weight" inputMode="decimal" value={form.weight} onChange={e=>setForm({...form,weight:e.target.value.replace(/[^0-9.,]/g,'').slice(0,6)})} className="min-h-12 w-full rounded-2xl border border-[#DDD5C9] bg-white px-4 font-medium outline-none focus:border-[#293D34]"/><span className="font-bold text-[#747067]">{copy.kg}</span></div></label>
+          <label className="mt-4 block text-sm font-black text-[#3D403A]">{copy.hunger}<div className="mt-2 flex items-center gap-3"><span className="text-xs text-[#747067]">{copy.low}</span><input data-testid="onboarding-hunger" type="range" min="1" max="5" value={form.hunger} onChange={e=>setForm({...form,hunger:Number(e.target.value)})} className="w-full"/><span className="min-w-6 text-center font-black text-[#293D34]">{form.hunger}</span><span className="text-xs text-[#747067]">{copy.high}</span></div></label>
+          <label className="mt-4 block text-sm font-black text-[#3D403A]">{copy.energy}<div className="mt-2 flex items-center gap-3"><span className="text-xs text-[#747067]">{copy.low}</span><input data-testid="onboarding-energy" type="range" min="1" max="5" value={form.energy} onChange={e=>setForm({...form,energy:Number(e.target.value)})} className="w-full"/><span className="min-w-6 text-center font-black text-[#293D34]">{form.energy}</span><span className="text-xs text-[#747067]">{copy.high}</span></div></label>
+          <label className="mt-4 block text-sm font-black text-[#3D403A]">{copy.rhythm}<select data-testid="onboarding-rhythm" value={form.rhythm} onChange={e=>setForm({...form,rhythm:e.target.value as FormState['rhythm']})} className="mt-2 min-h-12 w-full rounded-2xl border border-[#DDD5C9] bg-white px-4 font-medium outline-none focus:border-[#293D34]"><option value="regular">{copy.regular}</option><option value="irregular">{copy.irregular}</option><option value="mixed">{copy.mixed}</option></select></label>
+          <button data-testid="onboarding-form-save" type="button" disabled={!form.goal.trim()||saving} onClick={()=>void submitForm()} className="mt-6 min-h-12 w-full rounded-2xl bg-[#293D34] px-5 py-3 font-black text-white disabled:opacity-40">{saving?'…':copy.save}</button>
+        </div>}
       </section>
-    </div>,
-    document.body
+    </div>,document.body
   );
 };
