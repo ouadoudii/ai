@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test';
 
 test('evening check-in offers a missed midday moment before continuing',async({page},testInfo)=>{
   await page.setViewportSize({width:390,height:844});
-  await page.clock.setFixedTime(new Date('2026-09-14T19:00:00'));
   await page.addInitScript(()=>{
     localStorage.setItem('rhythm_language_v1','en');
     localStorage.setItem('cary_access_mode_v1','guest');
@@ -15,6 +14,11 @@ test('evening check-in offers a missed midday moment before continuing',async({p
   });
 
   await page.goto('/');
+  const browserTime=await page.evaluate(()=>({now:Date.now(),hour:new Date().getHours()}));
+  const hoursToEvening=(19-browserTime.hour+24)%24;
+  await page.clock.setFixedTime(new Date(browserTime.now+hoursToEvening*60*60*1000));
+  await page.reload();
+
   const eveningCard=page.getByRole('button').filter({hasText:'Good evening'});
   await expect(eveningCard).toBeVisible();
   await eveningCard.click();
