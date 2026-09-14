@@ -10,6 +10,7 @@ async function installSpeech(page:any,language:Language,transcript:string){
     localStorage.setItem('nimmapp_moments_v1','[]');
     localStorage.setItem('nimmapp_checkins_v1','[]');
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+
     class FakeSpeechRecognition{
       lang='';interimResults=false;continuous=false;onresult:any=null;onend:any=null;onerror:any=null;
       start(){}
@@ -21,6 +22,27 @@ async function installSpeech(page:any,language:Language,transcript:string){
     }
     ;(window as any).SpeechRecognition=FakeSpeechRecognition;
     ;(window as any).webkitSpeechRecognition=FakeSpeechRecognition;
+
+    class FakeRecorder{
+      static isTypeSupported(){return true}
+      state='inactive';mimeType='audio/webm';ondataavailable:any=null;onstop:any=null;
+      constructor(_stream:any){}
+      start(){this.state='recording'}
+      stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['voice'],{type:'audio/webm'})});this.onstop?.()}
+    }
+    ;(window as any).MediaRecorder=FakeRecorder;
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
+    class FakeAudioContext{
+      async decodeAudioData(){return {numberOfChannels:1,length:3200,sampleRate:16000,getChannelData:()=>new Float32Array(3200).fill(.2)}}
+      async close(){}
+    }
+    ;(window as any).AudioContext=FakeAudioContext;
+    class FakeWorker{
+      onmessage:any=null;
+      postMessage(message:any){if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{id:message.id,type:'result',text}}),5)}
+      terminate(){}
+    }
+    ;(window as any).Worker=FakeWorker;
   },{lang:language,text:transcript});
 }
 
