@@ -31,4 +31,13 @@ describe('check-in generated meal moment copy', () => {
       badge: 'Check-in',
     });
   });
+
+  it.each([
+    ['en', 'Snack'],
+    ['de', 'Snack'],
+    ['fr', 'Collation'],
+    ['ar', 'وجبة خفيفة'],
+  ] as const)('keeps saved snack check-ins labeled as snacks in %s', (language, expectedLabel) => {
+    expect(getCheckInMomentCopy(language, 'snack').label).toBe(expectedLabel);
+  });
 });
