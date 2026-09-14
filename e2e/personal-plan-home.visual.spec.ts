@@ -65,3 +65,19 @@ test('mobile My moments navigation opens the chronology instead of returning to 
   await expect(page.getByText('Chronologisches Archiv')).toBeVisible();
   await page.screenshot({path:testInfo.outputPath('mobile-moments-chronology.png'),fullPage:true});
 });
+
+test('mobile navigation exposes the active destination to assistive technology',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','de');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    localStorage.setItem('rhythm_voice_entry_seen_v1','true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+  });
+  await page.goto('/');
+  await expect(page.getByRole('button',{name:'Heute'})).toHaveAttribute('aria-current','page');
+  await page.getByTestId('mobile-moments-nav').click();
+  await expect(page.getByTestId('mobile-moments-nav')).toHaveAttribute('aria-current','page');
+  await expect(page.getByRole('button',{name:'Heute'})).not.toHaveAttribute('aria-current','page');
+});
