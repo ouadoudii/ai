@@ -1,11 +1,11 @@
 import type { AppLanguage } from '../i18n';
 import type { MomentCategory } from '../types';
 
-const labels: Record<AppLanguage, Record<'breakfast'|'lunch'|'dinner', string>> = {
-  en: { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner' },
-  de: { breakfast: 'Frühstück', lunch: 'Mittagessen', dinner: 'Abendessen' },
-  fr: { breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', dinner: 'Dîner' },
-  ar: { breakfast: 'فطور', lunch: 'غداء', dinner: 'عشاء' },
+const labels: Record<AppLanguage, Record<'breakfast'|'lunch'|'dinner'|'snack', string>> = {
+  en: { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack' },
+  de: { breakfast: 'Frühstück', lunch: 'Mittagessen', dinner: 'Abendessen', snack: 'Snack' },
+  fr: { breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', dinner: 'Dîner', snack: 'Collation' },
+  ar: { breakfast: 'فطور', lunch: 'غداء', dinner: 'عشاء', snack: 'وجبة خفيفة' },
 };
 
 const metadata: Record<AppLanguage, { location: string; captured: string; fallbackSummary: string; badge: string }> = {
@@ -16,7 +16,7 @@ const metadata: Record<AppLanguage, { location: string; captured: string; fallba
 };
 
 export const getCheckInMomentCopy = (language: AppLanguage, category: MomentCategory) => {
-  const mealCategory = category === 'breakfast' || category === 'lunch' || category === 'dinner' ? category : 'dinner';
+  const mealCategory = category === 'breakfast' || category === 'lunch' || category === 'dinner' || category === 'snack' ? category : 'dinner';
   return {
     label: labels[language][mealCategory],
     ...metadata[language],
