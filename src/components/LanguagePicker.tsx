@@ -26,7 +26,9 @@ export const LanguagePicker: React.FC<Props> = ({ open, onClose, surface }) => {
 
     openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const panel = panelRef.current;
-    const focusable = () => Array.from(panel?.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? []);
+    const focusable = (): HTMLElement[] => panel
+      ? Array.from(panel.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'))
+      : [];
     const currentLanguage = panel?.querySelector<HTMLElement>(`[data-language-option="${language}"]`);
     (currentLanguage ?? focusable()[0])?.focus();
 
