@@ -68,6 +68,7 @@ for(const example of[
 ]){
   test(`${example.language} personal goal voice is routed to profile instead of meal error: ${example.text}`,async({page})=>{
     await page.route('**/api/voice-checkin',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(emptyVoiceResult)}));
+    await page.route('**/api/coach-chat',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'offline in browser contract test'})}));
     let intentCalls=0;
     await page.route('**/api/voice-intent',async route=>{
       intentCalls++;
@@ -79,8 +80,10 @@ for(const example of[
     await installSpeech(page,example.language,example.text);
     await speak(page,example.language);
     await expect.poll(()=>intentCalls).toBe(1);
-    await expect(page.getByTestId('profile-intro-modal')).toBeVisible();
-    await expect(page.getByTestId('profile-intro-textarea')).toHaveValue(example.text);
+    const profile=page.getByTestId('profile-intro-modal');
+    await expect(profile).toBeVisible();
+    await expect(profile.getByTestId('profile-summary')).toHaveValue(example.text);
+    await expect(profile.getByTestId('personal-first-plan')).toBeVisible();
     await expect(page.getByRole('heading',{name:/Was hast du gegessen\?|What did you have\?/i})).toHaveCount(0);
     await expect(page.getByTestId('voice-understanding-card')).toHaveCount(0);
   });
