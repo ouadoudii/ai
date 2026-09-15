@@ -12,9 +12,10 @@ describe('Moment animal companions', () => {
     expect(css).toContain('[class*="max-w-[860px]"] > section:first-child::after');
   });
 
-  it('ships lion, fox, bear and rabbit artwork with accessible Moment metadata', () => {
+  it('ships lion, fox, bear and wolf artwork with accessible Moment metadata', () => {
     expect(companionSvg).toContain('<title id="title">Moment animal companions</title>');
-    expect(companionSvg).toContain('friendly lion, fox, bear and rabbit');
+    expect(companionSvg).toContain('friendly lion, fox, bear and wolf');
+    expect(companionSvg).not.toContain('rabbit');
     expect(companionSvg).toContain('viewBox="0 0 680 300"');
   });
 });
