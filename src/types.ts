@@ -79,6 +79,10 @@ export interface DailyCheckIn {
   sleep?: {
     durationHours?: number;
     quality?: number;
+    bedtime?: string;
+    wakeTime?: string;
+    wakeCount?: number;
+    awakeMinutes?: number;
     wakeFeeling?: 'refreshed' | 'normal' | 'tired' | 'exhausted';
   };
   food?: {
