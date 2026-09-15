@@ -3,6 +3,13 @@ import { analyzeNutritionType as fallbackAnalyze } from './utils/nutritionTypeEn
 import { getCoachChatResponse as fallbackChat } from './utils/coachEngine';
 
 export type VoiceLanguage = 'ar' | 'en' | 'de' | 'fr';
+export type VoiceIntent = 'profile_goal' | 'journal' | 'meal' | 'other';
+
+export interface VoiceIntentResult {
+  intent: VoiceIntent;
+  confidence: number;
+  reason?: string;
+}
 
 export interface VoiceMealEntry {
   category: string;
@@ -69,6 +76,20 @@ export async function processVoiceCheckIn(transcript:string,timeOfDay:string,use
           ? {title:'Note vocale enregistrée 💚',message:`Merci pour ce partage. Cary a enregistré « ${transcript.slice(0,80)}... » dans ton journal.`,type:'praise' as const,badge:'Check-in vocal',habitScore:92}
           : {title:'Voice note captured 💚',message:`Thanks for sharing. Cary captured “${transcript.slice(0,80)}...” for your journal.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92};
     return {coachFeedback:feedback,extractedData:{}};
+  }
+}
+
+export async function classifyVoiceIntent(transcript:string,language:VoiceLanguage='en'):Promise<VoiceIntentResult>{
+  try{
+    const res=await fetch('/api/voice-intent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript,language})});
+    if(!res.ok)throw new Error(`API returned status ${res.status}`);
+    const data=await res.json();
+    const intent:VoiceIntent=['profile_goal','journal','meal','other'].includes(data?.intent)?data.intent:'other';
+    const confidence=Math.min(1,Math.max(0,Number(data?.confidence)||0));
+    return {intent,confidence,reason:typeof data?.reason==='string'?data.reason:''};
+  }catch(error){
+    console.warn('Backend /api/voice-intent not reachable, leaving voice message in journal flow:',error);
+    return {intent:'other',confidence:0,reason:''};
   }
 }
 
