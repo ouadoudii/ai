@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('mobile Today home shows Cary animal companions without blocking the main flow', async ({ page }, testInfo) => {
+test('mobile Today home shows Moment animal companions without blocking the main flow', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => {
     localStorage.setItem('rhythm_language_v1', 'de');
@@ -24,7 +24,8 @@ test('mobile Today home shows Cary animal companions without blocking the main f
     };
   });
 
-  expect(art.image).toContain('cary-animal-companions.svg');
+  expect(art.image).toContain('moment-animal-companions.svg');
+  expect(art.image).not.toContain('cary-animal-companions.svg');
   expect(art.pointerEvents).toBe('none');
   expect(art.width).toBeGreaterThan(100);
 
