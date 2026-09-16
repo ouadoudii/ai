@@ -10,9 +10,9 @@ export function isSeedDemoCheckIn(checkIn: DailyCheckIn): boolean {
 }
 
 /**
- * Cary nutrition-pattern engine.
- * A type is deliberately not unlocked from a handful of entries on one day:
- * we require repeated observations across several calendar days.
+ * Moment nutrition-pattern engine.
+ * Useful orientation starts with the first real observations, while a stable
+ * nutrition type still requires repeated evidence across several days.
  */
 export function analyzeNutritionType(
   moments: FoodMoment[],
@@ -71,34 +71,45 @@ export function analyzeNutritionType(
   let typeName = 'Der intuitive Genießer';
   let subtitle = 'Ausgewogene Balance aus Genuss, Körpergefühl & Achtsamkeit';
   let badge = 'Intuitiv & Achtsam';
-  let description = 'Deine bisherigen Einträge zeigen eher ruhige, körperorientierte Essmuster. Cary prüft dieses Muster über mehrere Tage, bevor es als Ernährungstyp gilt.';
-  let sleepNutritionCorrelation = 'Cary vergleicht Schlaf, Hunger, Sättigung, Essenszeit und Tagesenergie über mehrere Tage, um Zusammenhänge sichtbar zu machen.';
-  let optimalMealTiming = 'Noch kein festes Timing: Cary lernt zuerst deinen tatsächlichen Tagesrhythmus.';
+  let description = 'Deine bisherigen Einträge zeigen eher ruhige, körperorientierte Essmuster. Moment prüft dieses Muster über mehrere Tage, bevor es als Ernährungstyp gilt.';
+  let sleepNutritionCorrelation = 'Moment vergleicht Schlaf, Hunger, Sättigung, Essenszeit und Tagesenergie über mehrere Tage, um Zusammenhänge sichtbar zu machen.';
+  let optimalMealTiming = 'Noch kein festes Timing: Moment lernt zuerst deinen tatsächlichen Tagesrhythmus.';
 
   if (proteinRatio >= 0.35) {
     archetype = 'protein_performer';
     typeName = 'Der protein-optimierte Performer';
     subtitle = 'Fokus auf Sättigungsdichte, Protein & stabile Energie';
     badge = 'Protein Focus';
-    description = 'In deinen protokollierten Mahlzeiten tauchen wiederholt proteinreiche Entscheidungen auf. Cary beobachtet zusätzlich Sättigung und Energie danach.';
-    sleepNutritionCorrelation = 'Cary prüft, ob proteinreichere Mahlzeiten bei dir tatsächlich mit Sättigung, Energie oder Schlaf zusammenhängen.';
-    optimalMealTiming = 'Cary leitet dein Timing aus deinen protokollierten Essenszeiten ab, statt ein starres Schema vorzugeben.';
+    description = 'In deinen protokollierten Mahlzeiten tauchen wiederholt proteinreiche Entscheidungen auf. Moment beobachtet zusätzlich Sättigung und Energie danach.';
+    sleepNutritionCorrelation = 'Moment prüft, ob proteinreichere Mahlzeiten bei dir tatsächlich mit Sättigung, Energie oder Schlaf zusammenhängen.';
+    optimalMealTiming = 'Moment leitet dein Timing aus deinen protokollierten Essenszeiten ab, statt ein starres Schema vorzugeben.';
   } else if (lateDinnerRatio >= 0.35 || screenDistractedCount >= 3) {
     archetype = 'circadian_rhythm';
     typeName = 'Der Rhythmus- & Abend-Typ';
     subtitle = 'Essenszeit und Alltagssituation prägen dein Muster';
     badge = 'Rhythmus Focus';
-    description = 'Spätere Mahlzeiten oder Ablenkung beim Essen kommen in deinen Einträgen wiederholt vor. Cary beobachtet, wie sich das auf dein Wohlbefinden auswirkt.';
-    sleepNutritionCorrelation = 'Cary vergleicht insbesondere spätes Essen mit deiner gemeldeten Schlafqualität und morgendlichen Energie.';
+    description = 'Spätere Mahlzeiten oder Ablenkung beim Essen kommen in deinen Einträgen wiederholt vor. Moment beobachtet, wie sich das auf dein Wohlbefinden auswirkt.';
+    sleepNutritionCorrelation = 'Moment vergleicht insbesondere spätes Essen mit deiner gemeldeten Schlafqualität und morgendlichen Energie.';
     optimalMealTiming = 'Dein persönliches Zeitfenster wird aus mehreren Tagen abgeleitet und nicht pauschal vorgegeben.';
   } else if (breakfastRatio < 0.15 && foodObservationCount >= 6) {
     archetype = 'intermittent_balancer';
     typeName = 'Der Intervall- & Rhythmus-Typ';
     subtitle = 'Dein erstes Essen liegt häufig später am Tag';
     badge = 'Intermittent Rhythm';
-    description = 'Frühstück taucht in deinem bisherigen Muster selten auf. Cary wertet das zunächst als beobachteten Rhythmus, nicht als Empfehlung zum Fasten.';
-    sleepNutritionCorrelation = 'Cary prüft, ob dein späteres erstes Essen mit Schlaf, Hunger und Tagesenergie zusammenpasst.';
+    description = 'Frühstück taucht in deinem bisherigen Muster selten auf. Moment wertet das zunächst als beobachteten Rhythmus, nicht als Empfehlung zum Fasten.';
+    sleepNutritionCorrelation = 'Moment prüft, ob dein späteres erstes Essen mit Schlaf, Hunger und Tagesenergie zusammenpasst.';
     optimalMealTiming = 'Kein vorgegebenes Fastenfenster: Entscheidend ist dein wiederkehrendes, gut verträgliches Muster.';
+  }
+
+  if (totalDataPoints === 0) {
+    typeName = 'Noch keine persönliche Einschätzung';
+    subtitle = 'Dein erster echter Eintrag reicht, damit Moment mit der Orientierung beginnt';
+    badge = 'Startklar';
+    description = 'Nach deinem ersten echten Eintrag zeigt Moment eine klar vorläufige persönliche Einschätzung und verfeinert sie mit jedem weiteren Eintrag.';
+  } else if (!isUnlocked) {
+    typeName = `Vorläufig: ${typeName}`;
+    badge = `Vorläufig · ${badge}`;
+    description = `Vorläufige persönliche Einschätzung auf Basis deiner bisherigen ${totalDataPoints} ${totalDataPoints === 1 ? 'Angabe' : 'Angaben'}: ${description} Sie kann sich mit weiteren Einträgen verändern.`;
   }
 
   const traits = [
@@ -110,9 +121,9 @@ export function analyzeNutritionType(
 
   const dos = [
     'Dokumentiere mehrere normale Tage statt nur besonders gute oder schlechte Tage.',
-    'Erfasse Hunger vor und Sättigung nach dem Essen, damit Cary dein Körpergefühl einbeziehen kann.',
+    'Erfasse Hunger vor und Sättigung nach dem Essen, damit Moment dein Körpergefühl einbeziehen kann.',
     'Halte Essenszeit und Schlaf möglichst ehrlich fest; Regelmäßigkeit ist wichtiger als Perfektion.',
-    'Nutze Check-ins über mindestens fünf verschiedene Tage, bevor du den Typ als Muster interpretierst.',
+    'Nutze Check-ins über mindestens fünf verschiedene Tage, bevor du den Typ als stabiles Muster interpretierst.',
   ];
   const donts = [
     'Ein einzelnes Essen nicht als Beweis für einen Ernährungstyp verstehen.',
@@ -134,9 +145,11 @@ export function analyzeNutritionType(
     traits,
     dos,
     donts,
-    recommendedFocus: isUnlocked
-      ? 'Beobachte, ob dieses Muster auch in den nächsten Tagen stabil bleibt; Cary aktualisiert es mit jedem neuen Check-in.'
-      : `Noch in Kalibrierung: ${uniqueDays}/${targetDays} Tage und ${totalDataPoints}/${targetDataPoints} Einträge erfasst.`,
+    recommendedFocus: totalDataPoints === 0
+      ? 'Erzähl Moment kurz von deinem Essen, Schlaf oder Energielevel – schon danach beginnt deine persönliche Orientierung.'
+      : isUnlocked
+        ? 'Beobachte, ob dieses Muster auch in den nächsten Tagen stabil bleibt; Moment aktualisiert es mit jedem neuen Check-in.'
+        : `Vorläufige Orientierung: ${uniqueDays}/${targetDays} Tage und ${totalDataPoints}/${targetDataPoints} Einträge erfasst. Moment verfeinert und aktualisiert diese Einschätzung mit jedem weiteren Eintrag.`,
     sleepNutritionCorrelation,
     optimalMealTiming,
   };
