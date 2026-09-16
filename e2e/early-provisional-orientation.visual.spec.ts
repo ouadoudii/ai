@@ -21,7 +21,7 @@ test('mobile German discoveries show a useful preliminary orientation after two 
   await page.setViewportSize({ width:390, height:844 });
   await installReturningState(page, 'de');
   await page.goto('/');
-  await page.getByRole('button', { name:'Entdeckungen' }).click();
+  await page.getByRole('button', { name:'Entdeckungen', exact:true }).click();
   const card = page.getByTestId('early-personal-orientation');
   await expect(card).toBeVisible();
   await expect(page.getByTestId('orientation-status')).toHaveText(/Vorläufige Orientierung/);
@@ -35,7 +35,7 @@ test('desktop French discoveries render the localized preliminary orientation wi
   await page.setViewportSize({ width:1440, height:900 });
   await installReturningState(page, 'fr');
   await page.goto('/');
-  await page.getByRole('button', { name:'Découvertes' }).click();
+  await page.getByRole('button', { name:'Découvertes', exact:true }).click();
   const card = page.getByTestId('early-personal-orientation');
   await expect(card).toBeVisible();
   await expect(page.getByTestId('orientation-status')).toHaveText(/Orientation provisoire/);
