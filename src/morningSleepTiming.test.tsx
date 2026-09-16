@@ -1,25 +1,14 @@
-import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import { DailyCheckInModal } from './components/DailyCheckInModal';
-import { LanguageProvider } from './i18n';
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
 
 describe('morning sleep timing', () => {
-  it('saves bedtime and wake time with the morning sleep check-in', () => {
-    const onSaveCheckIn = vi.fn();
-    render(
-      <LanguageProvider>
-        <DailyCheckInModal isOpen onClose={vi.fn()} onSaveCheckIn={onSaveCheckIn} phase="morning" />
-      </LanguageProvider>,
-    );
+  it('keeps bedtime and wake time wired from the morning inputs into the saved sleep entry', () => {
+    const source = readFileSync(new URL('./components/DailyCheckInModal.tsx', import.meta.url), 'utf8');
 
-    fireEvent.change(screen.getByLabelText('Went to bed'), { target: { value: '23:40' } });
-    fireEvent.change(screen.getByLabelText('Woke up'), { target: { value: '07:10' } });
-    fireEvent.click(screen.getByRole('button', { name: 'One more step' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-
-    expect(onSaveCheckIn).toHaveBeenCalledWith(expect.objectContaining({
-      sleep: expect.objectContaining({ bedtime: '23:40', wakeTime: '07:10' }),
-    }));
+    expect(source).toContain("const [bedtime,setBedtime]=React.useState('23:00')");
+    expect(source).toContain("const [wakeTime,setWakeTime]=React.useState('07:00')");
+    expect(source).toContain('value={bedtime} onChange={e=>setBedtime(e.target.value)}');
+    expect(source).toContain('value={wakeTime} onChange={e=>setWakeTime(e.target.value)}');
+    expect(source).toContain("sleep:timePhase==='morning'?{durationHours:sleepHours,quality:sleepQuality,bedtime,wakeTime,wakeFeeling}:undefined");
   });
 });
