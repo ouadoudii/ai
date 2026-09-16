@@ -98,7 +98,7 @@ test('desktop French flow requires an answer or an explicit unknown choice befor
   await mockCompositeMeal(page,{items:['pizza','champignons'],title:transcript,category:'dinner',question:'Quelle taille, et avec quel fromage ou autres garnitures importantes ?'});
   await installVoiceHarness(page,'fr',transcript);
   await page.goto('/');
-  await page.getByRole('button',{name:'Ajouter un moment',exact:true}).click();
+  await page.getByRole('main').getByRole('button',{name:'Ajouter un moment',exact:true}).click();
   await page.getByRole('dialog').getByRole('button',{name:'Raconter'}).click();
   await page.getByRole('button',{name:'Démarrer l’enregistrement'}).click();
   await page.getByRole('button',{name:'Arrêter l’enregistrement'}).click();
