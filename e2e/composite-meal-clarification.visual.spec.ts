@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-type Language = 'de' | 'ar';
+type Language = 'de' | 'ar' | 'fr';
 
 async function installVoiceHarness(page:any, language:Language, transcript:string) {
   await page.addInitScript(({lang,text}:{lang:string;text:string})=>{
@@ -54,12 +54,15 @@ test('mobile German flow asks only the missing Döner details and keeps stated c
   await expect(card).not.toContainText('Hähnchen?');
   await expect(page.getByText('Hähnchen',{exact:true})).toBeVisible();
   await expect(page.getByText('Knoblauchsauce',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Mahlzeit speichern'})).toBeDisabled();
+  await expect(page.getByTestId('meal-clarification-skip')).toHaveText('Nicht sicher — ohne Angabe fortfahren');
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.title.includes('Döner')))).toBe(false);
   await page.getByTestId('meal-clarification-answer').fill('im Brot, große Portion');
   await page.getByRole('button',{name:'Antwort hinzufügen'}).click();
   await expect(card).toContainText('Ergänzung übernommen');
   await expect(page.getByTestId('meal-clarification-answer')).toHaveCount(0);
   await expect(page.getByText('im Brot, große Portion',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Mahlzeit speichern'})).toBeEnabled();
   await page.screenshot({path:'test-results/composite-meal-mobile-de.png',fullPage:true});
   await page.getByRole('button',{name:'Mahlzeit speichern'}).click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.title.includes('im Brot, große Portion')))).toBe(true);
@@ -77,12 +80,35 @@ test('desktop mixed Arabic/French flow keeps known bowl details and asks one con
   await expect(card).toContainText(question);
   await expect(card).not.toContainText('دجاج؟');
   await expect(page.getByText('tahini',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'حفظ الوجبة'})).toBeDisabled();
   await page.getByTestId('meal-clarification-answer').fill('portion صغيرة، بلا extras');
   await page.getByRole('button',{name:'إضافة الجواب'}).click();
   await expect(card).toContainText('تمت إضافة التفصيل');
   await expect(page.getByTestId('meal-clarification-answer')).toHaveCount(0);
   await expect(page.getByText('portion صغيرة، بلا extras',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'حفظ الوجبة'})).toBeEnabled();
   await page.screenshot({path:'test-results/composite-meal-desktop-ar.png',fullPage:true});
   await page.getByRole('button',{name:'حفظ الوجبة'}).click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.title.includes('portion صغيرة')))).toBe(true);
+});
+
+test('desktop French flow requires an answer or an explicit unknown choice before saving',async({page})=>{
+  await page.setViewportSize({width:1440,height:900});
+  const transcript='une pizza avec champignons';
+  await mockCompositeMeal(page,{items:['pizza','champignons'],title:transcript,category:'dinner',question:'Quelle taille, et avec quel fromage ou autres garnitures importantes ?'});
+  await installVoiceHarness(page,'fr',transcript);
+  await page.goto('/');
+  await page.getByRole('main').getByRole('button',{name:'Ajouter un moment',exact:true}).click();
+  await page.getByRole('dialog').getByRole('button',{name:'Raconter'}).click();
+  await page.getByRole('button',{name:'Démarrer l’enregistrement'}).click();
+  await page.getByRole('button',{name:'Arrêter l’enregistrement'}).click();
+
+  const save=page.getByRole('button',{name:'Enregistrer le repas'});
+  await expect(save).toBeDisabled();
+  await page.getByTestId('meal-clarification-skip').click();
+  await expect(page.getByTestId('meal-clarification-card')).toContainText('Sans autre précision');
+  await expect(save).toBeEnabled();
+  await page.screenshot({path:'test-results/composite-meal-desktop-fr-skip.png',fullPage:true});
+  await save.click();
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.title.includes('pizza')&&m.title.includes('champignons')))).toBe(true);
 });
