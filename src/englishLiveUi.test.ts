@@ -18,7 +18,7 @@ const liveFiles = [
   'src/components/CatchUpMiddayCheckInModal.tsx',
   'src/components/MealVisualPicker.tsx',
   'src/components/MomentDetailModal.tsx',
-  'src/components/CaryOnboarding.tsx',
+  'src/components/MomentOnboarding.tsx',
   'src/components/CaryAccountGate.tsx',
   'src/utils/patternInsights.ts',
   'src/utils/dailyJourney.ts',
