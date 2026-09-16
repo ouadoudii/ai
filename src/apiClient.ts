@@ -37,6 +37,7 @@ export interface VoiceCheckInResult {
     mealItems?: string[];
     mealCategory?: string;
     mealContext?: string;
+    clarificationQuestion?: string;
     meals?: VoiceMealEntry[];
     sleepHours?: number | null;
     sleepQuality?: number;

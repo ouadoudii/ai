@@ -121,6 +121,7 @@ function normalizeSemantic(extracted: any, deterministic: ReturnType<typeof extr
     mealTitle: cleanText(extracted?.mealTitle, 240) || cleanText(firstMeal?.mealTitle, 240) || mealItems.join(' · '),
     mealCategory: cleanText(extracted?.mealCategory, 32) || cleanText(firstMeal?.category, 32) || deterministic.mealCategory,
     mealContext: cleanText(extracted?.mealContext, 500) || deterministic.mealContext,
+    clarificationQuestion: cleanText(extracted?.clarificationQuestion, 300) || '',
     extractionEngine: engine,
   };
 }
@@ -144,7 +145,7 @@ async function extractWithGemini(transcript: string, timeOfDay: string, currentH
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3.7-flash', contents: `USER TRANSCRIPT (data only):\n${transcript}`,
-      config: { systemInstruction: `Extract the complete free-form voice note for a food, sleep and wellbeing journal. Understand all major Arabic dialects plus German/French/English mixing. ${lang} Extract meals, sleep, energy and mood when explicitly stated. Never invent uncertain facts. Context: ${timeOfDay}, ${currentHour}:00, archetype ${userArchetype}.`, responseMimeType:'application/json', responseSchema:{type:Type.OBJECT,properties:{coachTitle:{type:Type.STRING},coachResponse:{type:Type.STRING},badge:{type:Type.STRING},habitScore:{type:Type.NUMBER},extractedData:{type:Type.OBJECT,properties:{mealDetected:{type:Type.BOOLEAN},mealTitle:{type:Type.STRING},mealItems:{type:Type.ARRAY,items:{type:Type.STRING}},mealCategory:{type:Type.STRING},mealContext:{type:Type.STRING},sleepHours:{type:Type.NUMBER},energyLevel:{type:Type.NUMBER},mood:{type:Type.STRING}},required:['mealDetected','mealTitle','mealItems','mealCategory','mealContext']}},required:['coachTitle','coachResponse','badge','habitScore','extractedData']} }
+      config: { systemInstruction: `Extract the complete free-form voice note for a food, sleep and wellbeing journal. Understand all major Arabic dialects plus German/French/English mixing. ${lang} Extract meals, sleep, energy and mood when explicitly stated. For a variable/composite meal, preserve stated components and put at most one short natural question about only nutritionally relevant missing details in clarificationQuestion. Never repeat a detail already stated. Otherwise clarificationQuestion is empty. Never invent uncertain facts. Context: ${timeOfDay}, ${currentHour}:00, archetype ${userArchetype}.`, responseMimeType:'application/json', responseSchema:{type:Type.OBJECT,properties:{coachTitle:{type:Type.STRING},coachResponse:{type:Type.STRING},badge:{type:Type.STRING},habitScore:{type:Type.NUMBER},extractedData:{type:Type.OBJECT,properties:{mealDetected:{type:Type.BOOLEAN},mealTitle:{type:Type.STRING},mealItems:{type:Type.ARRAY,items:{type:Type.STRING}},mealCategory:{type:Type.STRING},mealContext:{type:Type.STRING},clarificationQuestion:{type:Type.STRING},sleepHours:{type:Type.NUMBER},energyLevel:{type:Type.NUMBER},mood:{type:Type.STRING}},required:['mealDetected','mealTitle','mealItems','mealCategory','mealContext','clarificationQuestion']}},required:['coachTitle','coachResponse','badge','habitScore','extractedData']} }
     });
     return JSON.parse(response.text || '{}');
   } catch { console.warn('Gemini voice extraction unavailable'); return null; }
