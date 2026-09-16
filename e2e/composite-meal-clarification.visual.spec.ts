@@ -26,7 +26,9 @@ async function installVoiceHarness(page:any, language:Language, transcript:strin
 
 async function record(page:any, language:Language) {
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  const mobileCapture=page.getByTestId('primary-capture-button');
+  if(await mobileCapture.isVisible()) await mobileCapture.click();
+  else await page.getByRole('button',{name:language==='de'?'Moment hinzufügen':'سجّل لحظة',exact:true}).click();
   await page.getByRole('dialog').getByRole('button',{name:language==='de'?'Erzähl mir':'احكِ لي'}).click();
   await page.getByRole('button',{name:language==='de'?'Aufnahme starten':'ابدأ التسجيل'}).click();
   await page.getByRole('button',{name:language==='de'?'Aufnahme stoppen':'إيقاف التسجيل'}).click();
