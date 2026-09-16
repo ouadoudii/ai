@@ -57,6 +57,8 @@ test('mobile German flow asks only the missing Döner details and keeps stated c
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.title.includes('Döner')))).toBe(false);
   await page.getByTestId('meal-clarification-answer').fill('im Brot, große Portion');
   await page.getByRole('button',{name:'Antwort hinzufügen'}).click();
+  await expect(card).toContainText('Ergänzung übernommen');
+  await expect(page.getByTestId('meal-clarification-answer')).toHaveCount(0);
   await expect(page.getByText('im Brot, große Portion',{exact:true})).toBeVisible();
   await page.screenshot({path:'test-results/composite-meal-mobile-de.png',fullPage:true});
   await page.getByRole('button',{name:'Mahlzeit speichern'}).click();
@@ -77,6 +79,8 @@ test('desktop mixed Arabic/French flow keeps known bowl details and asks one con
   await expect(page.getByText('tahini',{exact:true})).toBeVisible();
   await page.getByTestId('meal-clarification-answer').fill('portion صغيرة، بلا extras');
   await page.getByRole('button',{name:'إضافة الجواب'}).click();
+  await expect(card).toContainText('تمت إضافة التفصيل');
+  await expect(page.getByTestId('meal-clarification-answer')).toHaveCount(0);
   await expect(page.getByText('portion صغيرة، بلا extras',{exact:true})).toBeVisible();
   await page.screenshot({path:'test-results/composite-meal-desktop-ar.png',fullPage:true});
   await page.getByRole('button',{name:'حفظ الوجبة'}).click();
