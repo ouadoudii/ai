@@ -100,6 +100,24 @@ describe('voice check-in endpoint', () => {
     expect(JSON.parse(requestBody).messages[0].content).toContain('UI language is German');
   });
 
+  it('passes a focused composite-meal clarification to the client without losing known details', async () => {
+    delete process.env.GEMINI_API_KEY;
+    process.env.GROQ_API_KEY = 'test-key';
+    vi.stubGlobal('fetch', vi.fn(async () => groqResponse({
+      mealDetected:true, mealTitle:'Döner mit Hähnchen und Knoblauchsauce', mealItems:['Döner','Hähnchen','Knoblauchsauce'], mealCategory:'lunch', mealContext:'',
+      clarificationQuestion:'War er im Brot oder als Teller, und wie groß war die Portion?',
+      meals:[{category:'lunch',timeOfDay:'midday',time:'',mealTitle:'Döner mit Hähnchen und Knoblauchsauce',mealItems:['Döner','Hähnchen','Knoblauchsauce'],hungerBefore:0,fullnessAfter:0}],
+      ...wellbeingEmpty,
+    })));
+    const response=createResponse();
+
+    await handler({method:'POST',headers:{'x-forwarded-for':'203.0.113.42'},ip:'203.0.113.42',body:{transcript:'Döner mit Hähnchen und Knoblauchsauce',language:'de'}} as any,response.res);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.extractedData.mealItems).toEqual(['Döner','Hähnchen','Knoblauchsauce']);
+    expect(response.body.extractedData.clarificationQuestion).toBe('War er im Brot oder als Teller, und wie groß war die Portion?');
+  });
+
   it('returns localized German fallback meal names when AI providers are unavailable', async () => {
     delete process.env.GEMINI_API_KEY;delete process.env.GROQ_API_KEY;
     const response=createResponse();
