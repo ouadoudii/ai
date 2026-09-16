@@ -51,6 +51,7 @@ test('mobile German flow asks only the missing Döner details and keeps stated c
 
   const card=page.getByTestId('meal-clarification-card');
   await expect(card).toContainText('War er im Brot oder als Teller, und wie groß war die Portion?');
+  const pendingHeight=(await card.boundingBox())?.height||0;
   await expect(card).not.toContainText('Hähnchen?');
   await expect(page.getByText('Hähnchen',{exact:true})).toBeVisible();
   await expect(page.getByText('Knoblauchsauce',{exact:true})).toBeVisible();
@@ -63,6 +64,9 @@ test('mobile German flow asks only the missing Döner details and keeps stated c
   await expect(page.getByTestId('meal-clarification-answer')).toHaveCount(0);
   await expect(page.getByText('im Brot, große Portion',{exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Mahlzeit speichern'})).toBeEnabled();
+  const resolvedHeight=(await card.boundingBox())?.height||0;
+  expect(resolvedHeight).toBeLessThan(pendingHeight);
+  expect(resolvedHeight).toBeLessThanOrEqual(60);
   await page.screenshot({path:'test-results/composite-meal-mobile-de.png',fullPage:true});
   await page.getByRole('button',{name:'Mahlzeit speichern'}).click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.title.includes('im Brot, große Portion')))).toBe(true);
@@ -106,7 +110,9 @@ test('desktop French flow requires an answer or an explicit unknown choice befor
   const save=page.getByRole('button',{name:'Enregistrer le repas'});
   await expect(save).toBeDisabled();
   await page.getByTestId('meal-clarification-skip').click();
-  await expect(page.getByTestId('meal-clarification-card')).toContainText('Sans autre précision');
+  const card=page.getByTestId('meal-clarification-card');
+  await expect(card).toContainText('Sans autre précision');
+  expect((await card.boundingBox())?.height||0).toBeLessThanOrEqual(60);
   await expect(save).toBeEnabled();
   await page.screenshot({path:'test-results/composite-meal-desktop-fr-skip.png',fullPage:true});
   await save.click();
