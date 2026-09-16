@@ -1,0 +1,29 @@
+import { describe, expect, it } from 'vitest';
+import { buildEarlyOrientationCopy, getAnimalTypeNames } from './utils/earlyOrientation';
+
+describe('early personal orientation localization', () => {
+  it.each([
+    ['de', 'Vorläufige Orientierung', 'Löwe'],
+    ['en', 'Preliminary orientation', 'Lion'],
+    ['fr', 'Orientation provisoire', 'Lion'],
+    ['ar', 'توجّه أولي', 'الأسد'],
+  ] as const)('shows a clearly preliminary localized result in %s after few entries', (language, label, animal) => {
+    const copy = buildEarlyOrientationCopy(language, 'protein_performer', 2);
+    expect(copy.label).toBe(label);
+    expect(copy.title).toContain(animal);
+    expect(copy.description).toContain('2');
+    expect(copy.progress).toContain('2/12');
+  });
+
+  it('does not claim a personal pattern without real data', () => {
+    const copy = buildEarlyOrientationCopy('fr', 'intuitive_mindful', 0);
+    expect(copy.label).toBe('Pas encore d’estimation');
+    expect(copy.title).not.toContain('Renard');
+  });
+
+  it('provides all four animal profiles in every supported language', () => {
+    for (const language of ['de', 'en', 'fr', 'ar'] as const) {
+      expect(getAnimalTypeNames(language)).toHaveLength(4);
+    }
+  });
+});
