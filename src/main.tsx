@@ -2,7 +2,7 @@ import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { CaryAccountGate } from './components/CaryAccountGate';
-import { CaryOnboarding } from './components/CaryOnboarding';
+import { MomentOnboarding } from './components/MomentOnboarding';
 import { CaryCloudMemorySync } from './components/CaryCloudMemorySync';
 import { LanguageProvider, useLanguage } from './i18n';
 import { migrateLegacyStorage } from './storageMigration';
@@ -23,4 +23,4 @@ const AccountButton:React.FC<{accessMode:'guest'|'account';session:any;openAccou
 
 if(!rootElement)throw new Error('Root element #root is missing');
 migrateLegacyStorage();
-createRoot(rootElement).render(<StrictMode><RuntimeErrorBoundary><LanguageProvider><CaryAccountGate>{({accessMode,session,openAccount})=>(<CaryOnboarding><CaryCloudMemorySync session={accessMode==='account'?session:null}/><App/><AccountButton accessMode={accessMode} session={session} openAccount={openAccount}/></CaryOnboarding>)}</CaryAccountGate></LanguageProvider></RuntimeErrorBoundary></StrictMode>);
+createRoot(rootElement).render(<StrictMode><RuntimeErrorBoundary><LanguageProvider><CaryAccountGate>{({accessMode,session,openAccount})=>(<MomentOnboarding><CaryCloudMemorySync session={accessMode==='account'?session:null}/><App/><AccountButton accessMode={accessMode} session={session} openAccount={openAccount}/></MomentOnboarding>)}</CaryAccountGate></LanguageProvider></RuntimeErrorBoundary></StrictMode>);
