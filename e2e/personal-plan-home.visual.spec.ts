@@ -115,5 +115,5 @@ test('French desktop home localizes a stored generic plan fallback',async({page}
   await expect(page.getByTestId('personal-plan-first-step')).toContainText('Au prochain check-in');
   await expect(plan).not.toContainText('Your first step');
   await expect(plan).not.toContainText('At your next check-in');
-  await page.screenshot({path:testInfo.outputPath('personal-plan-home-french-desktop.png'),fullPage:true});
+  await page.screenshot({path:'visual-artifacts/personal-plan-home-french-desktop.png',fullPage:true});
 });
