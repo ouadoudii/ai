@@ -75,7 +75,7 @@ test('mobile German flow asks only the missing Döner details and keeps stated c
   const resolvedHeight=(await card.boundingBox())?.height||0;
   expect(resolvedHeight).toBeLessThan(pendingHeight);
   expect(resolvedHeight).toBeLessThanOrEqual(60);
-  await page.screenshot({path:'test-results/composite-meal-mobile-de.png',fullPage:true});
+  await page.screenshot({path:'visual-artifacts/composite-meal-mobile-de.png',fullPage:true});
   await quickSave.click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.title==='Döner · Hähnchen · Knoblauchsauce · im Brot, große Portion'))).toBe(true);
 });
@@ -101,7 +101,7 @@ test('desktop mixed Arabic/French flow keeps known bowl details and asks one con
   await expect(page.getByRole('button',{name:'حفظ الوجبة'})).toBeEnabled();
   const quickSave=page.getByTestId('meal-clarification-save');
   await expect(quickSave).toHaveText('حفظ الآن');
-  await page.screenshot({path:'test-results/composite-meal-desktop-ar.png',fullPage:true});
+  await page.screenshot({path:'visual-artifacts/composite-meal-desktop-ar.png',fullPage:true});
   await quickSave.click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.title==='bowl · دجاج · riz · tahini · portion صغيرة، بلا extras'))).toBe(true);
 });
@@ -126,7 +126,7 @@ test('desktop French flow requires an answer or an explicit unknown choice befor
   await expect(save).toBeEnabled();
   const quickSave=page.getByTestId('meal-clarification-save');
   await expect(quickSave).toHaveText('Enregistrer');
-  await page.screenshot({path:'test-results/composite-meal-desktop-fr-skip.png',fullPage:true});
+  await page.screenshot({path:'visual-artifacts/composite-meal-desktop-fr-skip.png',fullPage:true});
   await quickSave.click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.title==='pizza · champignons'))).toBe(true);
 });
@@ -145,7 +145,7 @@ test('desktop English sandwich flow offers immediate save after the missing deta
   await page.getByRole('button',{name:'Add answer'}).click();
   const quickSave=page.getByTestId('meal-clarification-save');
   await expect(quickSave).toHaveText('Save now');
-  await page.screenshot({path:'test-results/composite-meal-desktop-en.png',fullPage:true});
+  await page.screenshot({path:'visual-artifacts/composite-meal-desktop-en.png',fullPage:true});
   await quickSave.click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.title==='sandwich · turkey · whole-grain bread · mustard, regular size'))).toBe(true);
 });
