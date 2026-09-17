@@ -34,7 +34,7 @@ async function record(page:any, language:Language) {
   await page.goto('/');
   const mobileCapture=page.getByTestId('primary-capture-button');
   if(await mobileCapture.isVisible()) await mobileCapture.click();
-  else await page.getByRole('main').getByRole('button',{name:labels.add,exact:true}).click();
+  else await page.getByRole('button',{name:labels.add,exact:true}).first().click();
   await page.getByRole('dialog').getByRole('button',{name:labels.tell}).click();
   await page.getByRole('button',{name:labels.start}).click();
   await page.getByRole('button',{name:labels.stop}).click();
