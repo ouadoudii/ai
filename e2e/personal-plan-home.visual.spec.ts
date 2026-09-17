@@ -81,3 +81,39 @@ test('mobile navigation exposes the active destination to assistive technology',
   await expect(page.getByTestId('mobile-moments-nav')).toHaveAttribute('aria-current','page');
   await expect(page.getByRole('button',{name:'Heute'})).not.toHaveAttribute('aria-current','page');
 });
+
+
+test('French desktop home localizes a stored generic plan fallback',async({page},testInfo)=>{
+  await page.setViewportSize({width:1280,height:900});
+  await page.addInitScript(()=>{
+    localStorage.setItem('rhythm_language_v1','fr');
+    localStorage.setItem('cary_access_mode_v1','guest');
+    localStorage.setItem('cary_onboarding_v2_complete','true');
+    localStorage.setItem('rhythm_voice_entry_seen_v1','true');
+    localStorage.setItem('nimmapp_moments_v1','[]');
+    localStorage.setItem('nimmapp_checkins_v1','[]');
+    localStorage.setItem('rhythm_intro_profile_v1',JSON.stringify({
+      summary:'Je veux mieux comprendre mon énergie.',
+      priorities:[],
+      preferences:[],
+      rawIntro:'Je veux mieux comprendre mon énergie.',
+      confirmedAt:Date.now(),
+      firstPlan:{
+        title:'Your first step',
+        rationale:'Je veux mieux comprendre mon énergie.',
+        focusAreas:[],
+        firstStep:'At your next check-in, notice what stands out in your everyday rhythm.',
+        phase:'midday'
+      }
+    }));
+    sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+  });
+  await page.goto('/');
+  const plan=page.getByTestId('personal-plan-home-card');
+  await expect(plan).toBeVisible();
+  await expect(plan).toContainText('Ton premier pas');
+  await expect(page.getByTestId('personal-plan-first-step')).toContainText('Au prochain check-in');
+  await expect(plan).not.toContainText('Your first step');
+  await expect(plan).not.toContainText('At your next check-in');
+  await page.screenshot({path:testInfo.outputPath('personal-plan-home-french-desktop.png'),fullPage:true});
+});
