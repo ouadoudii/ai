@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, CheckCircle2, Compass, Sparkles } from 'lucide-react';
 import { useLanguage } from '../i18n';
-import { loadIntroProfile, PlanPhase } from '../utils/introProfile';
+import { loadIntroProfile, localizeIntroPlanFallback, PlanPhase } from '../utils/introProfile';
 
 interface Props{
   onStart:(phase:PlanPhase)=>void;
@@ -20,7 +20,7 @@ export const PersonalPlanHomeCard:React.FC<Props>=({onStart})=>{
         ?{eyebrow:'بدايتك الشخصية',why:'لماذا يناسبك هذا',next:'خطوتك التالية',phase:{morning:'ابدأ تسجيل الصباح',midday:'ابدأ تسجيل منتصف اليوم',evening:'ابدأ تسجيل المساء'}}
         :{eyebrow:'Your personal start',why:'Why this fits you',next:'Your next step',phase:{morning:'Start morning check-in',midday:'Start midday check-in',evening:'Start evening check-in'}};
 
-  const {firstPlan}=profile;
+  const firstPlan=localizeIntroPlanFallback(profile.firstPlan,language);
   return <section data-testid="personal-plan-home-card" className="mb-5 rounded-[30px] border border-white/70 bg-[#FFFDF8]/97 p-5 text-[#2E302B] shadow-[0_16px_42px_rgba(45,35,25,.18)] backdrop-blur-xl sm:p-6" dir={language==='ar'?'rtl':'ltr'}>
     <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-[#69785E]"><Sparkles className="h-4 w-4"/>{copy.eyebrow}</div>
     <div className="mt-3 flex items-start gap-3">
