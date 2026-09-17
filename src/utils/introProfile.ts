@@ -39,13 +39,27 @@ const extractJson=(value:string)=>{
   return start>=0&&end>start?candidate.slice(start,end+1):candidate;
 };
 
+const fallbackPlanCopy:Record<AppLanguage,{title:string;step:string}>={
+  de:{title:'Dein erster Schritt',step:'Beobachte beim nächsten Check-in, was dir im Alltag auffällt.'},
+  en:{title:'Your first step',step:'At your next check-in, notice what stands out in your everyday rhythm.'},
+  fr:{title:'Ton premier pas',step:'Au prochain check-in, observe simplement ce qui ressort de ton quotidien.'},
+  ar:{title:'خطوتك الأولى',step:'في تسجيلك القادم، لاحظ ببساطة ما يبرز في إيقاع يومك.'},
+};
+
+const fallbackTitles=new Set(Object.values(fallbackPlanCopy).map(copy=>copy.title));
+const fallbackSteps=new Set(Object.values(fallbackPlanCopy).map(copy=>copy.step));
+
+export function localizeIntroPlanFallback(plan:PersonalFirstPlan,language:AppLanguage):PersonalFirstPlan{
+  const copy=fallbackPlanCopy[language];
+  return{
+    ...plan,
+    title:fallbackTitles.has(plan.title)?copy.title:plan.title,
+    firstStep:fallbackSteps.has(plan.firstStep)?copy.step:plan.firstStep,
+  };
+}
+
 const fallbackPlan=(rawIntro:string,language:AppLanguage='de'):PersonalFirstPlan=>{
-  const copy={
-    de:{title:'Dein erster Schritt',step:'Beobachte beim nächsten Check-in, was dir im Alltag auffällt.'},
-    en:{title:'Your first step',step:'At your next check-in, notice what stands out in your everyday rhythm.'},
-    fr:{title:'Ton premier pas',step:'Au prochain check-in, observe simplement ce qui ressort de ton quotidien.'},
-    ar:{title:'خطوتك الأولى',step:'في تسجيلك القادم، لاحظ ببساطة ما يبرز في إيقاع يومك.'},
-  }[language];
+  const copy=fallbackPlanCopy[language];
   return{title:copy.title,rationale:rawIntro.trim().slice(0,220),focusAreas:[],firstStep:copy.step,phase:'midday'};
 };
 
