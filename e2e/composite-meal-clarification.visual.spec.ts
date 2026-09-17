@@ -29,7 +29,7 @@ async function record(page:any, language:Language) {
     de:{add:'Moment hinzufügen',tell:'Erzähl mir',start:'Aufnahme starten',stop:'Aufnahme stoppen'},
     ar:{add:'سجّل لحظة',tell:'احكِ لي',start:'ابدأ التسجيل',stop:'إيقاف التسجيل'},
     fr:{add:'Ajouter un moment',tell:'Raconter',start:'Démarrer l’enregistrement',stop:'Arrêter l’enregistrement'},
-    en:{add:'Add moment',tell:'Tell me',start:'Start recording',stop:'Stop recording'},
+    en:{add:'Add a moment',tell:'Tell me',start:'Start recording',stop:'Stop recording'},
   }[language];
   await page.goto('/');
   const mobileCapture=page.getByTestId('primary-capture-button');
