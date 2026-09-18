@@ -16,9 +16,12 @@ async function seedProfile(page:any,language:'ar'|'de'='ar',checkIns:any[]=[],mo
   },{language,checkIns,moments});
 }
 
-async function setAppTime(page:any,iso:string){
+async function setAppLocalHour(page:any,hour:number){
   await page.goto('/');
-  await page.clock.setFixedTime(new Date(iso));
+  // Build the fixed instant inside the browser so the requested hour is local
+  // to the same timezone that TodayHomeView reads with new Date().getHours().
+  const localTimestamp=await page.evaluate((targetHour:number)=>new Date(2026,8,18,targetHour,0,0,0).getTime(),hour);
+  await page.clock.setFixedTime(localTimestamp);
   await page.reload();
 }
 
@@ -45,7 +48,7 @@ async function installArabicVoiceHarness(page:any,transcript:string){
 test('voice is the primary home action on mobile and opens recording directly',async({page},testInfo)=>{
   await page.setViewportSize({width:390,height:844});
   await seedProfile(page,'de');
-  await setAppTime(page,'2026-09-18T13:00:00Z');
+  await setAppLocalHour(page,13);
   const voice=page.getByTestId('voice-home-mic');
   await expect(voice).toBeVisible();
   await expect(voice).toHaveAttribute('data-full-day-recap','false');
@@ -58,7 +61,7 @@ test('voice is the primary home action on mobile and opens recording directly',a
 test('after 18:00 an incomplete day collapses to one Darija whole-day voice recap',async({page},testInfo)=>{
   await page.setViewportSize({width:1280,height:900});
   await seedProfile(page,'ar');
-  await setAppTime(page,'2026-09-18T20:00:00Z');
+  await setAppLocalHour(page,20);
   const voice=page.getByTestId('voice-home-mic');
   await expect(voice).toHaveAttribute('data-full-day-recap','true');
   await expect(voice).toContainText('عاود ليا نهارك كامل');
@@ -90,7 +93,7 @@ test('whole-day voice recap preserves earlier lunch speech and does not duplicat
       }
     })});
   });
-  await setAppTime(page,'2026-09-18T20:00:00Z');
+  await setAppLocalHour(page,20);
   await expect(page.getByTestId('voice-home-mic')).toHaveAttribute('data-full-day-recap','true');
   await page.getByTestId('voice-home-mic').click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
