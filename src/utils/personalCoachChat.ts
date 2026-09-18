@@ -20,7 +20,7 @@ export function buildPersonalCoachAnswer(question:string, moments:FoodMoment[], 
   const t=copy[language] || copy.de;
   const recent=checkIns.slice(0,7);
   const observations:string[]=[];
-  const sleepHours=recent.map(c=>c.sleep?.hours).filter((v):v is number=>typeof v==='number');
+  const sleepHours=recent.map(c=>c.sleep?.durationHours).filter((v):v is number=>typeof v==='number');
   const energies=recent.map(c=>c.wellbeing?.energyLevel).filter((v):v is number=>typeof v==='number');
   if(sleepHours.length && sleepHours.reduce((a,b)=>a+b,0)/sleepHours.length < 7) observations.push(t.sleep);
   if(energies.length && energies.reduce((a,b)=>a+b,0)/energies.length < 3) observations.push(t.energy);
