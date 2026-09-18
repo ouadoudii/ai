@@ -4,7 +4,7 @@ import { DailyCheckIn, FoodMoment } from '../types';
 
 const checkIn = (hours:number, energy:number):DailyCheckIn => ({
   id:`c-${hours}-${energy}`, date:'2026-09-18', time:'08:00', timeOfDay:'morning', createdAt:1,
-  sleep:{ hours }, wellbeing:{ energyLevel:energy }
+  sleep:{ durationHours: hours }, wellbeing:{ energyLevel:energy }
 } as DailyCheckIn);
 
 const meal = { id:'m1', title:'Tajine', date:'2026-09-18', time:'13:00', createdAt:1 } as FoodMoment;
