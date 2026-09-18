@@ -8,10 +8,13 @@ const meal=(id:string,date:string,time:string,category:FoodMoment['category'],ex
 describe('pattern insights',()=>{
   it('uses transparent evidence thresholds',()=>{expect(confidenceForEvidence(2)).toBe('Signal');expect(confidenceForEvidence(4)).toBe('Trend');expect(confidenceForEvidence(7)).toBe('Pattern');});
 
-  it('finds a repeated short-sleep / later-low-energy association without causal wording',()=>{
+  it('finds a repeated short-sleep / later-low-energy association and explicitly rejects causal inference',()=>{
     const checks=[check('u1','2026-09-10','morning',3,6),check('u2','2026-09-10','midday',2),check('u3','2026-09-11','morning',3,6.5),check('u4','2026-09-11','midday',1)];
     const insight=buildPatternInsights([],checks).find(i=>i.id==='sleep-energy');
-    expect(insight?.evidenceCount).toBe(2);expect(insight?.observation).toContain('2 of 2');expect(insight?.observation.toLowerCase()).not.toMatch(/caused|because|therefore/);
+    expect(insight?.evidenceCount).toBe(2);
+    expect(insight?.observation).toContain('2 of 2');
+    expect(insight?.observation).toContain('not proof that one caused the other');
+    expect(insight?.observation.toLowerCase()).not.toMatch(/\bbecause\b|\btherefore\b/);
   });
 
   it('connects late lunch with evening snacking only after several comparable lunch days',()=>{
