@@ -1,7 +1,6 @@
-import { TimeOfDayPhase } from '../types';
 import { AppLanguage } from '../i18n';
 
-export function shouldUseFullDayVoiceRecap(hour:number, completed:Iterable<TimeOfDayPhase>):boolean {
+export function shouldUseFullDayVoiceRecap(hour:number, completed:Iterable<unknown>):boolean {
   const phases=new Set(completed);
   return hour>=18 && phases.size<3;
 }
