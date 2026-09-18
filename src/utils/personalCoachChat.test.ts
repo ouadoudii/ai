@@ -21,7 +21,7 @@ describe('personal coach chat',()=>{
   it('does not invent a personal explanation when data is missing',()=>{
     const result=buildPersonalCoachAnswer('Why am I tired?',[],[],'en');
     expect(result.personalObservations).toEqual([]);
-    expect(result.answer.toLowerCase()).toContain('not enough personal data');
+    expect(result.uncertainty).toBe('I do not have enough personal data for a strong conclusion yet.');
     expect(result.answer.toLowerCase()).not.toContain('diagnos');
   });
 
