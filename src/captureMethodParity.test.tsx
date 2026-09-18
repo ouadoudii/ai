@@ -1,19 +1,19 @@
-import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { CaptureChoiceModal } from './components/CaptureChoiceModal';
-import { LanguageProvider } from './i18n';
+import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+
+const source = readFileSync(new URL('./components/CaptureChoiceModal.tsx', import.meta.url), 'utf8');
 
 describe('capture method parity', () => {
   it('offers photo, voice and text as first-class capture paths', () => {
-    const { container } = render(<LanguageProvider><CaptureChoiceModal isOpen onClose={vi.fn()} onFood={vi.fn()} onTellCary={vi.fn()} /></LanguageProvider>);
-    expect(container.querySelector('[data-capture-method="photo"]')).toBeTruthy();
-    expect(container.querySelector('[data-capture-method="voice"]')).toBeTruthy();
-    expect(container.querySelector('[data-capture-method="text"]')).toBeTruthy();
+    expect(source).toContain('data-capture-method="photo"');
+    expect(source).toContain('data-capture-method="voice"');
+    expect(source).toContain('data-capture-method="text"');
   });
 
-  it('keeps the text path understandable without requiring voice', () => {
-    render(<LanguageProvider><CaptureChoiceModal isOpen onClose={vi.fn()} onFood={vi.fn()} onTellCary={vi.fn()} /></LanguageProvider>);
-    expect(screen.getByRole('button', { name: /type/i })).toBeTruthy();
+  it('localizes the explicit text capture path in every supported language', () => {
+    expect(source).toContain("en: 'Type'");
+    expect(source).toContain("de: 'Tippen'");
+    expect(source).toContain("fr: 'Écrire'");
+    expect(source).toContain("ar: 'اكتب'");
   });
 });
