@@ -16,6 +16,12 @@ async function seedProfile(page:any,language:'ar'|'de'='ar',checkIns:any[]=[],mo
   },{language,checkIns,moments});
 }
 
+async function setAppTime(page:any,iso:string){
+  await page.goto('/');
+  await page.clock.setFixedTime(new Date(iso));
+  await page.reload();
+}
+
 async function installArabicVoiceHarness(page:any,transcript:string){
   await page.addInitScript((text:string)=>{
     class BadChromeSpeech{start(){throw new Error('Arabic must use Whisper')} stop(){}}
@@ -37,10 +43,9 @@ async function installArabicVoiceHarness(page:any,transcript:string){
 }
 
 test('voice is the primary home action on mobile and opens recording directly',async({page},testInfo)=>{
-  await page.clock.setFixedTime(new Date('2026-09-18T13:00:00'));
   await page.setViewportSize({width:390,height:844});
   await seedProfile(page,'de');
-  await page.goto('/');
+  await setAppTime(page,'2026-09-18T13:00:00Z');
   const voice=page.getByTestId('voice-home-mic');
   await expect(voice).toBeVisible();
   await expect(voice).toHaveAttribute('data-full-day-recap','false');
@@ -51,10 +56,9 @@ test('voice is the primary home action on mobile and opens recording directly',a
 });
 
 test('after 18:00 an incomplete day collapses to one Darija whole-day voice recap',async({page},testInfo)=>{
-  await page.clock.setFixedTime(new Date('2026-09-18T20:00:00'));
   await page.setViewportSize({width:1280,height:900});
   await seedProfile(page,'ar');
-  await page.goto('/');
+  await setAppTime(page,'2026-09-18T20:00:00Z');
   const voice=page.getByTestId('voice-home-mic');
   await expect(voice).toHaveAttribute('data-full-day-recap','true');
   await expect(voice).toContainText('عاود ليا نهارك كامل');
@@ -66,7 +70,6 @@ test('after 18:00 an incomplete day collapses to one Darija whole-day voice reca
 });
 
 test('whole-day voice recap preserves earlier lunch speech and does not duplicate the lunch meal',async({page})=>{
-  await page.clock.setFixedTime(new Date('2026-09-18T20:00:00'));
   const oldTranscript='فالغدا كليت كسكس بالخضرة وكنت جوعان';
   const recapTranscript='الصباح فطرت بيض. فالغدا كليت كسكس بالخضرة. فالعشا كليت حريرة.';
   const existingMoment={id:'existing-lunch',title:'كسكس بالخضرة',label:'الغداء',category:'lunch',date:'2026-09-18',time:'13:15',location:'الدار',locationCategory:'home',imageUrl:'',rating:5,mood:'satisfied',notes:oldTranscript,tags:['Voice','midday'],createdAt:1};
@@ -87,14 +90,24 @@ test('whole-day voice recap preserves earlier lunch speech and does not duplicat
       }
     })});
   });
-  await page.goto('/');
+  await setAppTime(page,'2026-09-18T20:00:00Z');
+  await expect(page.getByTestId('voice-home-mic')).toHaveAttribute('data-full-day-recap','true');
   await page.getByTestId('voice-home-mic').click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
-  await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').filter((m:any)=>m.category==='lunch'&&m.title==='كسكس بالخضرة').length)).toBe(1);
+
+  await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').some((m:any)=>m.category==='dinner'&&m.title==='حريرة'))).toBe(true);
+  await expect.poll(async()=>page.evaluate((oldText:string)=>{
+    const checks=JSON.parse(localStorage.getItem('nimmapp_checkins_v1')||'[]');
+    const midday=checks.find((c:any)=>c.date==='2026-09-18'&&c.timeOfDay==='midday');
+    return Boolean(midday?.wellbeing?.voiceTranscription?.includes(oldText));
+  },oldTranscript)).toBe(true);
+
   const saved=await page.evaluate(()=>({moments:JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]'),checks:JSON.parse(localStorage.getItem('nimmapp_checkins_v1')||'[]')}));
-  const lunch=saved.checks.find((c:any)=>c.id==='existing-midday');
-  expect(lunch.wellbeing.voiceTranscription).toContain(oldTranscript);
-  expect(lunch.wellbeing.voiceTranscription).toContain(recapTranscript);
+  const lunchMoments=saved.moments.filter((m:any)=>m.category==='lunch'&&m.title==='كسكس بالخضرة');
+  const lunch=saved.checks.find((c:any)=>c.date==='2026-09-18'&&c.timeOfDay==='midday');
+  expect(lunchMoments).toHaveLength(1);
+  expect(lunch?.wellbeing?.voiceTranscription).toContain(oldTranscript);
+  expect(lunch?.wellbeing?.voiceTranscription).toContain(recapTranscript);
   expect(saved.moments.some((m:any)=>m.category==='dinner'&&m.title==='حريرة')).toBe(true);
 });
