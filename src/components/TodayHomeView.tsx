@@ -67,13 +67,15 @@ export const TodayHomeView:React.FC<Props>=({
   const today=getLocalDateKey();
   const todayChecks=checkIns.filter(c=>c.date===today&&!demoC(c));
   const completed=new Set(todayChecks.map(c=>c.timeOfDay));
+  const completedKey=Array.from(completed).sort().join(',');
   const realMoments=moments.filter(m=>!demoM(m)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   const snackDone=realMoments.some(m=>m.date===today&&m.category==='snack');
   const insights=React.useMemo(()=>buildPatternInsights(moments,checkIns),[moments,checkIns]);
   const first=insights[0];
   const date=new Intl.DateTimeFormat(ar?'ar-MA':de?'de-DE':fr?'fr-FR':'en',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
   const hour=new Date().getHours();
-  const fullDayMode=shouldUseFullDayVoiceRecap(hour,completed);
+  const [fullDayMode,setFullDayMode]=React.useState(false);
+  React.useEffect(()=>{setFullDayMode(shouldUseFullDayVoiceRecap(new Date().getHours(),completed));},[completedKey]);
   const voicePrompt=voiceHomePrompt(language,fullDayMode);
   const allPhases:Array<{key:TimeOfDayPhase;title:string;body:string;accent:string;soft:string}>=[
     {key:'morning',title:copy('Good morning','صباح الخير','Guten Morgen'),body:copy('How did your day begin?','كيف بدأ يومك؟','Wie hat dein Tag begonnen?'),accent:'#D99B1D',soft:'#FFF1CE'},
