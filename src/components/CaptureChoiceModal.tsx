@@ -23,7 +23,7 @@ function read(): FoodMoment[] {
 const languageName: Record<AppLanguage, string> = { en: 'English', ar: 'العربية', de: 'Deutsch', fr: 'Français' };
 const textLabel: Record<AppLanguage, string> = { en: 'Type', de: 'Tippen', fr: 'Écrire', ar: 'اكتب' };
 const photoLabel: Record<AppLanguage, string> = { en: 'Photo', de: 'Foto', fr: 'Photo', ar: 'صورة' };
-const speakLabel: Record<AppLanguage, string> = { en: 'Speak', de: 'Sprechen', fr: 'Parler', ar: 'تحدث' };
+const speakLabel: Record<AppLanguage, string> = { en: 'Tell me', de: 'Erzähl mir', fr: 'Parle-moi', ar: 'احكِ لي' };
 
 export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, onClose, onFood, onTellCary }) => {
   const { language, setLanguage, t } = useLanguage();
