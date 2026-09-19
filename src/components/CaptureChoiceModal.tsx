@@ -10,6 +10,7 @@ interface CaptureChoiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onFood: () => void;
+  onText: () => void;
   onTellCary: () => void;
 }
 
@@ -25,7 +26,7 @@ const textLabel: Record<AppLanguage, string> = { en: 'Type', de: 'Tippen', fr: '
 const photoLabel: Record<AppLanguage, string> = { en: 'Photo', de: 'Foto', fr: 'Photo', ar: 'صورة' };
 const speakLabel: Record<AppLanguage, string> = { en: 'Tell me', de: 'Erzähl mir', fr: 'Raconter', ar: 'احكِ لي' };
 
-export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, onClose, onFood, onTellCary }) => {
+export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, onClose, onFood, onText, onTellCary }) => {
   const { language, setLanguage, t } = useLanguage();
   const [recent, setRecent] = React.useState<FoodMoment[]>([]);
   const dialogRef = React.useRef<HTMLElement | null>(null);
@@ -64,7 +65,7 @@ export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, 
       <div className="mt-6 grid grid-cols-3 gap-3" data-capture-methods="photo-voice-text">
         <button type="button" data-capture-method="photo" onClick={()=>choose(onFood,'photo')} className="min-h-24 rounded-[24px] bg-[#E76F45] text-white flex flex-col items-center justify-center gap-2"><Camera className="w-6 h-6"/><strong className="text-sm">{photoLabel[language]}</strong></button>
         <button type="button" data-capture-method="voice" onClick={()=>choose(onTellCary,'voice')} className="min-h-24 rounded-[24px] bg-[#293D34] text-white flex flex-col items-center justify-center gap-2"><Mic2 className="w-6 h-6"/><strong className="text-sm">{speakLabel[language]}</strong></button>
-        <button type="button" data-capture-method="text" onClick={()=>choose(onFood,'text')} className="min-h-24 rounded-[24px] border border-[#D8D2C8] bg-white text-[#293D34] flex flex-col items-center justify-center gap-2"><Keyboard className="w-6 h-6"/><strong className="text-sm">{textLabel[language]}</strong></button>
+        <button type="button" data-capture-method="text" onClick={()=>choose(onText,'text')} className="min-h-24 rounded-[24px] border border-[#D8D2C8] bg-white text-[#293D34] flex flex-col items-center justify-center gap-2"><Keyboard className="w-6 h-6"/><strong className="text-sm">{textLabel[language]}</strong></button>
       </div>
       <p className="mt-4 text-center text-xs text-[#8C8880]">{t('captureKinds')}</p>
     </section>
