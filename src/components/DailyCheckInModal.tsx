@@ -39,7 +39,21 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
   const onCloseRef=React.useRef(onClose);
 
   React.useEffect(()=>{onCloseRef.current=onClose},[onClose]);
-  React.useEffect(()=>{if(isOpen)setStep(1)},[isOpen]);
+  React.useEffect(()=>{
+    if(isOpen){
+      setStep(1);
+      setMealItems([]);
+      setHungerBefore(3);
+      setFullnessAfter(4);
+      setEnergyLevel(3);
+      setMood('satisfied');
+      setSleepHours(7.5);
+      setSleepQuality(4);
+      setBedtime('23:00');
+      setWakeTime('07:00');
+      setWakeFeeling('normal');
+    }
+  },[isOpen]);
   React.useEffect(()=>{
     if(!isOpen)return;
     const previousFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
