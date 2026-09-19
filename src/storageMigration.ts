@@ -52,9 +52,13 @@ function linkPersistedLegacyCheckInMeals() {
 
 export function migrateLegacyStorage() {
   try {
-    if (localStorage.getItem(MIGRATION_KEY) === 'done') return;
+    // Persisted state is untrusted input. Validate it on every startup, not only
+    // during a one-time schema migration: browser extensions, interrupted writes,
+    // older builds or manual storage edits can corrupt it after migration completed.
     sanitizeArrayStorage(MOMENTS_KEY, validMoment);
     sanitizeArrayStorage(CHECKINS_KEY, validCheckIn);
+
+    if (localStorage.getItem(MIGRATION_KEY) === 'done') return;
     linkPersistedLegacyCheckInMeals();
     localStorage.removeItem('food_journey_moments_v1');
     localStorage.removeItem('getyourcoach_checkins_v1');
