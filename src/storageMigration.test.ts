@@ -1,12 +1,24 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { migrateLegacyStorage } from './storageMigration';
 
 const MOMENTS_KEY = 'nimmapp_moments_v1';
 const CHECKINS_KEY = 'nimmapp_checkins_v1';
 const MIGRATION_KEY = 'cary_storage_schema_v3';
 
+const createLocalStorage = (): Storage => {
+  const values = new Map<string, string>();
+  return {
+    get length() { return values.size; },
+    clear: () => values.clear(),
+    getItem: (key) => values.get(key) ?? null,
+    key: (index) => Array.from(values.keys())[index] ?? null,
+    removeItem: (key) => { values.delete(key); },
+    setItem: (key, value) => { values.set(key, String(value)); },
+  };
+};
+
 describe('persisted storage validation', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => vi.stubGlobal('localStorage', createLocalStorage()));
 
   it('removes structurally invalid containers even after schema migration completed', () => {
     localStorage.setItem(MIGRATION_KEY, 'done');
