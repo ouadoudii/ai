@@ -51,7 +51,7 @@ export interface FoodMoment {
   location: string;
   locationCategory: 'home' | 'restaurant' | 'cafe' | 'travel' | 'takeaway';
   imageUrl: string;
-  rating: number;
+  rating?: number;
   mood: FoodMood;
   hungerLevel?: number;
   fullnessLevel?: number;
