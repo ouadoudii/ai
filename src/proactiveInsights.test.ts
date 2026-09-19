@@ -26,6 +26,30 @@ describe('personal proactive insights', () => {
     expect(deriveProactiveInsights(data)[0]).toMatchObject({ kind: 'energy-pattern', evidenceDays: 3 });
   });
 
+  it('does not blame late meals when short sleep matches the personal baseline', () => {
+    const data = [
+      checkIn('2026-08-01', '22:00', 3, 7.5, true), checkIn('2026-08-02', '08:00', 3, 6.1),
+      checkIn('2026-08-05', '22:00', 3, 7.5, true), checkIn('2026-08-06', '08:00', 3, 6.0),
+      checkIn('2026-08-09', '22:00', 3, 7.5, true), checkIn('2026-08-10', '08:00', 3, 6.2),
+      checkIn('2026-08-13', '19:00', 3, 7.5, true), checkIn('2026-08-14', '08:00', 3, 6.1),
+      checkIn('2026-08-17', '19:00', 3, 7.5, true), checkIn('2026-08-18', '08:00', 3, 6.0),
+      checkIn('2026-08-21', '19:00', 3, 7.5, true), checkIn('2026-08-22', '08:00', 3, 6.2),
+    ];
+    expect(deriveProactiveInsights(data).find(insight => insight.kind === 'late-meal-sleep')).toBeUndefined();
+  });
+
+  it('emits a late-meal insight only when sleep is meaningfully worse than comparison nights', () => {
+    const data = [
+      checkIn('2026-08-01', '22:00', 3, 7.5, true), checkIn('2026-08-02', '08:00', 3, 6.0),
+      checkIn('2026-08-05', '22:00', 3, 7.5, true), checkIn('2026-08-06', '08:00', 3, 6.2),
+      checkIn('2026-08-09', '22:00', 3, 7.5, true), checkIn('2026-08-10', '08:00', 3, 6.1),
+      checkIn('2026-08-13', '19:00', 3, 7.5, true), checkIn('2026-08-14', '08:00', 3, 7.6),
+      checkIn('2026-08-17', '19:00', 3, 7.5, true), checkIn('2026-08-18', '08:00', 3, 7.4),
+      checkIn('2026-08-21', '19:00', 3, 7.5, true), checkIn('2026-08-22', '08:00', 3, 7.7),
+    ];
+    expect(deriveProactiveInsights(data)[0]).toMatchObject({ kind: 'late-meal-sleep', evidenceDays: 3 });
+  });
+
   it('rate-limits an already shown insight for seven days', () => {
     const data = [
       checkIn('2026-09-07', '12:00', 2), checkIn('2026-09-14', '12:00', 2), checkIn('2026-09-21', '12:00', 2),

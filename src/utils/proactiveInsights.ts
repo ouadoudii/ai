@@ -16,8 +16,12 @@ export interface ProactiveInsightHistory {
 
 const DAY = 24 * 60 * 60 * 1000;
 const COOLDOWN = 7 * DAY;
+const MIN_LATE_MEAL_SLEEP_SAMPLES = 3;
+const MIN_BASELINE_SLEEP_SAMPLES = 3;
+const MIN_SLEEP_DIFFERENCE_HOURS = 0.75;
 const dateTime = (entry: DailyCheckIn) => Date.parse(`${entry.date}T${entry.time || '12:00'}:00`);
 const sleep = (entry: DailyCheckIn) => entry.sleep?.durationHours;
+const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
 
 /** Personal-data-only insight candidates. No generic wellness reminders are emitted. */
 export function deriveProactiveInsights(
@@ -41,7 +45,7 @@ export function deriveProactiveInsights(
       values.push(entry.wellbeing.energyLevel!);
       byWeekday.set(weekday, values);
     }
-    const recurring = [...byWeekday.entries()].find(([, values]) => values.length >= 3 && values.reduce((a, b) => a + b, 0) / values.length <= 2.5);
+    const recurring = [...byWeekday.entries()].find(([, values]) => values.length >= 3 && average(values) <= 2.5);
     if (recurring) {
       const [weekday, values] = recurring;
       const id = `energy-pattern:${weekday}`;
@@ -50,16 +54,33 @@ export function deriveProactiveInsights(
   }
 
   const sorted = [...checkIns].sort((a, b) => dateTime(a) - dateTime(b));
-  let linkedDays = 0;
+  const lateMealSleep: number[] = [];
+  const baselineSleep: number[] = [];
   for (let i = 0; i < sorted.length - 1; i++) {
-    const meal = sorted[i];
+    const entry = sorted[i];
     const next = sorted[i + 1];
-    if (!meal.food || Number(meal.time.slice(0, 2)) < 21 || sleep(next) == null) continue;
-    const nextDay = new Date(`${meal.date}T12:00:00`).getTime() + DAY === new Date(`${next.date}T12:00:00`).getTime();
-    if (nextDay && sleep(next)! < 7) linkedDays += 1;
+    if (sleep(next) == null) continue;
+    const nextDay = new Date(`${entry.date}T12:00:00`).getTime() + DAY === new Date(`${next.date}T12:00:00`).getTime();
+    if (!nextDay) continue;
+    const isLateMeal = Boolean(entry.food) && Number(entry.time.slice(0, 2)) >= 21;
+    if (isLateMeal) lateMealSleep.push(sleep(next)!);
+    else if (!entry.food || Number(entry.time.slice(0, 2)) < 21) baselineSleep.push(sleep(next)!);
   }
+
   const lateMealId = 'late-meal-sleep';
-  if (linkedDays >= 3 && eligible(lateMealId)) result.push({ id: lateMealId, kind: 'late-meal-sleep', reason: `On ${linkedDays} recorded occasions, a meal after 21:00 was followed by under 7 hours of sleep.`, evidenceDays: linkedDays });
+  if (
+    lateMealSleep.length >= MIN_LATE_MEAL_SLEEP_SAMPLES &&
+    baselineSleep.length >= MIN_BASELINE_SLEEP_SAMPLES &&
+    average(baselineSleep) - average(lateMealSleep) >= MIN_SLEEP_DIFFERENCE_HOURS &&
+    eligible(lateMealId)
+  ) {
+    result.push({
+      id: lateMealId,
+      kind: 'late-meal-sleep',
+      reason: `Across ${lateMealSleep.length} recorded late-meal nights, sleep averaged meaningfully shorter than on ${baselineSleep.length} comparison nights.`,
+      evidenceDays: lateMealSleep.length,
+    });
+  }
 
   return result.slice(0, 1);
 }
