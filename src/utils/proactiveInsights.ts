@@ -19,9 +19,13 @@ const COOLDOWN = 7 * DAY;
 const MIN_LATE_MEAL_SLEEP_SAMPLES = 3;
 const MIN_BASELINE_SLEEP_SAMPLES = 3;
 const MIN_SLEEP_DIFFERENCE_HOURS = 0.75;
-const dateTime = (entry: DailyCheckIn) => Date.parse(`${entry.date}T${entry.time || '12:00'}:00`);
 const sleep = (entry: DailyCheckIn) => entry.sleep?.durationHours;
 const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
+const nextDate = (date: string) => {
+  const value = new Date(`${date}T12:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + 1);
+  return value.toISOString().slice(0, 10);
+};
 
 /** Personal-data-only insight candidates. No generic wellness reminders are emitted. */
 export function deriveProactiveInsights(
@@ -53,18 +57,29 @@ export function deriveProactiveInsights(
     }
   }
 
-  const sorted = [...checkIns].sort((a, b) => dateTime(a) - dateTime(b));
+  // Link meals to sleep by calendar day, not event adjacency. A wellbeing or other
+  // check-in between dinner and next morning must not make real evidence disappear.
+  const sleepByDate = new Map<string, number>();
+  for (const entry of checkIns) {
+    const duration = sleep(entry);
+    if (duration != null && !sleepByDate.has(entry.date)) sleepByDate.set(entry.date, duration);
+  }
+
+  const mealByDate = new Map<string, DailyCheckIn>();
+  for (const entry of checkIns) {
+    if (!entry.food) continue;
+    const current = mealByDate.get(entry.date);
+    if (!current || entry.time > current.time) mealByDate.set(entry.date, entry);
+  }
+
   const lateMealSleep: number[] = [];
   const baselineSleep: number[] = [];
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const entry = sorted[i];
-    const next = sorted[i + 1];
-    if (sleep(next) == null) continue;
-    const nextDay = new Date(`${entry.date}T12:00:00`).getTime() + DAY === new Date(`${next.date}T12:00:00`).getTime();
-    if (!nextDay) continue;
-    const isLateMeal = Boolean(entry.food) && Number(entry.time.slice(0, 2)) >= 21;
-    if (isLateMeal) lateMealSleep.push(sleep(next)!);
-    else if (!entry.food || Number(entry.time.slice(0, 2)) < 21) baselineSleep.push(sleep(next)!);
+  for (const [date, meal] of mealByDate) {
+    const nextDaySleep = sleepByDate.get(nextDate(date));
+    if (nextDaySleep == null) continue;
+    const hour = Number(meal.time.slice(0, 2));
+    if (hour >= 21) lateMealSleep.push(nextDaySleep);
+    else baselineSleep.push(nextDaySleep);
   }
 
   const lateMealId = 'late-meal-sleep';
