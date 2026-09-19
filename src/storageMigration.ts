@@ -1,6 +1,9 @@
+import type { DailyCheckIn, FoodMoment } from './types';
+import { linkLegacyCheckInMeals } from './utils/legacyCheckInMealLinks';
+
 const MOMENTS_KEY = 'nimmapp_moments_v1';
 const CHECKINS_KEY = 'nimmapp_checkins_v1';
-const MIGRATION_KEY = 'cary_storage_schema_v2';
+const MIGRATION_KEY = 'cary_storage_schema_v3';
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
@@ -37,11 +40,22 @@ function sanitizeArrayStorage(key: string, validator: (value: unknown) => boolea
   }
 }
 
+function linkPersistedLegacyCheckInMeals() {
+  const rawMoments = localStorage.getItem(MOMENTS_KEY);
+  const rawCheckIns = localStorage.getItem(CHECKINS_KEY);
+  if (!rawMoments || !rawCheckIns) return;
+  const moments = JSON.parse(rawMoments) as FoodMoment[];
+  const checkIns = JSON.parse(rawCheckIns) as DailyCheckIn[];
+  const linked = linkLegacyCheckInMeals(moments, checkIns);
+  if (linked !== moments) localStorage.setItem(MOMENTS_KEY, JSON.stringify(linked));
+}
+
 export function migrateLegacyStorage() {
   try {
     if (localStorage.getItem(MIGRATION_KEY) === 'done') return;
     sanitizeArrayStorage(MOMENTS_KEY, validMoment);
     sanitizeArrayStorage(CHECKINS_KEY, validCheckIn);
+    linkPersistedLegacyCheckInMeals();
     localStorage.removeItem('food_journey_moments_v1');
     localStorage.removeItem('getyourcoach_checkins_v1');
     localStorage.setItem(MIGRATION_KEY, 'done');
