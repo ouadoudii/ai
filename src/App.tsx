@@ -31,6 +31,7 @@ import { useLanguage } from './i18n';
 const STORAGE_KEY='nimmapp_moments_v1';
 const STORAGE_KEY_CHECKINS='nimmapp_checkins_v1';
 const SEEDED_CHECKIN_IDS=new Set(['checkin-1','checkin-2','checkin-3']);
+const CHECKIN_SOURCE_TAG='source-checkin:';
 
 export default function App(){
   const {language}=useLanguage();
@@ -76,7 +77,7 @@ export default function App(){
     if(checkinStartedAt.current){trackUx({eventName:'flow_finished',surface:'checkin',language,durationMs:Date.now()-checkinStartedAt.current,outcome:'completed',metadata:{phase:checkInData.timeOfDay,has_photo:false}});checkinStartedAt.current=null;}
     const now=Date.now();const newCheckIn:DailyCheckIn={...checkInData,id:`user-checkin-${now}`,createdAt:now};
     setCheckIns(prev=>[newCheckIn,...prev.filter(c=>!(c.date===checkInData.date&&c.timeOfDay===checkInData.timeOfDay&&!SEEDED_CHECKIN_IDS.has(c.id)))]);
-    if(checkInData.food?.mealTitle){const category=checkInData.food.category;const matchedPhoto=getDishPhoto(checkInData.food.mealTitle,category);const copy=getCheckInMomentCopy(language,category);const newMoment:FoodMoment={id:`moment-${now}`,title:checkInData.food.mealTitle,label:copy.label,category,date:checkInData.date,time:checkInData.time,location:copy.location,locationCategory:'home',imageUrl:matchedPhoto?.url||'',rating:5,mood:checkInData.wellbeing.mood||'satisfied',hungerLevel:checkInData.food.hungerBefore,fullnessLevel:checkInData.food.fullnessAfter,eatingPace:checkInData.food.eatingPace,distraction:checkInData.food.distraction,energyAfter:(checkInData.wellbeing.energyLevel||3)>=4?'energized':'neutral',coachFeedback:{title:copy.captured,message:checkInData.coachSummary||copy.fallbackSummary,type:'praise',badge:copy.badge},notes:checkInData.wellbeing.note,tags:[copy.badge,checkInData.timeOfDay],createdAt:now};setMoments(prev=>[newMoment,...prev]);}
+    if(checkInData.food?.mealTitle){const category=checkInData.food.category;const matchedPhoto=getDishPhoto(checkInData.food.mealTitle,category);const copy=getCheckInMomentCopy(language,category);const newMoment:FoodMoment={id:`moment-${now}`,title:checkInData.food.mealTitle,label:copy.label,category,date:checkInData.date,time:checkInData.time,location:copy.location,locationCategory:'home',imageUrl:matchedPhoto?.url||'',rating:5,mood:checkInData.wellbeing.mood||'satisfied',hungerLevel:checkInData.food.hungerBefore,fullnessLevel:checkInData.food.fullnessAfter,eatingPace:checkInData.food.eatingPace,distraction:checkInData.food.distraction,energyAfter:(checkInData.wellbeing.energyLevel||3)>=4?'energized':'neutral',coachFeedback:{title:copy.captured,message:checkInData.coachSummary||copy.fallbackSummary,type:'praise',badge:copy.badge},notes:checkInData.wellbeing.note,tags:[copy.badge,checkInData.timeOfDay,`${CHECKIN_SOURCE_TAG}${newCheckIn.id}`],createdAt:now};setMoments(prev=>[newMoment,...prev]);}
   };
 
   const applyVoiceJournal=React.useCallback((result:Awaited<ReturnType<typeof processVoiceCheckIn>>,transcript:string)=>{
@@ -90,7 +91,7 @@ export default function App(){
   const cancelMeal=()=>{setInitialMealCategory(null);setInitialMealText('');setInitialMealItems([]);setInitialMealNotes('');setInitialVoiceTranscript('');setMealClarificationQuestion('');setVoiceUnderstandingFailed(false);setAddModalHasBack(false);if(mealStartedAt.current){trackUx({eventName:'flow_finished',surface:'meal_editor',language,durationMs:Date.now()-mealStartedAt.current,outcome:'cancelled'});mealStartedAt.current=null;}setIsAddModalOpen(false);setEditingMoment(null)};
   const backFromMeal=()=>{setIsAddModalOpen(false);setInitialMealText('');setInitialMealItems([]);setInitialMealNotes('');setInitialVoiceTranscript('');setMealClarificationQuestion('');setVoiceUnderstandingFailed(false);setInitialMealCategory(null);setAddModalHasBack(false);setIsCaptureOpen(true)};
   const cancelCheckin=()=>{setRequestedPhase(null);if(checkinStartedAt.current){trackUx({eventName:'flow_finished',surface:'checkin',language,durationMs:Date.now()-checkinStartedAt.current,outcome:'cancelled'});checkinStartedAt.current=null;}setIsCheckInModalOpen(false);setIsMiddayCatchUpOpen(false)};
-  const handleDeleteMoment=(id:string)=>{setMoments(prev=>prev.filter(m=>m.id!==id));if(selectedMomentDetail?.id===id)setSelectedMomentDetail(null);};
+  const handleDeleteMoment=(id:string)=>{const moment=moments.find(m=>m.id===id);const sourceCheckInId=moment?.tags.find(tag=>tag.startsWith(CHECKIN_SOURCE_TAG))?.slice(CHECKIN_SOURCE_TAG.length);setMoments(prev=>prev.filter(m=>m.id!==id));if(sourceCheckInId)setCheckIns(prev=>prev.map(checkIn=>checkIn.id===sourceCheckInId?{...checkIn,food:undefined}:checkIn));if(selectedMomentDetail?.id===id)setSelectedMomentDetail(null);};
   const handleToggleFavorite=(id:string)=>{setMoments(prev=>prev.map(m=>m.id===id?{...m,isFavorite:!m.isFavorite}:m));if(selectedMomentDetail?.id===id)setSelectedMomentDetail(prev=>prev?{...prev,isFavorite:!prev.isFavorite}:null);};
   const go=(tab:ActiveTab)=>setActiveTab(tab==='type_analysis'||tab==='timeline'?tab:'today');
 
