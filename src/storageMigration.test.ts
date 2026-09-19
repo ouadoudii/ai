@@ -40,7 +40,7 @@ describe('persisted storage validation', () => {
       { id: 'broken' },
     ]));
     localStorage.setItem(CHECKINS_KEY, JSON.stringify([
-      { id: 'check-1', date: '2026-09-19', time: '08:00', wellbeing: { energyLevel: 4, mood: 'good' } },
+      { id: 'check-1', date: '2026-09-19', time: '08:00', timeOfDay: 'morning', wellbeing: { energyLevel: 4, mood: 'satisfied' } },
       {},
     ]));
 
@@ -50,7 +50,25 @@ describe('persisted storage validation', () => {
       { id: 'meal-1', title: 'Soup', date: '2026-09-19', time: '12:00' },
     ]);
     expect(JSON.parse(localStorage.getItem(CHECKINS_KEY) || '[]')).toEqual([
-      { id: 'check-1', date: '2026-09-19', time: '08:00', wellbeing: { energyLevel: 4, mood: 'good' } },
+      { id: 'check-1', date: '2026-09-19', time: '08:00', timeOfDay: 'morning', wellbeing: { energyLevel: 4, mood: 'satisfied' } },
     ]);
+  });
+
+  it('preserves legitimate sparse voice-only check-ins', () => {
+    const voiceOnly = {
+      id: 'voice-midday',
+      date: '2026-09-19',
+      time: '13:15',
+      timeOfDay: 'midday',
+      food: { mealTitle: 'كسكس بالخضرة', category: 'lunch' },
+      wellbeing: { voiceTranscription: 'فالغدا كليت كسكس بالخضرة وكنت جوعان' },
+      createdAt: 1,
+    };
+    localStorage.setItem(MIGRATION_KEY, 'done');
+    localStorage.setItem(CHECKINS_KEY, JSON.stringify([voiceOnly]));
+
+    migrateLegacyStorage();
+
+    expect(JSON.parse(localStorage.getItem(CHECKINS_KEY) || '[]')).toEqual([voiceOnly]);
   });
 });
