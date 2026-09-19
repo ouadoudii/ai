@@ -13,6 +13,10 @@ const checkIn = (date: string, time = '12:00', energy = 3, sleep = 7.5, meal = f
   createdAt: Date.parse(`${date}T${time}:00Z`),
 });
 
+const wellbeingOnly = (date: string, time = '23:00'): DailyCheckIn => ({
+  id: `${date}-${time}-wellbeing`, date, time, timeOfDay: 'evening', sleep: {}, wellbeing: { energyLevel: 3 }, createdAt: Date.parse(`${date}T${time}:00Z`),
+});
+
 describe('personal proactive insights', () => {
   it('emits no generic reminder when personal evidence is insufficient', () => {
     expect(deriveProactiveInsights([checkIn('2026-09-01'), checkIn('2026-09-02')])).toEqual([]);
@@ -36,6 +40,18 @@ describe('personal proactive insights', () => {
       checkIn('2026-08-21', '19:00', 3, 7.5, true), checkIn('2026-08-22', '08:00', 3, 6.2),
     ];
     expect(deriveProactiveInsights(data).find(insight => insight.kind === 'late-meal-sleep')).toBeUndefined();
+  });
+
+  it('links next-day sleep even when another same-day check-in intervenes', () => {
+    const data = [
+      checkIn('2026-08-01', '22:00', 3, 7.5, true), wellbeingOnly('2026-08-01'), checkIn('2026-08-02', '08:00', 3, 6.0),
+      checkIn('2026-08-05', '22:00', 3, 7.5, true), wellbeingOnly('2026-08-05'), checkIn('2026-08-06', '08:00', 3, 6.2),
+      checkIn('2026-08-09', '22:00', 3, 7.5, true), wellbeingOnly('2026-08-09'), checkIn('2026-08-10', '08:00', 3, 6.1),
+      checkIn('2026-08-13', '19:00', 3, 7.5, true), checkIn('2026-08-14', '08:00', 3, 7.6),
+      checkIn('2026-08-17', '19:00', 3, 7.5, true), checkIn('2026-08-18', '08:00', 3, 7.4),
+      checkIn('2026-08-21', '19:00', 3, 7.5, true), checkIn('2026-08-22', '08:00', 3, 7.7),
+    ];
+    expect(deriveProactiveInsights(data)[0]).toMatchObject({ kind: 'late-meal-sleep', evidenceDays: 3 });
   });
 
   it('emits a late-meal insight only when sleep is meaningfully worse than comparison nights', () => {
