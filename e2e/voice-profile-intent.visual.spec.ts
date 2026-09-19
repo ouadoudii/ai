@@ -50,7 +50,7 @@ async function speak(page:any,language:Language){
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
   const chooser=page.getByRole('dialog');
-  await chooser.getByRole('button').last().click();
+  await chooser.locator('[data-capture-method="voice"]').click();
   await page.getByRole('button',{name:language==='de'?'Aufnahme starten':'ابدأ التسجيل'}).click();
   await page.getByRole('button',{name:language==='de'?'Aufnahme stoppen':'إيقاف التسجيل'}).click();
 }
