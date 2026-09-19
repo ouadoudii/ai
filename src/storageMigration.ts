@@ -17,8 +17,10 @@ function validMoment(value: unknown): boolean {
 function validCheckIn(value: unknown): boolean {
   if (!isObject(value)) return false;
   if (typeof value.id !== 'string' || typeof value.date !== 'string' || typeof value.time !== 'string') return false;
-  if (!isObject(value.wellbeing)) return false;
-  return typeof value.wellbeing.energyLevel === 'number' && typeof value.wellbeing.mood === 'string';
+  if (!['morning', 'midday', 'evening'].includes(String(value.timeOfDay))) return false;
+  // DailyCheckIn wellbeing fields are intentionally optional: voice-only and other
+  // partial check-ins are legitimate persisted history and must survive startup.
+  return isObject(value.wellbeing);
 }
 
 function sanitizeArrayStorage(key: string, validator: (value: unknown) => boolean) {
