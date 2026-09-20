@@ -4,8 +4,6 @@
  */
 import React from 'react';
 import { FoodMoment, ActiveTab, DailyCheckIn, TimeOfDayPhase } from './types';
-import { INITIAL_FOOD_MOMENTS } from './data/momentsData';
-import { INITIAL_DAILY_CHECK_INS } from './data/checkInsData';
 import { Header } from './components/Header';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AddMomentModal } from './components/AddMomentModal';
@@ -35,8 +33,8 @@ const CHECKIN_SOURCE_TAG='source-checkin:';
 
 export default function App(){
   const {language}=useLanguage();
-  const [moments,setMoments]=React.useState<FoodMoment[]>(()=>{try{const stored=localStorage.getItem(STORAGE_KEY)||localStorage.getItem('food_journey_moments_v1');if(stored)return JSON.parse(stored);}catch(e){console.error('Failed to load moments from localStorage',e);}return INITIAL_FOOD_MOMENTS;});
-  const [checkIns,setCheckIns]=React.useState<DailyCheckIn[]>(()=>{try{const stored=localStorage.getItem(STORAGE_KEY_CHECKINS)||localStorage.getItem('getyourcoach_checkins_v1');if(stored)return JSON.parse(stored);}catch(e){console.error('Failed to load check-ins from localStorage',e);}return INITIAL_DAILY_CHECK_INS;});
+  const [moments,setMoments]=React.useState<FoodMoment[]>(()=>{try{const stored=localStorage.getItem(STORAGE_KEY)||localStorage.getItem('food_journey_moments_v1');if(stored)return JSON.parse(stored);}catch(e){console.error('Failed to load moments from localStorage',e);}return [];});
+  const [checkIns,setCheckIns]=React.useState<DailyCheckIn[]>(()=>{try{const stored=localStorage.getItem(STORAGE_KEY_CHECKINS)||localStorage.getItem('getyourcoach_checkins_v1');if(stored)return JSON.parse(stored);}catch(e){console.error('Failed to load check-ins from localStorage',e);}return [];});
   React.useEffect(()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(moments));}catch(e){console.error('Failed to save moments',e)}},[moments]);
   React.useEffect(()=>{try{localStorage.setItem(STORAGE_KEY_CHECKINS,JSON.stringify(checkIns));}catch(e){console.error('Failed to save check-ins',e)}},[checkIns]);
 
