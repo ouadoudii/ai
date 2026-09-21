@@ -15,7 +15,6 @@ const liveFiles = [
   'src/components/NutritionTypeAnalysisView.tsx',
   'src/components/CaptureChoiceModal.tsx',
   'src/components/DailyCheckInModal.tsx',
-  'src/components/CatchUpMiddayCheckInModal.tsx',
   'src/components/MealVisualPicker.tsx',
   'src/components/MomentDetailModal.tsx',
   'src/components/MomentOnboarding.tsx',
