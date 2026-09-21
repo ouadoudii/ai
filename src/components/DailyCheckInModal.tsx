@@ -15,6 +15,7 @@ interface DailyCheckInModalProps {
 }
 
 const FOCUSABLE_SELECTOR='button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
+export const getCanonicalLocalTime=(date:Date):string=>`${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
 
 export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose,onSaveCheckIn,phase:requestedPhase})=>{
   const {language}=useLanguage();
@@ -71,28 +72,14 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
       if(event.key!=='Tab')return;
       const candidates=Array.from(dialog.querySelectorAll(FOCUSABLE_SELECTOR)) as HTMLElement[];
       const focusable=candidates.filter(element=>element.offsetParent!==null);
-      if(!focusable.length){
-        event.preventDefault();
-        dialog.focus();
-        return;
-      }
+      if(!focusable.length){event.preventDefault();dialog.focus();return;}
       const first=focusable[0];
       const last=focusable[focusable.length-1];
-      if(event.shiftKey&&(document.activeElement===first||!dialog.contains(document.activeElement))){
-        event.preventDefault();
-        last.focus();
-      }else if(!event.shiftKey&&document.activeElement===last){
-        event.preventDefault();
-        first.focus();
-      }
+      if(event.shiftKey&&(document.activeElement===first||!dialog.contains(document.activeElement))){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
     };
     document.addEventListener('keydown',handleKeyDown);
-    return ()=>{
-      cancelAnimationFrame(frame);
-      document.removeEventListener('keydown',handleKeyDown);
-      document.body.style.overflow=previousOverflow;
-      if(previousFocus?.isConnected)previousFocus.focus();
-    };
+    return ()=>{cancelAnimationFrame(frame);document.removeEventListener('keydown',handleKeyDown);document.body.style.overflow=previousOverflow;if(previousFocus?.isConnected)previousFocus.focus();};
   },[isOpen]);
   if(!isOpen)return null;
 
@@ -100,7 +87,7 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
     const now=new Date();
     onSaveCheckIn({
       date:getLocalDateKey(now),
-      time:now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+      time:getCanonicalLocalTime(now),
       timeOfDay:timePhase,
       sleep:timePhase==='morning'?{durationHours:sleepHours,quality:sleepQuality,bedtime,wakeTime,wakeFeeling}:undefined,
       food:mealItems.length?{mealTitle:mealItems.join(' + '),category:timePhase==='morning'?'breakfast':timePhase==='midday'?'lunch':'dinner',hungerBefore,fullnessAfter,eatingPace:'moderate',distraction:'mindful'}:undefined,
