@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { migrateLegacyStorage } from './storageMigration';
+import { loadPersistedCheckIns, loadPersistedMoments, migrateLegacyStorage } from './storageMigration';
 
 const MOMENTS_KEY = 'nimmapp_moments_v1';
 const CHECKINS_KEY = 'nimmapp_checkins_v1';
@@ -30,6 +30,32 @@ describe('persisted storage validation', () => {
     expect(localStorage.getItem(MOMENTS_KEY)).toBeNull();
     expect(localStorage.getItem(CHECKINS_KEY)).toBeNull();
     expect(localStorage.getItem(MIGRATION_KEY)).toBe('done');
+  });
+
+  it('runtime loaders reject valid JSON with invalid container shapes', () => {
+    localStorage.setItem(MOMENTS_KEY, JSON.stringify({ unexpected: 'object' }));
+    localStorage.setItem(CHECKINS_KEY, 'null');
+
+    expect(loadPersistedMoments()).toEqual([]);
+    expect(loadPersistedCheckIns()).toEqual([]);
+  });
+
+  it('runtime loaders filter malformed records but preserve valid history', () => {
+    const moment = { id: 'meal-1', title: 'Soup', date: '2026-09-19', time: '12:00' };
+    const checkIn = { id: 'check-1', date: '2026-09-19', time: '08:00', timeOfDay: 'morning', wellbeing: { energyLevel: 4, mood: 'satisfied' } };
+    localStorage.setItem(MOMENTS_KEY, JSON.stringify([moment, null, { id: 'broken' }]));
+    localStorage.setItem(CHECKINS_KEY, JSON.stringify([checkIn, {}]));
+
+    expect(loadPersistedMoments()).toEqual([moment]);
+    expect(loadPersistedCheckIns()).toEqual([checkIn]);
+  });
+
+  it('runtime loaders use a valid legacy fallback when the current payload is corrupt', () => {
+    const legacyMoment = { id: 'legacy-meal', title: 'Couscous', date: '2026-09-19', time: '13:00' };
+    localStorage.setItem(MOMENTS_KEY, '{}');
+    localStorage.setItem('food_journey_moments_v1', JSON.stringify([legacyMoment]));
+
+    expect(loadPersistedMoments()).toEqual([legacyMoment]);
   });
 
   it('preserves valid entries while dropping malformed entries after migration', () => {
