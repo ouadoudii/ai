@@ -445,13 +445,17 @@ test('Voice capture handles denied microphone permission without trapping the us
   await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
 });
 
-test('Voice capture starts, stops, transcribes and prefills the meal editor',async({page})=>{
+test('Voice capture starts, stops, transcribes and stores the recognized meal',async({page})=>{
   await page.route('**/api/voice-checkin',async route=>{
     const body=JSON.parse(route.request().postData()||'{}');
     expect(body.transcript).toBe('boiled eggs');
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
       coachFeedback:{title:'Got it',message:'Understood',type:'praise',badge:'Voice',habitScore:90},
-      extractedData:{mealItems:['boiled eggs'],mealTitle:'boiled eggs',mealCategory:'breakfast'}
+      extractedData:{
+        mealDetected:true,mealItems:['boiled eggs'],mealTitle:'boiled eggs',mealCategory:'breakfast',mealContext:'',
+        meals:[{category:'breakfast',timeOfDay:'morning',time:'',mealTitle:'boiled eggs',mealItems:['boiled eggs'],hungerBefore:0,fullnessAfter:0}],
+        sleepHours:0,sleepQuality:0,wakeFeeling:'',wellbeingEntries:[]
+      }
     })});
   });
   await page.addInitScript(()=>{
@@ -483,10 +487,9 @@ test('Voice capture starts, stops, transcribes and prefills the meal editor',asy
   await page.getByRole('button',{name:'Start recording'}).click();
   await expect(page.getByRole('button',{name:'Stop recording'})).toBeVisible();
   await page.getByRole('button',{name:'Stop recording'}).click();
-  await expect(page.getByTestId('voice-understanding-card')).toContainText('boiled eggs');
-  await expect(page.getByText('boiled eggs',{exact:true}).last()).toBeVisible();
-  await expect(page.locator('input[value="boiled eggs"]')).toHaveCount(0);
-  await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
+  await expect.poll(async()=>page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1')||'')).toContain('boiled eggs');
+  await expect(page.getByTestId('voice-understanding-card')).toHaveCount(0);
+  await expect(page.getByRole('heading',{name:'What did you have?'})).toHaveCount(0);
 });
 
 test('Voice Back during recording discards audio and returns to Add choices',async({page})=>{
@@ -520,10 +523,16 @@ test('Arabic Whisper understands a full Darija message semantically with multipl
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
       coachFeedback:{title:'تمام',message:'تم فهم الرسالة كاملة',type:'praise',badge:'Voice',habitScore:90},
       extractedData:{
+        mealDetected:true,
         mealItems:['بيض مسلوق','خبز','قهوة بالحليب'],
         mealTitle:'بيض مسلوق · خبز · قهوة بالحليب',
         mealCategory:'breakfast',
-        mealContext:'المستخدم قال إنه لم يأكل الحلو'
+        mealContext:'',
+        meals:[
+          {category:'breakfast',timeOfDay:'morning',time:'',mealTitle:'بيض مسلوق · خبز',mealItems:['بيض مسلوق','خبز'],hungerBefore:0,fullnessAfter:0},
+          {category:'coffee',timeOfDay:'morning',time:'',mealTitle:'قهوة بالحليب',mealItems:['قهوة بالحليب'],hungerBefore:0,fullnessAfter:0}
+        ],
+        sleepHours:0,sleepQuality:0,wakeFeeling:'',wellbeingEntries:[]
       }
     })});
   });
@@ -566,11 +575,12 @@ test('Arabic Whisper understands a full Darija message semantically with multipl
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
   await expect.poll(()=>receivedTranscript).toContain('كليت جوج بيضات مسلوقين');
-  await expect(page.getByTestId('voice-understanding-card')).toContainText('كليت جوج بيضات مسلوقين');
-  await expect(page.getByText('بيض مسلوق',{exact:true})).toBeVisible();
-  await expect(page.getByText('خبز',{exact:true})).toBeVisible();
-  await expect(page.getByText('قهوة بالحليب',{exact:true})).toBeVisible();
-  await expect(page.getByText('الحلو',{exact:true})).toHaveCount(0);
+  await expect.poll(async()=>page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1')||'')).toContain('بيض مسلوق');
+  const stored=await page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1')||'');
+  expect(stored).toContain('خبز');
+  expect(stored).toContain('قهوة بالحليب');
+  expect(stored).not.toContain('الحلو');
+  await expect(page.getByTestId('voice-understanding-card')).toHaveCount(0);
 });
 
 test('Arabic Whisper semantic failure keeps the full message out of autocomplete search',async({page})=>{
@@ -628,7 +638,11 @@ test('Arabic Whisper transcript is sent once as one complete message',async({pag
     expect(body.transcript).toBe(raw);
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
       coachFeedback:{title:'تمام',message:'فهمت',type:'praise',badge:'Voice',habitScore:90},
-      extractedData:{mealItems:['مسمن بالعسل','أتاي'],mealTitle:'مسمن بالعسل · أتاي',mealCategory:'breakfast'}
+      extractedData:{
+        mealDetected:true,mealItems:['مسمن بالعسل','أتاي'],mealTitle:'مسمن بالعسل · أتاي',mealCategory:'breakfast',mealContext:'',
+        meals:[{category:'breakfast',timeOfDay:'morning',time:'',mealTitle:'مسمن بالعسل · أتاي',mealItems:['مسمن بالعسل','أتاي'],hungerBefore:0,fullnessAfter:0}],
+        sleepHours:0,sleepQuality:0,wakeFeeling:'',wellbeingEntries:[]
+      }
     })});
   });
   await page.addInitScript((rawText)=>{
@@ -663,8 +677,9 @@ test('Arabic Whisper transcript is sent once as one complete message',async({pag
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
   await expect.poll(()=>calls).toBe(1);
-  await expect(page.getByText('مسمن بالعسل',{exact:true})).toBeVisible();
-  await expect(page.getByText('أتاي',{exact:true})).toBeVisible();
+  await expect.poll(async()=>page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1')||'')).toContain('مسمن بالعسل');
+  const stored=await page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1')||'');
+  expect(stored).toContain('أتاي');
 });
 
 

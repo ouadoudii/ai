@@ -1,4 +1,4 @@
-name: Quality gate and build
+name: Tests, E2E and build
 
 on:
   push:
@@ -8,7 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  quality-build:
+  tests:
+    name: Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,38 +20,64 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Arab user quality gate
-        run: npm run quality:arab-users
+      - name: Typecheck
+        run: npm run lint
 
-      - name: Full quality gate
-        run: npm run quality:deploy
+      - name: Unit and integration tests
+        run: npm test
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Install Playwright browser
         run: |
-          # GitHub's Ubuntu image can include Google's Chrome apt source.
-          # Playwright does not need that repository, and transient metadata
-          # mismatches there must not block our browser quality gate.
           sudo rm -f /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/google-chrome.sources
           sudo apt-get clean
           sudo rm -rf /var/lib/apt/lists/*
           npx playwright install --with-deps chromium
 
-      - name: Real-browser Arabic visual journeys
-        run: npm run test:visual
+      - name: Full Playwright E2E suite
+        run: npm run test:e2e
 
-      - name: Upload browser screenshots and traces
+      - name: Upload browser screenshots, videos and traces
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: arab-user-visual-report
+          name: e2e-report
           path: |
             test-results/
             playwright-report/
             visual-artifacts/
           if-no-files-found: ignore
           retention-days: 14
+
+  build:
+    name: Production build
+    needs: [tests, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Production build
         run: npm run build
