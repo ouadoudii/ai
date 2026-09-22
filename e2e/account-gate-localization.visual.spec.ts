@@ -48,7 +48,9 @@ for (const copy of cases) {
     await expect(page.getByPlaceholder(copy.email)).toBeVisible();
     await expect(page.getByPlaceholder(copy.password)).toBeVisible();
 
-    await page.getByRole('button', { name: new RegExp(copy.create) }).last().click();
+    const createAccount = page.getByText(copy.create, { exact: true }).filter({ visible: true });
+    await expect(createAccount).toBeVisible();
+    await createAccount.click();
     await expect(page.getByRole('heading', { name: copy.create })).toBeVisible();
     await expect(page.getByPlaceholder(copy.email)).toBeVisible();
     await expect(page.getByPlaceholder(copy.password)).toBeVisible();
