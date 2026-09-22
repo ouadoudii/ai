@@ -10,14 +10,15 @@ const cases: Array<{
   device: string;
   signin: string;
   create: string;
+  createFromLogin: string;
   welcome: string;
   email: string;
   password: string;
 }> = [
-  { language: 'de', dir: 'ltr', title: 'Deine Tage. Deine Muster.', intro: 'Starte auf diesem Gerät oder nutze ein Konto, um deine Einträge zu synchronisieren.', device: 'Auf diesem Gerät starten', signin: 'Anmelden', create: 'Konto erstellen', welcome: 'Willkommen zurück', email: 'E-Mail', password: 'Passwort' },
-  { language: 'en', dir: 'ltr', title: 'Your days. Your patterns.', intro: 'Start on this device or use an account to sync your entries.', device: 'Start on this device', signin: 'Sign in', create: 'Create account', welcome: 'Welcome back', email: 'Email', password: 'Password' },
-  { language: 'fr', dir: 'ltr', title: 'Tes journées. Tes habitudes.', intro: 'Commence sur cet appareil ou utilise un compte pour synchroniser tes entrées.', device: 'Commencer sur cet appareil', signin: 'Se connecter', create: 'Créer un compte', welcome: 'Bon retour', email: 'E-mail', password: 'Mot de passe' },
-  { language: 'ar', dir: 'rtl', title: 'أيامك. أنماطك.', intro: 'ابدأ على هذا الجهاز أو استخدم حساباً لمزامنة تسجيلاتك.', device: 'ابدأ على هذا الجهاز', signin: 'تسجيل الدخول', create: 'إنشاء حساب', welcome: 'مرحباً بعودتك', email: 'البريد الإلكتروني', password: 'كلمة المرور' },
+  { language: 'de', dir: 'ltr', title: 'Deine Tage. Deine Muster.', intro: 'Starte auf diesem Gerät oder nutze ein Konto, um deine Einträge zu synchronisieren.', device: 'Auf diesem Gerät starten', signin: 'Anmelden', create: 'Konto erstellen', createFromLogin: 'Neues Konto erstellen', welcome: 'Willkommen zurück', email: 'E-Mail', password: 'Passwort' },
+  { language: 'en', dir: 'ltr', title: 'Your days. Your patterns.', intro: 'Start on this device or use an account to sync your entries.', device: 'Start on this device', signin: 'Sign in', create: 'Create account', createFromLogin: 'Create a new account', welcome: 'Welcome back', email: 'Email', password: 'Password' },
+  { language: 'fr', dir: 'ltr', title: 'Tes journées. Tes habitudes.', intro: 'Commence sur cet appareil ou utilise un compte pour synchroniser tes entrées.', device: 'Commencer sur cet appareil', signin: 'Se connecter', create: 'Créer un compte', createFromLogin: 'Créer un nouveau compte', welcome: 'Bon retour', email: 'E-mail', password: 'Mot de passe' },
+  { language: 'ar', dir: 'rtl', title: 'أيامك. أنماطك.', intro: 'ابدأ على هذا الجهاز أو استخدم حساباً لمزامنة تسجيلاتك.', device: 'ابدأ على هذا الجهاز', signin: 'تسجيل الدخول', create: 'إنشاء حساب', createFromLogin: 'إنشاء حساب جديد', welcome: 'مرحباً بعودتك', email: 'البريد الإلكتروني', password: 'كلمة المرور' },
 ];
 
 async function seedFreshGate(page: any, language: AppLanguage) {
@@ -48,7 +49,7 @@ for (const copy of cases) {
     await expect(page.getByPlaceholder(copy.email)).toBeVisible();
     await expect(page.getByPlaceholder(copy.password)).toBeVisible();
 
-    const createAccount = page.getByText(copy.create, { exact: true }).filter({ visible: true });
+    const createAccount = page.getByRole('button', { name: copy.createFromLogin, exact: true });
     await expect(createAccount).toBeVisible();
     await createAccount.click();
     await expect(page.getByRole('heading', { name: copy.create })).toBeVisible();
