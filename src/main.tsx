@@ -5,7 +5,7 @@ import { CaryAccountGate } from './components/CaryAccountGate';
 import { MomentOnboarding } from './components/MomentOnboarding';
 import { CaryCloudMemorySync } from './components/CaryCloudMemorySync';
 import { LanguageProvider, useLanguage } from './i18n';
-import { migrateLegacyStorage } from './storageMigration';
+import { loadPersistedCheckIns, loadPersistedMoments, migrateLegacyStorage } from './storageMigration';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -23,4 +23,12 @@ const AccountButton:React.FC<{accessMode:'guest'|'account';session:any;openAccou
 
 if(!rootElement)throw new Error('Root element #root is missing');
 migrateLegacyStorage();
+// Normalize the exact values App will hydrate before React renders. This closes the
+// gap where a stale/corrupt legacy fallback can survive an already-completed migration.
+try {
+  localStorage.setItem('nimmapp_moments_v1', JSON.stringify(loadPersistedMoments()));
+  localStorage.setItem('nimmapp_checkins_v1', JSON.stringify(loadPersistedCheckIns()));
+} catch {
+  // Storage can be unavailable in privacy modes; App already falls back in memory.
+}
 createRoot(rootElement).render(<StrictMode><RuntimeErrorBoundary><LanguageProvider><CaryAccountGate>{({accessMode,session,openAccount})=>(<MomentOnboarding><CaryCloudMemorySync session={accessMode==='account'?session:null}/><App/><AccountButton accessMode={accessMode} session={session} openAccount={openAccount}/></MomentOnboarding>)}</CaryAccountGate></LanguageProvider></RuntimeErrorBoundary></StrictMode>);
