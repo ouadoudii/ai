@@ -72,7 +72,7 @@ describe('44 Arab-country user simulations',()=>{
       const captured=(html.match(/تم تسجيل هذه اللحظة/g)||[]).length;
       expect(captured).toBe(scenario.phases.length);
       expect(html).toContain('وجبة خفيفة');
-      if(scenario.hasSnack) expect(html).toContain('تم تسجيل وجبة خفيفة');
+      if(scenario.hasSnack) expect(html).toContain('أضف وجبة خفيفة أخرى');
     });
   }
 
