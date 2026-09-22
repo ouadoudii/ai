@@ -3,24 +3,50 @@ import { linkLegacyCheckInMeals } from './utils/legacyCheckInMealLinks';
 
 const MOMENTS_KEY = 'nimmapp_moments_v1';
 const CHECKINS_KEY = 'nimmapp_checkins_v1';
+const LEGACY_MOMENTS_KEY = 'food_journey_moments_v1';
+const LEGACY_CHECKINS_KEY = 'getyourcoach_checkins_v1';
 const MIGRATION_KEY = 'cary_storage_schema_v3';
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function validMoment(value: unknown): boolean {
+function validMoment(value: unknown): value is FoodMoment {
   if (!isObject(value)) return false;
   return typeof value.id === 'string' && typeof value.title === 'string' && typeof value.date === 'string' && typeof value.time === 'string';
 }
 
-function validCheckIn(value: unknown): boolean {
+function validCheckIn(value: unknown): value is DailyCheckIn {
   if (!isObject(value)) return false;
   if (typeof value.id !== 'string' || typeof value.date !== 'string' || typeof value.time !== 'string') return false;
   if (!['morning', 'midday', 'evening'].includes(String(value.timeOfDay))) return false;
   // DailyCheckIn wellbeing fields are intentionally optional: voice-only and other
   // partial check-ins are legitimate persisted history and must survive startup.
   return isObject(value.wellbeing);
+}
+
+function readValidatedArray<T>(keys: string[], validator: (value: unknown) => value is T): T[] {
+  for (const key of keys) {
+    const raw = localStorage.getItem(key);
+    if (!raw) continue;
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) continue;
+      return parsed.filter(validator);
+    } catch {
+      // Try the legacy fallback before giving up. App hydration must never trust
+      // syntactically or structurally invalid persisted state.
+    }
+  }
+  return [];
+}
+
+export function loadPersistedMoments(): FoodMoment[] {
+  return readValidatedArray([MOMENTS_KEY, LEGACY_MOMENTS_KEY], validMoment);
+}
+
+export function loadPersistedCheckIns(): DailyCheckIn[] {
+  return readValidatedArray([CHECKINS_KEY, LEGACY_CHECKINS_KEY], validCheckIn);
 }
 
 function sanitizeArrayStorage(key: string, validator: (value: unknown) => boolean) {
@@ -62,8 +88,8 @@ export function migrateLegacyStorage() {
 
     if (localStorage.getItem(MIGRATION_KEY) === 'done') return;
     linkPersistedLegacyCheckInMeals();
-    localStorage.removeItem('food_journey_moments_v1');
-    localStorage.removeItem('getyourcoach_checkins_v1');
+    localStorage.removeItem(LEGACY_MOMENTS_KEY);
+    localStorage.removeItem(LEGACY_CHECKINS_KEY);
     localStorage.setItem(MIGRATION_KEY, 'done');
   } catch {
     // Storage may be blocked by the browser. Cary can still run with preset data.
