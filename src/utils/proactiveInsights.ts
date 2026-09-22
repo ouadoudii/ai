@@ -16,6 +16,8 @@ export interface ProactiveInsightHistory {
 
 const DAY = 24 * 60 * 60 * 1000;
 const COOLDOWN = 7 * DAY;
+const MIN_ENERGY_BASELINE_SAMPLES = 3;
+const MIN_ENERGY_DIFFERENCE = 0.75;
 const MIN_LATE_MEAL_SLEEP_SAMPLES = 3;
 const MIN_BASELINE_SLEEP_SAMPLES = 3;
 const MIN_SLEEP_DIFFERENCE_HOURS = 0.75;
@@ -49,7 +51,13 @@ export function deriveProactiveInsights(
       values.push(entry.wellbeing.energyLevel!);
       byWeekday.set(weekday, values);
     }
-    const recurring = [...byWeekday.entries()].find(([, values]) => values.length >= 3 && average(values) <= 2.5);
+    const recurring = [...byWeekday.entries()].find(([weekday, values]) => {
+      if (values.length < 3 || average(values) > 2.5) return false;
+      const baseline = energy
+        .filter(entry => new Date(`${entry.date}T12:00:00`).getDay() !== weekday)
+        .map(entry => entry.wellbeing.energyLevel!);
+      return baseline.length >= MIN_ENERGY_BASELINE_SAMPLES && average(baseline) - average(values) >= MIN_ENERGY_DIFFERENCE;
+    });
     if (recurring) {
       const [weekday, values] = recurring;
       const id = `energy-pattern:${weekday}`;
