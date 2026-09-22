@@ -1,17 +1,30 @@
 import { describe, expect, it } from 'vitest';
-import { DailyCheckIn, FoodMoment } from '../types';
+import { DailyCheckIn, FoodMoment, TimeOfDayPhase } from '../types';
 import { CHECKIN_SOURCE_TAG, reconcileCheckInMoments } from './checkInMomentState';
 
-const checkIn = (id: string, date = '2026-09-23', timeOfDay: DailyCheckIn['timeOfDay'] = 'midday') => ({
+const checkIn = (id: string, date = '2026-09-23', timeOfDay: TimeOfDayPhase = 'midday'): DailyCheckIn => ({
   id,
   date,
+  time: '12:30',
   timeOfDay,
-} as DailyCheckIn);
+  wellbeing: {},
+  createdAt: 1,
+});
 
-const moment = (id: string, sourceId?: string) => ({
+const moment = (id: string, sourceId?: string): FoodMoment => ({
   id,
+  title: id,
+  label: id,
+  category: 'lunch',
+  date: '2026-09-23',
+  time: '12:30',
+  location: 'home',
+  locationCategory: 'home',
+  imageUrl: '',
+  mood: 'satisfied',
   tags: sourceId ? [`${CHECKIN_SOURCE_TAG}${sourceId}`] : ['manual'],
-} as FoodMoment);
+  createdAt: 1,
+});
 
 describe('reconcileCheckInMoments', () => {
   it('replaces the moment linked to the corrected same-phase check-in', () => {
