@@ -30,6 +30,14 @@ describe('personal proactive insights', () => {
     expect(deriveProactiveInsights(data)[0]).toMatchObject({ kind: 'energy-pattern', evidenceDays: 3 });
   });
 
+  it('does not invent a weekday-specific pattern when energy is similarly low on other days', () => {
+    const data = [
+      checkIn('2026-09-07', '12:00', 2), checkIn('2026-09-14', '12:00', 2), checkIn('2026-09-21', '12:00', 2),
+      checkIn('2026-09-08', '12:00', 2), checkIn('2026-09-09', '12:00', 2), checkIn('2026-09-10', '12:00', 2),
+    ];
+    expect(deriveProactiveInsights(data).find(insight => insight.kind === 'energy-pattern')).toBeUndefined();
+  });
+
   it('does not blame late meals when short sleep matches the personal baseline', () => {
     const data = [
       checkIn('2026-08-01', '22:00', 3, 7.5, true), checkIn('2026-08-02', '08:00', 3, 6.1),
