@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { CHECKIN_SOURCE_TAG } from './utils/checkInMomentState';
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
 
 describe('check-in meal deletion consistency', () => {
   it('links a check-in-derived timeline meal to its source check-in', () => {
-    expect(app).toContain("const CHECKIN_SOURCE_TAG='source-checkin:'");
+    expect(CHECKIN_SOURCE_TAG).toBe('source-checkin:');
     expect(app).toContain('`${CHECKIN_SOURCE_TAG}${newCheckIn.id}`');
   });
 

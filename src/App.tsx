@@ -21,6 +21,7 @@ import { classifyVoiceIntent, processVoiceCheckIn } from './apiClient';
 import { getLocalDateKey } from './utils/dateKey';
 import { getDishPhoto } from './utils/dishPhoto';
 import { getCheckInMomentCopy } from './utils/checkInMomentLocalization';
+import { CHECKIN_SOURCE_TAG, reconcileCheckInMoments } from './utils/checkInMomentState';
 import { trackUx } from './utils/uxAnalytics';
 import { buildVoiceJournalEntries } from './utils/voiceJournalApply';
 import { mergeVoiceCheckIns, mergeVoiceMoments } from './utils/voiceJournalState';
@@ -29,7 +30,6 @@ import { useLanguage } from './i18n';
 const STORAGE_KEY='nimmapp_moments_v1';
 const STORAGE_KEY_CHECKINS='nimmapp_checkins_v1';
 const SEEDED_CHECKIN_IDS=new Set(['checkin-1','checkin-2','checkin-3']);
-const CHECKIN_SOURCE_TAG='source-checkin:';
 
 export default function App(){
   const {language}=useLanguage();
@@ -74,8 +74,10 @@ export default function App(){
   const handleSaveCheckIn=(checkInData:Omit<DailyCheckIn,'id'|'createdAt'>)=>{
     if(checkinStartedAt.current){trackUx({eventName:'flow_finished',surface:'checkin',language,durationMs:Date.now()-checkinStartedAt.current,outcome:'completed',metadata:{phase:checkInData.timeOfDay,has_photo:false}});checkinStartedAt.current=null;}
     const now=Date.now();const newCheckIn:DailyCheckIn={...checkInData,id:`user-checkin-${now}`,createdAt:now};
+    const previousCheckIns=checkIns.filter(c=>c.date===checkInData.date&&c.timeOfDay===checkInData.timeOfDay&&!SEEDED_CHECKIN_IDS.has(c.id));
     setCheckIns(prev=>[newCheckIn,...prev.filter(c=>!(c.date===checkInData.date&&c.timeOfDay===checkInData.timeOfDay&&!SEEDED_CHECKIN_IDS.has(c.id)))]);
-    if(checkInData.food?.mealTitle){const category=checkInData.food.category;const matchedPhoto=getDishPhoto(checkInData.food.mealTitle,category);const copy=getCheckInMomentCopy(language,category);const newMoment:FoodMoment={id:`moment-${now}`,title:checkInData.food.mealTitle,label:copy.label,category,date:checkInData.date,time:checkInData.time,location:copy.location,locationCategory:'home',imageUrl:matchedPhoto?.url||'',rating:5,mood:checkInData.wellbeing.mood||'satisfied',hungerLevel:checkInData.food.hungerBefore,fullnessLevel:checkInData.food.fullnessAfter,eatingPace:checkInData.food.eatingPace,distraction:checkInData.food.distraction,energyAfter:(checkInData.wellbeing.energyLevel||3)>=4?'energized':'neutral',coachFeedback:{title:copy.captured,message:checkInData.coachSummary||copy.fallbackSummary,type:'praise',badge:copy.badge},notes:checkInData.wellbeing.note,tags:[copy.badge,checkInData.timeOfDay,`${CHECKIN_SOURCE_TAG}${newCheckIn.id}`],createdAt:now};setMoments(prev=>[newMoment,...prev]);}
+    if(checkInData.food?.mealTitle){const category=checkInData.food.category;const matchedPhoto=getDishPhoto(checkInData.food.mealTitle,category);const copy=getCheckInMomentCopy(language,category);const newMoment:FoodMoment={id:`moment-${now}`,title:checkInData.food.mealTitle,label:copy.label,category,date:checkInData.date,time:checkInData.time,location:copy.location,locationCategory:'home',imageUrl:matchedPhoto?.url||'',rating:5,mood:checkInData.wellbeing.mood||'satisfied',hungerLevel:checkInData.food.hungerBefore,fullnessLevel:checkInData.food.fullnessAfter,eatingPace:checkInData.food.eatingPace,distraction:checkInData.food.distraction,energyAfter:(checkInData.wellbeing.energyLevel||3)>=4?'energized':'neutral',coachFeedback:{title:copy.captured,message:checkInData.coachSummary||copy.fallbackSummary,type:'praise',badge:copy.badge},notes:checkInData.wellbeing.note,tags:[copy.badge,checkInData.timeOfDay,`${CHECKIN_SOURCE_TAG}${newCheckIn.id}`],createdAt:now};setMoments(prev=>reconcileCheckInMoments(prev,previousCheckIns,checkInData.date,checkInData.timeOfDay,newMoment));}
+    else if(previousCheckIns.length)setMoments(prev=>reconcileCheckInMoments(prev,previousCheckIns,checkInData.date,checkInData.timeOfDay));
   };
 
   const applyVoiceJournal=React.useCallback((result:Awaited<ReturnType<typeof processVoiceCheckIn>>,transcript:string)=>{
