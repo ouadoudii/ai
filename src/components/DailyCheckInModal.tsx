@@ -35,6 +35,8 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
   const [fullnessAfter,setFullnessAfter]=React.useState(4);
   const [energyLevel,setEnergyLevel]=React.useState(3);
   const [mood,setMood]=React.useState<FoodMood>('satisfied');
+  const [energyTouched,setEnergyTouched]=React.useState(false);
+  const [moodTouched,setMoodTouched]=React.useState(false);
   const dialogRef=React.useRef<HTMLElement>(null);
   const closeButtonRef=React.useRef<HTMLButtonElement>(null);
   const onCloseRef=React.useRef(onClose);
@@ -48,6 +50,8 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
       setFullnessAfter(4);
       setEnergyLevel(3);
       setMood('satisfied');
+      setEnergyTouched(false);
+      setMoodTouched(false);
       setSleepHours(7.5);
       setSleepQuality(4);
       setBedtime('23:00');
@@ -91,7 +95,7 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
       timeOfDay:timePhase,
       sleep:timePhase==='morning'?{durationHours:sleepHours,quality:sleepQuality,bedtime,wakeTime,wakeFeeling}:undefined,
       food:mealItems.length?{mealTitle:mealItems.join(' + '),category:timePhase==='morning'?'breakfast':timePhase==='midday'?'lunch':'dinner',hungerBefore,fullnessAfter,eatingPace:'moderate',distraction:'mindful'}:undefined,
-      wellbeing:{energyLevel,mood,stressLevel:2,waterGlasses:0},
+      wellbeing:{...(energyTouched?{energyLevel}:{}),...(moodTouched?{mood}:{})},
       coachSummary:copy.summary
     });
     onClose();
@@ -120,8 +124,8 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
         {step===1&&timePhase!=='morning'&&<div className="space-y-5"><MealVisualPicker value={mealItems} onChange={setMealItems} timePhase={timePhase}/><div className="grid grid-cols-2 gap-3">{[[copy.hungry,hungerBefore,setHungerBefore],[copy.full,fullnessAfter,setFullnessAfter]].map(([label,val,setter],i)=><div key={i} className="bg-white border rounded-2xl p-3"><div className="flex justify-between text-xs mb-2"><span>{String(label)}</span><strong>{Number(val)}/5</strong></div><input type="range" min="1" max="5" value={Number(val)} onChange={e=>(setter as React.Dispatch<React.SetStateAction<number>>)(+e.target.value)} className="w-full accent-amber-600"/></div>)}</div></div>}
         {step===2&&<div className="space-y-6">
           {timePhase==='morning'&&<MealVisualPicker value={mealItems} onChange={setMealItems} timePhase="morning"/>}
-          <div><div className="flex justify-between mb-3"><span className="font-bold flex gap-2"><BatteryCharging className="w-4 h-4"/>{copy.energy}</span><strong>{energyLevel}/5</strong></div><input type="range" min="1" max="5" value={energyLevel} onChange={e=>setEnergyLevel(+e.target.value)} className="w-full accent-amber-600"/></div>
-          <div><p className="text-sm font-semibold mb-2">{copy.mood}</p><div className="grid grid-cols-3 gap-2">{moods.map(([v,e,l])=><button key={v} onClick={()=>setMood(v)} className={`py-3 rounded-2xl border ${mood===v?'bg-amber-50 border-amber-400':'bg-white'}`}><span className="block text-xl">{e}</span><span className="text-xs font-semibold">{l}</span></button>)}</div></div>
+          <div><div className="flex justify-between mb-3"><span className="font-bold flex gap-2"><BatteryCharging className="w-4 h-4"/>{copy.energy}</span><strong>{energyLevel}/5</strong></div><input type="range" min="1" max="5" value={energyLevel} onChange={e=>{setEnergyLevel(+e.target.value);setEnergyTouched(true)}} className="w-full accent-amber-600"/></div>
+          <div><p className="text-sm font-semibold mb-2">{copy.mood}</p><div className="grid grid-cols-3 gap-2">{moods.map(([v,e,l])=><button key={v} onClick={()=>{setMood(v);setMoodTouched(true)}} className={`py-3 rounded-2xl border ${moodTouched&&mood===v?'bg-amber-50 border-amber-400':'bg-white'}`}><span className="block text-xl">{e}</span><span className="text-xs font-semibold">{l}</span></button>)}</div></div>
           <p className="text-xs text-stone-500 bg-white border rounded-2xl p-3">{copy.noWrong}</p>
         </div>}
       </div>
