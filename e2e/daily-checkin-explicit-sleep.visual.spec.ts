@@ -19,7 +19,7 @@ test('morning check-in saves only explicitly answered sleep fields', async ({ pa
   await page.goto('/');
   await page.getByTestId('personal-plan-start').click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('Schlafenszeit').fill('22:30');
+  await dialog.getByLabel('Schlafen gegangen').fill('22:30');
   await dialog.getByRole('button', { name: 'Noch ein Schritt', exact: true }).click();
   await dialog.getByRole('button', { name: 'Fertig', exact: true }).click();
 
