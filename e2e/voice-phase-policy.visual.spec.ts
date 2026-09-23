@@ -10,9 +10,11 @@ test('voice capture remains available under the shared Today phase policy', asyn
 
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
-  await expect(page.getByRole('dialog')).toBeVisible();
 
-  const tellButton = page.getByRole('button', { name: /tell|voice|talk/i });
+  const captureDialog = page.getByRole('dialog');
+  await expect(captureDialog).toBeVisible();
+
+  const tellButton = captureDialog.getByRole('button', { name: /tell|voice|talk/i });
   if (await tellButton.count()) {
     await tellButton.first().click();
     await expect(page.getByRole('dialog')).toBeVisible();
