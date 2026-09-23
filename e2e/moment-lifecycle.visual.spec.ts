@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
 
 async function openMoments(page: import('@playwright/test').Page) {
-  await page.getByTestId('mobile-moments-nav').click();
-  await expect(page.getByTestId('moments-timeline')).toBeVisible();
+  const momentsNav = page.getByTestId('mobile-moments-nav');
+  await momentsNav.click();
+  await expect(momentsNav).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('heading', { name: 'Journal & timeline' })).toBeVisible();
 }
 
 test('moment lifecycle persists favorite and deletion across reloads', async ({ page }) => {
