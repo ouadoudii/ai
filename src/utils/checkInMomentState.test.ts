@@ -37,6 +37,14 @@ describe('reconcileCheckInMoments', () => {
       .toEqual([correctedMeal, manualMeal]);
   });
 
+  it('removes synthetic ratings from check-in-derived meals', () => {
+    const replacement = { ...moment('meal-new', 'checkin-new'), rating: 5 };
+
+    const [saved] = reconcileCheckInMoments([], [], replacement.date, 'midday', replacement);
+
+    expect(saved.rating).toBeUndefined();
+  });
+
   it('removes the old linked meal when the correction no longer contains food', () => {
     const previous = checkIn('checkin-old');
     const oldMeal = moment('meal-old', previous.id);
