@@ -10,6 +10,12 @@ export function isPhaseAvailable(phase: TimeOfDayPhase, hour: number): boolean {
   return hour >= PHASE_START_HOUR[phase];
 }
 
+export function getCurrentPhase(hour: number): TimeOfDayPhase {
+  if (hour >= PHASE_START_HOUR.evening) return 'evening';
+  if (hour >= PHASE_START_HOUR.midday) return 'midday';
+  return 'morning';
+}
+
 export function getAvailablePhases(hour: number): TimeOfDayPhase[] {
   return (['morning','midday','evening'] as TimeOfDayPhase[]).filter(phase => isPhaseAvailable(phase, hour));
 }
