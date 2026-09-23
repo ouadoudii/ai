@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test';
 
+async function openMoments(page: import('@playwright/test').Page) {
+  await page.getByTestId('mobile-moments-nav').click();
+  await expect(page.getByTestId('moments-timeline')).toBeVisible();
+}
+
 test('moment lifecycle persists favorite and deletion across reloads', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => {
     localStorage.setItem('rhythm_language_v1', 'en');
     localStorage.setItem('cary_access_mode_v1', 'guest');
@@ -27,7 +32,7 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
   });
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'Entries' }).click();
+  await openMoments(page);
   await expect(page.getByTestId('moments-timeline')).toContainText('Lifecycle bowl');
 
   await page.getByText('Lifecycle bowl', { exact: true }).click();
@@ -43,7 +48,7 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
 
   await page.getByRole('button', { name: 'Close' }).click();
   await page.reload();
-  await page.getByRole('button', { name: 'Entries' }).click();
+  await openMoments(page);
   await expect(page.getByTestId('moments-timeline')).toContainText('Lifecycle bowl');
   await expect.poll(async () => {
     return page.evaluate(() => {
@@ -62,6 +67,6 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
   }).toBe(false);
 
   await page.reload();
-  await page.getByRole('button', { name: 'Entries' }).click();
+  await openMoments(page);
   await expect(page.getByText('Lifecycle bowl', { exact: true })).toHaveCount(0);
 });
