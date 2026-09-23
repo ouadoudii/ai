@@ -2,7 +2,21 @@ import { test, expect } from '@playwright/test';
 
 const profileKey = 'rhythm_intro_profile_v1';
 
+async function seedNewUser(page: any) {
+  await page.addInitScript(() => {
+    localStorage.setItem('rhythm_language_v1', 'en');
+    localStorage.setItem('cary_access_mode_v1', 'guest');
+    localStorage.setItem('cary_onboarding_v2_complete', 'true');
+    localStorage.setItem('nimmapp_moments_v1', '[]');
+    localStorage.setItem('nimmapp_checkins_v1', '[]');
+    localStorage.removeItem('rhythm_intro_profile_v1');
+    localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+    sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+  });
+}
+
 test('quick onboarding does not serialize untouched profile defaults', async ({ page }) => {
+  await seedNewUser(page);
   await page.goto('/');
   await page.getByTestId('voice-first-entry-form').click();
   await page.getByTestId('onboarding-goal').fill('I want to understand my energy');
@@ -18,6 +32,7 @@ test('quick onboarding does not serialize untouched profile defaults', async ({ 
 });
 
 test('quick onboarding keeps profile controls actionable on mobile', async ({ page }) => {
+  await seedNewUser(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await page.getByTestId('voice-first-entry-form').click();
