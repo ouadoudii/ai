@@ -13,22 +13,24 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('rhythm_intro_profile_v1', '{}');
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
-    localStorage.setItem('nimmapp_moments_v1', JSON.stringify([{
-      id: 'lifecycle-1',
-      title: 'Lifecycle bowl',
-      label: 'Lunch',
-      category: 'lunch',
-      date: '2026-09-23',
-      time: '12:30',
-      location: 'Home',
-      locationCategory: 'home',
-      imageUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20"/%3E',
-      rating: 5,
-      mood: 'satisfied',
-      tags: ['regression'],
-      isFavorite: false,
-      createdAt: Date.now(),
-    }]));
+    if (localStorage.getItem('nimmapp_moments_v1') === null) {
+      localStorage.setItem('nimmapp_moments_v1', JSON.stringify([{
+        id: 'lifecycle-1',
+        title: 'Lifecycle bowl',
+        label: 'Lunch',
+        category: 'lunch',
+        date: '2026-09-23',
+        time: '12:30',
+        location: 'Home',
+        locationCategory: 'home',
+        imageUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20"/%3E',
+        rating: 5,
+        mood: 'satisfied',
+        tags: ['regression'],
+        isFavorite: false,
+        createdAt: Date.now(),
+      }]));
+    }
   });
 
   await page.goto('/');
