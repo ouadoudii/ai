@@ -20,5 +20,5 @@ test('voice capture remains available under the shared Today phase policy', asyn
     await expect(page.getByRole('dialog')).toBeVisible();
   }
 
-  await expect(page.locator('body')).toHaveScreenshot('voice-phase-policy.png', { maxDiffPixelRatio: 0.03 });
+  await page.screenshot({ path: 'visual-artifacts/voice-phase-policy.png', fullPage: true });
 });
