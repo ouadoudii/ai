@@ -35,8 +35,8 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
   await openMoments(page);
   await expect(page.getByTestId('moments-timeline')).toContainText('Lifecycle bowl');
 
-  await page.getByText('Lifecycle bowl', { exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Lifecycle bowl' })).toBeVisible();
+  await page.getByTestId('moments-timeline').getByText('Lifecycle bowl', { exact: true }).click();
+  await expect(page.locator('h1', { hasText: 'Lifecycle bowl' })).toBeVisible();
   await page.getByRole('button', { name: 'Favorite' }).click();
 
   await expect.poll(async () => {
@@ -57,7 +57,7 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
     });
   }).toBe(true);
 
-  await page.getByText('Lifecycle bowl', { exact: true }).click();
+  await page.getByTestId('moments-timeline').getByText('Lifecycle bowl', { exact: true }).click();
   await page.getByRole('button', { name: 'Delete' }).click();
   await expect.poll(async () => {
     return page.evaluate(() => {
