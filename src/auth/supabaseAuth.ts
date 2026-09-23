@@ -60,8 +60,16 @@ export async function signInWithPassword(email: string, password: string): Promi
   return session;
 }
 
+export function getEmailConfirmationRedirectUrl(): string | null {
+  if (typeof window === 'undefined' || !window.location?.origin) return null;
+  return `${window.location.origin}/?auth=confirmed`;
+}
+
 export async function signUpWithPassword(email: string, password: string): Promise<{ session: CarySession | null; needsEmailConfirmation: boolean }> {
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+  const redirectTo = getEmailConfirmationRedirectUrl();
+  const signupUrl = new URL(`${SUPABASE_URL}/auth/v1/signup`);
+  if (redirectTo) signupUrl.searchParams.set('redirect_to', redirectTo);
+  const res = await fetch(signupUrl.toString(), {
     method: 'POST',
     headers,
     body: JSON.stringify({ email: email.trim(), password }),
