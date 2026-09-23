@@ -22,7 +22,9 @@ export function reconcileCheckInMoments(
     const sourceId = getCheckInSourceId(moment);
     return !sourceId || !replacedIds.has(sourceId);
   });
-  return replacement ? [replacement, ...retained] : retained;
+  if (!replacement) return retained;
+  const { rating: _syntheticRating, ...unratedReplacement } = replacement;
+  return [unratedReplacement, ...retained];
 }
 
 export { CHECKIN_SOURCE_TAG };
