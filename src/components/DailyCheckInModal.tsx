@@ -30,6 +30,11 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
   const [bedtime,setBedtime]=React.useState('23:00');
   const [wakeTime,setWakeTime]=React.useState('07:00');
   const [wakeFeeling,setWakeFeeling]=React.useState<'refreshed'|'normal'|'tired'|'exhausted'>('normal');
+  const [sleepHoursTouched,setSleepHoursTouched]=React.useState(false);
+  const [sleepQualityTouched,setSleepQualityTouched]=React.useState(false);
+  const [bedtimeTouched,setBedtimeTouched]=React.useState(false);
+  const [wakeTimeTouched,setWakeTimeTouched]=React.useState(false);
+  const [wakeFeelingTouched,setWakeFeelingTouched]=React.useState(false);
   const [mealItems,setMealItems]=React.useState<string[]>([]);
   const [hungerBefore,setHungerBefore]=React.useState(3);
   const [fullnessAfter,setFullnessAfter]=React.useState(4);
@@ -61,6 +66,11 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
       setBedtime('23:00');
       setWakeTime('07:00');
       setWakeFeeling('normal');
+      setSleepHoursTouched(false);
+      setSleepQualityTouched(false);
+      setBedtimeTouched(false);
+      setWakeTimeTouched(false);
+      setWakeFeelingTouched(false);
     }
   },[isOpen]);
   React.useEffect(()=>{
@@ -93,11 +103,12 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
 
   const finish=()=>{
     const now=new Date();
+    const hasSleepAnswer=sleepHoursTouched||sleepQualityTouched||bedtimeTouched||wakeTimeTouched||wakeFeelingTouched;
     onSaveCheckIn({
       date:getLocalDateKey(now),
       time:getCanonicalLocalTime(now),
       timeOfDay:timePhase,
-      sleep:timePhase==='morning'?{durationHours:sleepHours,quality:sleepQuality,bedtime,wakeTime,wakeFeeling}:undefined,
+      sleep:timePhase==='morning'&&hasSleepAnswer?{...(sleepHoursTouched?{durationHours:sleepHours}:{}),...(sleepQualityTouched?{quality:sleepQuality}:{}),...(bedtimeTouched?{bedtime}:{}),...(wakeTimeTouched?{wakeTime}:{}),...(wakeFeelingTouched?{wakeFeeling}:{})}:undefined,
       food:mealItems.length?{mealTitle:mealItems.join(' + '),category:timePhase==='morning'?'breakfast':timePhase==='midday'?'lunch':'dinner',...(hungerTouched?{hungerBefore}:{}),...(fullnessTouched?{fullnessAfter}:{})}:undefined,
       wellbeing:{...(energyTouched?{energyLevel}:{}),...(moodTouched?{mood}:{})},
       coachSummary:copy.summary
@@ -120,10 +131,10 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
       <div className="h-1 bg-stone-200 mx-5 rounded-full overflow-hidden"><div className="h-full bg-amber-500" style={{width:`${step*50}%`}}/></div>
       <div className="p-5 overflow-y-auto flex-1">
         {step===1&&timePhase==='morning'&&<div className="space-y-5">
-          <div><div className="flex justify-between mb-2"><h3 className="font-bold">{copy.sleepHours}</h3><strong>{sleepHours} {copy.hours}</strong></div><input type="range" min="4" max="11" step="0.5" value={sleepHours} onChange={e=>setSleepHours(+e.target.value)} className="w-full accent-amber-600"/></div>
-          <div className="grid grid-cols-2 gap-3"><label className="bg-white border rounded-2xl p-3 text-xs font-semibold">{copy.bedtime}<input aria-label={copy.bedtime} type="time" value={bedtime} onChange={e=>setBedtime(e.target.value)} className="mt-2 block w-full bg-transparent text-base"/></label><label className="bg-white border rounded-2xl p-3 text-xs font-semibold">{copy.wakeTime}<input aria-label={copy.wakeTime} type="time" value={wakeTime} onChange={e=>setWakeTime(e.target.value)} className="mt-2 block w-full bg-transparent text-base"/></label></div>
-          <div><p className="text-sm font-semibold mb-2">{copy.sleepFeel}</p><div className="grid grid-cols-5 gap-2">{[1,2,3,4,5].map(n=><button key={n} onClick={()=>setSleepQuality(n)} className={`h-11 rounded-xl border ${sleepQuality===n?'bg-amber-500 text-white':'bg-white'}`}>{n}</button>)}</div></div>
-          <div><p className="text-sm font-semibold mb-2">{copy.wakeFeel}</p><div className="grid grid-cols-2 gap-2">{wake.map(([v,e,l])=><button key={v} onClick={()=>setWakeFeeling(v)} className={`p-3 rounded-xl border ${wakeFeeling===v?'bg-amber-50 border-amber-400':'bg-white'}`}><span>{e}</span><span className="text-sm font-semibold mx-2">{l}</span></button>)}</div></div>
+          <div><div className="flex justify-between mb-2"><h3 className="font-bold">{copy.sleepHours}</h3><strong>{sleepHours} {copy.hours}</strong></div><input type="range" min="4" max="11" step="0.5" value={sleepHours} onChange={e=>{setSleepHours(+e.target.value);setSleepHoursTouched(true)}} className="w-full accent-amber-600"/></div>
+          <div className="grid grid-cols-2 gap-3"><label className="bg-white border rounded-2xl p-3 text-xs font-semibold">{copy.bedtime}<input aria-label={copy.bedtime} type="time" value={bedtime} onChange={e=>{setBedtime(e.target.value);setBedtimeTouched(true)}} className="mt-2 block w-full bg-transparent text-base"/></label><label className="bg-white border rounded-2xl p-3 text-xs font-semibold">{copy.wakeTime}<input aria-label={copy.wakeTime} type="time" value={wakeTime} onChange={e=>{setWakeTime(e.target.value);setWakeTimeTouched(true)}} className="mt-2 block w-full bg-transparent text-base"/></label></div>
+          <div><p className="text-sm font-semibold mb-2">{copy.sleepFeel}</p><div className="grid grid-cols-5 gap-2">{[1,2,3,4,5].map(n=><button key={n} onClick={()=>{setSleepQuality(n);setSleepQualityTouched(true)}} className={`h-11 rounded-xl border ${sleepQualityTouched&&sleepQuality===n?'bg-amber-500 text-white':'bg-white'}`}>{n}</button>)}</div></div>
+          <div><p className="text-sm font-semibold mb-2">{copy.wakeFeel}</p><div className="grid grid-cols-2 gap-2">{wake.map(([v,e,l])=><button key={v} onClick={()=>{setWakeFeeling(v);setWakeFeelingTouched(true)}} className={`p-3 rounded-xl border ${wakeFeelingTouched&&wakeFeeling===v?'bg-amber-50 border-amber-400':'bg-white'}`}><span>{e}</span><span className="text-sm font-semibold mx-2">{l}</span></button>)}</div></div>
         </div>}
         {step===1&&timePhase!=='morning'&&<div className="space-y-5"><MealVisualPicker value={mealItems} onChange={setMealItems} timePhase={timePhase}/><div className="grid grid-cols-2 gap-3">{[[copy.hungry,hungerBefore,setHungerBefore,setHungerTouched],[copy.full,fullnessAfter,setFullnessAfter,setFullnessTouched]].map(([label,val,setter,setTouched],i)=><div key={i} className="bg-white border rounded-2xl p-3"><div className="flex justify-between text-xs mb-2"><span>{String(label)}</span><strong>{Number(val)}/5</strong></div><input type="range" min="1" max="5" value={Number(val)} onChange={e=>{(setter as React.Dispatch<React.SetStateAction<number>>)(+e.target.value);(setTouched as React.Dispatch<React.SetStateAction<boolean>>)(true)}} className="w-full accent-amber-600"/></div>)}</div></div>}
         {step===2&&<div className="space-y-6">
