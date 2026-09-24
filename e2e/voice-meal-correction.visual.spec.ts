@@ -74,7 +74,9 @@ test('browser state merge keeps explicit correction semantics',async({page})=>{
     localStorage.setItem('rhythm_language_v1','en');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
-    localStorage.setItem('nimmapp_checkins_v1',JSON.stringify([checkIn]));
+    if (!localStorage.getItem('nimmapp_checkins_v1')) {
+      localStorage.setItem('nimmapp_checkins_v1',JSON.stringify([checkIn]));
+    }
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   },existing);
   await installVoiceHarness(page,'No, I had not Couscous but Salad for lunch');
