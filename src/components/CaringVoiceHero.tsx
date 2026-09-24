@@ -44,10 +44,24 @@ export const CaringVoiceHero: React.FC<CaringVoiceHeroProps> = ({
   const [feedbackSent, setFeedbackSent] = React.useState<boolean>(false);
   const recognitionRef = React.useRef<any>(null);
 
-  // Update prompt periodically or on mount
-  React.useEffect(() => {
-    setCaringPrompt(getCurrentCaringPrompt());
+  const refreshCaringPrompt = React.useCallback(() => {
+    const nextPrompt = getCurrentCaringPrompt();
+    setCaringPrompt(nextPrompt);
+    return nextPrompt;
   }, []);
+
+  React.useEffect(() => {
+    refreshCaringPrompt();
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') refreshCaringPrompt();
+    };
+    window.addEventListener('focus', refreshCaringPrompt);
+    document.addEventListener('visibilitychange', refreshOnVisible);
+    return () => {
+      window.removeEventListener('focus', refreshCaringPrompt);
+      document.removeEventListener('visibilitychange', refreshOnVisible);
+    };
+  }, [refreshCaringPrompt]);
 
   // Web Speech Recognition
   React.useEffect(() => {
@@ -90,6 +104,7 @@ export const CaringVoiceHero: React.FC<CaringVoiceHeroProps> = ({
       }
       setIsRecording(false);
     } else {
+      const currentPrompt = refreshCaringPrompt();
       setFeedbackSent(false);
       setAiCoachFeedback(null);
       setIsRecording(true);
@@ -103,7 +118,7 @@ export const CaringVoiceHero: React.FC<CaringVoiceHeroProps> = ({
         // Fallback simulation if browser/iframe blocks mic
         setTimeout(() => {
           if (!transcript) {
-            setTranscript(caringPrompt.audioExample);
+            setTranscript(currentPrompt.audioExample);
           }
         }, 1800);
       }
@@ -114,9 +129,10 @@ export const CaringVoiceHero: React.FC<CaringVoiceHeroProps> = ({
     const text = transcript.trim();
     if (!text || isProcessingAI) return;
 
+    const currentPrompt = refreshCaringPrompt();
     setIsProcessingAI(true);
     try {
-      const result = await processVoiceCheckIn(text, caringPrompt.timeSlot, archetype);
+      const result = await processVoiceCheckIn(text, currentPrompt.timeSlot, archetype);
       setAiCoachFeedback(result.coachFeedback);
       onQuickVoiceSubmit(text, result);
       setFeedbackSent(true);
@@ -133,6 +149,7 @@ export const CaringVoiceHero: React.FC<CaringVoiceHeroProps> = ({
   };
 
   const handleQuickQuestionClick = (question: string) => {
+    refreshCaringPrompt();
     setTranscript((prev) => (prev ? `${prev} ${question}` : question));
   };
 
