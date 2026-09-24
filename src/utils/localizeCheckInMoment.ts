@@ -14,6 +14,7 @@ export const localizeCheckInMoment = (moment: FoodMoment, language: AppLanguage)
 
   const copy = getCheckInMomentCopy(language, moment.category);
   const generatedBadges = new Set(languages.map(locale => getCheckInMomentCopy(locale, moment.category).badge));
+  const generatedLocations = new Set(languages.map(locale => getCheckInMomentCopy(locale, moment.category).location));
   const tags = sourceTags.map(tag => generatedBadges.has(tag) ? copy.badge : tag);
   const coachFeedback = moment.coachFeedback
     ? {
@@ -29,7 +30,7 @@ export const localizeCheckInMoment = (moment: FoodMoment, language: AppLanguage)
   return {
     ...moment,
     label: copy.label,
-    location: languages.some(locale => moment.location === getCheckInMomentCopy(locale, moment.category).location)
+    location: moment.location && generatedLocations.has(moment.location)
       ? copy.location
       : moment.location,
     tags,
