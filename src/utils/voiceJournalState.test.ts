@@ -25,6 +25,39 @@ describe('durable voice journal state',()=>{
     expect(result[0].food?.mealTitle).toBe('كسكس بالخضرة · أتاي');
   });
 
+  it.each([
+    ['German','Couscous','Salat','Nein, mittags hatte ich nicht Couscous, sondern Salat.'],
+    ['English','Couscous','Salad','No, I had not Couscous but Salad for lunch.'],
+    ['French','Couscous','Salade','Non, pas Couscous mais Salade à midi.'],
+    ['Darija','كسكس','سلطة','لا، ماشي كسكس ولكن سلطة فالغدا.'],
+    ['Arabic','كسكس','سلطة','ليس كسكس بل سلطة في الغداء.'],
+  ])('replaces a rejected meal for an explicit %s voice correction',(_language,oldMeal,newMeal,transcript)=>{
+    const result=mergeVoiceCheckIns(
+      [check('old','midday',`Previously: ${oldMeal}`,oldMeal)],
+      [check('new','midday',transcript,newMeal)],
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('old');
+    expect(result[0].food?.mealTitle).toBe(newMeal);
+    expect(result[0].wellbeing.voiceTranscription).toContain(transcript);
+  });
+
+  it('keeps genuinely additive meal input additive',()=>{
+    const result=mergeVoiceCheckIns(
+      [check('old','midday','I had couscous','Couscous')],
+      [check('new','midday','I also had yogurt','Yogurt')],
+    );
+    expect(result[0].food?.mealTitle).toBe('Couscous · Yogurt');
+  });
+
+  it('does not silently replace an ambiguous contradictory meal',()=>{
+    const result=mergeVoiceCheckIns(
+      [check('old','midday','I had couscous','Couscous')],
+      [check('new','midday','Salad','Salad')],
+    );
+    expect(result[0].food?.mealTitle).toBe('Couscous · Salad');
+  });
+
   it('does not duplicate the same meal when a whole-day recap has no exact clock time',()=>{
     const existing=moment('m1','كسكس بالخضرة','13:15','الغدا كان كسكس بالخضرة');
     const recap=moment('m2','كسكس بالخضرة','','عاودت فملخص النهار أن الغدا كان كسكس بالخضرة');
