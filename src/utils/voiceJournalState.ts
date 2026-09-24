@@ -28,9 +28,12 @@ function mergeMealTitle(existing: string, incoming: string): string {
 
 function sameMoment(a: FoodMoment, b: FoodMoment): boolean {
   if (a.date !== b.date || a.category !== b.category || normalize(a.title) !== normalize(b.title)) return false;
-  // A full-day recap often has no exact meal time. In that case the known meal is
-  // the same event. Two explicit, different clock times stay separate.
-  return !a.time || !b.time || a.time === b.time;
+  if (a.time && b.time) return a.time === b.time;
+  // Missing time is not identity evidence for repeatable foods/drinks: preserve the
+  // occurrence instead of silently losing it. Primary meals carry stronger phase
+  // identity and may be restated by an untimed whole-day recap, so keep the
+  // established recap reconciliation for breakfast/lunch/dinner.
+  return a.category === 'breakfast' || a.category === 'lunch' || a.category === 'dinner';
 }
 
 export function mergeVoiceMoments(existing: FoodMoment[], incoming: FoodMoment[]): FoodMoment[] {
