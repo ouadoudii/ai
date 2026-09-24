@@ -28,9 +28,9 @@ function mergeMealTitle(existing: string, incoming: string): string {
 
 function sameMoment(a: FoodMoment, b: FoodMoment): boolean {
   if (a.date !== b.date || a.category !== b.category || normalize(a.title) !== normalize(b.title)) return false;
-  // A full-day recap often has no exact meal time. In that case the known meal is
-  // the same event. Two explicit, different clock times stay separate.
-  return !a.time || !b.time || a.time === b.time;
+  // Missing time means the occurrence is unknown, not identical. Only explicit
+  // matching clock times provide enough evidence to merge two voice moments.
+  return Boolean(a.time && b.time && a.time === b.time);
 }
 
 export function mergeVoiceMoments(existing: FoodMoment[], incoming: FoodMoment[]): FoodMoment[] {
