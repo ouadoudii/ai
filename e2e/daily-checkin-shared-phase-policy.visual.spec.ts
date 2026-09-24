@@ -7,7 +7,7 @@ test('generic daily check-in uses midday policy at 17:00', async ({ page }, test
     const fixedNow = new RealDate(2026, 8, 24, 17, 0, 0, 0).getTime();
     class FixedDate extends RealDate {
       constructor(...args: ConstructorParameters<typeof Date>) {
-        super(...(args.length ? args : [fixedNow]));
+        super(args.length ? args[0] : fixedNow);
       }
       static now() { return fixedNow; }
     }
