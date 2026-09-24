@@ -33,6 +33,7 @@ test('quick Voice refreshes daypart after a long-lived mobile session crosses 18
   });
 
   await page.goto('/');
+  await page.getByRole('button', { name: /Sprich mit Moment/ }).click();
   await expect(page.getByText('AFTERNOON CHECK-IN')).toBeVisible();
 
   await page.evaluate(() => {
