@@ -3,6 +3,7 @@ import { X,Moon,Sun,Utensils,ArrowRight,Check,BatteryCharging } from 'lucide-rea
 import { DailyCheckIn,TimeOfDayPhase,FoodMood } from '../types';
 import { MealVisualPicker } from './MealVisualPicker';
 import { getLocalDateKey } from '../utils/dateKey';
+import { getCurrentPhase } from '../utils/phaseAvailability';
 import { useLanguage } from '../i18n';
 import { dailyCheckInCopy } from '../dailyCheckInCopy';
 
@@ -22,7 +23,7 @@ export const DailyCheckInModal:React.FC<DailyCheckInModalProps>=({isOpen,onClose
   const copy=dailyCheckInCopy[language] ?? dailyCheckInCopy.en;
   const ar=language==='ar';
   const hour=new Date().getHours();
-  const timePhase:TimeOfDayPhase=requestedPhase||(hour>=5&&hour<11?'morning':hour>=11&&hour<16?'midday':'evening');
+  const timePhase:TimeOfDayPhase=requestedPhase||getCurrentPhase(hour);
   const phase=copy.phase[timePhase];
   const [step,setStep]=React.useState(1);
   const [sleepHours,setSleepHours]=React.useState(7.5);

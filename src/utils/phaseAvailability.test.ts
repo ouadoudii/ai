@@ -30,6 +30,11 @@ describe('phase availability', () => {
     expect(getCurrentPhase(hour)).toBe(expected);
   });
 
+  it('keeps generic Daily Check-In on midday throughout the disputed 16:00–17:59 window', () => {
+    expect([16,17].map(getCurrentPhase)).toEqual(['midday','midday']);
+    expect(getCurrentPhase(18)).toBe('evening');
+  });
+
   it('keeps the current phase aligned with evening availability at the disputed boundary', () => {
     for (const hour of [16, 17, 18]) {
       expect(getCurrentPhase(hour) === 'evening').toBe(isPhaseAvailable('evening', hour));
