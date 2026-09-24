@@ -6,7 +6,7 @@ test('open generic daily check-in keeps its phase after wall-clock boundary', as
     const RealDate = Date;
     let fixedNow = new RealDate(2026, 8, 24, 10, 59, 0, 0).getTime();
     class FixedDate extends RealDate {
-      constructor(...args: ConstructorParameters<typeof Date>) { super(args.length ? args[0] : fixedNow); }
+      constructor(value?: string | number | Date) { super(value === undefined ? fixedNow : value); }
       static now() { return fixedNow; }
     }
     Object.setPrototypeOf(FixedDate, RealDate);
