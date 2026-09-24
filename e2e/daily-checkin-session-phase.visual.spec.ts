@@ -6,14 +6,16 @@ test('open generic daily check-in keeps its phase after wall-clock boundary', as
     const RealDate = Date;
     let fixedNow = new RealDate(2026, 8, 24, 10, 59, 0, 0).getTime();
     class FixedDate extends RealDate {
-      constructor(value?: string | number | Date) { super(value === undefined ? fixedNow : value); }
+      constructor(value?: string | number | Date) {
+        super(value === undefined ? fixedNow : value instanceof RealDate ? value.getTime() : value);
+      }
       static now() { return fixedNow; }
     }
     Object.setPrototypeOf(FixedDate, RealDate);
-    // @ts-expect-error deterministic boundary regression
-    window.Date = FixedDate;
-    // @ts-expect-error test-only clock control
-    window.__advanceCheckInClock = () => { fixedNow = new RealDate(2026, 8, 24, 11, 1, 0, 0).getTime(); };
+    window.Date = FixedDate as DateConstructor;
+    (window as Window & { __advanceCheckInClock?: () => void }).__advanceCheckInClock = () => {
+      fixedNow = new RealDate(2026, 8, 24, 11, 1, 0, 0).getTime();
+    };
     localStorage.setItem('rhythm_language_v1', 'de');
     localStorage.setItem('cary_access_mode_v1', 'guest');
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
