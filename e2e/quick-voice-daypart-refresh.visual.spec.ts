@@ -35,7 +35,8 @@ test('quick Voice refreshes daypart after a long-lived mobile session crosses 18
   await expect(page.getByText('AFTERNOON CHECK-IN')).toBeVisible();
 
   await page.evaluate(() => {
-    (window as typeof window & { __quickVoiceNow?: number }).__quickVoiceNow = new Date(2026, 8, 24, 18, 5, 0, 0).getTime();
+    const clock = window as typeof window & { __quickVoiceNow?: number };
+    clock.__quickVoiceNow = Date.now() + 10 * 60 * 1000;
     window.dispatchEvent(new Event('focus'));
   });
 
