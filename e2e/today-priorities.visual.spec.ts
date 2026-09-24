@@ -3,15 +3,16 @@ import { expect, test } from '@playwright/test';
 const profile={summary:'I want to understand my rhythm.',priorities:[],preferences:[],rawIntro:'I want to understand my rhythm.',confirmedAt:Date.now(),firstPlan:{title:'Observe your rhythm',rationale:'Notice what repeats.',focusAreas:[],firstStep:'Capture your next midday check-in.',phase:'midday'}};
 
 const prepare=async(page:any,language:'de'|'ar')=>{await page.addInitScript(({language,profile})=>{
+  const dateKey=(daysAgo:number)=>{const d=new Date();d.setDate(d.getDate()-daysAgo);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
   localStorage.setItem('rhythm_language_v1',language);
   localStorage.setItem('cary_access_mode_v1','guest');
   localStorage.setItem('cary_onboarding_v2_complete','true');
   localStorage.setItem('rhythm_voice_entry_seen_v1','true');
   localStorage.setItem('rhythm_intro_profile_v1',JSON.stringify(profile));
   localStorage.setItem('nimmapp_moments_v1',JSON.stringify([
-    {id:'user-lunch-1',title:'Lunch',category:'lunch',date:'2026-09-16',time:'14:20',createdAt:1},
-    {id:'user-lunch-2',title:'Lunch',category:'lunch',date:'2026-09-17',time:'14:35',createdAt:2},
-    {id:'user-lunch-3',title:'Lunch',category:'lunch',date:'2026-09-18',time:'14:10',createdAt:3}
+    {id:'user-lunch-1',title:'Lunch',category:'lunch',date:dateKey(2),time:'14:20',createdAt:Date.now()-172800000},
+    {id:'user-lunch-2',title:'Lunch',category:'lunch',date:dateKey(1),time:'14:35',createdAt:Date.now()-86400000},
+    {id:'user-lunch-3',title:'Lunch',category:'lunch',date:dateKey(0),time:'14:10',createdAt:Date.now()}
   ]));
   localStorage.setItem('nimmapp_checkins_v1','[]');
   sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
