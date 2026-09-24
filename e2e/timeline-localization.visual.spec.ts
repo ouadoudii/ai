@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 const cases=[
-  {language:'en',title:'Journal & timeline',archive:'Chronological archive',add:'Add entry',today:'Today',category:'Lunch',home:'Home'},
-  {language:'fr',title:'Journal & chronologie',archive:'Archive chronologique',add:'Ajouter une entrée',today:'Aujourd’hui',category:'Déjeuner',home:'Maison'},
-  {language:'ar',title:'اليوميات والتسلسل الزمني',archive:'الأرشيف الزمني',add:'إضافة تدوينة',today:'اليوم',category:'غداء',home:'المنزل'},
+  {language:'en',title:'Journal & timeline',archive:'Chronological archive',add:'Add entry',today:'Today',category:'Lunch',location:'Not specified'},
+  {language:'fr',title:'Journal & chronologie',archive:'Archive chronologique',add:'Ajouter une entrée',today:'Aujourd’hui',category:'Déjeuner',location:'Non précisé'},
+  {language:'ar',title:'اليوميات والتسلسل الزمني',archive:'الأرشيف الزمني',add:'إضافة تدوينة',today:'اليوم',category:'غداء',location:'غير محدد'},
 ] as const;
 
 for(const scenario of cases){
@@ -18,7 +18,7 @@ for(const scenario of cases){
       localStorage.setItem('rhythm_voice_entry_seen_v1','true');
       localStorage.setItem('rhythm_intro_profile_v1',JSON.stringify({summary:'Track my rhythm.',priorities:[],preferences:[],rawIntro:'Track my rhythm.',confirmedAt:Date.now(),firstPlan:{title:'Observe',rationale:'Notice patterns.',focusAreas:[],firstStep:'Capture the next check-in.',phase:'midday'}}));
       localStorage.setItem('nimmapp_checkins_v1','[]');
-      localStorage.setItem('nimmapp_moments_v1',JSON.stringify([{id:'timeline-localization',title:'Pizza',label:'Mittagessen',category:'lunch',date,time:'12:30',location:'Zuhause',imageUrl:'',rating:5,mood:'satisfied',tags:['Erfasst','midday','checkin-source:user-checkin-timeline'],coachFeedback:{title:'Check-in erfasst',message:'Eigene Notiz',type:'praise',badge:'Erfasst'},createdAt:Date.now()}]));
+      localStorage.setItem('nimmapp_moments_v1',JSON.stringify([{id:'timeline-localization',title:'Pizza',label:'Mittagessen',category:'lunch',date,time:'12:30',location:'Nicht angegeben',imageUrl:'',rating:5,mood:'satisfied',tags:['Erfasst','midday','checkin-source:user-checkin-timeline'],coachFeedback:{title:'Erfasst',message:'Eigene Notiz',type:'praise',badge:'Check-in'},createdAt:Date.now()}]));
       sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
     },{language:scenario.language});
     await page.goto('/');
@@ -29,7 +29,7 @@ for(const scenario of cases){
     const timeline=page.getByTestId('moments-timeline');
     await expect(timeline).toContainText(scenario.today);
     await expect(timeline).toContainText(scenario.category);
-    await expect(timeline).toContainText(scenario.home);
+    await expect(timeline).toContainText(scenario.location);
     await expect(timeline).not.toContainText('Chronologisches Archiv');
     await page.screenshot({path:testInfo.outputPath(`timeline-${scenario.language}.png`),fullPage:true});
   });
