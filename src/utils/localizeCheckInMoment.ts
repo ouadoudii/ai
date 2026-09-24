@@ -9,11 +9,12 @@ const isGeneratedFallback = (message: string) =>
   languages.some(language => message === getCheckInMomentCopy(language, 'dinner').fallbackSummary);
 
 export const localizeCheckInMoment = (moment: FoodMoment, language: AppLanguage): FoodMoment => {
-  if (!moment.tags.some(tag => tag.startsWith(CHECKIN_SOURCE_TAG))) return moment;
+  const sourceTags = moment.tags ?? [];
+  if (!sourceTags.some(tag => tag.startsWith(CHECKIN_SOURCE_TAG))) return moment;
 
   const copy = getCheckInMomentCopy(language, moment.category);
   const generatedBadges = new Set(languages.map(locale => getCheckInMomentCopy(locale, moment.category).badge));
-  const tags = moment.tags.map(tag => generatedBadges.has(tag) ? copy.badge : tag);
+  const tags = sourceTags.map(tag => generatedBadges.has(tag) ? copy.badge : tag);
   const coachFeedback = moment.coachFeedback
     ? {
         ...moment.coachFeedback,
