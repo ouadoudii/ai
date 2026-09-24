@@ -5,14 +5,15 @@ test('quick Voice refreshes daypart after a long-lived mobile session crosses 18
   await page.addInitScript(() => {
     const RealDate = Date;
     const initialNow = new RealDate(2026, 8, 24, 17, 55, 0, 0).getTime();
-    (window as typeof window & { __quickVoiceNow?: number }).__quickVoiceNow = initialNow;
+    const clock = window as unknown as { __quickVoiceNow?: number };
+    clock.__quickVoiceNow = initialNow;
     class FixedDate extends RealDate {
-      constructor(...args: ConstructorParameters<typeof Date>) {
-        const now = (window as typeof window & { __quickVoiceNow?: number }).__quickVoiceNow ?? initialNow;
-        super(args.length ? args[0] : now);
+      constructor(value?: string | number | Date) {
+        const now = clock.__quickVoiceNow ?? initialNow;
+        super(value === undefined ? now : value);
       }
       static now() {
-        return (window as typeof window & { __quickVoiceNow?: number }).__quickVoiceNow ?? initialNow;
+        return clock.__quickVoiceNow ?? initialNow;
       }
     }
     Object.setPrototypeOf(FixedDate, RealDate);
@@ -35,7 +36,7 @@ test('quick Voice refreshes daypart after a long-lived mobile session crosses 18
   await expect(page.getByText('AFTERNOON CHECK-IN')).toBeVisible();
 
   await page.evaluate(() => {
-    const clock = window as typeof window & { __quickVoiceNow?: number };
+    const clock = window as unknown as { __quickVoiceNow?: number };
     clock.__quickVoiceNow = Date.now() + 10 * 60 * 1000;
     window.dispatchEvent(new Event('focus'));
   });
