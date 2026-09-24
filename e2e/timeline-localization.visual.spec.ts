@@ -18,7 +18,7 @@ for(const scenario of cases){
       localStorage.setItem('rhythm_voice_entry_seen_v1','true');
       localStorage.setItem('rhythm_intro_profile_v1',JSON.stringify({summary:'Track my rhythm.',priorities:[],preferences:[],rawIntro:'Track my rhythm.',confirmedAt:Date.now(),firstPlan:{title:'Observe',rationale:'Notice patterns.',focusAreas:[],firstStep:'Capture the next check-in.',phase:'midday'}}));
       localStorage.setItem('nimmapp_checkins_v1','[]');
-      localStorage.setItem('nimmapp_moments_v1',JSON.stringify([{id:'timeline-localization',title:'Pizza',label:'Mittagessen',category:'lunch',date,time:'12:30',location:'Nicht angegeben',imageUrl:'',rating:5,mood:'satisfied',tags:['Erfasst','midday','checkin-source:user-checkin-timeline'],coachFeedback:{title:'Erfasst',message:'Eigene Notiz',type:'praise',badge:'Check-in'},createdAt:Date.now()}]));
+      localStorage.setItem('nimmapp_moments_v1',JSON.stringify([{id:'timeline-localization',title:'Pizza',label:'Mittagessen',category:'lunch',date,time:'12:30',location:'Nicht angegeben',imageUrl:'',rating:5,mood:'satisfied',tags:['Erfasst','midday','source-checkin:user-checkin-timeline'],coachFeedback:{title:'Erfasst',message:'Eigene Notiz',type:'praise',badge:'Check-in'},createdAt:Date.now()}]));
       sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
     },{language:scenario.language});
     await page.goto('/');
