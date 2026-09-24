@@ -38,10 +38,10 @@ function isExplicitMealReplacement(existing: string, incoming: string, transcrip
   const escapedOld = oldMeal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const escapedNew = newMeal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const correctionPatterns = [
-    new RegExp(`(?:not|nicht|pas)\\s+(?:the\\s+|der\\s+|die\\s+|das\\s+)?${escapedOld}[^.،,;]{0,80}(?:but|sondern|mais)\\s+(?:the\\s+|der\\s+|die\\s+|das\\s+)?${escapedNew}`, 'iu'),
-    new RegExp(`${escapedNew}[^.،,;]{0,80}(?:not|nicht|pas)\\s+(?:the\\s+|der\\s+|die\\s+|das\\s+)?${escapedOld}`, 'iu'),
-    new RegExp(`(?:ماشي|مش|ليس)\\s*${escapedOld}[^.،,;]{0,80}(?:بل|ولكن|لكن)\\s*${escapedNew}`, 'u'),
-    new RegExp(`${escapedNew}[^.،,;]{0,80}(?:ماشي|مش|ليس)\\s*${escapedOld}`, 'u'),
+    new RegExp(`(?:not|nicht|pas)\\s+(?:the\\s+|der\\s+|die\\s+|das\\s+)?${escapedOld}[\\s,،;:-]{0,80}(?:but|sondern|mais)\\s+(?:the\\s+|der\\s+|die\\s+|das\\s+)?${escapedNew}`, 'iu'),
+    new RegExp(`${escapedNew}[\\s,،;:-]{0,80}(?:not|nicht|pas)\\s+(?:the\\s+|der\\s+|die\\s+|das\\s+)?${escapedOld}`, 'iu'),
+    new RegExp(`(?:ماشي|مش|ليس)\\s*${escapedOld}[\\s,،;:-]{0,80}(?:بل|ولكن|لكن)\\s*${escapedNew}`, 'u'),
+    new RegExp(`${escapedNew}[\\s,،;:-]{0,80}(?:ماشي|مش|ليس)\\s*${escapedOld}`, 'u'),
   ];
   return correctionPatterns.some(pattern => pattern.test(text));
 }
@@ -136,7 +136,7 @@ export function mergeVoiceJournalState(
   incomingMoments: FoodMoment[],
   incomingCheckIns: DailyCheckIn[],
   seededIds: ReadonlySet<string> = new Set(),
-) {
+): { moments: FoodMoment[]; checkIns: DailyCheckIn[] } {
   return {
     moments: mergeVoiceMoments(existingMoments, incomingMoments),
     checkIns: mergeVoiceCheckIns(existingCheckIns, incomingCheckIns, seededIds),
