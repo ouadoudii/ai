@@ -20,12 +20,19 @@ test('open generic daily check-in keeps its phase after wall-clock boundary', as
     localStorage.setItem('cary_access_mode_v1', 'guest');
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
-    localStorage.setItem('rhythm_profile_v1', JSON.stringify({
-      goal: 'Gesünder essen',
-      eatingRhythm: 'regular',
-      hungerPattern: 'stable',
-      energyPattern: 'stable',
-      confirmed: true,
+    localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify({
+      summary: 'Du möchtest deinen Essrhythmus und deine Energie besser verstehen.',
+      priorities: ['Essrhythmus verstehen', 'Energie beobachten'],
+      preferences: ['einfache Routinen'],
+      rawIntro: 'Ich möchte verstehen, wie mein Essrhythmus meine Energie beeinflusst.',
+      confirmedAt: fixedNow,
+      firstPlan: {
+        title: 'Morgen und Energie beobachten',
+        rationale: 'Beobachte deinen Morgen, um deinen Rhythmus besser zu verstehen.',
+        focusAreas: ['Morgen', 'Energie'],
+        firstStep: 'Halte beim nächsten Check-in fest, wie dein Morgen läuft.',
+        phase: 'morning',
+      },
     }));
     localStorage.setItem('nimmapp_moments_v1', '[]');
     localStorage.setItem('nimmapp_checkins_v1', '[]');
