@@ -27,10 +27,10 @@ async function seedPersonalPlan(page:Page){
 }
 
 test('daily check-in traps keyboard focus, names sliders, and restores focus after Escape',async({page})=>{
-  // Keep this accessibility flow deterministic: step 1 has the meal sliders only
-  // during midday/evening. A fixed midday clock prevents CI wall-clock changes
-  // from silently switching the modal to the morning sleep flow.
-  await page.clock.setFixedTime(new Date('2026-09-25T12:00:00'));
+  // Install the fake clock before navigation so every Date instance created while
+  // React boots observes midday. This keeps the real phase-availability guard in
+  // the flow instead of bypassing the disabled plan action in late CI runs.
+  await page.clock.install({time:new Date('2026-09-25T12:00:00')});
   await seedPersonalPlan(page);
   await page.goto('/');
 
