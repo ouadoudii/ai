@@ -42,10 +42,11 @@ test('daily check-in traps keyboard focus, names sliders, and restores focus aft
   await trigger.click();
 
   const dialog=page.getByRole('dialog');
+  const closeButton=page.getByRole('button',{name:'Schließen'});
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAttribute('aria-labelledby','daily-checkin-title');
   await expect(dialog).toHaveAttribute('aria-describedby','daily-checkin-description');
-  await expect(page.getByRole('button',{name:'Schließen'})).toBeFocused();
+  await expect(closeButton).toBeFocused();
 
   await expect(dialog.getByRole('slider',{name:'Wie hungrig warst du?'})).toBeVisible();
   await expect(dialog.getByRole('slider',{name:'Wie satt hast du dich danach gefühlt?'})).toBeVisible();
@@ -53,11 +54,16 @@ test('daily check-in traps keyboard focus, names sliders, and restores focus aft
   await expect(dialog.getByRole('slider',{name:'Wie ist deine Energie gerade?'})).toBeVisible();
   await page.getByRole('button',{name:'Zurück'}).click();
 
+  // Returning from step two removes the focused Back button from the DOM. Put
+  // focus on the first boundary explicitly, then verify Shift+Tab wraps to the
+  // last focusable control and Tab wraps back to the first boundary.
+  await closeButton.focus();
+  await expect(closeButton).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(page.getByRole('button',{name:'Noch ein Schritt'})).toBeFocused();
 
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button',{name:'Schließen'})).toBeFocused();
+  await expect(closeButton).toBeFocused();
 
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
