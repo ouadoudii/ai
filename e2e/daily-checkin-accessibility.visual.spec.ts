@@ -27,15 +27,17 @@ async function seedPersonalPlan(page:Page){
 }
 
 test('daily check-in traps keyboard focus, names sliders, and restores focus after Escape',async({page})=>{
-  // Install the fake clock before navigation so every Date instance created while
-  // React boots observes midday. This keeps the real phase-availability guard in
-  // the flow instead of bypassing the disabled plan action in late CI runs.
-  await page.clock.install({time:new Date('2026-09-25T12:00:00')});
+  // Pin an absolute late-day instant before navigation. The previous noon value
+  // could become a pre-11:00 local hour in some browser timezones, leaving the
+  // real midday plan action disabled. 23:00Z keeps midday available without
+  // bypassing the product's phase-availability guard.
+  await page.clock.install({time:new Date('2026-09-25T23:00:00Z')});
   await seedPersonalPlan(page);
   await page.goto('/');
 
   const trigger=page.getByTestId('personal-plan-start');
   await expect(trigger).toBeVisible();
+  await expect(trigger).toBeEnabled();
   await trigger.focus();
   await trigger.click();
 
