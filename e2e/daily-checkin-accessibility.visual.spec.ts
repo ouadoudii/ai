@@ -26,7 +26,7 @@ async function seedPersonalPlan(page:Page){
   });
 }
 
-test('daily check-in traps keyboard focus and restores it after Escape',async({page})=>{
+test('daily check-in traps keyboard focus, names sliders, and restores focus after Escape',async({page})=>{
   await seedPersonalPlan(page);
   await page.goto('/');
 
@@ -41,6 +41,12 @@ test('daily check-in traps keyboard focus and restores it after Escape',async({p
   await expect(dialog).toHaveAttribute('aria-describedby','daily-checkin-description');
   await expect(page.getByRole('button',{name:'Schließen'})).toBeFocused();
 
+  await expect(dialog.getByRole('slider',{name:'Hunger vorher'})).toBeVisible();
+  await expect(dialog.getByRole('slider',{name:'Sättigung danach'})).toBeVisible();
+  await page.getByRole('button',{name:'Noch ein Schritt'}).click();
+  await expect(dialog.getByRole('slider',{name:'Energie'})).toBeVisible();
+  await page.getByRole('button',{name:'Zurück'}).click();
+
   await page.keyboard.press('Shift+Tab');
   await expect(page.getByRole('button',{name:'Noch ein Schritt'})).toBeFocused();
 
@@ -50,4 +56,6 @@ test('daily check-in traps keyboard focus and restores it after Escape',async({p
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
+
+  await page.screenshot({path:'test-results/daily-checkin-accessible-sliders.png',fullPage:true});
 });
