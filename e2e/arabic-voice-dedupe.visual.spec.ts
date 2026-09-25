@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-async function installArabicVoiceHarness(page:any, transcript:string) {
-  await page.addInitScript((text:string)=>{
+async function installArabicVoiceHarness(page:any, transcript:string, delayMs=5) {
+  await page.addInitScript(({text,delay}:{text:string;delay:number})=>{
     localStorage.setItem('rhythm_language_v1','ar');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
@@ -24,11 +24,11 @@ async function installArabicVoiceHarness(page:any, transcript:string) {
     ;(window as any).AudioContext=FakeAudioContext;
     class FakeWorker{
       onmessage:any=null;
-      postMessage(message:any){if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{id:message.id,type:'result',text}}),5)}
+      postMessage(message:any){if(message.type==='audio')setTimeout(()=>this.onmessage?.({data:{id:message.id,type:'result',text}}),delay)}
       terminate(){}
     }
     ;(window as any).Worker=FakeWorker;
-  }, transcript);
+  }, {text:transcript,delay:delayMs});
 }
 
 test('Arabic voice capture stores one meal when extraction returns spelling variants of the same dish',async({page})=>{
@@ -60,4 +60,29 @@ test('Arabic voice capture stores one meal when extraction returns spelling vari
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]') as any[]);
   const voice=saved.filter(m=>String(m.id).startsWith('voice-moment-'));
   expect(voice[0]).toMatchObject({category:'breakfast',title:'أُومليت بالجبنة',time:'08:15'});
+});
+
+test('closing Arabic voice while Whisper is pending ignores the abandoned transcript',async({page})=>{
+  let voiceCheckInRequests=0;
+  await page.route('**/api/voice-checkin',async route=>{
+    voiceCheckInRequests++;
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({coachFeedback:{title:'',message:'',type:'neutral',badge:'',habitScore:0},extractedData:{mealDetected:false,mealItems:[],mealTitle:'',mealCategory:'',mealContext:'',meals:[],sleepHours:0,sleepQuality:0,wakeFeeling:'',wellbeingEntries:[]}})});
+  });
+  await installArabicVoiceHarness(page,'هذا التسجيل يجب تجاهله',350);
+  await page.goto('/');
+  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  const voiceDialog=page.getByRole('dialog');
+  await voiceDialog.getByRole('button',{name:/ابدأ التسجيل/}).click();
+  await voiceDialog.getByRole('button',{name:/إيقاف التسجيل/}).click();
+  await expect(voiceDialog.getByText(/جارٍ/)).toBeVisible();
+  await voiceDialog.locator('button').nth(1).click();
+  await expect(voiceDialog).toBeHidden();
+  await page.waitForTimeout(500);
+  expect(voiceCheckInRequests).toBe(0);
+  const voiceMoments=await page.evaluate(()=>{
+    const moments=JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]') as any[];
+    return moments.filter(m=>String(m.id).startsWith('voice-moment-')).length;
+  });
+  expect(voiceMoments).toBe(0);
 });
