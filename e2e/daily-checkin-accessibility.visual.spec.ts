@@ -41,10 +41,10 @@ test('daily check-in traps keyboard focus, names sliders, and restores focus aft
   await expect(dialog).toHaveAttribute('aria-describedby','daily-checkin-description');
   await expect(page.getByRole('button',{name:'Schließen'})).toBeFocused();
 
-  await expect(dialog.getByRole('slider',{name:'Hunger vorher'})).toBeVisible();
-  await expect(dialog.getByRole('slider',{name:'Sättigung danach'})).toBeVisible();
+  await expect(dialog.getByRole('slider',{name:'Wie hungrig warst du?'})).toBeVisible();
+  await expect(dialog.getByRole('slider',{name:'Wie satt hast du dich danach gefühlt?'})).toBeVisible();
   await page.getByRole('button',{name:'Noch ein Schritt'}).click();
-  await expect(dialog.getByRole('slider',{name:'Energie'})).toBeVisible();
+  await expect(dialog.getByRole('slider',{name:'Wie ist deine Energie gerade?'})).toBeVisible();
   await page.getByRole('button',{name:'Zurück'}).click();
 
   await page.keyboard.press('Shift+Tab');
