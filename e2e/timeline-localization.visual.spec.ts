@@ -31,6 +31,8 @@ for(const scenario of cases){
     await expect(timeline).toContainText(scenario.category);
     await expect(timeline).toContainText(scenario.location);
     await expect(timeline).not.toContainText('Chronologisches Archiv');
+    await expect(page.getByTestId('timeline-image-fallback-timeline-localization')).toBeVisible();
+    await expect(timeline.locator('img[alt="Pizza"]')).toHaveCount(0);
     await page.screenshot({path:testInfo.outputPath(`timeline-${scenario.language}.png`),fullPage:true});
   });
 }
