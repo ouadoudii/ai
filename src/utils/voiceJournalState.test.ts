@@ -14,12 +14,8 @@ const check = (id:string,phase:'morning'|'midday'|'evening',transcript:string,me
 
 describe('durable voice journal state',()=>{
   it('keeps earlier spoken detail when the same phase is updated later',()=>{
-    const result=mergeVoiceCheckIns(
-      [check('old','midday','فالغدا كليت كسكس بالخضرة','كسكس بالخضرة')],
-      [check('new','midday','ومن بعد الغدا شربت أتاي','أتاي')],
-    );
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('old');
+    const result=mergeVoiceCheckIns([check('old','midday','فالغدا كليت كسكس بالخضرة','كسكس بالخضرة')],[check('new','midday','ومن بعد الغدا شربت أتاي','أتاي')]);
+    expect(result).toHaveLength(1); expect(result[0].id).toBe('old');
     expect(result[0].wellbeing.voiceTranscription).toContain('فالغدا كليت كسكس بالخضرة');
     expect(result[0].wellbeing.voiceTranscription).toContain('ومن بعد الغدا شربت أتاي');
     expect(result[0].food?.mealTitle).toBe('كسكس بالخضرة · أتاي');
@@ -32,51 +28,44 @@ describe('durable voice journal state',()=>{
     ['Darija','كسكس','سلطة','لا، ماشي كسكس ولكن سلطة فالغدا.'],
     ['Arabic','كسكس','سلطة','ليس كسكس بل سلطة في الغداء.'],
   ])('replaces a rejected meal for an explicit %s voice correction',(_language,oldMeal,newMeal,transcript)=>{
-    const result=mergeVoiceCheckIns(
-      [check('old','midday',`Previously: ${oldMeal}`,oldMeal)],
-      [check('new','midday',transcript,newMeal)],
-    );
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('old');
-    expect(result[0].food?.mealTitle).toBe(newMeal);
-    expect(result[0].wellbeing.voiceTranscription).toContain(transcript);
+    const result=mergeVoiceCheckIns([check('old','midday',`Previously: ${oldMeal}`,oldMeal)],[check('new','midday',transcript,newMeal)]);
+    expect(result).toHaveLength(1); expect(result[0].id).toBe('old'); expect(result[0].food?.mealTitle).toBe(newMeal); expect(result[0].wellbeing.voiceTranscription).toContain(transcript);
+  });
+
+  it.each([
+    ['German','Nein, ich habe mittags doch nichts gegessen.'],
+    ['English',"No, I didn't eat lunch."],
+    ['French',"Non, je n'ai rien mangé à midi."],
+    ['Darija','لا، مكلتش والو فالغدا.'],
+    ['Arabic','لا، لم آكل الغداء.'],
+  ])('clears an existing meal for an explicit %s no-meal correction',(_language,transcript)=>{
+    const result=mergeVoiceCheckIns([check('old','midday','I had salad','Salad')],[check('new','midday',transcript)]);
+    expect(result).toHaveLength(1); expect(result[0].id).toBe('old'); expect(result[0].food).toBeUndefined(); expect(result[0].wellbeing.voiceTranscription).toContain(transcript);
+  });
+
+  it('preserves an existing meal when a partial voice update merely omits food',()=>{
+    const result=mergeVoiceCheckIns([check('old','midday','I had salad','Salad')],[check('new','midday','I feel energetic now')]);
+    expect(result[0].food?.mealTitle).toBe('Salad');
   });
 
   it('keeps genuinely additive meal input additive',()=>{
-    const result=mergeVoiceCheckIns(
-      [check('old','midday','I had couscous','Couscous')],
-      [check('new','midday','I also had yogurt','Yogurt')],
-    );
+    const result=mergeVoiceCheckIns([check('old','midday','I had couscous','Couscous')],[check('new','midday','I also had yogurt','Yogurt')]);
     expect(result[0].food?.mealTitle).toBe('Couscous · Yogurt');
   });
 
   it('does not silently replace an ambiguous contradictory meal',()=>{
-    const result=mergeVoiceCheckIns(
-      [check('old','midday','I had couscous','Couscous')],
-      [check('new','midday','Salad','Salad')],
-    );
+    const result=mergeVoiceCheckIns([check('old','midday','I had couscous','Couscous')],[check('new','midday','Salad','Salad')]);
     expect(result[0].food?.mealTitle).toBe('Couscous · Salad');
   });
 
   it('does not duplicate the same meal when a whole-day recap has no exact clock time',()=>{
-    const existing=moment('m1','كسكس بالخضرة','13:15','الغدا كان كسكس بالخضرة');
-    const recap=moment('m2','كسكس بالخضرة','','عاودت فملخص النهار أن الغدا كان كسكس بالخضرة');
-    const result=mergeVoiceMoments([existing],[recap]);
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('m1');
-    expect(result[0].time).toBe('13:15');
-    expect(result[0].notes).toContain('الغدا كان كسكس بالخضرة');
-    expect(result[0].notes).toContain('عاودت فملخص النهار');
+    const existing=moment('m1','كسكس بالخضرة','13:15','الغدا كان كسكس بالخضرة'); const recap=moment('m2','كسكس بالخضرة','','عاودت فملخص النهار أن الغدا كان كسكس بالخضرة');
+    const result=mergeVoiceMoments([existing],[recap]); expect(result).toHaveLength(1); expect(result[0].id).toBe('m1'); expect(result[0].time).toBe('13:15'); expect(result[0].notes).toContain('الغدا كان كسكس بالخضرة'); expect(result[0].notes).toContain('عاودت فملخص النهار');
   });
 
   it('keeps genuinely separate repeated meals when both times differ',()=>{
-    const result=mergeVoiceMoments([moment('m1','قهوة','10:00')],[moment('m2','قهوة','16:00')]);
-    expect(result).toHaveLength(2);
-    expect(result.map(item=>item.time).sort()).toEqual(['10:00','16:00']);
+    const result=mergeVoiceMoments([moment('m1','قهوة','10:00')],[moment('m2','قهوة','16:00')]); expect(result).toHaveLength(2); expect(result.map(item=>item.time).sort()).toEqual(['10:00','16:00']);
   });
 
-  it('does not repeat identical transcript text',()=>{
-    expect(mergeVoiceText('I ate eggs','I ate eggs')).toBe('I ate eggs');
-    expect(mergeVoiceText('I ate eggs','I ate eggs and bread')).toBe('I ate eggs and bread');
-  });
+  it('does not repeat identical transcript text',()=>{ expect(mergeVoiceText('I ate eggs','I ate eggs')).toBe('I ate eggs'); expect(mergeVoiceText('I ate eggs','I ate eggs and bread')).toBe('I ate eggs and bread'); });
 });
