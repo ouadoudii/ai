@@ -15,6 +15,8 @@ const copies = [
   { language:'ar', languageButton:'اختر اللغة', title:'الغداء المتأخر والوجبات الخفيفة مساءً' },
 ] as const;
 
+type LanguageCopy = (typeof copies)[number];
+
 test('late-lunch pattern title follows real language switching without English fallback', async ({ page }, testInfo) => {
   await page.setViewportSize({ width:390, height:844 });
   await page.addInitScript(({ seedMoments }) => {
@@ -35,13 +37,13 @@ test('late-lunch pattern title follows real language switching without English f
   await page.getByRole('button', { name:'Discoveries', exact:true }).click();
   await expect(page.getByRole('heading', { name:copies[0].title, exact:true })).toBeVisible();
 
-  let current = copies[0];
+  let current: LanguageCopy = copies[0];
   for (const next of copies.slice(1)) {
     await page.getByRole('button', { name:current.languageButton, exact:true }).click();
     await page.locator(`[data-language-option="${next.language}"]`).click();
     await expect(page.locator('html')).toHaveAttribute('lang', next.language);
     await expect(page.getByRole('heading', { name:next.title, exact:true })).toBeVisible();
-    await expect(page.getByRole('heading', { name:copies[0].title, exact:true })).toHaveCount(next.language === 'en' ? 1 : 0);
+    await expect(page.getByRole('heading', { name:copies[0].title, exact:true })).toHaveCount(0);
     await page.screenshot({ path:testInfo.outputPath(`late-lunch-pattern-${next.language}.png`), fullPage:true });
     current = next;
   }
