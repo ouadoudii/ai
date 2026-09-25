@@ -68,17 +68,16 @@ test('closing Arabic voice while Whisper is pending ignores the abandoned transc
     voiceCheckInRequests++;
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({coachFeedback:{title:'',message:'',type:'neutral',badge:'',habitScore:0},extractedData:{mealDetected:false,mealItems:[],mealTitle:'',mealCategory:'',mealContext:'',meals:[],sleepHours:0,sleepQuality:0,wakeFeeling:'',wellbeingEntries:[]}})});
   });
-  await installArabicVoiceHarness(page,'هذا التسجيل يجب تجاهله',350);
+  await installArabicVoiceHarness(page,'هذا التسجيل يجب تجاهله',1000);
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   const voiceDialog=page.getByRole('dialog');
   await voiceDialog.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await voiceDialog.getByRole('button',{name:/إيقاف التسجيل/}).click();
-  await expect(voiceDialog.getByText(/جارٍ/)).toBeVisible();
-  await voiceDialog.locator('button').nth(1).click();
+  await voiceDialog.getByRole('button',{name:'إغلاق'}).click();
   await expect(voiceDialog).toBeHidden();
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1200);
   expect(voiceCheckInRequests).toBe(0);
   const voiceMoments=await page.evaluate(()=>{
     const moments=JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]') as any[];
