@@ -26,6 +26,26 @@ function mergeMealTitle(existing: string, incoming: string): string {
   return `${first} · ${second}`;
 }
 
+function isExplicitMealReplacement(existing: string, incoming: string, transcript?: string): boolean {
+  const text = normalize(transcript);
+  const oldMeal = normalize(existing);
+  const newMeal = normalize(incoming);
+  if (!text || !oldMeal || !newMeal || oldMeal === newMeal) return false;
+  if (!text.includes(oldMeal) || !text.includes(newMeal)) return false;
+
+  // Only replace when the user's own transcript explicitly contrasts the old and
+  // new values. Plain additions such as "also yogurt" keep additive merge semantics.
+  const escapedOld = oldMeal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedNew = newMeal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const correctionPatterns = [
+    new RegExp(`(?:not|nicht|pas)\\s+(?:the\\s+|der\\s+|die\\s+|das\\s+)?${escapedOld}[\\s,،;:-]{0,80}(?:but|sondern|mais)\\s+(?:the\\s+|der\\s+|die\\s+|das\\s+)?${escapedNew}`, 'iu'),
+    new RegExp(`${escapedNew}[\\s,،;:-]{0,80}(?:not|nicht|pas)\\s+(?:the\\s+|der\\s+|die\\s+|das\\s+)?${escapedOld}`, 'iu'),
+    new RegExp(`(?:ماشي|مش|ليس)\\s*${escapedOld}[\\s,،;:-]{0,80}(?:بل|ولكن|لكن)\\s*${escapedNew}`, 'u'),
+    new RegExp(`${escapedNew}[\\s,،;:-]{0,80}(?:ماشي|مش|ليس)\\s*${escapedOld}`, 'u'),
+  ];
+  return correctionPatterns.some(pattern => pattern.test(text));
+}
+
 function sameMoment(a: FoodMoment, b: FoodMoment): boolean {
   if (a.date !== b.date || a.category !== b.category || normalize(a.title) !== normalize(b.title)) return false;
   if (a.time && b.time) return a.time === b.time;
@@ -75,11 +95,18 @@ export function mergeVoiceCheckIns(
     const current = next[index];
     const currentFood = current.food;
     const incomingFood = item.food;
+    const replaceMeal = currentFood && incomingFood && isExplicitMealReplacement(
+      currentFood.mealTitle,
+      incomingFood.mealTitle,
+      item.wellbeing?.voiceTranscription,
+    );
     const food = currentFood && incomingFood
       ? {
           ...currentFood,
           ...incomingFood,
-          mealTitle: mergeMealTitle(currentFood.mealTitle, incomingFood.mealTitle),
+          mealTitle: replaceMeal
+            ? incomingFood.mealTitle
+            : mergeMealTitle(currentFood.mealTitle, incomingFood.mealTitle),
         }
       : incomingFood || currentFood;
     next[index] = {
@@ -109,7 +136,7 @@ export function mergeVoiceJournalState(
   incomingMoments: FoodMoment[],
   incomingCheckIns: DailyCheckIn[],
   seededIds: ReadonlySet<string> = new Set(),
-) {
+): { moments: FoodMoment[]; checkIns: DailyCheckIn[] } {
   return {
     moments: mergeVoiceMoments(existingMoments, incomingMoments),
     checkIns: mergeVoiceCheckIns(existingCheckIns, incomingCheckIns, seededIds),
