@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { patternTitles } from './NutritionTypeAnalysisView';
+import { patternTitles } from '../utils/patternTitleLocalization';
 
 const insightIds = ['sleep-energy', 'pace-energy', 'lunch-rhythm', 'late-lunch-snacking', 'distraction-fullness', 'learning'];
 
