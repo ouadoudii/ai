@@ -26,28 +26,48 @@ async function seedPersonalPlan(page:Page){
   });
 }
 
-test('daily check-in traps keyboard focus and restores it after Escape',async({page})=>{
+test('daily check-in traps keyboard focus, names sliders, and restores focus after Escape',async({page})=>{
+  // Pin an absolute late-day instant before navigation. The previous noon value
+  // could become a pre-11:00 local hour in some browser timezones, leaving the
+  // real midday plan action disabled. 23:00Z keeps midday available without
+  // bypassing the product's phase-availability guard.
+  await page.clock.install({time:new Date('2026-09-25T23:00:00Z')});
   await seedPersonalPlan(page);
   await page.goto('/');
 
   const trigger=page.getByTestId('personal-plan-start');
   await expect(trigger).toBeVisible();
+  await expect(trigger).toBeEnabled();
   await trigger.focus();
   await trigger.click();
 
   const dialog=page.getByRole('dialog');
+  const closeButton=page.getByRole('button',{name:'Schließen'});
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAttribute('aria-labelledby','daily-checkin-title');
   await expect(dialog).toHaveAttribute('aria-describedby','daily-checkin-description');
-  await expect(page.getByRole('button',{name:'Schließen'})).toBeFocused();
+  await expect(closeButton).toBeFocused();
 
+  await expect(dialog.getByRole('slider',{name:'Wie hungrig warst du?'})).toBeVisible();
+  await expect(dialog.getByRole('slider',{name:'Wie satt hast du dich danach gefühlt?'})).toBeVisible();
+  await page.getByRole('button',{name:'Noch ein Schritt'}).click();
+  await expect(dialog.getByRole('slider',{name:'Wie ist deine Energie gerade?'})).toBeVisible();
+  await page.getByRole('button',{name:'Zurück'}).click();
+
+  // Returning from step two removes the focused Back button from the DOM. Put
+  // focus on the first boundary explicitly, then verify Shift+Tab wraps to the
+  // last focusable control and Tab wraps back to the first boundary.
+  await closeButton.focus();
+  await expect(closeButton).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(page.getByRole('button',{name:'Noch ein Schritt'})).toBeFocused();
 
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button',{name:'Schließen'})).toBeFocused();
+  await expect(closeButton).toBeFocused();
 
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
+
+  await page.screenshot({path:'test-results/daily-checkin-accessible-sliders.png',fullPage:true});
 });
