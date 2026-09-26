@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function seedPersonalPlan(page:Page){
-  await page.addInitScript(()=>{
+  await page.evaluate(()=>{
     localStorage.setItem('rhythm_language_v1','de');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
@@ -27,13 +27,14 @@ async function seedPersonalPlan(page:Page){
 }
 
 test('daily check-in traps keyboard focus, names sliders, and restores focus after Escape',async({page})=>{
-  // Pin an absolute late-day instant before navigation. The previous noon value
-  // could become a pre-11:00 local hour in some browser timezones, leaving the
-  // real midday plan action disabled. 23:00Z keeps midday available without
-  // bypassing the product's phase-availability guard.
-  await page.clock.install({time:new Date('2026-09-25T23:00:00Z')});
-  await seedPersonalPlan(page);
+  // The shared Playwright config already pins every browser project to a
+  // deterministic midday timezone. Keep the browser clock untouched here:
+  // installing or fixing page.clock before navigation can interfere with app
+  // bootstrap/hydration on the mobile project. Seed the returning-user state
+  // on the real app origin, then reload so React hydrates from that state.
   await page.goto('/');
+  await seedPersonalPlan(page);
+  await page.reload();
 
   const trigger=page.getByTestId('personal-plan-start');
   await expect(trigger).toBeVisible();

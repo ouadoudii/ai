@@ -9,7 +9,7 @@ import { getDishPhoto } from '../utils/dishPhoto';
 import { fetchFoodAutocomplete } from '../apiClient';
 import { trackUx } from '../utils/uxAnalytics';
 import { mergeAutocompleteSuggestions, rankLocalAutocomplete } from '../utils/foodAutocomplete';
-import { addMealItem, buildMealTitle, removeMealItem } from '../utils/mealItems';
+import { addMealItem, buildMealTitle, parseMealTitle, removeMealItem } from '../utils/mealItems';
 import { getFoodVisuals, localizeFoodVisualName, type FoodVisual } from '../utils/foodVisuals';
 import { useLanguage } from '../i18n';
 import { getAvailableMealCategories } from '../utils/phaseAvailability';
@@ -43,7 +43,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   const requestId=React.useRef(0);
   const imageReadId=React.useRef(0);
 
-  React.useEffect(()=>{if(!isOpen){imageReadId.current+=1;setImageReading(false);return;}imageReadId.current+=1;setImageReading(false);setShowMainMeals(false);setClarificationAnswer('');setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems([editingMoment.title]);setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const suggested=initialCategory||'snack';const next=(initialCategory?[initialCategory]:extraMomentCategories).includes(suggested)?suggested:'snack';setCategory(next);setImageUrl('');setTitle(initialText);setFocused(Boolean(initialText));setItems(initialItems);setNotes(initialNotes);setShowMore(Boolean(initialNotes));setAiSuggestions([]);setImageRecognitionNote('')},[isOpen,editingMoment,initialCategory,initialText,initialItems,initialNotes]);
+  React.useEffect(()=>{if(!isOpen){imageReadId.current+=1;setImageReading(false);return;}imageReadId.current+=1;setImageReading(false);setShowMainMeals(false);setClarificationAnswer('');setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems(parseMealTitle(editingMoment.title));setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const suggested=initialCategory||'snack';const next=(initialCategory?[initialCategory]:extraMomentCategories).includes(suggested)?suggested:'snack';setCategory(next);setImageUrl('');setTitle(initialText);setFocused(Boolean(initialText));setItems(initialItems);setNotes(initialNotes);setShowMore(Boolean(initialNotes));setAiSuggestions([]);setImageRecognitionNote('')},[isOpen,editingMoment,initialCategory,initialText,initialItems,initialNotes]);
   React.useEffect(()=>{if(isOpen)setClarificationResolution('pending')},[isOpen,clarificationQuestion]);
 
   const all=React.useMemo(()=>getFoodSuggestions(country,title.trim()?undefined:category),[country,category,title]);
