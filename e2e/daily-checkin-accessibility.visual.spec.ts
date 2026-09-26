@@ -27,11 +27,10 @@ async function seedPersonalPlan(page:Page){
 }
 
 test('daily check-in traps keyboard focus, names sliders, and restores focus after Escape',async({page})=>{
-  // Pin an absolute late-day instant before navigation. The previous noon value
-  // could become a pre-11:00 local hour in some browser timezones, leaving the
-  // real midday plan action disabled. 23:00Z keeps midday available without
-  // bypassing the product's phase-availability guard.
-  await page.clock.install({time:new Date('2026-09-25T23:00:00Z')});
+  // Use a local wall-clock value rather than a UTC instant. The Android/Arabic
+  // project can run with a different browser timezone; a UTC instant therefore
+  // does not guarantee that Date#getHours() lands inside the midday window.
+  await page.clock.install({time:new Date(2026,8,25,14,0,0)});
   await seedPersonalPlan(page);
   await page.goto('/');
 
