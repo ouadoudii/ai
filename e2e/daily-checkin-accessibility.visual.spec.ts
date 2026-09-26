@@ -27,10 +27,10 @@ async function seedPersonalPlan(page:Page){
 }
 
 test('daily check-in traps keyboard focus, names sliders, and restores focus after Escape',async({page})=>{
-  // Use a local wall-clock value rather than a UTC instant. The Android/Arabic
-  // project can run with a different browser timezone; a UTC instant therefore
-  // does not guarantee that Date#getHours() lands inside the midday window.
-  await page.clock.install({time:new Date(2026,8,25,14,0,0)});
+  // Fix Date#getHours() inside the midday window without installing fake timers.
+  // The app still needs real timers during startup; freezing them can prevent the
+  // personal-plan card from mounting and makes this accessibility flow flaky.
+  await page.clock.setFixedTime(new Date(2026,8,26,14,0,0));
   await seedPersonalPlan(page);
   await page.goto('/');
 
