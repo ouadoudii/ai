@@ -27,10 +27,11 @@ async function seedPersonalPlan(page:Page){
 }
 
 test('daily check-in traps keyboard focus, names sliders, and restores focus after Escape',async({page})=>{
-  // Keep real timers, but make the phase availability deterministic. Load the
-  // app origin first, then seed storage directly and reload so React always
-  // hydrates from the intended profile rather than relying on init-script order.
-  await page.clock.setFixedTime(new Date(2026,8,26,14,0,0));
+  // The shared Playwright config already pins every browser project to a
+  // deterministic midday timezone. Keep the browser clock untouched here:
+  // installing or fixing page.clock before navigation can interfere with app
+  // bootstrap/hydration on the mobile project. Seed the returning-user state
+  // on the real app origin, then reload so React hydrates from that state.
   await page.goto('/');
   await seedPersonalPlan(page);
   await page.reload();
