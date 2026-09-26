@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function seedPersonalPlan(page:Page){
-  await page.addInitScript(()=>{
+  await page.evaluate(()=>{
     localStorage.setItem('rhythm_language_v1','de');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
@@ -27,12 +27,13 @@ async function seedPersonalPlan(page:Page){
 }
 
 test('daily check-in traps keyboard focus, names sliders, and restores focus after Escape',async({page})=>{
-  // Fix Date#getHours() inside the midday window without installing fake timers.
-  // The app still needs real timers during startup; freezing them can prevent the
-  // personal-plan card from mounting and makes this accessibility flow flaky.
+  // Keep real timers, but make the phase availability deterministic. Load the
+  // app origin first, then seed storage directly and reload so React always
+  // hydrates from the intended profile rather than relying on init-script order.
   await page.clock.setFixedTime(new Date(2026,8,26,14,0,0));
-  await seedPersonalPlan(page);
   await page.goto('/');
+  await seedPersonalPlan(page);
+  await page.reload();
 
   const trigger=page.getByTestId('personal-plan-start');
   await expect(trigger).toBeVisible();
