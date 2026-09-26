@@ -26,6 +26,14 @@ export const readCoachSession = (storage: Pick<Storage, 'getItem'> = localStorag
   }
 };
 
+export const restoreCoachSessionOrDefault = (
+  defaultMessages: CoachChatMessage[],
+  storage: Pick<Storage, 'getItem'> = localStorage,
+): CoachChatMessage[] => {
+  const restored = readCoachSession(storage);
+  return restored.length > 0 ? restored : defaultMessages;
+};
+
 export const writeCoachSession = (
   messages: CoachChatMessage[],
   storage: Pick<Storage, 'setItem'> = localStorage,
