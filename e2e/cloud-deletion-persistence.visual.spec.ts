@@ -7,8 +7,9 @@ test.describe('journal deletion persistence', () => {
     const deletedTitle = 'بيض مسلوق · pain complet · Kaffee';
     const keptTitle = 'Harira · Wasser';
 
-    // Seed the journal before React hydrates. Guard the seed so the later reload observes
-    // the app's persisted deletion instead of re-inserting the fixture.
+    // Seed structurally valid FoodMoments before React hydrates. The startup storage
+    // migration intentionally removes invalid persisted records, so this fixture must
+    // represent data that a real app session could have written.
     await page.addInitScript(({ key, deleted, kept }) => {
       localStorage.setItem('rhythm_language_v1', 'en');
       localStorage.setItem('cary_access_mode_v1', 'guest');
@@ -16,9 +17,27 @@ test.describe('journal deletion persistence', () => {
       localStorage.setItem('rhythm_intro_profile_v1', '{}');
       sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
       if (localStorage.getItem(key) === null) {
+        const now = new Date();
+        const date = now.toISOString().slice(0, 10);
+        const time = now.toTimeString().slice(0, 5);
+        const createdAt = now.getTime();
+        const moment = (id: string, title: string) => ({
+          id,
+          title,
+          label: 'Lunch',
+          category: 'lunch',
+          date,
+          time,
+          location: 'Home',
+          locationCategory: 'home',
+          imageUrl: '',
+          mood: 'satisfied',
+          tags: [],
+          createdAt,
+        });
         localStorage.setItem(key, JSON.stringify([
-          { id: 'deleted-meal', title: deleted, timestamp: new Date().toISOString(), type: 'meal' },
-          { id: 'kept-meal', title: kept, timestamp: new Date().toISOString(), type: 'meal' },
+          moment('deleted-meal', deleted),
+          moment('kept-meal', kept),
         ]));
       }
     }, { key: MOMENTS_KEY, deleted: deletedTitle, kept: keptTitle });
