@@ -7,24 +7,23 @@ test.describe('journal deletion persistence', () => {
     const deletedTitle = 'بيض مسلوق · pain complet · Kaffee';
     const keptTitle = 'Harira · Wasser';
 
-    // Seed the journal before the application hydrates. Writing after page.goto() races
-    // the app's initial storage load and can legitimately be overwritten by hydration.
-    await page.addInitScript(({ key, deleted, kept }) => {
+    // Establish the real app origin first, then seed storage and reload so React hydrates
+    // from the baseline exactly once. A persistent init script would reinsert the deleted
+    // record on every reload and would test the fixture rather than deletion persistence.
+    await page.goto('/');
+    await page.evaluate(({ key, deleted, kept }) => {
       localStorage.setItem(key, JSON.stringify([
         { id: 'deleted-meal', title: deleted, timestamp: new Date().toISOString(), type: 'meal' },
         { id: 'kept-meal', title: kept, timestamp: new Date().toISOString(), type: 'meal' },
       ]));
     }, { key: MOMENTS_KEY, deleted: deletedTitle, kept: keptTitle });
-    await page.goto('/');
+    await page.reload();
 
     await expect.poll(async () => page.evaluate((key) => {
       const moments = JSON.parse(localStorage.getItem(key) || '[]');
       return moments.some((moment: { id?: string }) => moment.id === 'deleted-meal');
     }, MOMENTS_KEY)).toBe(true);
 
-    // The seed script is only for the initial baseline. Subsequent reloads must observe
-    // the application's persisted state rather than re-inserting the deleted record.
-    await page.removeAllInitScripts();
     await page.evaluate((key) => {
       const moments = JSON.parse(localStorage.getItem(key) || '[]');
       localStorage.setItem(key, JSON.stringify(moments.filter((moment: { id?: string }) => moment.id !== 'deleted-meal')));
