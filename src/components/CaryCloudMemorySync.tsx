@@ -39,7 +39,6 @@ function writeBaseline(memory: CaryMemorySnapshot) {
 
 export const CaryCloudMemorySync: React.FC<{ session: CarySession | null }> = ({ session }) => {
   const syncingRef = React.useRef(false);
-  const lastPayloadRef = React.useRef('');
 
   const syncNow = React.useCallback(async () => {
     if (!session || syncingRef.current) return;
@@ -55,7 +54,6 @@ export const CaryCloudMemorySync: React.FC<{ session: CarySession | null }> = ({
 
       await saveCloudMemory(session, merged);
       writeBaseline(visibleMerged);
-      lastPayloadRef.current = payload;
 
       if (payload !== localPayload) {
         writeLocalMemory(visibleMerged);
