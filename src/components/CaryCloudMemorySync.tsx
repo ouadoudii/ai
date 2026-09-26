@@ -1,9 +1,10 @@
 import React from 'react';
 import { CarySession } from '../auth/supabaseAuth';
-import { loadCloudMemory, mergeMemory, saveCloudMemory, CaryMemorySnapshot } from '../auth/caryCloudMemory';
+import { loadCloudMemory, mergeMemory, saveCloudMemory, withLocalDeletions, CaryMemorySnapshot } from '../auth/caryCloudMemory';
 
 const MOMENTS_KEY = 'nimmapp_moments_v1';
 const CHECKINS_KEY = 'nimmapp_checkins_v1';
+const BASELINE_KEY = 'nimmapp_cloud_sync_baseline_v1';
 
 function readLocalMemory(): CaryMemorySnapshot {
   try {
@@ -18,9 +19,22 @@ function readLocalMemory(): CaryMemorySnapshot {
   }
 }
 
+function readBaseline(): CaryMemorySnapshot | null {
+  try {
+    const raw = localStorage.getItem(BASELINE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 function writeLocalMemory(memory: CaryMemorySnapshot) {
   localStorage.setItem(MOMENTS_KEY, JSON.stringify(memory.moments));
   localStorage.setItem(CHECKINS_KEY, JSON.stringify(memory.checkIns));
+}
+
+function writeBaseline(memory: CaryMemorySnapshot) {
+  localStorage.setItem(BASELINE_KEY, JSON.stringify({ moments: memory.moments, checkIns: memory.checkIns }));
 }
 
 export const CaryCloudMemorySync: React.FC<{ session: CarySession | null }> = ({ session }) => {
@@ -31,21 +45,21 @@ export const CaryCloudMemorySync: React.FC<{ session: CarySession | null }> = ({
     if (!session || syncingRef.current) return;
     syncingRef.current = true;
     try {
-      const local = readLocalMemory();
+      const local = withLocalDeletions(readLocalMemory(), readBaseline());
       const remote = await loadCloudMemory(session);
       const merged = mergeMemory(local, remote || { moments: [], checkIns: [] });
-      const localPayload = JSON.stringify(local);
-      const payload = JSON.stringify(merged);
+      const visibleMerged = { moments: merged.moments, checkIns: merged.checkIns };
+      const localVisible = { moments: local.moments, checkIns: local.checkIns };
+      const localPayload = JSON.stringify(localVisible);
+      const payload = JSON.stringify(visibleMerged);
+
+      await saveCloudMemory(session, merged);
+      writeBaseline(visibleMerged);
+      lastPayloadRef.current = payload;
+
       if (payload !== localPayload) {
-        writeLocalMemory(merged);
-        await saveCloudMemory(session, merged);
-        lastPayloadRef.current = payload;
+        writeLocalMemory(visibleMerged);
         window.location.reload();
-        return;
-      }
-      if (payload !== lastPayloadRef.current) {
-        await saveCloudMemory(session, merged);
-        lastPayloadRef.current = payload;
       }
     } catch (error) {
       console.warn('Cary cloud sync skipped', error);
