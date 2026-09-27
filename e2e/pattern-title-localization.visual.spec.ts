@@ -59,5 +59,6 @@ test('late-lunch pattern exposes concrete localized evidence and experiment acro
 
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await page.getByRole('button', { name:'اكتشافاتك', exact:true }).click();
   await assertPattern(copies[3]);
 });
