@@ -9,15 +9,15 @@ const moments = [
 ];
 
 const copies = [
-  { language:'en', languageButton:'Choose language', title:'Late lunch ↔ evening snacking' },
-  { language:'de', languageButton:'Sprache wählen', title:'Spätes Mittagessen und Snacks am Abend' },
-  { language:'fr', languageButton:'Choisir la langue', title:'Déjeuner tardif et grignotage le soir' },
-  { language:'ar', languageButton:'اختر اللغة', title:'الغداء المتأخر والوجبات الخفيفة مساءً' },
+  { language:'en', languageButton:'Choose language', title:'Late lunch ↔ evening snacking', evidence:'On 2 of 3 days', experiment:'try lunch a little earlier' },
+  { language:'de', languageButton:'Sprache wählen', title:'Spätes Mittagessen und Snacks am Abend', evidence:'An 2 von 3 Tagen', experiment:'früheres Mittagessen' },
+  { language:'fr', languageButton:'Choisir la langue', title:'Déjeuner tardif et grignotage le soir', evidence:'Lors de 2 jours sur 3', experiment:'déjeuner un peu plus tôt' },
+  { language:'ar', languageButton:'اختر اللغة', title:'الغداء المتأخر والوجبات الخفيفة مساءً', evidence:'في 2 من 3 أيام', experiment:'الغداء أبكر' },
 ] as const;
 
 type LanguageCopy = (typeof copies)[number];
 
-test('late-lunch pattern title follows real language switching without English fallback', async ({ page }, testInfo) => {
+test('late-lunch pattern exposes concrete localized evidence and experiment across language switching', async ({ page }, testInfo) => {
   await page.setViewportSize({ width:390, height:844 });
   await page.addInitScript(({ seedMoments }) => {
     localStorage.setItem('rhythm_language_v1', 'en');
@@ -35,16 +35,27 @@ test('late-lunch pattern title follows real language switching without English f
 
   await page.goto('/');
   await page.getByRole('button', { name:'Discoveries', exact:true }).click();
-  await expect(page.getByRole('heading', { name:copies[0].title, exact:true })).toBeVisible();
+
+  const assertPattern = async (copy: LanguageCopy) => {
+    const card = page.locator('[data-pattern-id="late-lunch-snacking"]');
+    await expect(page.getByRole('heading', { name:copy.title, exact:true })).toBeVisible();
+    await expect(card.getByTestId('pattern-evidence')).toContainText(copy.evidence);
+    await expect(card.getByTestId('pattern-experiment')).toContainText(copy.experiment);
+  };
 
   let current: LanguageCopy = copies[0];
+  await assertPattern(current);
   for (const next of copies.slice(1)) {
     await page.getByRole('button', { name:current.languageButton, exact:true }).click();
     await page.locator(`[data-language-option="${next.language}"]`).click();
     await expect(page.locator('html')).toHaveAttribute('lang', next.language);
-    await expect(page.getByRole('heading', { name:next.title, exact:true })).toBeVisible();
+    await assertPattern(next);
     await expect(page.getByRole('heading', { name:copies[0].title, exact:true })).toHaveCount(0);
     await page.screenshot({ path:testInfo.outputPath(`late-lunch-pattern-${next.language}.png`), fullPage:true });
     current = next;
   }
+
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await assertPattern(copies[3]);
 });
