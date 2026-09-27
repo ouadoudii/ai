@@ -10,7 +10,6 @@ const prepare=async(page:any)=>{await page.addInitScript((profile)=>{
   localStorage.setItem('rhythm_intro_profile_v1',JSON.stringify(profile));
   localStorage.setItem('nimmapp_moments_v1','[]');
   localStorage.setItem('nimmapp_checkins_v1','[]');
-  localStorage.removeItem('moment.coach.session.v1');
   sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
 },profile);};
 
