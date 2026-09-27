@@ -26,6 +26,7 @@ import {
 } from '../utils/coachEngine';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
 import { evaluateNutritionAlarms, GuardianStatus } from '../utils/interventionEngine';
+import { restoreCoachSessionOrDefault, writeCoachSession } from '../utils/coachSession';
 import { SmartInterventionGuardian } from './SmartInterventionGuardian';
 import { askGeminiCoach } from '../apiClient';
 
@@ -152,20 +153,22 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       : 'Guten Abend';
   
   // Interactive Coach Chat State
-  const [chatMessages, setChatMessages] = React.useState<CoachChatMessage[]>([
-    {
-      id: 'msg-1',
-      sender: 'coach',
-      text: `Hallo! ${timeGreeting}! Ich bin Cary, deine fürsorgliche Begleiterin. Ich passe auf dein Zusammenspiel aus Schlaf, Mahlzeiten und Wohlbefinden auf. Wie kann ich dir jetzt guttun?`,
-      timestamp: 'Heute',
-      suggestions: [
-        '📊 Welcher Ernährungstyp bin ich?',
-        '🛡️ Welche Frühwarnzeichen überwacht Cary?',
-        '🎙️ Sprach-Check-in starten',
-        '⚡ Wie vermeide ich das Nachmittagstief?',
-      ],
-    },
-  ]);
+  const [chatMessages, setChatMessages] = React.useState<CoachChatMessage[]>(() =>
+    restoreCoachSessionOrDefault([
+      {
+        id: 'msg-1',
+        sender: 'coach',
+        text: `Hallo! ${timeGreeting}! Ich bin Cary, deine fürsorgliche Begleiterin. Ich passe auf dein Zusammenspiel aus Schlaf, Mahlzeiten und Wohlbefinden auf. Wie kann ich dir jetzt guttun?`,
+        timestamp: 'Heute',
+        suggestions: [
+          '📊 Welcher Ernährungstyp bin ich?',
+          '🛡️ Welche Frühwarnzeichen überwacht Cary?',
+          '🎙️ Sprach-Check-in starten',
+          '⚡ Wie vermeide ich das Nachmittagstief?',
+        ],
+      },
+    ])
+  );
   const [inputQuery, setInputQuery] = React.useState('');
   const [isTyping, setIsTyping] = React.useState(false);
   const chatEndRef = React.useRef<HTMLDivElement>(null);
@@ -236,6 +239,10 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
         setIsTyping(false);
       });
   };
+
+  React.useEffect(() => {
+    writeCoachSession(chatMessages);
+  }, [chatMessages]);
 
   React.useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
