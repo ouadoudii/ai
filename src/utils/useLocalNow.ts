@@ -1,6 +1,7 @@
 import React from 'react';
 
-const nextMinuteDelay = (now: Date) => 60_000 - (now.getSeconds() * 1_000 + now.getMilliseconds());
+export const nextMinuteDelay = (now: Date) => 60_000 - (now.getSeconds() * 1_000 + now.getMilliseconds());
+export const shouldRefreshLocalClock = (visibilityState: DocumentVisibilityState) => visibilityState === 'visible';
 
 export const useLocalNow = () => {
   const [now, setNow] = React.useState(() => new Date());
@@ -19,7 +20,7 @@ export const useLocalNow = () => {
       }, nextMinuteDelay(current) + 25);
     };
     const refresh = () => {
-      if (document.visibilityState === 'visible') setNow(new Date());
+      if (shouldRefreshLocalClock(document.visibilityState)) setNow(new Date());
       schedule();
     };
 
