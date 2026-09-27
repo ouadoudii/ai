@@ -1,6 +1,7 @@
-import { FoodMoment, DailyCheckIn, NutritionTypeProfile, CoachFeedback } from './types';
+import { FoodMoment, DailyCheckIn, NutritionTypeProfile, CoachFeedback, CoachChatMessage } from './types';
 import { analyzeNutritionType as fallbackAnalyze } from './utils/nutritionTypeEngine';
 import { getCoachChatResponse as fallbackChat } from './utils/coachEngine';
+import { readCoachSession } from './utils/coachSession';
 
 export type VoiceLanguage = 'ar' | 'en' | 'de' | 'fr';
 export type VoiceIntent = 'profile_goal' | 'journal' | 'meal' | 'other';
@@ -96,8 +97,25 @@ export async function classifyVoiceIntent(transcript:string,language:VoiceLangua
 
 export async function fetchServerNutritionArchetype(moments:FoodMoment[],checkIns:DailyCheckIn[]=[]):Promise<NutritionTypeProfile>{return fallbackAnalyze(moments,checkIns);}
 
+const MAX_COACH_CONTEXT_MESSAGES = 8;
+const MAX_COACH_CONTEXT_TEXT = 600;
+
+export function buildCoachConversationContext(messages:CoachChatMessage[]):Array<{role:'user'|'coach';text:string}>{
+  return messages
+    .filter((message)=>message.sender==='user'||message.sender==='coach')
+    .slice(-MAX_COACH_CONTEXT_MESSAGES)
+    .map((message)=>({role:message.sender,text:message.text.trim().slice(0,MAX_COACH_CONTEXT_TEXT)}))
+    .filter((message)=>message.text.length>0);
+}
+
+function readRecentCoachContext():Array<{role:'user'|'coach';text:string}>{
+  if(typeof localStorage==='undefined')return [];
+  return buildCoachConversationContext(readCoachSession(localStorage));
+}
+
 export async function askGeminiCoach(query:string,moments:FoodMoment[],checkIns:DailyCheckIn[]=[],userArchetype?:string):Promise<string>{
-  try{const res=await fetch('/api/coach-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,moments,checkIns,userArchetype})});if(!res.ok)throw new Error(`API returned status ${res.status}`);const data=await res.json();return data.reply||'Ich bin immer für dich da. Wie kann ich dich heute unterstützen?';}catch(error){console.warn('Backend /api/coach-chat not reachable, using local response fallback:',error);return fallbackChat(query,moments);}
+  const conversationContext=readRecentCoachContext();
+  try{const res=await fetch('/api/coach-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,moments,checkIns,userArchetype,conversationContext})});if(!res.ok)throw new Error(`API returned status ${res.status}`);const data=await res.json();return data.reply||'Ich bin immer für dich da. Wie kann ich dich heute unterstützen?';}catch(error){console.warn('Backend /api/coach-chat not reachable, using local response fallback:',error);return fallbackChat(query,moments);}
 }
 
 export async function fetchFoodAutocomplete(input:{query:string;category:string;language:'en'|'ar';country?:string|null}):Promise<string[]>{
