@@ -36,7 +36,7 @@ test('daily check-in persists distinct collision-resistant linked entity ids', a
   expect(persisted.checkIn.id).toMatch(/^user-checkin-\d+-[0-9a-z-]+$/i);
   expect(persisted.moment.id).toMatch(/^moment-\d+-[0-9a-z-]+$/i);
   expect(persisted.moment.id).not.toBe(persisted.checkIn.id);
-  expect(persisted.moment.tags).toContain(`checkin-source:${persisted.checkIn.id}`);
+  expect(persisted.moment.tags).toContain(`source-checkin:${persisted.checkIn.id}`);
 
   await page.reload();
   const afterReload = await page.evaluate(() => ({
@@ -45,6 +45,6 @@ test('daily check-in persists distinct collision-resistant linked entity ids', a
   }));
   expect(afterReload.checkIn.id).toBe(persisted.checkIn.id);
   expect(afterReload.moment.id).toBe(persisted.moment.id);
-  expect(afterReload.moment.tags).toContain(`checkin-source:${persisted.checkIn.id}`);
+  expect(afterReload.moment.tags).toContain(`source-checkin:${persisted.checkIn.id}`);
   await page.screenshot({ path: testInfo.outputPath('daily-checkin-unique-ids.png'), fullPage: true });
 });
