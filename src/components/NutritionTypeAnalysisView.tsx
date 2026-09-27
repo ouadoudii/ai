@@ -2,6 +2,7 @@ import React from 'react';
 import { Activity, FlaskConical, Plus, PawPrint, Sparkles } from 'lucide-react';
 import { FoodMoment, DailyCheckIn } from '../types';
 import { buildPatternInsights } from '../utils/patternInsights';
+import { localizePatternInsight } from '../utils/patternInsightLocalization';
 import { patternTitles } from '../utils/patternTitleLocalization';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
 import { buildEarlyOrientationCopy, getAnimalTypeNames } from '../utils/earlyOrientation';
@@ -21,18 +22,6 @@ const learningText: Record<AppLanguage, string> = {
   de: 'Der Anfang ist da. Mit jedem weiteren Moment aktualisieren wir deine Orientierung und machen Zusammenhänge sichtbarer.',
   fr: 'Le début est là. Chaque nouveau moment affine ton orientation et rend les liens plus visibles.',
   en: 'The start is here. Every new moment refines your orientation and makes connections clearer.',
-};
-const repeatedText: Record<AppLanguage, string> = {
-  ar: 'لاحظنا هذا أكثر من مرة في لحظاتك. قد يكون جزءاً مهماً من إيقاعك الشخصي.',
-  de: 'Das ist uns in deinen Momenten mehr als einmal aufgefallen. Es könnte ein wichtiger Teil deines persönlichen Rhythmus sein.',
-  fr: 'Nous l’avons remarqué plusieurs fois dans tes moments. Cela pourrait faire partie de ton rythme personnel.',
-  en: 'We noticed this more than once in your moments. It may be an important part of your personal rhythm.',
-};
-const experimentText: Record<AppLanguage, string> = {
-  ar: 'إذا أحببت، جرّب تغييراً صغيراً في موقف مشابه ولاحظ الفرق. لا نجاح ولا فشل — مجرد اكتشاف.',
-  de: 'Wenn du möchtest, probiere in einer ähnlichen Situation eine kleine Veränderung aus und beobachte den Unterschied. Kein Erfolg oder Misserfolg — nur eine Entdeckung.',
-  fr: 'Si tu veux, essaie un petit changement dans une situation similaire et observe la différence. Ni réussite ni échec — seulement une découverte.',
-  en: 'If you like, try one small change in a similar situation and notice the difference. No success or failure — just discovery.',
 };
 
 export const NutritionTypeAnalysisView: React.FC<Props> = ({ moments, checkIns, onOpenCheckIn, onOpenAddMoment }) => {
@@ -58,11 +47,14 @@ export const NutritionTypeAnalysisView: React.FC<Props> = ({ moments, checkIns, 
       {real === 0 && <button type="button" onClick={onOpenAddMoment} className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-black text-[#293D34]"><Plus className="h-4 w-4" />{t('add')}</button>}
     </section>
 
-    <div className="mt-4 space-y-4">{insights.map((item) => <article key={item.id} className="rounded-[30px] border border-[#E5E0D7] bg-white p-6 sm:p-7 text-[#292B27]">
-      <div className="flex items-center justify-between gap-3"><span className="rounded-full bg-[#F1ECE4] px-3 py-1 text-[10px] font-black uppercase tracking-[.1em] text-[#77736B]">{confidence(item.confidence)}</span><span className="text-[11px] text-[#969188]">{item.evidenceCount} {t('observations')}</span></div>
-      <h2 className="mt-4 text-2xl sm:text-3xl font-display font-black">{patternTitles[language][item.id] || item.title}</h2><p className="mt-3 text-sm leading-relaxed text-[#706F68]">{item.id === 'learning' ? learningText[language] : repeatedText[language]}</p>
-      {item.id !== 'learning' && <div className="mt-5 rounded-[20px] bg-[#F7F5F0] p-4"><p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.12em]"><FlaskConical className="h-4 w-4" />{t('tryWeek')}</p><p className="mt-2 text-sm leading-relaxed text-[#66655F]">{experimentText[language]}</p></div>}
-    </article>)}</div>
+    <div className="mt-4 space-y-4">{insights.map((item) => {
+      const localized = localizePatternInsight(item, language);
+      return <article key={item.id} data-pattern-id={item.id} className="rounded-[30px] border border-[#E5E0D7] bg-white p-6 sm:p-7 text-[#292B27]">
+        <div className="flex items-center justify-between gap-3"><span className="rounded-full bg-[#F1ECE4] px-3 py-1 text-[10px] font-black uppercase tracking-[.1em] text-[#77736B]">{confidence(item.confidence)}</span><span className="text-[11px] text-[#969188]">{item.evidenceCount} {t('observations')}</span></div>
+        <h2 className="mt-4 text-2xl sm:text-3xl font-display font-black">{patternTitles[language][item.id] || item.title}</h2><p data-testid="pattern-evidence" className="mt-3 text-sm leading-relaxed text-[#706F68]" dir="auto">{item.id === 'learning' ? learningText[language] : localized.observation}</p>
+        {item.id !== 'learning' && <div className="mt-5 rounded-[20px] bg-[#F7F5F0] p-4"><p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.12em]"><FlaskConical className="h-4 w-4" />{t('tryWeek')}</p><p data-testid="pattern-experiment" className="mt-2 text-sm leading-relaxed text-[#66655F]" dir="auto">{localized.experiment}</p></div>}
+      </article>;
+    })}</div>
 
     <section className="mt-6 rounded-[30px] border border-[#E5E0D7] bg-white p-6"><div className="flex items-center gap-2 text-xs font-black uppercase tracking-[.12em] text-[#7A654D]"><PawPrint className="h-4 w-4" />{rhythmLabel[language]}</div><div className="mt-4 grid grid-cols-2 gap-2">{getAnimalTypeNames(language).map(name => <div key={name} className="rounded-2xl bg-[#F7F5F0] px-3 py-3 text-xs font-bold text-[#555750]">{name}</div>)}</div></section>
     <section className="mt-7 flex items-center justify-between gap-4 rounded-[26px] bg-[#EFE9DE] p-5"><div><strong className="text-sm text-[#30322E]">{real} {t('realDataPoints')}</strong><p className="mt-1 text-xs text-[#7D7971]">{t('ordinaryDaysEnough')}</p></div><button onClick={onOpenCheckIn} className="shrink-0 rounded-full bg-[#252824] px-4 py-3 text-xs font-black text-white flex items-center gap-1.5"><Plus className="h-4 w-4" />{language === 'ar' ? 'أضف لحظة' : t('add')}</button></section>
