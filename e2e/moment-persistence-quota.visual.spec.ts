@@ -23,7 +23,6 @@ async function openMealEditor(page:any) {
 }
 
 async function saveTypedMeal(page:any, name:string) {
-  const editor = page.getByRole('heading', { name: 'What did you have?' }).locator('..').locator('..').locator('..');
   const input = page.getByPlaceholder('Start typing… e.g. chicken pasta');
   await input.fill(name);
   await page.getByRole('button', { name: 'Confirm' }).click();
