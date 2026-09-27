@@ -20,7 +20,9 @@ type LanguageCopy = (typeof copies)[number];
 test('late-lunch pattern exposes concrete localized evidence and experiment across language switching', async ({ page }, testInfo) => {
   await page.setViewportSize({ width:390, height:844 });
   await page.addInitScript(({ seedMoments }) => {
-    localStorage.setItem('rhythm_language_v1', 'en');
+    if (!localStorage.getItem('rhythm_language_v1')) {
+      localStorage.setItem('rhythm_language_v1', 'en');
+    }
     localStorage.setItem('cary_access_mode_v1', 'guest');
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
