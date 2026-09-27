@@ -81,7 +81,7 @@ export default function App(){
       ? moments.map(m=>m.id===editingMoment.id?{...momentData,id:m.id,createdAt:m.createdAt}:m)
       : [{...momentData,id:`moment-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,createdAt:Date.now()},...moments];
     const persistence=persistMoments(nextMoments);
-    if(!persistence.ok){setMomentPersistenceError(persistence.reason);return;}
+    if(persistence.ok===false){setMomentPersistenceError(persistence.reason);return;}
     setMomentPersistenceError(null);
     setMoments(nextMoments);
     if(mealStartedAt.current){trackUx({eventName:'flow_finished',surface:'meal_editor',language,durationMs:Date.now()-mealStartedAt.current,outcome:'completed',metadata:{category:momentData.category,has_photo:Boolean(momentData.imageUrl)}});mealStartedAt.current=null;}
