@@ -7,8 +7,8 @@ test('daily check-in persists distinct collision-resistant linked entity ids', a
     localStorage.setItem('cary_access_mode_v1', 'guest');
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
-    localStorage.setItem('nimmapp_moments_v1', '[]');
-    localStorage.setItem('nimmapp_checkins_v1', '[]');
+    if (localStorage.getItem('nimmapp_moments_v1') === null) localStorage.setItem('nimmapp_moments_v1', '[]');
+    if (localStorage.getItem('nimmapp_checkins_v1') === null) localStorage.setItem('nimmapp_checkins_v1', '[]');
     localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify({
       summary: 'Profile', priorities: ['meal'], preferences: ['simple'], rawIntro: 'Midday rhythm', confirmedAt: Date.now(),
       firstPlan: { title: 'Plan', rationale: 'Rationale', focusAreas: ['meal'], firstStep: 'Check in', phase: 'midday' }
@@ -39,6 +39,8 @@ test('daily check-in persists distinct collision-resistant linked entity ids', a
   expect(persisted.moment.tags).toContain(`source-checkin:${persisted.checkIn.id}`);
 
   await page.reload();
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]').length)).toBe(1);
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').length)).toBe(1);
   const afterReload = await page.evaluate(() => ({
     checkIn: JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]')[0],
     moment: JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]')[0]
