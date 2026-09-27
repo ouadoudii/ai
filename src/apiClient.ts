@@ -6,49 +6,12 @@ import { readCoachSession } from './utils/coachSession';
 export type VoiceLanguage = 'ar' | 'en' | 'de' | 'fr';
 export type VoiceIntent = 'profile_goal' | 'journal' | 'meal' | 'other';
 
-export interface VoiceIntentResult {
-  intent: VoiceIntent;
-  confidence: number;
-  reason?: string;
-}
-
-export interface VoiceMealEntry {
-  category: string;
-  timeOfDay: string;
-  time: string;
-  mealTitle: string;
-  mealItems: string[];
-  hungerBefore: number;
-  fullnessAfter: number;
-}
-
-export interface VoiceWellbeingEntry {
-  timeOfDay: string;
-  energyLevel: number;
-  mood: string;
-  stressLevel: number;
-  waterGlasses: number;
-  note: string;
-}
-
+export interface VoiceIntentResult { intent: VoiceIntent; confidence: number; reason?: string; }
+export interface VoiceMealEntry { category: string; timeOfDay: string; time: string; mealTitle: string; mealItems: string[]; hungerBefore: number; fullnessAfter: number; }
+export interface VoiceWellbeingEntry { timeOfDay: string; energyLevel: number; mood: string; stressLevel: number; waterGlasses: number; note: string; }
 export interface VoiceCheckInResult {
   coachFeedback: CoachFeedback;
-  extractedData?: {
-    mealTitle?: string;
-    mealItems?: string[];
-    mealCategory?: string;
-    mealContext?: string;
-    clarificationQuestion?: string;
-    meals?: VoiceMealEntry[];
-    sleepHours?: number | null;
-    sleepQuality?: number;
-    wakeFeeling?: string;
-    wellbeingEntries?: VoiceWellbeingEntry[];
-    energyLevel?: number;
-    mood?: string;
-    hungerBefore?: number;
-    fullnessAfter?: number;
-  };
+  extractedData?: { mealTitle?: string; mealItems?: string[]; mealCategory?: string; mealContext?: string; clarificationQuestion?: string; meals?: VoiceMealEntry[]; sleepHours?: number | null; sleepQuality?: number; wakeFeeling?: string; wellbeingEntries?: VoiceWellbeingEntry[]; energyLevel?: number; mood?: string; hungerBefore?: number; fullnessAfter?: number; };
 }
 
 export async function transcribeRecordedAudio(blob:Blob,language:VoiceLanguage):Promise<string>{
@@ -56,66 +19,36 @@ export async function transcribeRecordedAudio(blob:Blob,language:VoiceLanguage):
   const contentType=blob.type||'audio/webm';
   const res=await fetch('/api/transcribe-audio',{method:'POST',headers:{'Content-Type':contentType,'X-Voice-Language':language},body:blob});
   if(!res.ok)throw new Error(`Transcription API returned status ${res.status}`);
-  const data=await res.json();
-  const text=typeof data?.text==='string'?data.text.trim():'';
-  if(!text)throw new Error('Empty transcript');
-  return text;
+  const data=await res.json(); const text=typeof data?.text==='string'?data.text.trim():''; if(!text)throw new Error('Empty transcript'); return text;
 }
 
 export async function processVoiceCheckIn(transcript:string,timeOfDay:string,userArchetype?:string,language:VoiceLanguage='en'):Promise<VoiceCheckInResult>{
-  try {
-    const currentHour=new Date().getHours();
-    const res=await fetch('/api/voice-checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript,timeOfDay,userArchetype,currentHour,language})});
-    if(!res.ok)throw new Error(`API returned status ${res.status}`);
-    return await res.json();
-  } catch(error) {
-    console.warn('Backend /api/voice-checkin not reachable, using client fallback:',error);
-    const feedback = language==='ar'
-      ? {title:'تسجلات الرسالة الصوتية 💚',message:'سمعتك وسجلت الرسالة. تقدر تصحح التفاصيل يدوياً.',type:'praise' as const,badge:'تسجيل بالصوت',habitScore:92}
-      : language==='de'
-        ? {title:'Sprachnotiz gespeichert 💚',message:`Danke fürs Teilen. Cary hat „${transcript.slice(0,80)}...“ für dein Tagebuch gespeichert.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92}
-        : language==='fr'
-          ? {title:'Note vocale enregistrée 💚',message:`Merci pour ce partage. Cary a enregistré « ${transcript.slice(0,80)}... » dans ton journal.`,type:'praise' as const,badge:'Check-in vocal',habitScore:92}
-          : {title:'Voice note captured 💚',message:`Thanks for sharing. Cary captured “${transcript.slice(0,80)}...” for your journal.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92};
-    return {coachFeedback:feedback,extractedData:{}};
-  }
+  try { const currentHour=new Date().getHours(); const res=await fetch('/api/voice-checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript,timeOfDay,userArchetype,currentHour,language})}); if(!res.ok)throw new Error(`API returned status ${res.status}`); return await res.json(); }
+  catch(error) { console.warn('Backend /api/voice-checkin not reachable, using client fallback:',error); const feedback = language==='ar' ? {title:'تسجلات الرسالة الصوتية 💚',message:'سمعتك وسجلت الرسالة. تقدر تصحح التفاصيل يدوياً.',type:'praise' as const,badge:'تسجيل بالصوت',habitScore:92} : language==='de' ? {title:'Sprachnotiz gespeichert 💚',message:`Danke fürs Teilen. Cary hat „${transcript.slice(0,80)}...“ für dein Tagebuch gespeichert.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92} : language==='fr' ? {title:'Note vocale enregistrée 💚',message:`Merci pour ce partage. Cary a enregistré « ${transcript.slice(0,80)}... » dans ton journal.`,type:'praise' as const,badge:'Check-in vocal',habitScore:92} : {title:'Voice note captured 💚',message:`Thanks for sharing. Cary captured “${transcript.slice(0,80)}...” for your journal.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92}; return {coachFeedback:feedback,extractedData:{}}; }
 }
 
 export async function classifyVoiceIntent(transcript:string,language:VoiceLanguage='en'):Promise<VoiceIntentResult>{
-  try{
-    const res=await fetch('/api/voice-intent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript,language})});
-    if(!res.ok)throw new Error(`API returned status ${res.status}`);
-    const data=await res.json();
-    const intent:VoiceIntent=['profile_goal','journal','meal','other'].includes(data?.intent)?data.intent:'other';
-    const confidence=Math.min(1,Math.max(0,Number(data?.confidence)||0));
-    return {intent,confidence,reason:typeof data?.reason==='string'?data.reason:''};
-  }catch(error){
-    console.warn('Backend /api/voice-intent not reachable, leaving voice message in journal flow:',error);
-    return {intent:'other',confidence:0,reason:''};
-  }
+  try{ const res=await fetch('/api/voice-intent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript,language})}); if(!res.ok)throw new Error(`API returned status ${res.status}`); const data=await res.json(); const intent:VoiceIntent=['profile_goal','journal','meal','other'].includes(data?.intent)?data.intent:'other'; const confidence=Math.min(1,Math.max(0,Number(data?.confidence)||0)); return {intent,confidence,reason:typeof data?.reason==='string'?data.reason:''}; }
+  catch(error){ console.warn('Backend /api/voice-intent not reachable, leaving voice message in journal flow:',error); return {intent:'other',confidence:0,reason:''}; }
 }
 
 export async function fetchServerNutritionArchetype(moments:FoodMoment[],checkIns:DailyCheckIn[]=[]):Promise<NutritionTypeProfile>{return fallbackAnalyze(moments,checkIns);}
 
-const MAX_COACH_CONTEXT_MESSAGES = 8;
-const MAX_COACH_CONTEXT_TEXT = 600;
-
+const MAX_COACH_CONTEXT_MESSAGES=8;
+const MAX_COACH_CONTEXT_TEXT=600;
 export function buildCoachConversationContext(messages:CoachChatMessage[]):Array<{role:'user'|'coach';text:string}>{
-  return messages
-    .filter((message)=>message.sender==='user'||message.sender==='coach')
-    .slice(-MAX_COACH_CONTEXT_MESSAGES)
-    .map((message)=>({role:message.sender,text:message.text.trim().slice(0,MAX_COACH_CONTEXT_TEXT)}))
-    .filter((message)=>message.text.length>0);
+  return messages.filter((message)=>message.sender==='user'||message.sender==='coach').slice(-MAX_COACH_CONTEXT_MESSAGES).map((message)=>({role:message.sender,text:message.text.trim().slice(0,MAX_COACH_CONTEXT_TEXT)})).filter((message)=>message.text.length>0);
 }
-
-function readRecentCoachContext():Array<{role:'user'|'coach';text:string}>{
-  if(typeof localStorage==='undefined')return [];
-  return buildCoachConversationContext(readCoachSession(localStorage));
+export function buildContextualCoachQuery(query:string,messages:CoachChatMessage[]):string{
+  const context=buildCoachConversationContext(messages); if(context.length===0)return query;
+  const transcript=context.map((message)=>`${message.role==='user'?'Nutzer':'Cary'}: ${message.text}`).join('\n');
+  return `Bisheriges Gespräch:\n${transcript}\n\nAktuelle Frage:\n${query}`;
 }
+function readRecentCoachMessages():CoachChatMessage[]{ if(typeof localStorage==='undefined')return []; return readCoachSession(localStorage); }
 
 export async function askGeminiCoach(query:string,moments:FoodMoment[],checkIns:DailyCheckIn[]=[],userArchetype?:string):Promise<string>{
-  const conversationContext=readRecentCoachContext();
-  try{const res=await fetch('/api/coach-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,moments,checkIns,userArchetype,conversationContext})});if(!res.ok)throw new Error(`API returned status ${res.status}`);const data=await res.json();return data.reply||'Ich bin immer für dich da. Wie kann ich dich heute unterstützen?';}catch(error){console.warn('Backend /api/coach-chat not reachable, using local response fallback:',error);return fallbackChat(query,moments);}
+  const contextualQuery=buildContextualCoachQuery(query,readRecentCoachMessages());
+  try{const res=await fetch('/api/coach-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:contextualQuery,moments,checkIns,userArchetype})});if(!res.ok)throw new Error(`API returned status ${res.status}`);const data=await res.json();return data.reply||'Ich bin immer für dich da. Wie kann ich dich heute unterstützen?';}catch(error){console.warn('Backend /api/coach-chat not reachable, using local response fallback:',error);return fallbackChat(query,moments);}
 }
 
 export async function fetchFoodAutocomplete(input:{query:string;category:string;language:'en'|'ar';country?:string|null}):Promise<string[]>{
