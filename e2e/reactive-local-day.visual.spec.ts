@@ -56,9 +56,9 @@ test('unsaved meal draft survives local midnight rollover',async({page})=>{
 
   await page.getByTestId('primary-capture-button').click();
   await page.locator('[data-capture-method="text"]').click();
-  const editor=page.getByRole('dialog');
-  await expect(editor).toBeVisible();
-  const foodInput=editor.locator('input:not([type="file"])').first();
+  const editorHeading=page.getByRole('heading',{name:'Was hast du gegessen?'});
+  await expect(editorHeading).toBeVisible();
+  const foodInput=page.locator('input:not([type="file"])').first();
   await foodInput.fill('Ungespeicherter Mitternachtssnack');
   await expect(foodInput).toHaveValue('Ungespeicherter Mitternachtssnack');
 
@@ -67,7 +67,7 @@ test('unsaved meal draft survives local midnight rollover',async({page})=>{
     window.dispatchEvent(new Event('focus'));
   });
 
-  await expect(editor).toBeVisible();
+  await expect(editorHeading).toBeVisible();
   await expect(foodInput).toHaveValue('Ungespeicherter Mitternachtssnack');
   await page.screenshot({path:'test-results/midnight-unsaved-meal-draft-preserved.png',fullPage:true});
 });
