@@ -6,7 +6,6 @@ import { MomentOnboarding } from './components/MomentOnboarding';
 import { CaryCloudMemorySync } from './components/CaryCloudMemorySync';
 import { LanguageProvider, useLanguage } from './i18n';
 import { loadPersistedCheckIns, loadPersistedMoments, migrateLegacyStorage } from './storageMigration';
-import { getLocalDateKey } from './utils/dateKey';
 import { useLocalNow } from './utils/useLocalNow';
 import './index.css';
 
@@ -23,7 +22,7 @@ class RuntimeErrorBoundary extends React.Component<React.PropsWithChildren,{erro
 
 const AccountButton:React.FC<{accessMode:'guest'|'account';session:any;openAccount:()=>void}>=({accessMode,session,openAccount})=>{const {language}=useLanguage();return <button type="button" onClick={openAccount} className="fixed z-40 top-3 right-3 md:top-auto md:right-5 md:bottom-5 rounded-full border border-[#E5D6CB] bg-white/95 backdrop-blur-xl px-3.5 py-2 shadow-[0_8px_24px_rgba(72,49,38,.14)] text-[11px] font-bold text-[#5F4538]" aria-label={language==='ar'?'فتح الحساب':'Open account'}>{accessMode==='account'?(session?.user.email||(language==='ar'?'حسابي':'My account')):(language==='ar'?'ضيف · تسجيل الدخول':'Guest · Sign in')}</button>};
 
-const ReactiveApp:React.FC=()=>{const now=useLocalNow();return <App key={getLocalDateKey(now)}/>;};
+const ReactiveApp:React.FC=()=>{useLocalNow();return <App/>;};
 
 if(!rootElement)throw new Error('Root element #root is missing');
 migrateLegacyStorage();

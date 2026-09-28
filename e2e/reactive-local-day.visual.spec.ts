@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('mounted Today refreshes to the new local day after returning to the app',async({page})=>{
+const installClock = async (page:any) => {
   await page.addInitScript(()=>{
     const RealDate=Date;
     const initial=new RealDate(2026,8,27,23,59,0,0).getTime();
@@ -12,7 +12,9 @@ test('mounted Today refreshes to the new local day after returning to the app',a
     Object.setPrototypeOf(MockDate,RealDate);
     (window as any).Date=MockDate;
   });
+};
 
+const prepareGuest = async (page:any) => {
   await page.goto('/');
   await page.evaluate(()=>{
     localStorage.setItem('rhythm_language_v1','de');
@@ -27,6 +29,11 @@ test('mounted Today refreshes to the new local day after returning to the app',a
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.reload();
+};
+
+test('mounted Today refreshes to the new local day after returning to the app',async({page})=>{
+  await installClock(page);
+  await prepareGuest(page);
   await expect(page.getByText(/Sonntag, 27\. September/i)).toBeVisible();
 
   await page.evaluate(()=>{
@@ -41,4 +48,26 @@ test('mounted Today refreshes to the new local day after returning to the app',a
   await morning.click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.screenshot({path:'test-results/reactive-local-day-after-focus.png',fullPage:true});
+});
+
+test('unsaved meal draft survives local midnight rollover',async({page})=>{
+  await installClock(page);
+  await prepareGuest(page);
+
+  await page.getByTestId('primary-capture-button').click();
+  await page.locator('[data-capture-method="text"]').click();
+  const editorHeading=page.getByRole('heading',{name:'Was hast du gegessen?'});
+  await expect(editorHeading).toBeVisible();
+  const foodInput=page.locator('input:not([type="file"])').first();
+  await foodInput.fill('Ungespeicherter Mitternachtssnack');
+  await expect(foodInput).toHaveValue('Ungespeicherter Mitternachtssnack');
+
+  await page.evaluate(()=>{
+    (window as any).__rhythmNow=new Date(2026,8,28,0,1,0,0).getTime();
+    window.dispatchEvent(new Event('focus'));
+  });
+
+  await expect(editorHeading).toBeVisible();
+  await expect(foodInput).toHaveValue('Ungespeicherter Mitternachtssnack');
+  await page.screenshot({path:'test-results/midnight-unsaved-meal-draft-preserved.png',fullPage:true});
 });
