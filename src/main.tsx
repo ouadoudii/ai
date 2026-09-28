@@ -6,7 +6,7 @@ import { MomentOnboarding } from './components/MomentOnboarding';
 import { CaryCloudMemorySync } from './components/CaryCloudMemorySync';
 import { LanguageProvider, useLanguage } from './i18n';
 import { loadPersistedCheckIns, loadPersistedMoments, migrateLegacyStorage } from './storageMigration';
-import { useLocalNow } from './hooks/useLocalNow';
+import { useLocalNow } from './utils/useLocalNow';
 import './index.css';
 
 const rootElement = document.getElementById('root');
