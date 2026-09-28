@@ -2,7 +2,7 @@ import { FoodMoment } from '../types';
 
 export type MomentListFilter='all'|'favorites';
 
-const normalizeSearch=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase().trim();
+const normalizeSearch=(value:string)=>value.normalize('NFD').replace(/\p{M}/gu,'').toLocaleLowerCase().trim();
 
 export const filterMoments=(moments:FoodMoment[],filter:MomentListFilter,query=''):FoodMoment[]=>{
   const filtered=filter==='favorites'?moments.filter(moment=>Boolean(moment.isFavorite)):moments;
