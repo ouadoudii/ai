@@ -14,7 +14,7 @@ describe('moment persistence', () => {
     const storage = { setItem: () => { throw new DOMException('full', 'QuotaExceededError'); } };
     const result = persistMoments([] as any, storage);
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe('quota');
+    if (result.ok === false) expect(result.reason).toBe('quota');
   });
 
   it('provides actionable localized recovery copy', () => {
