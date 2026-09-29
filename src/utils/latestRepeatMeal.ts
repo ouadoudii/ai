@@ -1,4 +1,4 @@
-import { FoodMoment } from '../types';
+import type { FoodMoment } from '../types';
 
 const isDemoMoment=(moment:FoodMoment)=>/^moment-\d{1,2}$/.test(moment.id);
 
