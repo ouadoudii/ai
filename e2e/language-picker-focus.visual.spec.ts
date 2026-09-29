@@ -20,7 +20,7 @@ for (const viewport of [
     await seedReturningGuest(page);
     await page.goto('/');
 
-    const opener = page.getByRole('button', { name: 'Choose language', exact: true });
+    const opener = page.getByRole('button', { name: /^Choose language:/ });
     await opener.focus();
     await expect(opener).toBeFocused();
     await opener.click();
@@ -29,7 +29,7 @@ for (const viewport of [
     await page.locator('[data-language-option="ar"]').click();
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
-    const arabicOpener = page.getByRole('button', { name: 'اختر اللغة', exact: true });
+    const arabicOpener = page.getByRole('button', { name: /^اختر اللغة:/ });
     await expect(arabicOpener).toBeFocused();
     await page.screenshot({ path: `test-results/language-picker-focus-${viewport.name}.png`, fullPage: true });
   });
