@@ -37,7 +37,7 @@ test('mobile Arabic discoveries localize the same personal rhythm shift', async 
   await page.setViewportSize({ width:390, height:844 });
   await installReturningState(page, 'ar');
   await page.goto('/');
-  await page.getByRole('button', { name:'اكتشافات', exact:true }).click();
+  await page.getByRole('button', { name:'اكتشافاتك', exact:true }).click();
   const insight = page.getByTestId('meal-rhythm-shift-insight');
   await expect(insight).toBeVisible();
   await expect(insight).toContainText('إيقاع وجباتك يتغيّر');
