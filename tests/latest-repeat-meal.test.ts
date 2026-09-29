@@ -2,7 +2,7 @@ import { describe,expect,it } from 'vitest';
 import { getLatestRepeatMeal } from '../src/utils/latestRepeatMeal';
 import type { FoodMoment } from '../src/types';
 
-const meal=(id:string,createdAt:number,title=id):FoodMoment=>({id,title,category:'breakfast',date:'2026-09-28',time:'08:00',location:'',locationCategory:'home',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt});
+const meal=(id:string,createdAt:number,title=id):FoodMoment=>({id,title,label:title,category:'breakfast',date:'2026-09-28',time:'08:00',location:'',locationCategory:'home',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt});
 
 describe('getLatestRepeatMeal',()=>{
   it('returns the newest real meal regardless of input order',()=>{
