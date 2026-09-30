@@ -20,7 +20,8 @@ for (const viewport of [
     await seedReturningGuest(page);
     await page.goto('/');
 
-    const opener = page.getByTestId('language-picker-opener');
+    const opener = page.locator('[data-testid="language-picker-opener"]:visible');
+    await expect(opener).toHaveCount(1);
     await expect(opener).toBeVisible();
     await opener.focus();
     await expect(opener).toBeFocused();
