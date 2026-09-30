@@ -115,3 +115,21 @@ test('quick form persists context and unlocks the app',async({page})=>{
   await page.reload();
   await expect(page.getByTestId('voice-first-entry-overlay')).toHaveCount(0);
 });
+
+test('quick form same-tick double activation submits profile generation once',async({page},testInfo)=>{
+  await seedNewUser(page,'en');
+  let calls=0;
+  await page.route('**/api/coach-chat',async route=>{
+    calls+=1;
+    await new Promise(resolve=>setTimeout(resolve,250));
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({reply:JSON.stringify({summary:'You want steadier energy.',priorities:['energy'],preferences:['simple steps'],firstPlan:{title:'Track energy',rationale:'Start with what you notice.',focusAreas:['Energy'],firstStep:'Notice energy at your next check-in.',phase:'midday'}})})});
+  });
+  await page.goto('/');
+  await page.getByTestId('voice-first-entry-form').click();
+  await page.getByTestId('onboarding-goal').fill('I want steadier energy.');
+  await page.getByTestId('onboarding-form-save').evaluate((button:HTMLButtonElement)=>{button.click();button.click();});
+  await expect.poll(()=>calls).toBe(1);
+  await expect.poll(()=>page.evaluate(()=>Boolean(localStorage.getItem('rhythm_intro_profile_v1')))).toBe(true);
+  await expect(page.getByTestId('voice-first-entry-overlay')).toHaveCount(0);
+  await page.screenshot({path:testInfo.outputPath('onboarding-double-submit-guard.png'),fullPage:true});
+});
