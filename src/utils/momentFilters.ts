@@ -8,5 +8,5 @@ export const filterMoments=(moments:FoodMoment[],filter:MomentListFilter,query='
   const filtered=filter==='favorites'?moments.filter(moment=>Boolean(moment.isFavorite)):moments;
   const needle=normalizeSearch(query);
   if(!needle)return filtered;
-  return filtered.filter(moment=>normalizeSearch([moment.title,moment.location,...(moment.tags||[])].filter(Boolean).join(' ')).includes(needle));
+  return filtered.filter(moment=>normalizeSearch([moment.title,moment.location,moment.note,...(moment.tags||[])].filter(Boolean).join(' ')).includes(needle));
 };
