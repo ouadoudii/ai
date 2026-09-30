@@ -1,9 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
   PERSONAL_MEAL_VOCABULARY_LIMIT,
+  PERSONAL_MEAL_VOCABULARY_STORAGE_KEY,
   findRememberedMealCorrection,
+  loadPersonalMealVocabulary,
   rememberMealCorrection,
+  savePersonalMealVocabulary,
+  type MealVocabularyStorage,
 } from './personalMealVocabulary';
+
+function memoryStorage(initial: Record<string, string> = {}): MealVocabularyStorage {
+  const values = new Map(Object.entries(initial));
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => { values.set(key, value); },
+  };
+}
 
 describe('personal meal vocabulary', () => {
   it('preserves the preferred mixed-script wording verbatim', () => {
@@ -30,5 +42,33 @@ describe('personal meal vocabulary', () => {
     }
     expect(entries).toHaveLength(PERSONAL_MEAL_VOCABULARY_LIMIT);
     expect(entries[0]?.source).toBe(`meal-${PERSONAL_MEAL_VOCABULARY_LIMIT + 4}`);
+  });
+
+  it('persists and reloads mixed-language corrections locally', () => {
+    const storage = memoryStorage();
+    const entries = rememberMealCorrection([], 'بيض', 'بيض مسلوق + pain complet', '2026-09-30T10:00:00.000Z');
+    expect(savePersonalMealVocabulary(storage, entries)).toBe(true);
+    expect(loadPersonalMealVocabulary(storage)).toEqual(entries);
+  });
+
+  it('recovers safely from corrupt or malformed local data', () => {
+    const corrupt = memoryStorage({ [PERSONAL_MEAL_VOCABULARY_STORAGE_KEY]: '{broken' });
+    expect(loadPersonalMealVocabulary(corrupt)).toEqual([]);
+
+    const malformed = memoryStorage({
+      [PERSONAL_MEAL_VOCABULARY_STORAGE_KEY]: JSON.stringify([
+        { source: 'بيض', preferred: 'بيض مسلوق', updatedAt: '2026-09-30T10:00:00.000Z' },
+        { source: 42, preferred: 'invalid', updatedAt: null },
+      ]),
+    });
+    expect(loadPersonalMealVocabulary(malformed)).toHaveLength(1);
+  });
+
+  it('does not crash when browser storage rejects writes', () => {
+    const storage: MealVocabularyStorage = {
+      getItem: () => null,
+      setItem: () => { throw new Error('quota'); },
+    };
+    expect(savePersonalMealVocabulary(storage, rememberMealCorrection([], 'بيض', 'بيض مسلوق'))).toBe(false);
   });
 });
