@@ -5,7 +5,14 @@ export type MealCompanionHistoryEntry = {
 };
 
 const normalize = (value: string) =>
-  value.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+  value
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLocaleLowerCase()
+    // Treat the common Darija Arabic spelling and Latin transliteration as the same
+    // user-authored food token while preserving the original spelling for display.
+    .replace(/(^|\s)أتاي(?=\s|$)/g, '$1atay');
 
 /**
  * Finds one recurring companion for the current user-authored meal item.
