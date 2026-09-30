@@ -1,6 +1,8 @@
 import React from 'react';
-import { Check, Languages, X } from 'lucide-react';
+import { Check, Download, Languages, X } from 'lucide-react';
 import { useLanguage, type AppLanguage } from '../i18n';
+import type { DailyCheckIn, FoodMoment } from '../types';
+import { downloadPersonalDataExport } from '../utils/personalDataExport';
 import { trackUx } from '../utils/uxAnalytics';
 
 const languages: Array<{ code: AppLanguage; name: string; native: string }> = [
@@ -9,12 +11,20 @@ const languages: Array<{ code: AppLanguage; name: string; native: string }> = [
   { code: 'fr', name: 'French', native: 'Français' },
   { code: 'ar', name: 'Arabic', native: 'العربية' },
 ];
+const exportCopy:Record<AppLanguage,{label:string;hint:string}>={
+  en:{label:'Export my data',hint:'Download a private JSON backup on this device'},
+  de:{label:'Meine Daten exportieren',hint:'Private JSON-Sicherung auf dieses Gerät laden'},
+  fr:{label:'Exporter mes données',hint:'Télécharger une sauvegarde JSON privée sur cet appareil'},
+  ar:{label:'تصدير بياناتي',hint:'نزّل نسخة JSON خاصة على هذا الجهاز'},
+};
 
 interface Props {
   open: boolean;
   onClose: () => void;
   surface: 'header' | 'bottom_nav';
 }
+
+const readArray=<T,>(key:string,legacyKey:string):T[]=>{try{const raw=localStorage.getItem(key)||localStorage.getItem(legacyKey);const parsed=raw?JSON.parse(raw):[];return Array.isArray(parsed)?parsed:[];}catch{return [];}};
 
 export const LanguagePicker: React.FC<Props> = ({ open, onClose, surface }) => {
   const { language, setLanguage, t } = useLanguage();
@@ -71,6 +81,13 @@ export const LanguagePicker: React.FC<Props> = ({ open, onClose, surface }) => {
     }
     onClose();
   };
+  const exportData=()=>{
+    const moments=readArray<FoodMoment>('nimmapp_moments_v1','food_journey_moments_v1');
+    const checkIns=readArray<DailyCheckIn>('nimmapp_checkins_v1','getyourcoach_checkins_v1');
+    downloadPersonalDataExport(moments,checkIns);
+    trackUx({eventName:'personal_data_exported',surface,language,metadata:{moments: moments.length,checkins: checkIns.length}});
+  };
+  const copy=exportCopy[language];
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#25231F]/45 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none" onMouseDown={(event)=>{if(event.target===event.currentTarget)onClose()}}>
@@ -99,6 +116,12 @@ export const LanguagePicker: React.FC<Props> = ({ open, onClose, surface }) => {
               {language===item.code&&<Check className="h-5 w-5 text-[#526B48]" aria-hidden="true"/>}
             </button>
           ))}
+        </div>
+        <div className="mt-2 border-t border-[#E9E1D6] pt-2">
+          <button type="button" data-testid="personal-data-export" onClick={exportData} className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 text-start text-[#5E5A54] hover:bg-[#F5F0E8]">
+            <Download className="h-5 w-5 shrink-0 text-[#526B48]" aria-hidden="true"/>
+            <span><span className="block text-sm font-black">{copy.label}</span><span className="block text-[10px] font-semibold text-[#918B82]">{copy.hint}</span></span>
+          </button>
         </div>
       </div>
     </div>
