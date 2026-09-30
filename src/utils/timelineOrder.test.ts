@@ -3,7 +3,7 @@ import type { FoodMoment } from '../types';
 import { compareTimelineMoments } from './timelineOrder';
 
 const moment = (id:string, category:FoodMoment['category'], time:string, createdAt:number):FoodMoment => ({
-  id,title:id,label:id,category,date:'2026-09-30',time,location:'',imageUrl:'',rating:4,mood:'satisfied',tags:[],createdAt
+  id,title:id,label:id,category,date:'2026-09-30',time,location:'',locationCategory:'home',imageUrl:'',rating:4,mood:'satisfied',tags:[],createdAt
 });
 
 describe('compareTimelineMoments', () => {
