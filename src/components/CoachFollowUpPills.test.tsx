@@ -17,6 +17,6 @@ describe('CoachFollowUpPills', () => {
 
   it('renders nothing when Cary has no safe follow-ups', () => {
     const { container } = render(<CoachFollowUpPills suggestions={[]} onPrefill={vi.fn()} />);
-    expect(container).toBeEmptyDOMElement();
+    expect(container.innerHTML).toBe('');
   });
 });
