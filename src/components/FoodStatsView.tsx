@@ -2,6 +2,8 @@ import React from 'react';
 import { FoodMoment, MomentCategory } from '../types';
 import { MOMENT_LABELS, MOODS } from '../data/momentsData';
 import { getRecurringMeals } from '../utils/recurringMeals';
+import { getMealVarietyInsight } from '../utils/mealVariety';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Star, Utensils, Heart, Sparkles, Repeat2 } from 'lucide-react';
 
 interface FoodStatsViewProps {
@@ -10,6 +12,7 @@ interface FoodStatsViewProps {
 }
 
 export const FoodStatsView: React.FC<FoodStatsViewProps> = ({ moments, onSelectCategory }) => {
+  const { language } = useLanguage();
   const total = moments.length;
   const categoryCounts = React.useMemo(() => {
     const counts: Record<string, number> = {};
@@ -40,6 +43,18 @@ export const FoodStatsView: React.FC<FoodStatsViewProps> = ({ moments, onSelectC
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
   }, [moments]);
   const recurringMeals = React.useMemo(() => getRecurringMeals(moments), [moments]);
+  const mealVariety = React.useMemo(() => getMealVarietyInsight(moments), [moments]);
+  const varietyCopy = language === 'ar'
+    ? {
+        title: 'تنوع وجباتك مؤخراً',
+        body: mealVariety ? `سجّلت ${mealVariety.distinctMealCount} وجبات مختلفة ضمن آخر ${mealVariety.mealCount} وجبات حقيقية.` : '',
+        note: 'ملاحظة من سجلك فقط، وليست تقييماً غذائياً.',
+      }
+    : {
+        title: 'Your recent meal variety',
+        body: mealVariety ? `You logged ${mealVariety.distinctMealCount} different meals across your last ${mealVariety.mealCount} real meals.` : '',
+        note: 'An observation from your journal, not a nutrition judgement.',
+      };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -54,6 +69,19 @@ export const FoodStatsView: React.FC<FoodStatsViewProps> = ({ moments, onSelectC
           <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200/70"><p className="text-3xl sm:text-4xl font-bold font-display text-stone-900">{total ? Math.round((homeVsOut.restaurant / total) * 100) : 0}%</p><p className="text-[11px] font-medium text-stone-500 mt-1">Restaurants & Cafés</p></div>
         </div>
       </div>
+
+      {mealVariety && (
+        <section data-testid="meal-variety-insight" className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-xs" aria-labelledby="meal-variety-title">
+          <div className="flex items-start gap-3">
+            <div className="rounded-2xl bg-emerald-50 p-2.5 text-emerald-700"><Sparkles className="w-5 h-5" /></div>
+            <div className="min-w-0 flex-1">
+              <h3 id="meal-variety-title" className="font-display font-bold text-base text-stone-900">{varietyCopy.title}</h3>
+              <p className="mt-1 text-sm text-stone-700" data-testid="meal-variety-summary">{varietyCopy.body}</p>
+              <p className="mt-1 text-[11px] text-stone-500">{varietyCopy.note}</p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {recurringMeals.length > 0 && (
         <section data-testid="recurring-meals-insight" className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-xs" aria-labelledby="recurring-meals-title">
