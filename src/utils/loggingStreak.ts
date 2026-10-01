@@ -17,15 +17,19 @@ function previousDateKey(dateKey: string): string | null {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 }
 
-export function getMealLoggingStreak(moments: FoodMoment[]): number {
-  const dates = new Set(
+function realLoggingDates(moments: FoodMoment[]): string[] {
+  return [...new Set(
     moments
       .filter((moment) => !DEMO_IDS.has(moment.id) && previousDateKey(moment.date) !== null)
       .map((moment) => moment.date),
-  );
+  )].sort();
+}
+
+export function getMealLoggingStreak(moments: FoodMoment[]): number {
+  const dates = new Set(realLoggingDates(moments));
   if (!dates.size) return 0;
 
-  let cursor = [...dates].sort().at(-1)!;
+  let cursor = [...dates].at(-1)!;
   let streak = 0;
   while (dates.has(cursor)) {
     streak += 1;
@@ -34,4 +38,22 @@ export function getMealLoggingStreak(moments: FoodMoment[]): number {
     cursor = previous;
   }
   return streak;
+}
+
+export function getBestMealLoggingStreak(moments: FoodMoment[]): number {
+  const dates = realLoggingDates(moments);
+  if (!dates.length) return 0;
+
+  let best = 1;
+  let current = 1;
+  for (let index = 1; index < dates.length; index += 1) {
+    const previous = previousDateKey(dates[index]);
+    if (previous === dates[index - 1]) {
+      current += 1;
+      best = Math.max(best, current);
+    } else {
+      current = 1;
+    }
+  }
+  return best;
 }
