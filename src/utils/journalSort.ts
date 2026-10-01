@@ -25,7 +25,7 @@ export const sortJournalMoments = (
     if (aTime !== null && bTime === null) return -1;
     if (aTime === null && bTime !== null) return 1;
 
-    const createdCompare = (a.createdAt || '').localeCompare(b.createdAt || '');
+    const createdCompare = a.createdAt - b.createdAt;
     if (createdCompare !== 0) return createdCompare * direction;
     return a.id.localeCompare(b.id) * direction;
   });
