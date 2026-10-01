@@ -21,10 +21,21 @@ export const LanguagePicker: React.FC<Props> = ({ open, onClose, surface }) => {
   const panelRef = React.useRef<HTMLDivElement | null>(null);
   const openerRef = React.useRef<HTMLElement | null>(null);
 
+  // Capture the opener only for the closed -> open lifecycle. Locale changes can
+  // rerender the open dialog, but must never replace the original focus target.
+  React.useEffect(() => {
+    if (!open) return;
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => {
+      const opener = openerRef.current;
+      openerRef.current = null;
+      if (opener?.isConnected) opener.focus();
+    };
+  }, [open]);
+
   React.useEffect(() => {
     if (!open) return;
 
-    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const panel = panelRef.current;
     const focusable = (): HTMLElement[] => panel
       ? Array.from(panel.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'))
@@ -56,10 +67,7 @@ export const LanguagePicker: React.FC<Props> = ({ open, onClose, surface }) => {
     };
 
     document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      openerRef.current?.focus();
-    };
+    return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose, language]);
 
   if (!open) return null;
