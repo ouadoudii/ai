@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FoodMoment } from '../types';
-import { getMealLoggingStreak } from './loggingStreak';
+import { getBestMealLoggingStreak, getMealLoggingStreak } from './loggingStreak';
 
 const moment = (id: string, date: string): FoodMoment => ({
   id,
@@ -47,5 +47,34 @@ describe('getMealLoggingStreak', () => {
 
   it('returns zero without valid real history', () => {
     expect(getMealLoggingStreak([moment('moment-2', '2026-10-01')])).toBe(0);
+  });
+});
+
+describe('getBestMealLoggingStreak', () => {
+  it('returns the longest historical run even when the latest run is shorter', () => {
+    expect(getBestMealLoggingStreak([
+      moment('recent-2', '2026-10-01'),
+      moment('old-2', '2026-09-21'),
+      moment('old-1', '2026-09-20'),
+      moment('recent-1', '2026-09-30'),
+      moment('old-4', '2026-09-23'),
+      moment('old-3', '2026-09-22'),
+    ])).toBe(4);
+  });
+
+  it('counts duplicate same-day meals once', () => {
+    expect(getBestMealLoggingStreak([
+      moment('a', '2026-09-20'),
+      moment('b', '2026-09-21'),
+      moment('c', '2026-09-21'),
+      moment('d', '2026-09-22'),
+    ])).toBe(3);
+  });
+
+  it('ignores demo and invalid dates and returns zero without real history', () => {
+    expect(getBestMealLoggingStreak([
+      moment('moment-1', '2026-09-20'),
+      moment('bad', '2026-02-30'),
+    ])).toBe(0);
   });
 });
