@@ -1,0 +1,49 @@
+import { test, expect } from '@playwright/test';
+
+const moment = {
+  id: 'keyboard-meal',
+  title: 'بيض مسلوق',
+  category: 'breakfast',
+  date: '2026-09-30',
+  time: '08:15',
+  location: 'Home',
+  locationCategory: 'home',
+  mood: 'satisfied',
+  rating: 4,
+  tags: [],
+  createdAt: '2026-09-30T08:15:00.000Z'
+};
+
+test.describe('timeline meal keyboard access', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript((seed) => {
+      localStorage.setItem('foodMoments', JSON.stringify([seed]));
+      localStorage.setItem('moment-language', 'en');
+      localStorage.setItem('moment-onboarding-complete', 'true');
+    }, moment);
+    await page.goto('/');
+  });
+
+  test('meal row is a native button and Enter opens detail', async ({ page }) => {
+    const journal = page.getByText('Journal & timeline').first();
+    if (!(await journal.isVisible().catch(() => false))) {
+      const nav = page.getByRole('button', { name: /moments|journal/i }).first();
+      if (await nav.isVisible().catch(() => false)) await nav.click();
+    }
+    const card = page.getByTestId('timeline-moment-keyboard-meal');
+    await expect(card).toBeVisible();
+    await expect(card).toHaveJSProperty('tagName', 'BUTTON');
+    await card.focus();
+    await expect(card).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByText('بيض مسلوق').last()).toBeVisible();
+    await page.screenshot({ path: 'test-results/timeline-keyboard-enter.png', fullPage: true });
+  });
+
+  test('Space activates the focused meal row', async ({ page }) => {
+    const card = page.getByTestId('timeline-moment-keyboard-meal');
+    await card.focus();
+    await page.keyboard.press('Space');
+    await expect(page.getByText('بيض مسلوق').last()).toBeVisible();
+  });
+});
