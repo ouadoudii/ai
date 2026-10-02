@@ -10,12 +10,12 @@ const moment=(id:string,date:string)=>({id,date,createdAt:0} as never);
 describe('MealDayCoverageCard',()=>{
   it('shows distinct seven-day coverage when history is meaningful',()=>{
     render(<MealDayCoverageCard referenceDate="2026-10-02" moments={[moment('real-a','2026-10-02'),moment('real-b','2026-10-01'),moment('real-c','2026-09-29')]}/>);
-    expect(screen.getByTestId('meal-day-coverage')).toHaveTextContent('3 of the last 7 days are represented');
-    expect(screen.getByLabelText('3/7')).toBeInTheDocument();
+    expect(screen.getByTestId('meal-day-coverage').textContent).toContain('3 of the last 7 days are represented');
+    expect(screen.getByLabelText('3/7').getAttribute('aria-label')).toBe('3/7');
   });
 
   it('does not pressure sparse-history users with a coverage card',()=>{
     const {container}=render(<MealDayCoverageCard referenceDate="2026-10-02" moments={[moment('real-a','2026-10-02')]}/>);
-    expect(container).toBeEmptyDOMElement();
+    expect(container.innerHTML).toBe('');
   });
 });
