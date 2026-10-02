@@ -29,16 +29,21 @@ describe('pinned meals', () => {
     expect(togglePinnedMealId(ids, meal(ids[0], 'Meal'))).not.toContain(ids[0]);
   });
 
-  it('persists a bounded unique id list and reads it back', () => {
+  it('persists a bounded unique id list and reads it back through the minimal storage contract', () => {
     let raw: string | null = null;
     const storage = { getItem: (key: string) => key === PINNED_MEALS_STORAGE_KEY ? raw : null, setItem: (_key: string, value: string) => { raw = value; } };
-    const ids = writePinnedMealIds(['1', '1', '2', '3', '4', '5', '6'], storage as Storage);
+    const ids = writePinnedMealIds(['1', '1', '2', '3', '4', '5', '6'], storage);
     expect(ids).toEqual(['1', '2', '3', '4', '5']);
-    expect(readPinnedMealIds(storage as Storage)).toEqual(ids);
+    expect(readPinnedMealIds(storage)).toEqual(ids);
   });
 
   it('fails closed when persisted pin state is malformed', () => {
     const storage = { getItem: () => '{broken' };
-    expect(readPinnedMealIds(storage as Storage)).toEqual([]);
+    expect(readPinnedMealIds(storage)).toEqual([]);
+  });
+
+  it('does not require browser storage when rendered outside the browser', () => {
+    expect(readPinnedMealIds(undefined)).toEqual([]);
+    expect(writePinnedMealIds(['1'], undefined)).toEqual(['1']);
   });
 });
