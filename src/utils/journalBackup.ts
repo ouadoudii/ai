@@ -1,4 +1,4 @@
-import { DailyCheckIn, FoodMoment } from '../types';
+import type { DailyCheckIn, FoodMoment } from '../types';
 
 export const JOURNAL_BACKUP_SCHEMA_VERSION = 1 as const;
 
