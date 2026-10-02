@@ -45,8 +45,9 @@ export function deriveRecurringSocialCompanion(
     .filter(item => item.count >= 3)
     .sort((a, b) => b.count - a.count);
 
-  if (!ranked.length) return null;
-  if (ranked[1]?.count === ranked[0].count) return null;
+  const first = ranked[0];
+  if (!first) return null;
+  if (ranked[1]?.count === first.count) return null;
 
-  return { companion: ranked[0].latest, count: ranked[0].count, category };
+  return { companion: first.latest, count: first.count, category };
 }
