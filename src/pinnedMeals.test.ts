@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { derivePinnedMeals, isPinnableMeal, MAX_PINNED_MEALS, togglePinnedMealId } from './pinnedMeals';
+import { derivePinnedMeals, isPinnableMeal, MAX_PINNED_MEALS, PINNED_MEALS_STORAGE_KEY, readPinnedMealIds, togglePinnedMealId, writePinnedMealIds } from './pinnedMeals';
 import type { FoodMoment } from './types';
 
 const meal = (id: string, title: string, category = 'breakfast', tags: string[] = []): FoodMoment => ({ id, title, category, tags } as FoodMoment);
@@ -27,5 +27,18 @@ describe('pinned meals', () => {
     expect(ids).toHaveLength(MAX_PINNED_MEALS);
     expect(ids[0]).toBe(String(MAX_PINNED_MEALS + 1));
     expect(togglePinnedMealId(ids, meal(ids[0], 'Meal'))).not.toContain(ids[0]);
+  });
+
+  it('persists a bounded unique id list and reads it back', () => {
+    let raw: string | null = null;
+    const storage = { getItem: (key: string) => key === PINNED_MEALS_STORAGE_KEY ? raw : null, setItem: (_key: string, value: string) => { raw = value; } };
+    const ids = writePinnedMealIds(['1', '1', '2', '3', '4', '5', '6'], storage as Storage);
+    expect(ids).toEqual(['1', '2', '3', '4', '5']);
+    expect(readPinnedMealIds(storage as Storage)).toEqual(ids);
+  });
+
+  it('fails closed when persisted pin state is malformed', () => {
+    const storage = { getItem: () => '{broken' };
+    expect(readPinnedMealIds(storage as Storage)).toEqual([]);
   });
 });
