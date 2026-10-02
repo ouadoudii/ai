@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { MomentDetailModal } from './components/MomentDetailModal';
+import { copyMealShareText, MomentDetailModal } from './components/MomentDetailModal';
 
 const moment = {
   id: 'favorite-a11y',
@@ -35,5 +35,23 @@ describe('MomentDetailModal favorite accessibility state', () => {
 
   it('exposes the favorited state as aria-pressed=true', () => {
     expect(renderFavorite(true)).toContain('aria-label="Favorite" aria-pressed="true"');
+  });
+});
+
+describe('MomentDetailModal clipboard sharing', () => {
+  it('waits for a successful clipboard write', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    await expect(copyMealShareText('Harira · Dinner', { writeText } as any)).resolves.toBeUndefined();
+    expect(writeText).toHaveBeenCalledOnce();
+    expect(writeText).toHaveBeenCalledWith('Harira · Dinner');
+  });
+
+  it('propagates clipboard rejection instead of claiming success', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+    await expect(copyMealShareText('Harira · Dinner', { writeText } as any)).rejects.toThrow('denied');
+  });
+
+  it('treats a missing Clipboard API as a failure', async () => {
+    await expect(copyMealShareText('Harira · Dinner', undefined)).rejects.toThrow('clipboard-unavailable');
   });
 });
