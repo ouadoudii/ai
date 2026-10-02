@@ -2,7 +2,7 @@ import React from 'react';
 import { UsersRound } from 'lucide-react';
 import type { FoodMoment, MomentCategory } from '../types';
 import { useLanguage } from '../i18n';
-import { deriveRecurringSocialCompanion } from '../recurringSocialCompanion';
+import { deriveRecurringSocialCompanion, type RecurringSocialCompanionInsight } from '../recurringSocialCompanion';
 
 interface Props { moments: FoodMoment[] }
 
@@ -14,12 +14,14 @@ const copy = {
   ar: { title: 'لحظة مشتركة مألوفة', body: (name:string,count:number) => `سجّلت ${count} وجبات مع ${name} في هذا الجزء من يومك.` },
 } as const;
 
+const isInsight = (value: RecurringSocialCompanionInsight | null): value is RecurringSocialCompanionInsight => value !== null;
+
 export const RecurringSocialCompanionCard: React.FC<Props> = ({ moments }) => {
   const { language } = useLanguage();
   const insight = React.useMemo(() => categories
     .map(category => deriveRecurringSocialCompanion(moments, category))
-    .filter(Boolean)
-    .sort((a, b) => (b?.count || 0) - (a?.count || 0))[0] || null, [moments]);
+    .filter(isInsight)
+    .sort((a, b) => b.count - a.count)[0] ?? null, [moments]);
   if (!insight) return null;
   const text = copy[language as keyof typeof copy] || copy.en;
   return <section data-testid="recurring-social-companion-insight" className="mt-4 rounded-[28px] border border-[#E8DFD3] bg-[#FFFDF9] p-5 shadow-[0_12px_30px_rgba(68,52,36,.08)]" aria-label={text.title}>
