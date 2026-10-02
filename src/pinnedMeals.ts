@@ -4,6 +4,9 @@ export const MAX_PINNED_MEALS = 5;
 export const PINNED_MEALS_STORAGE_KEY = 'moment_pinned_meals_v1';
 export const PINNED_MEALS_CHANGED_EVENT = 'moment:pinned-meals-changed';
 
+type PinReader = { getItem: (key: string) => string | null };
+type PinWriter = { setItem: (key: string, value: string) => void };
+
 const normalize = (value: string) => value.trim().normalize('NFKC').toLocaleLowerCase();
 
 export function isPinnableMeal(moment: FoodMoment): boolean {
@@ -37,8 +40,8 @@ export function togglePinnedMealId(pinnedIds: string[], moment: FoodMoment, limi
   return [id, ...pinnedIds.filter(current => current !== id)].slice(0, limit);
 }
 
-export function readPinnedMealIds(storage?: Pick<Storage, 'getItem'>): string[] {
-  const target = storage ?? (typeof localStorage !== 'undefined' ? localStorage : undefined);
+export function readPinnedMealIds(storage?: PinReader): string[] {
+  const target: PinReader | undefined = storage ?? (typeof localStorage !== 'undefined' ? localStorage : undefined);
   if (!target) return [];
   try {
     const parsed = JSON.parse(target.getItem(PINNED_MEALS_STORAGE_KEY) || '[]');
@@ -49,9 +52,9 @@ export function readPinnedMealIds(storage?: Pick<Storage, 'getItem'>): string[] 
   }
 }
 
-export function writePinnedMealIds(ids: string[], storage?: Pick<Storage, 'setItem'>): string[] {
+export function writePinnedMealIds(ids: string[], storage?: PinWriter): string[] {
   const safeIds = Array.from(new Set(ids.filter(id => typeof id === 'string' && id.trim()))).slice(0, MAX_PINNED_MEALS);
-  const target = storage ?? (typeof localStorage !== 'undefined' ? localStorage : undefined);
+  const target: PinWriter | undefined = storage ?? (typeof localStorage !== 'undefined' ? localStorage : undefined);
   target?.setItem(PINNED_MEALS_STORAGE_KEY, JSON.stringify(safeIds));
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(PINNED_MEALS_CHANGED_EVENT, { detail: safeIds }));
   return safeIds;
