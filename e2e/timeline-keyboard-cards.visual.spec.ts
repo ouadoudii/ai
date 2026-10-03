@@ -22,14 +22,15 @@ test.describe('timeline meal keyboard access', () => {
       localStorage.setItem('moment-onboarding-complete', 'true');
     }, moment);
     await page.goto('/');
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').some((entry: { id?: string }) => entry.id === 'keyboard-meal'))).toBe(true);
+    const desktopTimeline = page.getByRole('button', { name: /entries/i }).first();
+    const mobileTimeline = page.getByTestId('mobile-moments-nav');
+    if (await desktopTimeline.isVisible().catch(() => false)) await desktopTimeline.click();
+    else await mobileTimeline.click();
+    await expect(page.getByTestId('moments-timeline')).toBeVisible();
   });
 
   test('meal row is a native button and Enter opens detail', async ({ page }) => {
-    const journal = page.getByText('Journal & timeline').first();
-    if (!(await journal.isVisible().catch(() => false))) {
-      const nav = page.getByRole('button', { name: /moments|journal/i }).first();
-      if (await nav.isVisible().catch(() => false)) await nav.click();
-    }
     const card = page.getByTestId('timeline-moment-keyboard-meal');
     await expect(card).toBeVisible();
     await expect(card).toHaveJSProperty('tagName', 'BUTTON');
@@ -41,11 +42,6 @@ test.describe('timeline meal keyboard access', () => {
   });
 
   test('Space activates the focused meal row', async ({ page }) => {
-    const journal = page.getByText('Journal & timeline').first();
-    if (!(await journal.isVisible().catch(() => false))) {
-      const nav = page.getByRole('button', { name: /moments|journal/i }).first();
-      if (await nav.isVisible().catch(() => false)) await nav.click();
-    }
     const card = page.getByTestId('timeline-moment-keyboard-meal');
     await expect(card).toBeVisible();
     await card.focus();
