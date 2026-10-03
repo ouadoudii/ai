@@ -17,7 +17,7 @@ const moment = {
 test.describe('timeline meal keyboard access', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript((seed) => {
-      localStorage.setItem('foodMoments', JSON.stringify([seed]));
+      localStorage.setItem('nimmapp_moments_v1', JSON.stringify([seed]));
       localStorage.setItem('moment-language', 'en');
       localStorage.setItem('moment-onboarding-complete', 'true');
     }, moment);
@@ -41,8 +41,15 @@ test.describe('timeline meal keyboard access', () => {
   });
 
   test('Space activates the focused meal row', async ({ page }) => {
+    const journal = page.getByText('Journal & timeline').first();
+    if (!(await journal.isVisible().catch(() => false))) {
+      const nav = page.getByRole('button', { name: /moments|journal/i }).first();
+      if (await nav.isVisible().catch(() => false)) await nav.click();
+    }
     const card = page.getByTestId('timeline-moment-keyboard-meal');
+    await expect(card).toBeVisible();
     await card.focus();
+    await expect(card).toBeFocused();
     await page.keyboard.press('Space');
     await expect(page.getByText('بيض مسلوق').last()).toBeVisible();
   });
