@@ -18,8 +18,12 @@ test.describe('timeline meal keyboard access', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript((seed) => {
       localStorage.setItem('nimmapp_moments_v1', JSON.stringify([seed]));
-      localStorage.setItem('moment-language', 'en');
-      localStorage.setItem('moment-onboarding-complete', 'true');
+      localStorage.setItem('rhythm_language_v1', 'en');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify({ confirmedAt: Date.now() }));
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
     }, moment);
     await page.goto('/');
     await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').some((entry: { id?: string }) => entry.id === 'keyboard-meal'))).toBe(true);
