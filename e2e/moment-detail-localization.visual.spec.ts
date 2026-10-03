@@ -17,7 +17,7 @@ for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',wid
       },{language:scenario.language});
       await page.goto('/');
       const momentsNav=page.getByTestId('mobile-moments-nav');
-      if(await momentsNav.isVisible()) await momentsNav.click(); else await page.getByRole('button',{name:/Momente|Moments|Journal/i}).first().click();
+      if(await momentsNav.isVisible()) await momentsNav.click(); else await page.getByRole('button',{name:/Momente|Moments|Journal|Entrées|Einträge/i}).first().click();
       await page.getByText('Harira maison').first().click();
       await expect(page.getByText(scenario.category)).toBeVisible();
       await expect(page.getByText(scenario.location,{exact:true})).toBeVisible();
