@@ -20,7 +20,7 @@ for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',wid
       if(await momentsNav.isVisible()) await momentsNav.click(); else await page.getByRole('button',{name:/Momente|Moments|Journal|Entrées|Einträge/i}).first().click();
       await page.getByText('Harira maison').first().click();
       const modal=page.getByRole('heading',{name:'Harira maison'}).locator('xpath=ancestor::section');
-      await expect(page.getByTestId('timeline-moment-detail-locale')).toHaveText(scenario.category);
+      await expect(modal.getByTestId('moment-detail-category')).toHaveText(scenario.category);
       await expect(modal.getByText(scenario.location,{exact:true})).toBeVisible();
       await expect(modal.getByText(scenario.rating,{exact:true})).toBeVisible();
       await expect(modal.getByText(scenario.body,{exact:true})).toBeVisible();
