@@ -16,7 +16,11 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await prepare(page);
 
-    const add = page.getByTestId('primary-capture-button');
+    // The mobile shell owns primary-capture-button. On desktop the real opener is
+    // the visible Add a moment action in the desktop shell.
+    const add = viewport.name === 'desktop'
+      ? page.getByRole('button', { name: 'Add a moment', exact: true }).filter({ visible: true }).first()
+      : page.getByTestId('primary-capture-button');
     await expect(add).toBeVisible();
     await add.click();
     const dialog = page.getByRole('dialog');
