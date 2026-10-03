@@ -31,10 +31,14 @@ export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, 
   const [recent, setRecent] = React.useState<FoodMoment[]>([]);
   const dialogRef = React.useRef<HTMLElement | null>(null);
   const closeButtonRef = React.useRef<HTMLButtonElement | null>(null);
+  const openerRef = React.useRef<HTMLElement | null>(null);
+  const restoreOpenerRef = React.useRef(true);
 
   React.useEffect(() => { if (isOpen) setRecent(getRepeatCandidates(read(), 3)); }, [isOpen]);
   React.useEffect(() => {
     if (!isOpen) return;
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    restoreOpenerRef.current = true;
     closeButtonRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); onClose(); return; }
@@ -46,12 +50,16 @@ export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, 
       else if (!event.shiftKey && active===last) { event.preventDefault(); first.focus(); }
     };
     document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      const opener = openerRef.current;
+      if (restoreOpenerRef.current && opener?.isConnected) opener.focus();
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-  const choose = (fn:()=>void, source:string) => { trackUx({eventName:'capture_choice_selected',surface:'capture_choice',language,metadata:{step:source}}); onClose(); fn(); };
-  const repeat=(moment:FoodMoment)=>{localStorage.setItem(KEY,JSON.stringify([repeatMeal(moment),...read()]));onClose();window.location.reload();};
+  const choose = (fn:()=>void, source:string) => { trackUx({eventName:'capture_choice_selected',surface:'capture_choice',language,metadata:{step:source}}); restoreOpenerRef.current=false; onClose(); fn(); };
+  const repeat=(moment:FoodMoment)=>{localStorage.setItem(KEY,JSON.stringify([repeatMeal(moment),...read()]));restoreOpenerRef.current=false;onClose();window.location.reload();};
   const changeLanguage=(lang:AppLanguage)=>{if(lang===language)return;trackUx({eventName:'language_selected',surface:'capture_choice',language:lang,metadata:{source:'capture_language_picker'}});setLanguage(lang);};
 
   return <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-[#25231F]/55 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="capture-choice-title">
