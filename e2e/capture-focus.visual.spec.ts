@@ -36,7 +36,14 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await dialog.getByRole('button', { name: 'Français', exact: true }).click();
     await dialog.getByRole('button', { name: 'Fermer' }).click();
     await expect(dialog).toBeHidden();
-    await expect(add).toBeFocused();
+    // The desktop opener's accessible name is localized after the language switch,
+    // so assert focus by DOM identity rather than re-resolving the stale English locator.
+    await expect.poll(async () => page.evaluate(() => document.activeElement?.getAttribute('data-testid'))).toBe(
+      viewport.name === 'mobile' ? 'primary-capture-button' : null,
+    );
+    if (viewport.name === 'desktop') {
+      await expect.poll(async () => page.evaluate(() => document.activeElement?.textContent?.trim())).toBe('Ajouter un moment');
+    }
     await page.screenshot({ path: `test-results/capture-focus-${viewport.name}.png`, fullPage: true });
   });
 }
