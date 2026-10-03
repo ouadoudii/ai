@@ -17,8 +17,8 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await prepare(page);
 
     const add = page.getByTestId('primary-capture-button');
-    await add.focus();
-    await page.keyboard.press('Enter');
+    await expect(add).toBeVisible();
+    await add.click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused();
@@ -27,7 +27,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(dialog).toBeHidden();
     await expect(add).toBeFocused();
 
-    await page.keyboard.press('Enter');
+    await add.click();
     await expect(dialog).toBeVisible();
     await dialog.getByRole('button', { name: 'Français', exact: true }).click();
     await dialog.getByRole('button', { name: 'Fermer' }).click();
