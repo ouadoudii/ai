@@ -23,7 +23,15 @@ for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',wid
     if(await mobileCoach.isVisible()) await mobileCoach.click();
     else await page.getByRole('button',{name:/Cary|Coach/i}).first().click();
 
-    const startCheckIn=page.getByRole('button',{name:/Check-in starten/i}).filter({visible:true}).first();
+    const startCheckInCandidates=page.getByRole('button',{name:/Check-in starten/i});
+    let startCheckIn=startCheckInCandidates.first();
+    for(let index=0;index<await startCheckInCandidates.count();index+=1){
+      const candidate=startCheckInCandidates.nth(index);
+      if(await candidate.isVisible()){
+        startCheckIn=candidate;
+        break;
+      }
+    }
     await expect(startCheckIn).toBeVisible();
     await startCheckIn.click();
     const dialog=page.getByRole('dialog');
