@@ -36,8 +36,11 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
     await page.getByRole('button',{name:/Schlafmangel/}).click();
     await expect(page.getByText('Keine Intervention erforderlich')).toBeVisible();
 
+    // A different source occurrence must remain independently actionable. Use
+    // the rushed-meal simulator because it is not gated by the runner's local
+    // wall-clock hour (the afternoon-crash alarm intentionally is).
     await page.getByRole('button',{name:/Reset/}).click();
-    await page.getByRole('button',{name:/14-Uhr Tief/}).click();
+    await page.getByRole('button',{name:/Stress-Essen/}).click();
     await expect(page.getByRole('button',{name:'Als erledigt abhaken'}).first()).toBeVisible();
     await page.screenshot({path:testInfo.outputPath(`guardian-acknowledgement-${viewport.name}.png`),fullPage:true});
   });
