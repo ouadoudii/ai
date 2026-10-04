@@ -23,7 +23,9 @@ for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',wid
     if(await mobileCoach.isVisible()) await mobileCoach.click();
     else await page.getByRole('button',{name:/Cary|Coach/i}).first().click();
 
-    await page.getByRole('button',{name:/Check-in starten/i}).click();
+    const startCheckIn=page.getByRole('button',{name:/Check-in starten/i}).filter({visible:true}).first();
+    await expect(startCheckIn).toBeVisible();
+    await startCheckIn.click();
     const dialog=page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     const add=dialog.getByRole('button',{name:'Moment hinzufügen'});
