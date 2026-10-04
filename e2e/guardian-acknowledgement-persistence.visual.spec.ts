@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const profile={summary:'I want to understand my rhythm.',priorities:[],preferences:[],rawIntro:'I want to understand my rhythm.',confirmedAt:Date.now(),firstPlan:{title:'Observe your rhythm',rationale:'Notice what repeats.',focusAreas:[],firstStep:'Capture your next midday check-in.',phase:'midday'}};
+const acknowledgementStorageKey='moment.guardian.acknowledged-occurrences.v1';
 
 const prepare=async(page:any)=>{await page.addInitScript((profile)=>{
   localStorage.setItem('rhythm_language_v1','de');
@@ -27,8 +28,7 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
     await resolve.click();
     await expect(page.getByText('Keine Intervention erforderlich')).toBeVisible();
 
-    const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_guardian_acknowledgements_v1')||'[]'));
-    expect(stored.length).toBeGreaterThan(0);
+    await expect.poll(async()=>page.evaluate((key)=>JSON.parse(localStorage.getItem(key)||'[]').length,acknowledgementStorageKey)).toBeGreaterThan(0);
 
     await page.reload();
     await page.getByTestId(viewport.name==='desktop'?'desktop-coach-nav':'mobile-coach-nav').click();
