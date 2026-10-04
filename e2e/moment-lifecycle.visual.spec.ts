@@ -15,6 +15,10 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('rhythm_intro_profile_v1', '{}');
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: async (text: string) => { localStorage.setItem('e2e_clipboard_text', text); } },
+    });
     if (localStorage.getItem('nimmapp_moments_v1') === null) {
       localStorage.setItem('nimmapp_moments_v1', JSON.stringify([{
         id: 'lifecycle-1',
@@ -41,6 +45,20 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
 
   await page.getByTestId('moments-timeline').getByText('Lifecycle bowl', { exact: true }).click();
   await expect(page.locator('h1', { hasText: 'Lifecycle bowl' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Share' }).click();
+  await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('e2e_clipboard_text'))).toContain('Lifecycle bowl');
+
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: async () => { throw new Error('denied'); } },
+    });
+  });
+  await page.getByRole('button', { name: 'Copied' }).click();
+  await expect(page.getByRole('button', { name: 'Copy failed' })).toBeVisible();
+
   await page.getByRole('button', { name: 'Favorite' }).click();
 
   await expect.poll(async () => {
