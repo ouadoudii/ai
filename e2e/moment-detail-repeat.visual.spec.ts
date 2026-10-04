@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+// Regression: repeating from an old detail must create a fresh persisted occurrence on both layouts.
 for (const viewport of [{ name: 'mobile', width: 390, height: 844 }, { name: 'desktop', width: 1280, height: 900 }]) {
   test(`repeat an older meal from moment detail persists a fresh copy - ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
