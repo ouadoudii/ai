@@ -62,6 +62,12 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
   }).toBe(true);
 
   await page.getByTestId('moments-timeline').getByText('Lifecycle bowl', { exact: true }).click();
+  page.once('dialog', async dialog => {
+    expect(dialog.type()).toBe('confirm');
+    expect(dialog.message()).toContain('Lifecycle bowl');
+    expect(dialog.message()).toContain('cannot be undone');
+    await dialog.accept();
+  });
   await page.getByRole('button', { name: 'Delete' }).click();
   await expect.poll(async () => {
     return page.evaluate(() => {
