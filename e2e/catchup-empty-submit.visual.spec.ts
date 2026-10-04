@@ -41,7 +41,7 @@ for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',wid
     await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_checkins_v1')||'[]').length)).toBe(0);
     await page.screenshot({path:testInfo.outputPath(`catchup-empty-${viewport.name}.png`),fullPage:true});
 
-    await dialog.getByRole('textbox').fill('Später gegessen');
+    await dialog.getByRole('textbox',{name:'Möchtest du etwas festhalten'}).fill('Später gegessen');
     await expect(add).toBeEnabled();
   });
 }
