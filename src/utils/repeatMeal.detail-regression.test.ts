@@ -15,7 +15,7 @@ describe('repeatMeal detail action contract', () => {
       locationCategory: 'restaurant',
       imageUrl: '',
       rating: 2,
-      mood: 'stressed',
+      mood: 'comfort',
       hungerLevel: 5,
       fullnessLevel: 4,
       energyAfter: 'sluggish',
