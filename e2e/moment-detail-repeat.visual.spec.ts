@@ -21,7 +21,7 @@ for (const viewport of [{ name: 'mobile', width: 390, height: 844 }, { name: 'de
 
     const openMoments = async () => {
       if (viewport.name === 'mobile') await page.getByTestId('mobile-moments-nav').click();
-      else await page.getByRole('button', { name: 'Entries' }).click();
+      else await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Moments' }).click();
     };
 
     await page.goto('/');
