@@ -14,7 +14,7 @@ const normalize = (value: string) => value
   .toLocaleLowerCase();
 
 const isDemoMoment = (moment: FoodMoment) => {
-  const marker = `${moment.id} ${moment.tags.join(' ')}`.toLocaleLowerCase();
+  const marker = `${moment.id} ${(moment.tags ?? []).join(' ')}`.toLocaleLowerCase();
   return /(^|[\s_-])(demo|seed|sample|simulated)([\s_-]|$)/.test(marker);
 };
 
