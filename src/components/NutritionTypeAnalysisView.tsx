@@ -7,7 +7,7 @@ import { patternTitles } from '../utils/patternTitleLocalization';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
 import { buildEarlyOrientationCopy, getAnimalTypeNames } from '../utils/earlyOrientation';
 import { getRecurringMeals } from '../utils/recurringMeals';
-import { getMealRhythmShift } from '../utils/mealRhythmShift';
+import { getMealRhythmShift, localizeMealRhythmShift } from '../utils/mealRhythmShift';
 import { useLanguage, type AppLanguage } from '../i18n';
 
 interface Props { moments: FoodMoment[]; checkIns: DailyCheckIn[]; onOpenCheckIn: () => void; onOpenAddMoment: () => void; }
@@ -21,24 +21,13 @@ const recurringCopy: Record<AppLanguage, { title: string; description: string; c
   fr: { title: 'Tes repas récurrents', description: 'Ce qui revient souvent dans ton assiette, détecté à partir de tes vrais moments.', count: n => `${n}× enregistré` },
   ar: { title: 'وجباتك المتكررة', description: 'ما يتكرر في طبقك، بناءً على لحظاتك الحقيقية.', count: n => `سُجّلت ${n}×` },
 };
-const mealNames: Record<AppLanguage, Record<'breakfast'|'lunch'|'dinner', string>> = {
-  de: { breakfast: 'Frühstück', lunch: 'Mittagessen', dinner: 'Abendessen' },
-  en: { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner' },
-  fr: { breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', dinner: 'Dîner' },
-  ar: { breakfast: 'الفطور', lunch: 'الغداء', dinner: 'العشاء' },
-};
-const rhythmShiftCopy: Record<AppLanguage, { title: string; later: (meal: string, minutes: number) => string; earlier: (meal: string, minutes: number) => string; evidence: string }> = {
-  de: { title: 'Dein Essrhythmus verändert sich', later: (meal, minutes) => `${meal} liegt zuletzt etwa ${minutes} Min. später als zuvor.`, earlier: (meal, minutes) => `${meal} liegt zuletzt etwa ${minutes} Min. früher als zuvor.`, evidence: 'Verglichen werden deine letzten 3 Einträge mit den 3 davor.' },
-  en: { title: 'Your meal rhythm is shifting', later: (meal, minutes) => `${meal} has recently been about ${minutes} min later than before.`, earlier: (meal, minutes) => `${meal} has recently been about ${minutes} min earlier than before.`, evidence: 'This compares your latest 3 entries with the 3 before them.' },
-  fr: { title: 'Ton rythme des repas évolue', later: (meal, minutes) => `${meal} est récemment environ ${minutes} min plus tard qu’avant.`, earlier: (meal, minutes) => `${meal} est récemment environ ${minutes} min plus tôt qu’avant.`, evidence: 'Comparaison de tes 3 dernières entrées avec les 3 précédentes.' },
-  ar: { title: 'إيقاع وجباتك يتغيّر', later: (meal, minutes) => `${meal} أصبح مؤخراً متأخراً بحوالي ${minutes} دقيقة مقارنةً بالسابق.`, earlier: (meal, minutes) => `${meal} أصبح مؤخراً أبكر بحوالي ${minutes} دقيقة مقارنةً بالسابق.`, evidence: 'نقارن آخر 3 تسجيلات لديك مع التسجيلات الثلاثة التي سبقتها.' },
-};
 
 export const NutritionTypeAnalysisView: React.FC<Props> = ({ moments, checkIns, onOpenCheckIn, onOpenAddMoment }) => {
   const { language, t } = useLanguage();
   const insights = React.useMemo(() => buildPatternInsights(moments, checkIns), [moments, checkIns]);
   const recurringMeals = React.useMemo(() => getRecurringMeals(moments), [moments]);
   const mealRhythmShift = React.useMemo(() => getMealRhythmShift(moments), [moments]);
+  const localizedRhythmShift = mealRhythmShift ? localizeMealRhythmShift(mealRhythmShift, language) : null;
   const profile = React.useMemo(() => analyzeNutritionType(moments, checkIns), [moments, checkIns]);
   const real = profile.dataPointsCurrent;
   const orientation = buildEarlyOrientationCopy(language, profile.archetype, real, profile.dataPointsNeeded);
@@ -53,7 +42,7 @@ export const NutritionTypeAnalysisView: React.FC<Props> = ({ moments, checkIns, 
     <section className="pt-5 sm:pt-9"><p className="flex items-center gap-2 text-xs font-black uppercase tracking-[.14em] text-[#6D765F]"><Activity className="w-4 h-4" />{t('yourData')}</p><h1 className="mt-3 text-5xl sm:text-7xl font-display font-black tracking-[-.04em] text-[#252824]">{t('patterns')}</h1><p className="mt-3 max-w-xl text-sm sm:text-base leading-relaxed text-[#706F68]">{intro[language]}</p></section>
     <section data-testid="early-personal-orientation" className="mt-8 rounded-[30px] bg-[#293D34] p-6 sm:p-7 text-white shadow-[0_18px_45px_rgba(41,61,52,.18)]"><div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3"><span data-testid="orientation-status" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.1em]"><Sparkles className="h-3.5 w-3.5 shrink-0" />{orientation.label}</span><span className="text-[11px] leading-4 text-white/60">{orientation.progress}</span></div><h2 className="mt-4 text-2xl sm:text-3xl font-display font-black" dir="auto">{orientation.title}</h2><p className="mt-3 max-w-xl text-sm leading-relaxed text-white/75" dir="auto">{orientation.description}</p><div className="mt-5 h-2 overflow-hidden rounded-full bg-white/12" aria-label={orientation.progress}><div className="h-full rounded-full bg-[#F2A275] transition-all" style={{ width: `${profile.confidenceScore}%` }} /></div>{real === 0 && <button type="button" onClick={onOpenAddMoment} className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-black text-[#293D34]"><Plus className="h-4 w-4" />{t('add')}</button>}</section>
 
-    {mealRhythmShift && <section data-testid="meal-rhythm-shift-insight" className="mt-4 rounded-[30px] border border-[#E5E0D7] bg-white p-6 sm:p-7 text-[#292B27]"><div className="flex items-start gap-3"><span className="rounded-2xl bg-[#EEF2E9] p-2.5 text-[#526B48]"><Clock3 className="h-5 w-5" /></span><div><h2 className="text-xl sm:text-2xl font-display font-black" dir="auto">{rhythmShiftCopy[language].title}</h2><p data-testid="meal-rhythm-shift-observation" className="mt-2 text-sm leading-relaxed text-[#5F625C]" dir="auto">{mealRhythmShift.deltaMinutes > 0 ? rhythmShiftCopy[language].later(mealNames[language][mealRhythmShift.category as 'breakfast'|'lunch'|'dinner'], Math.abs(mealRhythmShift.deltaMinutes)) : rhythmShiftCopy[language].earlier(mealNames[language][mealRhythmShift.category as 'breakfast'|'lunch'|'dinner'], Math.abs(mealRhythmShift.deltaMinutes))}</p><p className="mt-2 text-xs leading-relaxed text-[#8B887F]" dir="auto">{rhythmShiftCopy[language].evidence}</p></div></div></section>}
+    {localizedRhythmShift && <section data-testid="meal-rhythm-shift-insight" className="mt-4 rounded-[30px] border border-[#E5E0D7] bg-white p-6 sm:p-7 text-[#292B27]"><div className="flex items-start gap-3"><span className="rounded-2xl bg-[#EEF2E9] p-2.5 text-[#526B48]"><Clock3 className="h-5 w-5" /></span><div><h2 className="text-xl sm:text-2xl font-display font-black" dir="auto">{localizedRhythmShift.title}</h2><p data-testid="meal-rhythm-shift-observation" className="mt-2 text-sm leading-relaxed text-[#5F625C]" dir="auto">{localizedRhythmShift.observation}</p><p className="mt-2 text-xs leading-relaxed text-[#8B887F]" dir="auto">{localizedRhythmShift.evidence}</p></div></div></section>}
 
     {recurringMeals.length > 0 && <section data-testid="recurring-meals-insight" className="mt-4 rounded-[30px] border border-[#E5E0D7] bg-white p-6 sm:p-7 text-[#292B27]"><div className="flex items-start gap-3"><span className="rounded-2xl bg-[#F1ECE4] p-2.5 text-[#7A654D]"><Repeat2 className="h-5 w-5" /></span><div><h2 className="text-xl sm:text-2xl font-display font-black" dir="auto">{recurringCopy[language].title}</h2><p className="mt-1 text-sm leading-relaxed text-[#706F68]" dir="auto">{recurringCopy[language].description}</p></div></div><div className="mt-5 grid gap-2 sm:grid-cols-3">{recurringMeals.map(meal => <div data-testid="recurring-meal-item" key={`${meal.title}-${meal.latestCreatedAt}`} className="rounded-[20px] bg-[#F7F5F0] p-4"><p className="truncate text-sm font-black" dir="auto">{meal.title}</p><p className="mt-1 text-xs font-bold text-[#8A694A]" dir="auto">{recurringCopy[language].count(meal.count)}</p></div>)}</div></section>}
 
