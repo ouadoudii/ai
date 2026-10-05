@@ -1,8 +1,8 @@
 import { expect,test } from '@playwright/test';
 
 const moments=[
- {id:'creme',title:'Crème brûlée',label:'Meal',category:'dessert',date:'2026-09-28',time:'20:00',location:'Paris',imageUrl:'',rating:5,mood:'satisfied',tags:['dessert'],createdAt:1,isFavorite:true,note:'Dessert after dinner'},
- {id:'harira',title:'حريرة Harira',label:'Meal',category:'dinner',date:'2026-09-27',time:'19:00',location:'Marrakech',imageUrl:'',rating:5,mood:'comfort',tags:['morocco'],createdAt:2,isFavorite:false,note:'بعد sport avec Youssef'}
+ {id:'creme',title:'Crème brûlée',label:'Meal',category:'dessert',date:'2026-09-28',time:'20:00',location:'Paris',imageUrl:'',rating:5,mood:'satisfied',tags:['dessert'],createdAt:1,isFavorite:true,notes:'Dessert after dinner'},
+ {id:'harira',title:'حريرة Harira',label:'Meal',category:'dinner',date:'2026-09-27',time:'19:00',location:'Marrakech',imageUrl:'',rating:5,mood:'comfort',tags:['morocco'],createdAt:2,isFavorite:false,notes:'بعد sport avec Youssef'}
 ];
 const prepare=async(page:any)=>page.addInitScript((moments)=>{localStorage.setItem('rhythm_language_v1','de');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');localStorage.setItem('rhythm_voice_entry_seen_v1','true');localStorage.setItem('nimmapp_moments_v1',JSON.stringify(moments));localStorage.setItem('nimmapp_checkins_v1','[]');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');},moments);
 const openTimeline=async(page:any,mobile:boolean)=>mobile?page.getByTestId('mobile-moments-nav').click():page.getByRole('button',{name:'Momente',exact:true}).click();
