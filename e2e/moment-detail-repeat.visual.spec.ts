@@ -11,7 +11,7 @@ for (const viewport of [{ name: 'mobile', width: 390, height: 844 }, { name: 'de
       localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
       localStorage.setItem('rhythm_intro_profile_v1', '{}');
       sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
-      localStorage.setItem('nimmapp_moments_v1', JSON.stringify([{
+      if (!localStorage.getItem('nimmapp_moments_v1')) localStorage.setItem('nimmapp_moments_v1', JSON.stringify([{
         id: 'detail-repeat-source', title: 'بيض مسلوق + pain complet', label: 'Breakfast', category: 'breakfast',
         date: '2026-09-20', time: '08:15', location: 'Old café', locationCategory: 'restaurant', imageUrl: '',
         rating: 2, mood: 'comfort', hungerLevel: 5, fullnessLevel: 4, energyAfter: 'sluggish',
@@ -19,12 +19,13 @@ for (const viewport of [{ name: 'mobile', width: 390, height: 844 }, { name: 'de
       }]));
     });
 
+    const openMoments = async () => {
+      if (viewport.name === 'mobile') await page.getByTestId('mobile-moments-nav').click();
+      else await page.getByRole('button', { name: 'Entries' }).click();
+    };
+
     await page.goto('/');
-    if (viewport.name === 'mobile') {
-      await page.getByTestId('mobile-moments-nav').click();
-    } else {
-      await page.getByTestId('desktop-moments-nav').click();
-    }
+    await openMoments();
     await page.getByTestId('moments-timeline').getByText('بيض مسلوق + pain complet', { exact: true }).click();
     await expect(page.getByTestId('moment-detail-repeat')).toBeVisible();
     await page.screenshot({ path: `test-results/moment-detail-repeat-${viewport.name}-before.png`, fullPage: true });
@@ -44,12 +45,9 @@ for (const viewport of [{ name: 'mobile', width: 390, height: 844 }, { name: 'de
     expect(repeated.isFavorite).toBe(false);
 
     await page.reload();
-    if (viewport.name === 'mobile') {
-      await page.getByTestId('mobile-moments-nav').click();
-    } else {
-      await page.getByTestId('desktop-moments-nav').click();
-    }
+    await openMoments();
     await expect(page.getByTestId('moments-timeline')).toContainText('بيض مسلوق + pain complet');
+    await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').length)).toBe(2);
     await page.screenshot({ path: `test-results/moment-detail-repeat-${viewport.name}-after.png`, fullPage: true });
   });
 }
