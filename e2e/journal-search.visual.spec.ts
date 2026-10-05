@@ -9,7 +9,7 @@ const openTimeline=async(page:any,mobile:boolean)=>mobile?page.getByTestId('mobi
 
 for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',width:390,height:844}])test(`journal search finds multilingual history and personal notes on ${viewport.name}`,async({page},testInfo)=>{
  await page.setViewportSize({width:viewport.width,height:viewport.height});await prepare(page);await page.goto('/');await openTimeline(page,viewport.name==='mobile');
- const search=page.getByTestId('timeline-search');await expect(search).toHaveAttribute('placeholder','Mahlzeiten, Orte oder Tags suchen');
+ const search=page.getByTestId('timeline-search');await expect(search).toHaveAttribute('placeholder','Mahlzeiten, Orte, Notizen oder Tags suchen');
  await search.fill('creme');await expect(page.getByTestId('timeline-moment-creme')).toBeVisible();await expect(page.getByTestId('timeline-moment-harira')).toHaveCount(0);
  await search.fill('Marrakech');await expect(page.getByTestId('timeline-moment-harira')).toBeVisible();await expect(page.getByTestId('timeline-moment-creme')).toHaveCount(0);
  await search.fill('sport avec');await expect(page.getByTestId('timeline-moment-harira')).toBeVisible();await expect(page.getByTestId('timeline-moment-creme')).toHaveCount(0);
