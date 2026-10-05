@@ -5,7 +5,7 @@ import { filterMoments } from './momentFilters';
 const moment=(id:string,isFavorite?:boolean,extra:Partial<FoodMoment>={})=>({id,title:id,label:'Meal',category:'lunch',date:'2026-09-28',time:'12:00',location:'Home',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt:1,isFavorite,...extra} as FoodMoment);
 
 describe('filterMoments',()=>{
-  const moments=[moment('favorite',true,{title:'Crème brûlée',tags:['dessert']}),moment('ordinary',false,{title:'Harira',location:'Marrakech'}),moment('legacy',undefined,{title:'بيض مسلوق'}),moment('arabic-diacritics',true,{title:'حَرِيرَة Harira',location:'مَرَّاكُش',tags:['شُورْبَة']}),moment('note-only',false,{title:'Soup',note:'بعد sport avec Youssef'})];
+  const moments=[moment('favorite',true,{title:'Crème brûlée',tags:['dessert']}),moment('ordinary',false,{title:'Harira',location:'Marrakech'}),moment('legacy',undefined,{title:'بيض مسلوق'}),moment('arabic-diacritics',true,{title:'حَرِيرَة Harira',location:'مَرَّاكُش',tags:['شُورْبَة']}),moment('note-only',false,{title:'Soup',notes:'بعد sport avec Youssef'})];
   it('keeps the complete journal in all mode',()=>expect(filterMoments(moments,'all')).toEqual(moments));
   it('returns only explicitly favorited meals in favorites mode',()=>expect(filterMoments(moments,'favorites').map(item=>item.id)).toEqual(['favorite','arabic-diacritics']));
   it('searches title, location and tags accent-insensitively',()=>{
@@ -17,7 +17,7 @@ describe('filterMoments',()=>{
     expect(filterMoments(moments,'all','sport avec').map(item=>item.id)).toEqual(['note-only']);
     expect(filterMoments(moments,'all','يوسف').map(item=>item.id)).toEqual([]);
     expect(filterMoments(moments,'all','بعد').map(item=>item.id)).toEqual(['note-only']);
-    expect(moments.find(item=>item.id==='note-only')?.note).toBe('بعد sport avec Youssef');
+    expect(moments.find(item=>item.id==='note-only')?.notes).toBe('بعد sport avec Youssef');
   });
   it('supports Arabic and composes search with favorites',()=>{
     expect(filterMoments(moments,'all','بيض').map(item=>item.id)).toEqual(['legacy']);
