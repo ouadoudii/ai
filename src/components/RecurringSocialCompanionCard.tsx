@@ -14,6 +14,8 @@ const copy = {
   ar: { title: 'لحظة مشتركة مألوفة', body: (name:string,count:number) => `سجّلت ${count} وجبات مع ${name} في هذا الجزء من يومك.` },
 } as const;
 
+export const getRecurringSocialCompanionCopy = (language: keyof typeof copy) => copy[language] || copy.en;
+
 const isInsight = (value: RecurringSocialCompanionInsight | null): value is RecurringSocialCompanionInsight => value !== null;
 
 export const RecurringSocialCompanionCard: React.FC<Props> = ({ moments }) => {
@@ -23,7 +25,7 @@ export const RecurringSocialCompanionCard: React.FC<Props> = ({ moments }) => {
     .filter(isInsight)
     .sort((a, b) => b.count - a.count)[0] ?? null, [moments]);
   if (!insight) return null;
-  const text = copy[language as keyof typeof copy] || copy.en;
+  const text = getRecurringSocialCompanionCopy(language as keyof typeof copy);
   return <section data-testid="recurring-social-companion-insight" className="mt-4 rounded-[28px] border border-[#E8DFD3] bg-[#FFFDF9] p-5 shadow-[0_12px_30px_rgba(68,52,36,.08)]" aria-label={text.title}>
     <div className="flex items-center gap-4">
       <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#EEE9F7] text-[#7565B0]"><UsersRound className="h-6 w-6" aria-hidden="true"/></span>
