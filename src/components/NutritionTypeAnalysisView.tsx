@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, FlaskConical, Plus, PawPrint, Sparkles, Repeat2 } from 'lucide-react';
+import { Activity, Clock3, FlaskConical, Plus, PawPrint, Sparkles, Repeat2 } from 'lucide-react';
 import { FoodMoment, DailyCheckIn } from '../types';
 import { buildPatternInsights } from '../utils/patternInsights';
 import { localizePatternInsight } from '../utils/patternInsightLocalization';
@@ -7,6 +7,7 @@ import { patternTitles } from '../utils/patternTitleLocalization';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
 import { buildEarlyOrientationCopy, getAnimalTypeNames } from '../utils/earlyOrientation';
 import { getRecurringMeals } from '../utils/recurringMeals';
+import { getMealRhythmShift, localizeMealRhythmShift } from '../utils/mealRhythmShift';
 import { useLanguage, type AppLanguage } from '../i18n';
 
 interface Props { moments: FoodMoment[]; checkIns: DailyCheckIn[]; onOpenCheckIn: () => void; onOpenAddMoment: () => void; }
@@ -25,6 +26,8 @@ export const NutritionTypeAnalysisView: React.FC<Props> = ({ moments, checkIns, 
   const { language, t } = useLanguage();
   const insights = React.useMemo(() => buildPatternInsights(moments, checkIns), [moments, checkIns]);
   const recurringMeals = React.useMemo(() => getRecurringMeals(moments), [moments]);
+  const mealRhythmShift = React.useMemo(() => getMealRhythmShift(moments), [moments]);
+  const localizedRhythmShift = mealRhythmShift ? localizeMealRhythmShift(mealRhythmShift, language) : null;
   const profile = React.useMemo(() => analyzeNutritionType(moments, checkIns), [moments, checkIns]);
   const real = profile.dataPointsCurrent;
   const orientation = buildEarlyOrientationCopy(language, profile.archetype, real, profile.dataPointsNeeded);
@@ -38,6 +41,8 @@ export const NutritionTypeAnalysisView: React.FC<Props> = ({ moments, checkIns, 
   return <div className="max-w-3xl mx-auto pb-10">
     <section className="pt-5 sm:pt-9"><p className="flex items-center gap-2 text-xs font-black uppercase tracking-[.14em] text-[#6D765F]"><Activity className="w-4 h-4" />{t('yourData')}</p><h1 className="mt-3 text-5xl sm:text-7xl font-display font-black tracking-[-.04em] text-[#252824]">{t('patterns')}</h1><p className="mt-3 max-w-xl text-sm sm:text-base leading-relaxed text-[#706F68]">{intro[language]}</p></section>
     <section data-testid="early-personal-orientation" className="mt-8 rounded-[30px] bg-[#293D34] p-6 sm:p-7 text-white shadow-[0_18px_45px_rgba(41,61,52,.18)]"><div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3"><span data-testid="orientation-status" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.1em]"><Sparkles className="h-3.5 w-3.5 shrink-0" />{orientation.label}</span><span className="text-[11px] leading-4 text-white/60">{orientation.progress}</span></div><h2 className="mt-4 text-2xl sm:text-3xl font-display font-black" dir="auto">{orientation.title}</h2><p className="mt-3 max-w-xl text-sm leading-relaxed text-white/75" dir="auto">{orientation.description}</p><div className="mt-5 h-2 overflow-hidden rounded-full bg-white/12" aria-label={orientation.progress}><div className="h-full rounded-full bg-[#F2A275] transition-all" style={{ width: `${profile.confidenceScore}%` }} /></div>{real === 0 && <button type="button" onClick={onOpenAddMoment} className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-black text-[#293D34]"><Plus className="h-4 w-4" />{t('add')}</button>}</section>
+
+    {localizedRhythmShift && <section data-testid="meal-rhythm-shift-insight" className="mt-4 rounded-[30px] border border-[#E5E0D7] bg-white p-6 sm:p-7 text-[#292B27]"><div className="flex items-start gap-3"><span className="rounded-2xl bg-[#EEF2E9] p-2.5 text-[#526B48]"><Clock3 className="h-5 w-5" /></span><div><h2 className="text-xl sm:text-2xl font-display font-black" dir="auto">{localizedRhythmShift.title}</h2><p data-testid="meal-rhythm-shift-observation" className="mt-2 text-sm leading-relaxed text-[#5F625C]" dir="auto">{localizedRhythmShift.observation}</p><p className="mt-2 text-xs leading-relaxed text-[#8B887F]" dir="auto">{localizedRhythmShift.evidence}</p></div></div></section>}
 
     {recurringMeals.length > 0 && <section data-testid="recurring-meals-insight" className="mt-4 rounded-[30px] border border-[#E5E0D7] bg-white p-6 sm:p-7 text-[#292B27]"><div className="flex items-start gap-3"><span className="rounded-2xl bg-[#F1ECE4] p-2.5 text-[#7A654D]"><Repeat2 className="h-5 w-5" /></span><div><h2 className="text-xl sm:text-2xl font-display font-black" dir="auto">{recurringCopy[language].title}</h2><p className="mt-1 text-sm leading-relaxed text-[#706F68]" dir="auto">{recurringCopy[language].description}</p></div></div><div className="mt-5 grid gap-2 sm:grid-cols-3">{recurringMeals.map(meal => <div data-testid="recurring-meal-item" key={`${meal.title}-${meal.latestCreatedAt}`} className="rounded-[20px] bg-[#F7F5F0] p-4"><p className="truncate text-sm font-black" dir="auto">{meal.title}</p><p className="mt-1 text-xs font-bold text-[#8A694A]" dir="auto">{recurringCopy[language].count(meal.count)}</p></div>)}</div></section>}
 
