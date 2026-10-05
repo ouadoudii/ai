@@ -1,3 +1,4 @@
+import type { AppLanguage } from '../i18n';
 import type { FoodMoment, MomentCategory } from '../types';
 
 export type MealRhythmShift = {
@@ -45,4 +46,29 @@ export function getMealRhythmShift(moments: FoodMoment[]): MealRhythmShift | nul
   });
 
   return candidates.sort((a, b) => Math.abs(b.deltaMinutes) - Math.abs(a.deltaMinutes))[0] ?? null;
+}
+
+const mealNames: Record<AppLanguage, Record<'breakfast'|'lunch'|'dinner', string>> = {
+  de: { breakfast: 'Frühstück', lunch: 'Mittagessen', dinner: 'Abendessen' },
+  en: { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner' },
+  fr: { breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', dinner: 'Dîner' },
+  ar: { breakfast: 'الفطور', lunch: 'الغداء', dinner: 'العشاء' },
+};
+
+const copy: Record<AppLanguage, { title: string; later: (meal: string, minutes: number) => string; earlier: (meal: string, minutes: number) => string; evidence: string }> = {
+  de: { title: 'Dein Essrhythmus verändert sich', later: (meal, minutes) => `${meal} liegt zuletzt etwa ${minutes} Min. später als zuvor.`, earlier: (meal, minutes) => `${meal} liegt zuletzt etwa ${minutes} Min. früher als zuvor.`, evidence: 'Verglichen werden deine letzten 3 Einträge mit den 3 davor.' },
+  en: { title: 'Your meal rhythm is shifting', later: (meal, minutes) => `${meal} has recently been about ${minutes} min later than before.`, earlier: (meal, minutes) => `${meal} has recently been about ${minutes} min earlier than before.`, evidence: 'This compares your latest 3 entries with the 3 before them.' },
+  fr: { title: 'Ton rythme des repas évolue', later: (meal, minutes) => `${meal} est récemment environ ${minutes} min plus tard qu’avant.`, earlier: (meal, minutes) => `${meal} est récemment environ ${minutes} min plus tôt qu’avant.`, evidence: 'Comparaison de tes 3 dernières entrées avec les 3 précédentes.' },
+  ar: { title: 'إيقاع وجباتك يتغيّر', later: (meal, minutes) => `${meal} أصبح مؤخراً متأخراً بحوالي ${minutes} دقيقة مقارنةً بالسابق.`, earlier: (meal, minutes) => `${meal} أصبح مؤخراً أبكر بحوالي ${minutes} دقيقة مقارنةً بالسابق.`, evidence: 'نقارن آخر 3 تسجيلات لديك مع التسجيلات الثلاثة التي سبقتها.' },
+};
+
+export function localizeMealRhythmShift(shift: MealRhythmShift, language: AppLanguage) {
+  const category = shift.category as 'breakfast'|'lunch'|'dinner';
+  const meal = mealNames[language][category];
+  const minutes = Math.abs(shift.deltaMinutes);
+  return {
+    title: copy[language].title,
+    observation: shift.deltaMinutes > 0 ? copy[language].later(meal, minutes) : copy[language].earlier(meal, minutes),
+    evidence: copy[language].evidence,
+  };
 }
