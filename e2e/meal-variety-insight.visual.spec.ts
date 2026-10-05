@@ -1,13 +1,14 @@
 import { expect,test } from '@playwright/test';
 
+const moment=(id:string,title:string,category:string,date:string,time:string,createdAt:number)=>({id,title,label:'Meal',category,date,time,location:'Home',locationCategory:'home',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt});
 const moments=[
- {id:'real-1',title:'Harira',category:'dinner',date:'2026-09-25',time:'19:00',createdAt:10},
- {id:'real-2',title:' harira ',category:'dinner',date:'2026-09-26',time:'19:00',createdAt:20},
- {id:'real-3',title:'Couscous',category:'lunch',date:'2026-09-27',time:'13:00',createdAt:30},
- {id:'real-4',title:'بيض مسلوق',category:'breakfast',date:'2026-09-28',time:'08:00',createdAt:40},
- {id:'real-5',title:'Salad',category:'lunch',date:'2026-09-29',time:'13:00',createdAt:50},
- {id:'real-6',title:'Soup',category:'dinner',date:'2026-09-30',time:'19:00',createdAt:60},
- {id:'moment-1',title:'Demo meal',category:'lunch',date:'2026-09-30',time:'12:00',createdAt:999}
+ moment('real-1','Harira','dinner','2026-09-25','19:00',10),
+ moment('real-2',' harira ','dinner','2026-09-26','19:00',20),
+ moment('real-3','Couscous','lunch','2026-09-27','13:00',30),
+ moment('real-4','بيض مسلوق','breakfast','2026-09-28','08:00',40),
+ moment('real-5','Salad','lunch','2026-09-29','13:00',50),
+ moment('real-6','Soup','dinner','2026-09-30','19:00',60),
+ moment('moment-1','Demo meal','lunch','2026-09-30','12:00',999)
 ];
 const prepare=async(page:any)=>page.addInitScript((seed)=>{localStorage.setItem('rhythm_language_v1','de');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');localStorage.setItem('rhythm_voice_entry_seen_v1','true');localStorage.setItem('nimmapp_moments_v1',JSON.stringify(seed));localStorage.setItem('nimmapp_checkins_v1','[]');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');},moments);
 
