@@ -12,7 +12,16 @@ describe('filterMoments',()=>{
     expect(filterMoments(moments,'all','creme').map(item=>item.id)).toEqual(['favorite']);
     expect(filterMoments(moments,'all','marrakech').map(item=>item.id)).toEqual(['ordinary']);
     expect(filterMoments(moments,'all','dessert').map(item=>item.id)).toEqual(['favorite']);
+    it('filters by inclusive local calendar ranges and composes with favorites and search',()=>{
+    const now=new Date(2026,8,29,12);
+    const history=[moment('today',false,{date:'2026-09-29'}),moment('seven-edge',true,{date:'2026-09-23',title:'Harira'}),moment('eight-days',true,{date:'2026-09-22',title:'Harira'}),moment('thirty-edge',false,{date:'2026-08-31'}),moment('older',false,{date:'2026-08-30'})];
+    expect(filterMoments(history,'all','','7d',now).map(item=>item.id)).toEqual(['today','seven-edge']);
+    expect(filterMoments(history,'all','','30d',now).map(item=>item.id)).toEqual(['today','seven-edge','eight-days','thirty-edge']);
+    expect(filterMoments(history,'favorites','harira','7d',now).map(item=>item.id)).toEqual(['seven-edge']);
+    expect(filterMoments(history,'all','','all',now)).toEqual(history);
   });
+});
+
   it('searches user-authored notes without changing their mixed-script text',()=>{
     expect(filterMoments(moments,'all','sport avec').map(item=>item.id)).toEqual(['note-only']);
     expect(filterMoments(moments,'all','يوسف').map(item=>item.id)).toEqual([]);
