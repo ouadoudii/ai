@@ -42,7 +42,7 @@ for (const viewport of [
     const question = 'Warum bin ich nach بيض مسلوق + pain complet müde?';
     const composer = page.getByPlaceholder(/Frage stellen/);
     await composer.fill(question);
-    await page.getByRole('button', { name: /Senden/ }).click();
+    await composer.press('Enter');
     await expect(page.getByText(question, { exact: true })).toBeVisible();
 
     const followUps = page.getByTestId('cary-contextual-followups');
