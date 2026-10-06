@@ -34,14 +34,14 @@ for (const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wi
     await expect(insight).not.toContainText('Demo meal');
     await page.screenshot({path:testInfo.outputPath(`meal-variety-${viewport.name}-en.png`),fullPage:true});
 
-    await page.getByRole('button',{name:'Choose language',exact:true}).click();
-    await page.locator('[data-language-option="de"]').click();
+    await page.evaluate(() => localStorage.setItem('rhythm_language_v1','de'));
+    await page.reload();
     await expect(insight).toContainText('Deine Mahlzeitenvielfalt zuletzt');
     await expect(page.getByTestId('meal-variety-summary')).toContainText('5 verschiedene Mahlzeiten');
 
     if(viewport.name==='mobile') {
-      await page.getByRole('button',{name:'Sprache wählen',exact:true}).click();
-      await page.locator('[data-language-option="fr"]').click();
+      await page.evaluate(() => localStorage.setItem('rhythm_language_v1','fr'));
+      await page.reload();
       await expect(insight).toContainText('La variété récente de tes repas');
       await page.screenshot({path:testInfo.outputPath('meal-variety-mobile-fr.png'),fullPage:true});
     }
