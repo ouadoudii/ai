@@ -29,6 +29,7 @@ import { evaluateNutritionAlarms, GuardianStatus } from '../utils/interventionEn
 import { restoreCoachSessionOrDefault, writeCoachSession } from '../utils/coachSession';
 import { SmartInterventionGuardian } from './SmartInterventionGuardian';
 import { askGeminiCoach } from '../apiClient';
+import { buildCoachFollowUps } from '../utils/coachFollowUps';
 
 interface FoodCoachViewProps {
   moments: FoodMoment[];
