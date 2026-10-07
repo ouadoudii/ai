@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../i18n/LanguageContext';
 import { 
   FoodMoment 
 } from '../types';
@@ -30,6 +31,8 @@ export const MomentCard: React.FC<MomentCardProps> = ({
   onToggleFavorite,
 }) => {
   const [showMenu, setShowMenu] = React.useState(false);
+  const { language, dir } = useLanguage();
+  const copy = language === 'ar' ? { home: 'المنزل', hunger: 'الجوع', fullness: 'الشبع', slow: 'ببطء', rushed: 'بسرعة', normal: 'عادي', details: 'التفاصيل', options: 'الخيارات', edit: 'تعديل', delete: 'حذف', favorite: 'إضافة إلى المفضلة', unfavorite: 'إزالة من المفضلة', feeling: 'الشعور', clock: '' } : { home: 'Home', hunger: 'Hunger', fullness: 'Fullness', slow: 'Slow', rushed: 'Rushed', normal: 'Normal', details: 'Details', options: 'Options', edit: 'Edit', delete: 'Delete', favorite: 'Add to favorites', unfavorite: 'Remove from favorites', feeling: 'Feeling', clock: '' };
   const menuRef = React.useRef<HTMLDivElement>(null);
 
   const categoryDef = MOMENT_LABELS[moment.category] || MOMENT_LABELS.lunch;
@@ -53,18 +56,18 @@ export const MomentCard: React.FC<MomentCardProps> = ({
     try {
       const parts = moment.date.split('-');
       if (parts.length === 3) {
-        const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-        const mIdx = parseInt(parts[1], 10) - 1;
-        return `${parts[2]}. ${monthNames[mIdx] || parts[1]}`;
+        const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        return new Intl.DateTimeFormat(language === 'ar' ? 'ar' : 'en', { day: 'numeric', month: 'short' }).format(date);
       }
       return moment.date;
     } catch {
       return moment.date;
     }
-  }, [moment.date]);
+  }, [moment.date, language]);
 
   return (
     <article 
+      dir={dir}
       id={`moment-card-${moment.id}`}
       className="group relative bg-white rounded-2xl border border-stone-200/80 hover:border-amber-300 shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col justify-between"
     >
@@ -100,7 +103,8 @@ export const MomentCard: React.FC<MomentCardProps> = ({
               e.stopPropagation();
               onToggleFavorite(moment.id);
             }}
-            aria-label="Als Favorit markieren"
+            aria-label={moment.isFavorite ? copy.unfavorite : copy.favorite}
+            aria-pressed={moment.isFavorite}
             className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all active:scale-90 ${
               moment.isFavorite
                 ? 'bg-rose-500 text-white shadow-xs'
@@ -115,13 +119,13 @@ export const MomentCard: React.FC<MomentCardProps> = ({
             <div className="flex items-center gap-1.5 text-stone-100 font-medium drop-shadow-xs truncate pr-2">
               <span>{dateFormatted}</span>
               <span>•</span>
-              <span className="truncate">{moment.location || 'Zuhause'}</span>
+              <span className="truncate">{moment.location || copy.home}</span>
             </div>
 
             {/* Mood Emoji Badge */}
             <div 
               className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/90 text-stone-800 text-xs font-medium shrink-0 shadow-xs"
-              title={`Gefühl: ${moodDef.label}`}
+              title={`${copy.feeling}: ${moodDef.label}`}
             >
               <span>{moodDef.emoji}</span>
               <span className="hidden xs:inline">{moodDef.label}</span>
@@ -193,13 +197,13 @@ export const MomentCard: React.FC<MomentCardProps> = ({
           {/* Hunger & Fullness Micro Indicator */}
           {(moment.hungerLevel !== undefined || moment.fullnessLevel !== undefined) && (
             <div className="flex items-center gap-3 text-[11px] text-stone-500 pt-0.5">
-              <span>Hunger: <strong className="text-stone-700">{moment.hungerLevel || 3}/5</strong></span>
+              <span>{copy.hunger}: <strong className="text-stone-700">{moment.hungerLevel || 3}/5</strong></span>
               <span>•</span>
-              <span>Sättigung: <strong className="text-stone-700">{moment.fullnessLevel || 4}/5</strong></span>
+              <span>{copy.fullness}: <strong className="text-stone-700">{moment.fullnessLevel || 4}/5</strong></span>
               {moment.eatingPace && (
                 <>
                   <span>•</span>
-                  <span className="capitalize">{moment.eatingPace === 'slow' ? 'Langsam' : moment.eatingPace === 'rushed' ? 'Gehetzt' : 'Normal'}</span>
+                  <span className="capitalize">{moment.eatingPace === 'slow' ? copy.slow : moment.eatingPace === 'rushed' ? copy.rushed : copy.normal}</span>
                 </>
               )}
             </div>
@@ -230,7 +234,7 @@ export const MomentCard: React.FC<MomentCardProps> = ({
       {/* Card Footer Actions */}
       <div className="px-4 py-2.5 bg-stone-50/80 border-t border-stone-100 flex items-center justify-between text-xs">
         <span className="text-stone-500 text-xs">
-          {moment.time} Uhr
+          {moment.time}
         </span>
 
         {/* Action Menu */}
@@ -248,7 +252,7 @@ export const MomentCard: React.FC<MomentCardProps> = ({
               id={`btn-menu-${moment.id}`}
               onClick={() => setShowMenu(!showMenu)}
               className="p-1.5 text-stone-500 hover:text-stone-800 rounded-lg hover:bg-stone-200/60 transition-colors"
-              aria-label="Optionen"
+              aria-label={copy.options}
             >
               <MoreVertical className="w-3.5 h-3.5" />
             </button>
@@ -264,7 +268,7 @@ export const MomentCard: React.FC<MomentCardProps> = ({
                   className="w-full px-3 py-1.5 text-left text-xs text-stone-700 hover:bg-stone-100 flex items-center gap-2"
                 >
                   <Edit3 className="w-3.5 h-3.5 text-stone-500" />
-                  <span>Bearbeiten</span>
+                  <span>{copy.edit}</span>
                 </button>
                 
                 <button
@@ -275,7 +279,7 @@ export const MomentCard: React.FC<MomentCardProps> = ({
                   className="w-full px-3 py-1.5 text-left text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span>Löschen</span>
+                  <span>{copy.delete}</span>
                 </button>
               </div>
             )}
