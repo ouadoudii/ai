@@ -1,11 +1,9 @@
 import React from 'react';
-import {beforeEach,describe,expect,it,vi} from 'vitest';
+import {beforeEach,describe,expect,it} from 'vitest';
 import {renderToString} from 'react-dom/server';
 import {LanguageProvider} from './i18n';
-import {MobileBottomNav} from './components/MobileBottomNav';
+import {MobileBottomNavContent} from './components/MobileBottomNav';
 import {LanguagePicker} from './components/LanguagePicker';
-
-vi.mock('react-dom',()=>({createPortal:(children:React.ReactNode)=>children}));
 
 const noop=()=>{};
 
@@ -20,7 +18,7 @@ describe('mobile bottom navigation language behavior',()=>{
   it('renders the complete mobile navigation in French when French is persisted',()=>{
     const html=renderToString(
       <LanguageProvider>
-        <MobileBottomNav activeTab="today" setActiveTab={noop} onCapture={noop} favoriteCount={0}/>
+        <MobileBottomNavContent activeTab="today" setActiveTab={noop} onCapture={noop} favoriteCount={0}/>
       </LanguageProvider>,
     );
     expect(html).toContain('Découvertes');
@@ -33,7 +31,7 @@ describe('mobile bottom navigation language behavior',()=>{
   it('marks only the active mobile destination as the current page for assistive technology',()=>{
     const html=renderToString(
       <LanguageProvider>
-        <MobileBottomNav activeTab="timeline" setActiveTab={noop} onCapture={noop} favoriteCount={0}/>
+        <MobileBottomNavContent activeTab="timeline" setActiveTab={noop} onCapture={noop} favoriteCount={0}/>
       </LanguageProvider>,
     );
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
