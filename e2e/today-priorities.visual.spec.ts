@@ -40,3 +40,13 @@ test('desktop Arabic home keeps the same evidence transparent and localized',asy
   await expect(page.getByTestId('today-priorities')).toContainText('3 إدخالات حقيقية');
   await page.screenshot({path:testInfo.outputPath('today-priority-desktop-ar.png'),fullPage:true});
 });
+
+test('Today priority and recent moments render from the same hydrated snapshot',async({page},testInfo)=>{
+  await page.setViewportSize({width:1280,height:900});
+  await prepare(page,'de');
+  await page.goto('/');
+  await expect(page.getByTestId('today-priorities')).toContainText('3 echten Einträgen');
+  await expect(page.getByRole('heading',{name:'Deine letzten Momente'})).toBeVisible();
+  await expect(page.getByText('Lunch',{exact:true}).first()).toBeVisible();
+  await page.screenshot({path:testInfo.outputPath('today-live-snapshot-desktop-de.png'),fullPage:true});
+});

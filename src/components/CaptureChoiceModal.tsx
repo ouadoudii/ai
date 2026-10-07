@@ -1,7 +1,7 @@
 import React from 'react';
-import { Camera, Keyboard, Mic2, RotateCcw, X, Check, Languages } from 'lucide-react';
+import { Camera, Keyboard, Mic2, RotateCcw, Star, X, Check, Languages } from 'lucide-react';
 import type { FoodMoment } from '../types';
-import { getRepeatCandidates, repeatMeal } from '../utils/repeatMeal';
+import { getFavoriteRepeatCandidates, getRepeatCandidates, repeatMeal } from '../utils/repeatMeal';
 import { localizeStoredFoodName } from '../utils/arabicFoodNames';
 import { useLanguage, type AppLanguage } from '../i18n';
 import { trackUx } from '../utils/uxAnalytics';
@@ -25,16 +25,22 @@ const languageName: Record<AppLanguage, string> = { en: 'English', ar: 'العر
 const textLabel: Record<AppLanguage, string> = { en: 'Type', de: 'Tippen', fr: 'Écrire', ar: 'اكتب' };
 const photoLabel: Record<AppLanguage, string> = { en: 'Photo', de: 'Foto', fr: 'Photo', ar: 'صورة' };
 const speakLabel: Record<AppLanguage, string> = { en: 'Tell me', de: 'Erzähl mir', fr: 'Raconter', ar: 'احكِ لي' };
+const favoritesLabel: Record<AppLanguage, string> = { en: 'Favorites', de: 'Favoriten', fr: 'Favoris', ar: 'المفضلة' };
 
 export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, onClose, onFood, onText, onTellCary }) => {
   const { language, setLanguage, t } = useLanguage();
   const [recent, setRecent] = React.useState<FoodMoment[]>([]);
+  const [favorites, setFavorites] = React.useState<FoodMoment[]>([]);
   const dialogRef = React.useRef<HTMLElement | null>(null);
   const closeButtonRef = React.useRef<HTMLButtonElement | null>(null);
+  const openerRef = React.useRef<HTMLElement | null>(null);
+  const restoreOpenerRef = React.useRef(true);
 
-  React.useEffect(() => { if (isOpen) setRecent(getRepeatCandidates(read(), 3)); }, [isOpen]);
+  React.useEffect(() => { if (isOpen) { const moments=read(); setRecent(getRepeatCandidates(moments,3)); setFavorites(getFavoriteRepeatCandidates(moments,3)); } }, [isOpen]);
   React.useEffect(() => {
     if (!isOpen) return;
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    restoreOpenerRef.current = true;
     closeButtonRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); onClose(); return; }
@@ -46,22 +52,27 @@ export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, 
       else if (!event.shiftKey && active===last) { event.preventDefault(); first.focus(); }
     };
     document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      const opener = openerRef.current;
+      if (restoreOpenerRef.current && opener?.isConnected) opener.focus();
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-  const choose = (fn:()=>void, source:string) => { trackUx({eventName:'capture_choice_selected',surface:'capture_choice',language,metadata:{step:source}}); onClose(); fn(); };
-  const repeat=(moment:FoodMoment)=>{localStorage.setItem(KEY,JSON.stringify([repeatMeal(moment),...read()]));onClose();window.location.reload();};
+  const choose = (fn:()=>void, source:string) => { trackUx({eventName:'capture_choice_selected',surface:'capture_choice',language,metadata:{step:source}}); restoreOpenerRef.current=false; onClose(); fn(); };
+  const repeat=(moment:FoodMoment,source:'recent'|'favorite')=>{trackUx({eventName:'capture_choice_selected',surface:'capture_choice',language,metadata:{step:`repeat_${source}`}});localStorage.setItem(KEY,JSON.stringify([repeatMeal(moment),...read()]));restoreOpenerRef.current=false;onClose();window.location.reload();};
   const changeLanguage=(lang:AppLanguage)=>{if(lang===language)return;trackUx({eventName:'language_selected',surface:'capture_choice',language:lang,metadata:{source:'capture_language_picker'}});setLanguage(lang);};
 
   return <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-[#25231F]/55 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="capture-choice-title">
-    <section ref={dialogRef} className="w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] bg-[#FCFAF6] p-5 sm:p-6 shadow-2xl">
+    <section ref={dialogRef} className="w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] bg-[#FCFAF6] p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="inline-flex max-w-[calc(100%-3rem)] items-center gap-1 overflow-x-auto rounded-full border border-[#DED8CF] bg-white p-1 shadow-sm" aria-label={t('chooseLanguage')}><Languages className="mx-1 h-4 w-4 shrink-0 text-[#718067]" />{(['en','de','fr','ar'] as AppLanguage[]).map(lang=><button type="button" key={lang} data-language-option="true" onClick={()=>changeLanguage(lang)} className={`min-w-[68px] shrink-0 rounded-full px-2.5 py-2 text-xs font-black transition ${language===lang?'bg-[#526B48] text-white':'text-[#716D66] hover:bg-[#F0ECE4]'}`} aria-pressed={language===lang}>{language===lang&&<Check className="me-1 inline h-3 w-3"/>}{languageName[lang]}</button>)}</div>
         <button ref={closeButtonRef} type="button" onClick={onClose} className="w-10 h-10 shrink-0 rounded-full bg-white border border-[#E6E1D8] flex items-center justify-center" aria-label={t('close')}><X className="w-4 h-4"/></button>
       </div>
       <p className="text-xs font-bold text-[#8A867E]">{t('addLabel')}</p><h2 id="capture-choice-title" className="mt-1 text-3xl font-display font-black text-[#252824]">{t('addWhat')}</h2>
-      {recent.length>0&&<div className="mt-5"><p className="flex items-center gap-1.5 text-[11px] font-bold text-[#858078]"><RotateCcw className="w-3.5 h-3.5"/>{t('again')}</p><div className="mt-2 flex gap-2 overflow-x-auto">{recent.map(moment=><button key={moment.id} type="button" onClick={()=>repeat(moment)} className="shrink-0 max-w-44 rounded-full bg-white border border-[#E6E1D8] px-4 py-2.5 text-sm font-bold truncate">{localizeStoredFoodName(moment.title,moment.category,language)}</button>)}</div></div>}
+      {favorites.length>0&&<div className="mt-5" data-favorite-quick-repeat="true"><p className="flex items-center gap-1.5 text-[11px] font-bold text-[#858078]"><Star className="w-3.5 h-3.5"/>{favoritesLabel[language]}</p><div className="mt-2 flex gap-2 overflow-x-auto">{favorites.map(moment=><button key={moment.id} type="button" onClick={()=>repeat(moment,'favorite')} className="shrink-0 max-w-44 rounded-full bg-[#FFF8E7] border border-[#E8D7A8] px-4 py-2.5 text-sm font-bold truncate">{localizeStoredFoodName(moment.title,moment.category,language)}</button>)}</div></div>}
+      {recent.length>0&&<div className="mt-5"><p className="flex items-center gap-1.5 text-[11px] font-bold text-[#858078]"><RotateCcw className="w-3.5 h-3.5"/>{t('again')}</p><div className="mt-2 flex gap-2 overflow-x-auto">{recent.map(moment=><button key={moment.id} type="button" onClick={()=>repeat(moment,'recent')} className="shrink-0 max-w-44 rounded-full bg-white border border-[#E6E1D8] px-4 py-2.5 text-sm font-bold truncate">{localizeStoredFoodName(moment.title,moment.category,language)}</button>)}</div></div>}
       <div className="mt-6 grid grid-cols-3 gap-3" data-capture-methods="photo-voice-text">
         <button type="button" data-capture-method="photo" onClick={()=>choose(onFood,'photo')} className="min-h-24 rounded-[24px] bg-[#E76F45] text-white flex flex-col items-center justify-center gap-2"><Camera className="w-6 h-6"/><strong className="text-sm">{photoLabel[language]}</strong></button>
         <button type="button" data-capture-method="voice" onClick={()=>choose(onTellCary,'voice')} className="min-h-24 rounded-[24px] bg-[#293D34] text-white flex flex-col items-center justify-center gap-2"><Mic2 className="w-6 h-6"/><strong className="text-sm">{speakLabel[language]}</strong></button>

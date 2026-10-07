@@ -8,18 +8,16 @@ import { DailyCheckIn, FoodMoment } from '../types';
 
 interface Props{
   onStart:(phase:PlanPhase)=>void;
+  moments:FoodMoment[];
+  checkIns:DailyCheckIn[];
 }
 
-const readStored=<T,>(primary:string,legacy:string):T[]=>{try{const raw=localStorage.getItem(primary)||localStorage.getItem(legacy);return raw?JSON.parse(raw):[];}catch{return [];}};
-
-export const PersonalPlanHomeCard:React.FC<Props>=({onStart})=>{
+export const PersonalPlanHomeCard:React.FC<Props>=({onStart,moments,checkIns})=>{
   const {language}=useLanguage();
   const profile=loadIntroProfile();
   if(!profile)return null;
 
   const lang=(['de','en','fr','ar'].includes(language)?language:'en') as TodayPriorityLanguage;
-  const moments=readStored<FoodMoment>('nimmapp_moments_v1','food_journey_moments_v1');
-  const checkIns=readStored<DailyCheckIn>('nimmapp_checkins_v1','getyourcoach_checkins_v1');
   const priorities=buildTodayPriorities(moments,checkIns,lang);
 
   const copy=language==='de'

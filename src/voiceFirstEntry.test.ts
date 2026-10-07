@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from './components/VoiceFirstEntryOverlay';
+import { PROFILE_INTRO_KEY, parseOnboardingWeight, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from './components/VoiceFirstEntryOverlay';
 
 describe('required first onboarding',()=>{
   it('only unlocks once an intro profile exists',()=>{
@@ -22,5 +22,18 @@ describe('required first onboarding',()=>{
     expect(copy.helper.length).toBeGreaterThan(20);
     expect(copy.formTitle.length).toBeGreaterThan(10);
     expect(copy.goal.length).toBeGreaterThan(10);
+    expect(copy.weightError.length).toBeGreaterThan(10);
+  });
+
+  it.each([['72,5',72.5],['72.5',72.5],['72',72],[' 80,25 ',80.25]] as const)('normalizes valid weight %s',(value,expected)=>{
+    expect(parseOnboardingWeight(value)).toBe(expected);
+  });
+
+  it.each(['72,5.3','72,,5','.',',','19.9','401','72.555'])('rejects ambiguous or implausible weight %s',value=>{
+    expect(parseOnboardingWeight(value)).toBeNull();
+  });
+
+  it('keeps optional empty weight valid',()=>{
+    expect(parseOnboardingWeight('')).toBeUndefined();
   });
 });
