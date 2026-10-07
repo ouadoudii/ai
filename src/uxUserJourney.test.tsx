@@ -3,11 +3,9 @@ import {describe,expect,it,beforeAll,afterAll,beforeEach,afterEach,vi} from 'vit
 import {renderToString} from 'react-dom/server';
 import {LanguageProvider} from './i18n';
 import {TodayHomeView} from './components/TodayHomeView';
-import {MobileBottomNav} from './components/MobileBottomNav';
+import {MobileBottomNavContent} from './components/MobileBottomNav';
 import type {DailyCheckIn,FoodMoment} from './types';
 import {getLocalDateKey} from './utils/dateKey';
-
-vi.mock('react-dom',()=>({createPortal:(children:React.ReactNode)=>children}));
 
 let oldStorage:any;
 beforeAll(()=>{oldStorage=(globalThis as any).localStorage;(globalThis as any).localStorage={getItem:(k:string)=>k==='rhythm_language_v1'?'ar':null,setItem:()=>{},removeItem:()=>{}}});
@@ -36,7 +34,7 @@ describe('Arabic mobile UX day simulation',()=>{
   });
 
   it('keeps the five-item Arabic mobile navigation free of English labels',()=>{
-    const html=renderToString(<LanguageProvider><MobileBottomNav activeTab="today" setActiveTab={noop as any} onCapture={noop} favoriteCount={0}/></LanguageProvider>);
+    const html=renderToString(<LanguageProvider><MobileBottomNavContent activeTab="today" setActiveTab={noop as any} onCapture={noop} favoriteCount={0}/></LanguageProvider>);
     expect(html).toContain('اكتشافاتك');
     expect(html).toContain('لحظاتي');
     expect(html).toContain('اليوم');
