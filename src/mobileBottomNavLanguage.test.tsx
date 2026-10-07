@@ -1,9 +1,11 @@
 import React from 'react';
-import {beforeEach,describe,expect,it} from 'vitest';
+import {beforeEach,describe,expect,it,vi} from 'vitest';
 import {renderToString} from 'react-dom/server';
 import {LanguageProvider} from './i18n';
 import {MobileBottomNav} from './components/MobileBottomNav';
 import {LanguagePicker} from './components/LanguagePicker';
+
+vi.mock('react-dom',()=>({createPortal:(children:React.ReactNode)=>children}));
 
 const noop=()=>{};
 
