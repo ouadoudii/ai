@@ -7,6 +7,8 @@ import {MobileBottomNav} from './components/MobileBottomNav';
 import type {DailyCheckIn,FoodMoment} from './types';
 import {getLocalDateKey} from './utils/dateKey';
 
+vi.mock('react-dom',()=>({createPortal:(children:React.ReactNode)=>children}));
+
 let oldStorage:any;
 beforeAll(()=>{oldStorage=(globalThis as any).localStorage;(globalThis as any).localStorage={getItem:(k:string)=>k==='rhythm_language_v1'?'ar':null,setItem:()=>{},removeItem:()=>{}}});
 afterAll(()=>{(globalThis as any).localStorage=oldStorage});
