@@ -21,6 +21,25 @@ test('mobile bottom navigation remains clickable over Today content',async({page
  await page.setViewportSize({width:390,height:844});await prepare(page);await page.goto('/');
  const momentsNav=page.getByTestId('mobile-moments-nav');
  await expect(momentsNav).toBeVisible();
+ // Scroll Today cards underneath the fixed navigation before testing real hit targets.
+ await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
+ const capture=page.getByTestId('primary-capture-button');
+ await expect.poll(async()=>capture.evaluate((button)=>{
+   const rect=button.getBoundingClientRect();
+   const hit=document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2);
+   return hit===button||button.contains(hit);
+ })).toBe(true);
+ await capture.click();
+ const dialog=page.getByRole('dialog');
+ await expect(dialog).toBeVisible();
+ // The capture dialog must sit above the navigation while open.
+ expect(await capture.evaluate((button)=>{
+   const rect=button.getBoundingClientRect();
+   const hit=document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2);
+   return hit===button||button.contains(hit);
+ })).toBe(false);
+ await page.keyboard.press('Escape');
+ await expect(dialog).not.toBeVisible();
  await momentsNav.click();
  await expect(momentsNav).toHaveAttribute('aria-current','page');
  await page.screenshot({path:testInfo.outputPath('mobile-bottom-nav-stacking.png'),fullPage:true});
