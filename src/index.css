@@ -26,13 +26,13 @@ html{background:var(--moment-bg)}body{background-color:var(--moment-bg);backgrou
    raising the nav above dialogs or other overlays. */
 @media(max-width:767px){main.max-w-7xl{isolation:isolate}}
 
-/* Explicitly anchor the mobile nav above scrolling content, below modal overlays. */
+/* Keep the mobile nav above all scrolling content. Hide it while a dialog is open so modal controls remain clickable. */
 @media (max-width: 767px) {
   nav:has([data-testid="mobile-moments-nav"]) {
     position: fixed !important;
     inset-inline: 0 !important;
     bottom: 0 !important;
-    z-index: 40 !important;
+    z-index: 1000 !important;
     pointer-events: auto;
   }
 }
