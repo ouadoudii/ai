@@ -25,3 +25,14 @@ html{background:var(--moment-bg)}body{background-color:var(--moment-bg);backgrou
 /* Keep positioned Today/Journal content below the fixed mobile navigation without
    raising the nav above dialogs or other overlays. */
 @media(max-width:767px){main.max-w-7xl{isolation:isolate}}
+
+/* Explicitly anchor the mobile nav above scrolling content, below modal overlays. */
+@media (max-width: 767px) {
+  nav:has([data-testid="mobile-moments-nav"]) {
+    position: fixed !important;
+    inset-inline: 0 !important;
+    bottom: 0 !important;
+    z-index: 45 !important;
+    pointer-events: auto;
+  }
+}
