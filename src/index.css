@@ -32,7 +32,15 @@ html{background:var(--moment-bg)}body{background-color:var(--moment-bg);backgrou
     position: fixed !important;
     inset-inline: 0 !important;
     bottom: 0 !important;
-    z-index: 1000 !important;
+    z-index: 40 !important;
     pointer-events: auto;
+  }
+}
+
+/* While a modal is open, prevent the bottom bar from covering its actions. */
+@media (max-width: 767px) {
+  body:has([role="dialog"]) nav:has([data-testid="mobile-moments-nav"]) {
+    visibility: hidden;
+    pointer-events: none;
   }
 }
