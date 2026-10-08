@@ -32,7 +32,7 @@ html{background:var(--moment-bg)}body{background-color:var(--moment-bg);backgrou
     position: fixed !important;
     inset-inline: 0 !important;
     bottom: 0 !important;
-    z-index: 45 !important;
+    z-index: 1000 !important;
     pointer-events: auto;
   }
 }
