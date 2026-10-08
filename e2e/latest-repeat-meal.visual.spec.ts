@@ -14,3 +14,14 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
  expect(stored[0].title).toBe('Couscous');expect(stored[0].category).toBe('lunch');expect(stored[0].id).not.toBe('user-latest');expect(stored[0].tags).toEqual(['Repeated']);expect(stored[0].notes).toBeUndefined();expect(stored[0].rating).toBeUndefined();expect(stored[0].location).toBe('');
  await page.screenshot({path:testInfo.outputPath(`repeat-latest-${viewport.name}.png`),fullPage:true});
 });
+
+// Regression: Today cards may contain positioned elements, but must never
+// intercept actual pointer clicks on the fixed mobile bottom navigation.
+test('mobile bottom navigation remains clickable over Today content',async({page},testInfo)=>{
+ await page.setViewportSize({width:390,height:844});await prepare(page);await page.goto('/');
+ const momentsNav=page.getByTestId('mobile-moments-nav');
+ await expect(momentsNav).toBeVisible();
+ await momentsNav.click();
+ await expect(momentsNav).toHaveAttribute('aria-current','page');
+ await page.screenshot({path:testInfo.outputPath('mobile-bottom-nav-stacking.png'),fullPage:true});
+});
