@@ -21,26 +21,3 @@ html{background:var(--moment-bg)}body{background-color:var(--moment-bg);backgrou
 @media(max-width:520px){[class*="max-w-[860px]"] > section:first-child::after{top:76px;width:150px;inset-inline-start:8px;opacity:.98}[class*="max-w-[860px]"] > section:first-child::before{top:70px;width:158px;height:90px}}
 @media(min-width:768px){[class*="max-w-[860px]"] > section:first-child::after{top:86px;width:236px}}
 @media(prefers-reduced-motion:reduce){html:focus-within{scroll-behavior:auto!important;}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}}
-
-/* Keep positioned Today/Journal content below the fixed mobile navigation without
-   raising the nav above dialogs or other overlays. */
-@media(max-width:767px){main.max-w-7xl{isolation:isolate}}
-
-/* Keep the mobile nav above all scrolling content. Hide it while a dialog is open so modal controls remain clickable. */
-@media (max-width: 767px) {
-  nav:has([data-testid="mobile-moments-nav"]) {
-    position: fixed !important;
-    inset-inline: 0 !important;
-    bottom: 0 !important;
-    z-index: 1000 !important;
-    pointer-events: auto;
-  }
-}
-
-/* While a modal is open, prevent the bottom bar from covering its actions. */
-@media (max-width: 767px) {
-  body:has([role="dialog"]) nav:has([data-testid="mobile-moments-nav"]) {
-    visibility: hidden;
-    pointer-events: none;
-  }
-}
