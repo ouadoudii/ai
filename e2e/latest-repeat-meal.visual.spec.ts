@@ -21,6 +21,8 @@ test('mobile bottom navigation remains clickable over Today content',async({page
  await page.setViewportSize({width:390,height:844});await prepare(page);await page.goto('/');
  const momentsNav=page.getByTestId('mobile-moments-nav');
  await expect(momentsNav).toBeVisible();
+ // The repeat action must not force a wider mobile layout that shifts fixed hit targets.
+ await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
  // Scroll Today cards underneath the fixed navigation before testing real hit targets.
  await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
  const capture=page.getByTestId('primary-capture-button');
@@ -32,6 +34,13 @@ test('mobile bottom navigation remains clickable over Today content',async({page
  await capture.click();
  const dialog=page.getByRole('dialog');
  await expect(dialog).toBeVisible();
+ // The capture sheet must remain hit-testable after the page has scrolled.
+ const photo=dialog.locator('[data-capture-method="photo"]');
+ await expect.poll(()=>photo.evaluate((button)=>{
+   const rect=button.getBoundingClientRect();
+   const hit=document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2);
+   return hit===button||button.contains(hit);
+ })).toBe(true);
  // The capture dialog must sit above the navigation while open.
  expect(await capture.evaluate((button)=>{
    const rect=button.getBoundingClientRect();
