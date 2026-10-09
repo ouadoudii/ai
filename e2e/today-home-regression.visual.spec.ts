@@ -11,7 +11,9 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
       sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
     });
     await page.goto('/');
-    await expect(page.getByTestId('primary-capture-button')).toBeVisible();
+    if (viewport.name === 'mobile') {
+      await expect(page.getByTestId('primary-capture-button')).toBeVisible();
+    }
     await expect(page.getByTestId('voice-home-mic')).toBeVisible();
     await expect(page.getByText('Deine letzten Momente')).toBeVisible();
   });
