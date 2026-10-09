@@ -5,7 +5,7 @@ import type { DailyCheckIn, FoodMoment } from './types';
 const moment = (id: string, title: string, tags: string[] = []): FoodMoment => ({
   id, title, label: title, category: 'breakfast', date: '2026-10-02', time: '08:00',
   location: '', imageUrl: '', rating: 0, mood: 'neutral', tags, createdAt: 1,
-} as FoodMoment);
+} as unknown as FoodMoment);
 
 const checkIn = (id: string): DailyCheckIn => ({
   id, date: '2026-10-02', time: '08:00', timeOfDay: 'morning', createdAt: 1,
