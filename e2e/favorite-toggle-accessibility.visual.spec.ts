@@ -7,11 +7,11 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
  await page.setViewportSize({width:viewport.width,height:viewport.height});await prepare(page);await page.goto('/');
  if(viewport.name==='mobile')await page.getByTestId('mobile-moments-nav').click();else await page.getByRole('navigation').getByRole('button',{name:/Einträge|Momente/}).click();
  await page.getByText('Harira accessibility',{exact:true}).click();
- const favorite=page.getByRole('button',{name:'Favorite'});await expect(favorite).toHaveAttribute('aria-pressed','false');
+ const favorite=page.getByRole('button',{name:'Favorit'});await expect(favorite).toHaveAttribute('aria-pressed','false');
  await favorite.click();await expect(favorite).toHaveAttribute('aria-pressed','true');
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').find((entry:{id:string})=>entry.id==='favorite-a11y')?.isFavorite)).toBe(true);
  await page.screenshot({path:testInfo.outputPath(`favorite-toggle-a11y-${viewport.name}.png`),fullPage:true});
  await page.reload();
  if(viewport.name==='mobile')await page.getByTestId('mobile-moments-nav').click();else await page.getByRole('navigation').getByRole('button',{name:/Einträge|Momente/}).click();
- await page.getByText('Harira accessibility',{exact:true}).click();await expect(page.getByRole('button',{name:'Favorite'})).toHaveAttribute('aria-pressed','true');
+ await page.getByText('Harira accessibility',{exact:true}).click();await expect(page.getByRole('button',{name:'Favorit'})).toHaveAttribute('aria-pressed','true');
 });
