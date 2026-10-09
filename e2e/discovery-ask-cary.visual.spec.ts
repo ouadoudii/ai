@@ -13,6 +13,8 @@ test('Discovery to Cary prefill stays unsent on desktop', async ({ page }, testI
   await page.addInitScript((seed) => {
     localStorage.setItem('nimmapp_moments_v1', JSON.stringify(seed));
     localStorage.setItem('rhythm_language_v1', 'en');
+    localStorage.setItem('cary_access_mode_v1', 'guest');
+    localStorage.setItem('cary_onboarding_v2_complete', 'true');
   }, moments);
   await page.goto('/');
   await page.getByRole('button', { name:'Discoveries', exact:true }).click();
@@ -31,6 +33,8 @@ test('Discovery to Cary prefill stays unsent on mobile Arabic', async ({ page },
   await page.addInitScript((seed) => {
     localStorage.setItem('nimmapp_moments_v1', JSON.stringify(seed));
     localStorage.setItem('rhythm_language_v1', 'ar');
+    localStorage.setItem('cary_access_mode_v1', 'guest');
+    localStorage.setItem('cary_onboarding_v2_complete', 'true');
   }, moments);
   await page.goto('/');
   await page.getByRole('button', { name:'اكتشافاتك', exact:true }).click();
