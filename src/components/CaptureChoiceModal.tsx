@@ -2,6 +2,7 @@ import React from 'react';
 import { Camera, Keyboard, Mic2, RotateCcw, Star, X, Check, Languages } from 'lucide-react';
 import type { FoodMoment, MomentCategory } from '../types';
 import { derivePersonalMealRotation } from '../personalMealRotation';
+import { mealLabels } from '../utils/mealEditorCopy';
 import { getFavoriteRepeatCandidates, getRepeatCandidates, repeatMeal } from '../utils/repeatMeal';
 import { localizeStoredFoodName } from '../utils/arabicFoodNames';
 import { useLanguage, type AppLanguage } from '../i18n';
@@ -30,12 +31,6 @@ const speakLabel: Record<AppLanguage, string> = { en: 'Tell me', de: 'Erzähl mi
 const favoritesLabel: Record<AppLanguage, string> = { en: 'Favorites', de: 'Favoriten', fr: 'Favoris', ar: 'المفضلة' };
 const rotationLabel: Record<AppLanguage, string> = { en: 'Something different from your own meals?', de: 'Etwas anderes aus deinen Mahlzeiten?', fr: 'Autre chose parmi tes repas ?', ar: 'بغيتي تبدّل من وجباتك السابقة؟' };
 const rotationAction: Record<AppLanguage, string> = { en: 'Try', de: 'Ausprobieren', fr: 'Essayer', ar: 'جرّب' };
-const rotationMealLabel: Record<AppLanguage, Record<'breakfast'|'lunch'|'dinner', string>> = {
-  en: { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner' },
-  de: { breakfast: 'Frühstück', lunch: 'Mittagessen', dinner: 'Abendessen' },
-  fr: { breakfast: 'Petit-déjeuner', lunch: 'Déjeuner', dinner: 'Dîner' },
-  ar: { breakfast: 'الفطور', lunch: 'الغداء', dinner: 'العشاء' },
-};
 const rotationCategories = ['breakfast','lunch','dinner'] as const;
 
 export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, onClose, onFood, onText, onTellCary, onSelectRotation }) => {
@@ -85,7 +80,7 @@ export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, 
       <p className="text-xs font-bold text-[#8A867E]">{t('addLabel')}</p><h2 id="capture-choice-title" className="mt-1 text-3xl font-display font-black text-[#252824]">{t('addWhat')}</h2>
       {favorites.length>0&&<div className="mt-5" data-favorite-quick-repeat="true"><p className="flex items-center gap-1.5 text-[11px] font-bold text-[#858078]"><Star className="w-3.5 h-3.5"/>{favoritesLabel[language]}</p><div className="mt-2 flex gap-2 overflow-x-auto">{favorites.map(moment=><button key={moment.id} type="button" onClick={()=>repeat(moment,'favorite')} className="shrink-0 max-w-44 rounded-full bg-[#FFF8E7] border border-[#E8D7A8] px-4 py-2.5 text-sm font-bold truncate">{localizeStoredFoodName(moment.title,moment.category,language)}</button>)}</div></div>}
       {recent.length>0&&<div className="mt-5"><p className="flex items-center gap-1.5 text-[11px] font-bold text-[#858078]"><RotateCcw className="w-3.5 h-3.5"/>{t('again')}</p><div className="mt-2 flex gap-2 overflow-x-auto">{recent.map(moment=><button key={moment.id} type="button" onClick={()=>repeat(moment,'recent')} className="shrink-0 max-w-44 rounded-full bg-white border border-[#E6E1D8] px-4 py-2.5 text-sm font-bold truncate">{localizeStoredFoodName(moment.title,moment.category,language)}</button>)}</div></div>}
-      {rotations.length>0&&<div data-testid="personal-meal-rotation" className="mt-5 rounded-2xl border border-[#C9D7BE] bg-[#F1F6ED] p-3"><p className="text-xs font-bold text-[#455744]">{rotationLabel[language]}</p><div className="mt-2 flex flex-wrap gap-2">{rotations.map(({category,title})=><button type="button" key={category} data-testid={`personal-rotation-${category}`} onClick={()=>choose(()=>onSelectRotation(category,title),'personal_rotation')} className="max-w-full rounded-xl border border-[#C9D7BE] bg-white px-3 py-2 text-start text-sm font-semibold text-[#293D34]"><span>{rotationAction[language]} · {rotationMealLabel[language][category]}: </span><span dir="auto">{title}</span></button>)}</div></div>}
+      {rotations.length>0&&<div data-testid="personal-meal-rotation" className="mt-5 rounded-2xl border border-[#C9D7BE] bg-[#F1F6ED] p-3"><p className="text-xs font-bold text-[#455744]">{rotationLabel[language]}</p><div className="mt-2 flex flex-wrap gap-2">{rotations.map(({category,title})=><button type="button" key={category} data-testid={`personal-rotation-${category}`} onClick={()=>choose(()=>onSelectRotation(category,title),'personal_rotation')} className="max-w-full rounded-xl border border-[#C9D7BE] bg-white px-3 py-2 text-start text-sm font-semibold text-[#293D34]"><span>{rotationAction[language]} · {mealLabels[language][category]}: </span><span dir="auto">{title}</span></button>)}</div></div>}
       <div className="mt-6 grid grid-cols-3 gap-3" data-capture-methods="photo-voice-text">
         <button type="button" data-capture-method="photo" onClick={()=>choose(onFood,'photo')} className="min-h-24 rounded-[24px] bg-[#E76F45] text-white flex flex-col items-center justify-center gap-2"><Camera className="w-6 h-6"/><strong className="text-sm">{photoLabel[language]}</strong></button>
         <button type="button" data-capture-method="voice" onClick={()=>choose(onTellCary,'voice')} className="min-h-24 rounded-[24px] bg-[#293D34] text-white flex flex-col items-center justify-center gap-2"><Mic2 className="w-6 h-6"/><strong className="text-sm">{speakLabel[language]}</strong></button>
