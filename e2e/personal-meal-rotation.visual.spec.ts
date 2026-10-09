@@ -36,7 +36,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await prepare(page, history, language);
       await page.goto('/');
-      await page.getByTestId('primary-capture-button').click();
+      await page.getByTestId(viewport.name === 'desktop' ? 'desktop-capture-button' : 'primary-capture-button').click();
       await expect(page.getByTestId('personal-meal-rotation')).toContainText(copy[language]);
       const candidate = page.getByTestId('personal-rotation-breakfast');
       await expect(candidate).toContainText('مسمن بالزبدة');
@@ -51,7 +51,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await prepare(page, history.filter(m => m.id !== 'two'), 'en');
     await page.goto('/');
-    await page.getByTestId('primary-capture-button').click();
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-capture-button' : 'primary-capture-button').click();
     await expect(page.getByTestId('personal-meal-rotation')).toHaveCount(0);
     await page.screenshot({ path: testInfo.outputPath(`rotation-absent-${viewport.name}.png`), fullPage: true });
   });
