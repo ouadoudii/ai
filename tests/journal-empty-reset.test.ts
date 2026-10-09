@@ -6,7 +6,7 @@ const component=fs.readFileSync(path.join(process.cwd(),'src/components/FoodCale
 
 describe('journal empty-search recovery',()=>{
   it('clears the query and restores the all filter in one action',()=>{
-    expect(component).toContain("const resetSearch=()=>{setQuery('');setFilter('all');};");
+    expect(component).toContain("const resetSearch=()=>{setQuery('');setFilter('all');setSearchScope('all');};");
     expect(component).toContain('onClick={resetSearch}');
     expect(component).toContain('data-testid="timeline-search-reset"');
   });
