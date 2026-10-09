@@ -22,7 +22,7 @@ async function seedMeal(page: import('@playwright/test').Page) {
     localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
     localStorage.setItem('nimmapp_moments_v1', JSON.stringify([seed]));
     localStorage.setItem('nimmapp_checkins_v1', '[]');
-    localStorage.removeItem('moment_pinned_meals_v1');
+    // Preserve pinned meal state across navigation and page reloads.
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
   }, meal);
 }
