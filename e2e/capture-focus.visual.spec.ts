@@ -39,7 +39,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     // The desktop opener's accessible name is localized after the language switch,
     // so assert focus by DOM identity rather than re-resolving the stale English locator.
     await expect.poll(async () => page.evaluate(() => document.activeElement?.getAttribute('data-testid'))).toBe(
-      viewport.name === 'mobile' ? 'primary-capture-button' : null,
+      viewport.name === 'mobile' ? 'primary-capture-button' : 'desktop-capture-button',
     );
     if (viewport.name === 'desktop') {
       await expect.poll(async () => page.evaluate(() => document.activeElement?.textContent?.trim())).toBe('Ajouter un moment');
