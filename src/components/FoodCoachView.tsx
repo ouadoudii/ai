@@ -39,6 +39,7 @@ interface FoodCoachViewProps {
   onSelectMoment: (moment: FoodMoment) => void;
   onNavigateToTimeline?: () => void;
   onNavigateToTypeAnalysis?: () => void;
+  prefillQuestion?: string;
 }
 
 export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
@@ -49,6 +50,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   onSelectMoment,
   onNavigateToTimeline,
   onNavigateToTypeAnalysis,
+  prefillQuestion,
 }) => {
   const metrics = React.useMemo(() => calculateCoachingMetrics(moments), [moments]);
   const nutritionProfile = React.useMemo(() => analyzeNutritionType(moments, checkIns), [moments, checkIns]);
@@ -170,9 +172,15 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       },
     ])
   );
-  const [inputQuery, setInputQuery] = React.useState('');
+  const [inputQuery, setInputQuery] = React.useState(prefillQuestion ?? '');
   const [isTyping, setIsTyping] = React.useState(false);
   const chatEndRef = React.useRef<HTMLDivElement>(null);
+  const composerRef = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    if (!prefillQuestion) return;
+    const frame = requestAnimationFrame(() => composerRef.current?.scrollIntoView({ block: 'center' }));
+    return () => cancelAnimationFrame(frame);
+  }, [prefillQuestion]);
 
   const toggleGoal = (goalId: string) => {
     setGoals((prev) =>
@@ -554,6 +562,8 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
         {/* Input Bar */}
         <div className="flex gap-2 pt-1">
           <input
+            ref={composerRef}
+            data-testid="cary-chat-composer"
             type="text"
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
