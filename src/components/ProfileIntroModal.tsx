@@ -18,19 +18,33 @@ export const ProfileIntroModal:React.FC<Props>=({isOpen,initialTranscript='',onC
   const [intro,setIntro]=React.useState(initialTranscript);
   const [draft,setDraft]=React.useState<IntroProfileDraft|null>(null);
   const [loading,setLoading]=React.useState(false);
+  const requestIdRef=React.useRef(0);
+  const sessionRef=React.useRef(0);
+
+  async function build(value=intro){
+    const clean=value.trim();if(!clean)return;
+    const requestId=++requestIdRef.current;
+    const sessionId=sessionRef.current;
+    setLoading(true);
+    try{
+      const next=await createIntroProfileDraft(clean,language);
+      if(requestId!==requestIdRef.current||sessionId!==sessionRef.current)return;
+      setDraft(next);
+    }finally{
+      if(requestId===requestIdRef.current&&sessionId===sessionRef.current)setLoading(false);
+    }
+  }
 
   React.useEffect(()=>{
+    sessionRef.current+=1;
+    requestIdRef.current+=1;
+    setLoading(false);
     if(!isOpen)return;
     setIntro(initialTranscript);setDraft(null);
     if(initialTranscript.trim())void build(initialTranscript);
   },[isOpen,initialTranscript,language]);
 
   if(!isOpen)return null;
-
-  async function build(value=intro){
-    const clean=value.trim();if(!clean)return;
-    setLoading(true);const next=await createIntroProfileDraft(clean,language);setDraft(next);setLoading(false);
-  }
 
   const updateList=(key:'priorities'|'preferences',value:string)=>{
     if(!draft)return;
