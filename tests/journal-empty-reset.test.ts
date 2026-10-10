@@ -6,13 +6,13 @@ const component=fs.readFileSync(path.join(process.cwd(),'src/components/FoodCale
 
 describe('journal empty-search recovery',()=>{
   it('clears the query and restores the all filter in one action',()=>{
-    expect(component).toContain("const resetSearch=()=>{setQuery('');setFilter('all');};");
+    expect(component).toContain("const resetSearch=()=>{setQuery('');setFilter('all');setCategory('all');};");
     expect(component).toContain('onClick={resetSearch}');
     expect(component).toContain('data-testid="timeline-search-reset"');
   });
 
   it('only offers recovery for an empty active search and keeps all supported locales',()=>{
-    expect(component).toContain('query.trim()&&groupedMoments.length===0');
+    expect(component).toContain('(query.trim()||category!=='all')&&groupedMoments.length===0');
     for(const label of ['Reset search','Suche zurücksetzen','Réinitialiser la recherche','إعادة ضبط البحث']) expect(component).toContain(label);
   });
 });
