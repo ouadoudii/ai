@@ -1,13 +1,14 @@
 import { FoodMoment } from '../types';
 
 export type MomentListFilter='all'|'favorites';
+export type MomentCategoryFilter=FoodMoment['category']|'all';
 export type MomentSearchScope='all'|'notes';
 export type MomentDateRange='all'|'7d'|'30d';
 
 const normalizeSearch=(value:string)=>value.normalize('NFD').replace(/\p{M}/gu,'').toLocaleLowerCase().trim();
 const localDateKey=(date:Date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
 
-export const filterMoments=(moments:FoodMoment[],filter:MomentListFilter,query='',dateRange:MomentDateRange='all',now=new Date(),scope:MomentSearchScope='all'):FoodMoment[]=>{
+export const filterMoments=(moments:FoodMoment[],filter:MomentListFilter,query='',dateRange:MomentDateRange='all',now=new Date(),scope:MomentSearchScope='all',category:MomentCategoryFilter='all'):FoodMoment[]=>{
   let filtered=filter==='favorites'?moments.filter(moment=>Boolean(moment.isFavorite)):moments;
   if(dateRange!=='all'){
     const days=dateRange==='7d'?7:30;
@@ -16,6 +17,7 @@ export const filterMoments=(moments:FoodMoment[],filter:MomentListFilter,query='
     const startKey=localDateKey(start),endKey=localDateKey(now);
     filtered=filtered.filter(moment=>moment.date>=startKey&&moment.date<=endKey);
   }
+  if(category!=='all')filtered=filtered.filter(moment=>moment.category===category);
   const needle=normalizeSearch(query);
   if(!needle)return filtered;
   return filtered.filter(moment=>{

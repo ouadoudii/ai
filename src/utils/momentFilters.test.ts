@@ -39,4 +39,17 @@ describe('filterMoments',()=>{
     expect(filterMoments(history,'favorites','harira','7d',now).map(item=>item.id)).toEqual(['seven-edge']);
     expect(filterMoments(history,'all','','all',now)).toEqual(history);
   });
+  it('composes category with favorites, multilingual search, date range and note scope',()=>{
+    const now=new Date(2026,8,29,12);
+    const history=[
+      moment('breakfast-fav',true,{category:'breakfast',title:'بيض مسلوق',date:'2026-09-29',notes:'مع العائلة'}),
+      moment('breakfast-old',true,{category:'breakfast',title:'بيض مسلوق',date:'2026-09-20',notes:'مع العائلة'}),
+      moment('dinner-fav',true,{category:'dinner',title:'بيض مسلوق',date:'2026-09-29',notes:'مع العائلة'}),
+      moment('breakfast-ordinary',false,{category:'breakfast',title:'بيض مسلوق',date:'2026-09-29',notes:'مع العائلة'})
+    ];
+    expect(filterMoments(history,'favorites','بيض','7d',now,'all','breakfast').map(item=>item.id)).toEqual(['breakfast-fav']);
+    expect(filterMoments(history,'all','العائلة','7d',now,'notes','breakfast').map(item=>item.id)).toEqual(['breakfast-fav','breakfast-ordinary']);
+    expect(filterMoments(history,'all','','all',now,'all','all')).toEqual(history);
+    expect(history[0].title).toBe('بيض مسلوق');
+  });
 });
