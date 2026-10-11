@@ -9,7 +9,8 @@ function toMinutes(time: string): number | null {
 }
 
 function isDemo(moment: FoodMoment): boolean {
-  return moment.id.startsWith('demo-') || moment.tags?.includes('demo') || moment.tags?.includes('Demo');
+  return /^(demo|seed|sample|simulated)[-_]/i.test(moment.id)
+    || moment.tags?.some(tag => /^(demo|seed|sample|simulated)$/i.test(tag)) === true;
 }
 
 /**

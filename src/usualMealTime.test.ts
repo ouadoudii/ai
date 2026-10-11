@@ -17,6 +17,11 @@ describe('deriveUsualMealTime', () => {
     expect(deriveUsualMealTime(moments, 'lunch')).toBeNull();
   });
 
+  it('excludes seeded and simulated history even with valid times', () => {
+    expect(deriveUsualMealTime([meal('1','05:20'),meal('2','05:30'),meal('seed-3','05:40')], 'lunch')).toBeNull();
+    expect(deriveUsualMealTime([meal('1','05:20'),meal('2','05:30'),meal('3','05:40','lunch',['simulated'])], 'lunch')).toBeNull();
+  });
+
   it('handles meals around midnight without incorrectly averaging to noon', () => {
     expect(deriveUsualMealTime([meal('1','23:50','snack'), meal('2','00:10','snack'), meal('3','00:00','snack')], 'snack')).toBe('00:00');
   });
