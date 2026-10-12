@@ -17,7 +17,7 @@ export function mealIdentityKey(title: string): string {
 }
 
 function isDemoMoment(moment: FoodMoment): boolean {
-  const tags = moment.tags.map((tag) => tag.toLocaleLowerCase());
+  const tags = (moment.tags ?? []).map((tag) => tag.toLocaleLowerCase());
   return tags.some((tag) => tag === 'demo' || tag === 'seed' || tag === 'sample');
 }
 
