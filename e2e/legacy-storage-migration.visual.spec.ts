@@ -27,7 +27,9 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 
       )).toContain('كسكس Couscous');
       expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]')
         .some((c: { id: string }) => c.id === 'legacy-check'))).toBe(true);
-      await expect(page.getByText('كسكس Couscous', { exact: true }).first()).toBeVisible();
+      // Today can translate meal names; assert the original title in persisted history.
+      // The visible Today representation must still contain the recognizable food name.
+      await expect(page.getByText(/couscous/i).first()).toBeVisible();
       await page.screenshot({ path: `test-results/legacy-migration-${viewport.width}-${visit}.png`, fullPage: true });
       if (visit === 0) await page.reload();
     }
