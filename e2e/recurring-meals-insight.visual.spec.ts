@@ -48,3 +48,32 @@ for (const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wi
     }
   });
 }
+
+for (const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',width:390,height:844}]) {
+  test(`personal meal memory preserves mixed-language wording on ${viewport.name}`, async ({page}, testInfo) => {
+    await page.setViewportSize({width:viewport.width,height:viewport.height});
+    await page.addInitScript(() => {
+      localStorage.setItem('rhythm_language_v1','en');
+      localStorage.setItem('cary_access_mode_v1','guest');
+      localStorage.setItem('cary_onboarding_v2_complete','true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1','true');
+      localStorage.setItem('nimmapp_checkin_auto_opened','true');
+      localStorage.setItem('nimmapp_checkins_v1','[]');
+      localStorage.setItem('nimmapp_moments_v1',JSON.stringify([
+        {id:'arabic-1',title:'بيض مسلوق',category:'breakfast',date:'2026-10-01',time:'08:00',createdAt:1,tags:[]},
+        {id:'arabic-2',title:'بيض، مسلوق!',category:'breakfast',date:'2026-10-02',time:'08:00',createdAt:2,tags:[]},
+        {id:'demo-1',title:'Demo food',category:'breakfast',date:'2026-10-03',time:'08:00',createdAt:3,tags:['demo']},
+        {id:'demo-2',title:'Demo food',category:'breakfast',date:'2026-10-04',time:'08:00',createdAt:4,tags:['demo']},
+      ]));
+    });
+    await page.goto('/');
+    await page.getByRole('button',{name:'Discoveries',exact:true}).click();
+    const card=page.getByTestId('personal-meal-memory');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('بيض، مسلوق!');
+    await expect(card).toContainText('2 ×');
+    await expect(card).not.toContainText('Demo food');
+    await expect(card.getByTestId('personal-meal-memory-item')).toHaveCount(1);
+    await page.screenshot({path:testInfo.outputPath(`personal-memory-${viewport.name}.png`),fullPage:true});
+  });
+}
