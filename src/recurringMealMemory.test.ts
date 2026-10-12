@@ -18,6 +18,11 @@ const moment = (id: string, title: string, createdAt: number, tags: string[] = [
 });
 
 describe('recurring meal memory', () => {
+  it('reads older journal entries with no tags', () => {
+    const older = { ...moment('legacy-a', 'Harira', 1), tags: undefined } as unknown as FoodMoment;
+    const newer = { ...moment('legacy-b', 'HARIRA', 2), tags: undefined } as unknown as FoodMoment;
+    expect(deriveRecurringMealMemory([older, newer])).toMatchObject([{ occurrenceCount: 2, displayTitle: 'HARIRA' }]);
+  });
   it('keeps newest Arabic wording and excludes demo moments from visible memory', () => {
     const memories = deriveRecurringMealMemory([
       moment('older', 'بيض مسلوق', 10),
