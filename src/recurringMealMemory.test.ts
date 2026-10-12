@@ -15,6 +15,15 @@ const moment = (id: string, title: string, createdAt: number, tags: string[] = [
   mood: 'satisfied',
   tags,
   createdAt,
+  it('keeps the newest original Arabic wording for a visible personal-memory card', () => {
+    const memories = deriveRecurringMealMemory([
+      moment('older', 'بيض مسلوق', 10),
+      moment('newer', 'بيض، مسلوق!', 20),
+      moment('demo', 'بيض مسلوق', 30, ['demo']),
+    ]);
+    expect(memories).toEqual([{ key: 'بيض مسلوق', displayTitle: 'بيض، مسلوق!', occurrenceCount: 2, lastSeenAt: 20 }]);
+  });
+
 });
 
 describe('recurring meal memory', () => {
