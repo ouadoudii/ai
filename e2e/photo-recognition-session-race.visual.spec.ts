@@ -27,6 +27,11 @@ async function prepare(page:Page){
       if(!request)throw new Error('Missing pending photo request '+index);
       request.worker.onmessage?.({data:{id:request.id,results:[{label,score:0.99}]}});
     };
+    (window as any).__rejectPhoto=(index:number)=>{
+      const request=pending[index];
+      if(!request)throw new Error('Missing pending photo request '+index);
+      request.worker.onmessage?.({data:{id:request.id,type:'error',message:'Recognition failed'}});
+    };
     Object.defineProperty(window,'Worker',{configurable:true,writable:true,value:FakeWorker});
   });
   await page.goto('/');
@@ -81,4 +86,29 @@ for(const viewport of [
     await expect(page.getByTestId('photo-recognition-suggestions')).toHaveCount(0);
     await page.screenshot({path:testInfo.outputPath('photo-race-category-'+viewport.name+'.png'),fullPage:true});
   });
+  test('current-session photo recognition still shows a suggestion ('+viewport.name+')',async({page},testInfo)=>{
+    await page.setViewportSize({width:viewport.width,height:viewport.height});
+    await prepare(page);
+    await openEditor(page,viewport.mobile,'photo');
+    await upload(page);
+    await page.evaluate(()=>(window as any).__resolvePhoto(0,'pizza'));
+    await expect(page.getByTestId('photo-recognition-suggestions')).toContainText('pizza');
+    await page.screenshot({path:testInfo.outputPath('photo-current-session-'+viewport.name+'.png'),fullPage:true});
+  });
+
+  test('rejected old photo request cannot show a failure in the next editor ('+viewport.name+')',async({page},testInfo)=>{
+    await page.setViewportSize({width:viewport.width,height:viewport.height});
+    await prepare(page);
+    await openEditor(page,viewport.mobile,'photo');
+    await upload(page);
+    await page.getByRole('button',{name:'Close',exact:true}).last().click();
+    await openEditor(page,viewport.mobile,'text');
+    const input=page.locator('input[autocomplete="off"]');
+    await input.fill('fresh vegetable soup');
+    await page.evaluate(()=>(window as any).__rejectPhoto(0));
+    await expect(input).toHaveValue('fresh vegetable soup');
+    await expect(page.getByTestId('photo-recognition-suggestions')).toHaveCount(0);
+    await page.screenshot({path:testInfo.outputPath('photo-rejected-session-'+viewport.name+'.png'),fullPage:true});
+  });
+
 }
