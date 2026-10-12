@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../i18n';
-import { momentCardCopy, momentCardDate } from '../utils/momentCardCopy';
+import { momentCardCopy, momentCardDate, momentCategoryLabels, momentMoodLabels } from '../utils/momentCardCopy';
 import { 
   FoodMoment 
 } from '../types';
@@ -80,7 +80,7 @@ export const MomentCard: React.FC<MomentCardProps> = ({
           {/* Top Floating Badge: Category */}
           <div className="absolute top-3 left-3 flex items-center gap-1.5">
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/95 text-stone-800 shadow-xs backdrop-blur-xs">
-              {moment.label || categoryDef.label}
+              {moment.label || momentCategoryLabels[language][moment.category] || categoryDef.label}
             </span>
           </div>
 
@@ -113,10 +113,10 @@ export const MomentCard: React.FC<MomentCardProps> = ({
             {/* Mood Emoji Badge */}
             <div 
               className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/90 text-stone-800 text-xs font-medium shrink-0 shadow-xs"
-              title={`${copy.feeling}: ${moodDef.label}`}
+              title={`${copy.feeling}: ${momentMoodLabels[language][moment.mood] || moodDef.label}`}
             >
               <span>{moodDef.emoji}</span>
-              <span className="hidden xs:inline">{moodDef.label}</span>
+              <span className="hidden xs:inline">{momentMoodLabels[language][moment.mood] || moodDef.label}</span>
             </div>
           </div>
         </div>
