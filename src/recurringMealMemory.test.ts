@@ -15,7 +15,10 @@ const moment = (id: string, title: string, createdAt: number, tags: string[] = [
   mood: 'satisfied',
   tags,
   createdAt,
-  it('keeps the newest original Arabic wording for a visible personal-memory card', () => {
+});
+
+describe('recurring meal memory', () => {
+  it('keeps newest Arabic wording and excludes demo moments from visible memory', () => {
     const memories = deriveRecurringMealMemory([
       moment('older', 'بيض مسلوق', 10),
       moment('newer', 'بيض، مسلوق!', 20),
@@ -23,10 +26,6 @@ const moment = (id: string, title: string, createdAt: number, tags: string[] = [
     ]);
     expect(memories).toEqual([{ key: 'بيض مسلوق', displayTitle: 'بيض، مسلوق!', occurrenceCount: 2, lastSeenAt: 20 }]);
   });
-
-});
-
-describe('recurring meal memory', () => {
   it('matches harmless Arabic spacing and punctuation while preserving newest wording', () => {
     const memories = deriveRecurringMealMemory([
       moment('1', 'بيض مسلوق', 1),
