@@ -12,3 +12,16 @@ export const momentCardDate = (date:string, language:AppLanguage):string => {
  if(Number.isNaN(value.getTime())||value.getUTCMonth()!==Number(match[2])-1||value.getUTCDate()!==Number(match[3]))return date;
  return new Intl.DateTimeFormat(({de:'de-DE',en:'en-GB',fr:'fr-FR',ar:'ar'} as const)[language],{day:'numeric',month:'short',timeZone:'UTC'}).format(value);
 };
+
+export const momentCategoryLabels: Record<AppLanguage,Record<string,string>> = {
+ de:{breakfast:'Frühstück',lunch:'Mittagessen',dinner:'Abendessen',snack:'Snack',coffee:'Kaffee & Kuchen',dessert:'Dessert',drinks:'Getränke & Bar',travel:'Kulinarische Reise'},
+ en:{breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner',snack:'Snack',coffee:'Coffee & Cake',dessert:'Dessert',drinks:'Drinks & Bar',travel:'Culinary Travel'},
+ fr:{breakfast:'Petit-déjeuner',lunch:'Déjeuner',dinner:'Dîner',snack:'En-cas',coffee:'Café et gâteau',dessert:'Dessert',drinks:'Boissons et bar',travel:'Voyage culinaire'},
+ ar:{breakfast:'فطور',lunch:'غداء',dinner:'عشاء',snack:'وجبة خفيفة',coffee:'قهوة وحلوى',dessert:'حلوى',drinks:'مشروبات',travel:'رحلة طعام'}
+};
+export const momentMoodLabels: Record<AppLanguage,Record<string,string>> = {
+ de:{energized:'Energiegeladen',satisfied:'Satt & Zufrieden',light:'Leicht & Bekömmlich',indulgent:'Genuss pur',comfort:'Wohlfühl-Essen',joyful:'Feierlich / Gesellig'},
+ en:{energized:'Energized',satisfied:'Satisfied',light:'Light',indulgent:'Indulgent',comfort:'Comfort food',joyful:'Joyful'},
+ fr:{energized:'Plein d’énergie',satisfied:'Rassasié et satisfait',light:'Léger',indulgent:'Gourmand',comfort:'Réconfortant',joyful:'Festif'},
+ ar:{energized:'مفعم بالطاقة',satisfied:'شبعان وراضٍ',light:'خفيف',indulgent:'لذيذ',comfort:'طعام مريح',joyful:'احتفالي'}
+};
