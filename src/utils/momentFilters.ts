@@ -5,7 +5,7 @@ export type MomentCategoryFilter=FoodMoment['category']|'all';
 export type MomentSearchScope='all'|'notes';
 export type MomentDateRange='all'|'7d'|'30d';
 
-const normalizeSearch=(value:string)=>value.normalize('NFD').replace(/\p{M}/gu,'').toLocaleLowerCase().trim();
+const normalizeSearch=(value:string)=>value.normalize('NFKD').replace(/\p{M}/gu,'').replaceAll('ـ','').replaceAll('ى','ي').replaceAll('ی','ي').replaceAll('ک','ك').replace(/[٠-٩۰-۹]/g,digit=>String(digit.charCodeAt(0)-(digit.charCodeAt(0)<0x0670?0x0660:0x06F0))).toLocaleLowerCase().trim();
 const localDateKey=(date:Date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
 
 export const filterMoments=(moments:FoodMoment[],filter:MomentListFilter,query='',dateRange:MomentDateRange='all',now=new Date(),scope:MomentSearchScope='all',category:MomentCategoryFilter='all'):FoodMoment[]=>{
