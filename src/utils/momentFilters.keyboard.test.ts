@@ -7,6 +7,8 @@ describe('Arabic journal search keyboard tolerance',()=>{
   expect(filterMoments([meal],'all','كسكسى 2')).toEqual([meal]);
   expect(filterMoments([meal],'favorites','كسكسي ٢')).toEqual([meal]);
   expect(filterMoments([meal],'all','كسكسي 9')).toEqual([]);
+  expect(filterMoments([{...meal,id:'b',title:'طــاجين'}],'all','طاجين').map(m=>m.id)).toEqual(['b']);
+  expect(filterMoments([{...meal,id:'c',title:'شوربة ٣',notes:'بيض ۴'}],'all','بيض 4','all',new Date(),'notes').map(m=>m.id)).toEqual(['c']);
   expect(meal.title).toBe('کُسْکُسِی ۲');
  });
 });
