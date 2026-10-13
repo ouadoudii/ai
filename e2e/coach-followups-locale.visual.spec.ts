@@ -3,6 +3,11 @@ import { buildCoachFollowUps, type CoachLocale } from '../src/utils/coachFollowU
 
 async function verifyChat(page: Page, locale: CoachLocale, nav: string) {
   await page.goto('/');
+  // Follow the real first-visit guest journey before opening Cary.
+  await page.locator('#account-language').selectOption('en');
+  await page.getByRole('button', { name: /Start on this device/ }).click();
+  await page.getByRole('button').last().click();
+  await expect(page.getByTestId(nav)).toBeVisible();
   await page.locator('button[data-testid="language-picker-opener"]:visible').click();
   await page.locator('[data-language-option="' + locale + '"]').click();
   await page.getByTestId(nav).click();
