@@ -52,20 +52,49 @@ export function loadPersistedCheckIns(): DailyCheckIn[] {
 function sanitizeArrayStorage(key: string, validator: (value: unknown) => boolean) {
   const raw = localStorage.getItem(key);
   if (!raw) return;
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      localStorage.removeItem(key);
-      return;
-    }
-    const valid = parsed.filter(validator);
-    if (valid.length !== parsed.length) {
-      if (valid.length) localStorage.setItem(key, JSON.stringify(valid));
-      else localStorage.removeItem(key);
-    }
+    parsed = JSON.parse(raw);
   } catch {
     localStorage.removeItem(key);
+    return;
   }
+  if (!Array.isArray(parsed)) {
+    localStorage.removeItem(key);
+    return;
+  }
+  const valid = parsed.filter(validator);
+  if (valid.length !== parsed.length) {
+    // A failed write must never be mistaken for malformed JSON and delete history.
+    if (valid.length) localStorage.setItem(key, JSON.stringify(valid));
+    else localStorage.removeItem(key);
+  }
+}
+
+function transferLegacyRecords<T extends { id: string }>(
+  sourceKey: string, targetKey: string, validator: (value: unknown) => value is T,
+) {
+  const source = localStorage.getItem(sourceKey);
+  if (source === null) return;
+  const parsed: unknown = JSON.parse(source);
+  // Retain unrecognized source data for recovery instead of silently discarding it.
+  if (!Array.isArray(parsed) || !parsed.every(validator)) {
+    throw new Error('Legacy history needs recovery');
+  }
+  const current = readValidatedArray([targetKey], validator);
+  const knownIds = new Set(current.map(record => record.id));
+  for (const record of parsed as T[]) {
+    if (!knownIds.has(record.id)) {
+      current.push(record);
+      knownIds.add(record.id);
+    }
+  }
+  const serialized = JSON.stringify(current);
+  localStorage.setItem(targetKey, serialized);
+  if (localStorage.getItem(targetKey) !== serialized) {
+    throw new Error('Legacy history write could not be verified');
+  }
+  localStorage.removeItem(sourceKey);
 }
 
 function linkPersistedLegacyCheckInMeals() {
@@ -86,10 +115,10 @@ export function migrateLegacyStorage() {
     sanitizeArrayStorage(MOMENTS_KEY, validMoment);
     sanitizeArrayStorage(CHECKINS_KEY, validCheckIn);
 
+    transferLegacyRecords(LEGACY_MOMENTS_KEY, MOMENTS_KEY, validMoment);
+    transferLegacyRecords(LEGACY_CHECKINS_KEY, CHECKINS_KEY, validCheckIn);
     if (localStorage.getItem(MIGRATION_KEY) === 'done') return;
     linkPersistedLegacyCheckInMeals();
-    localStorage.removeItem(LEGACY_MOMENTS_KEY);
-    localStorage.removeItem(LEGACY_CHECKINS_KEY);
     localStorage.setItem(MIGRATION_KEY, 'done');
   } catch {
     // Storage may be blocked by the browser. Cary can still run with preset data.

@@ -41,6 +41,15 @@ describe('suggestPersonalMealCompanion', () => {
     expect(suggestPersonalMealCompanion('OMELETTE', history)).toBe('أتاي b na3na3');
   });
 
+  it('uses createdAt to preserve the newest spelling when history is not sorted', () => {
+    const history = [
+      { items: ['omelette', 'newest spelling'], createdAt: 30 },
+      { items: ['omelette', 'oldest spelling'], createdAt: 10 },
+      { items: ['omelette', 'newest spelling'], createdAt: 20 },
+    ];
+    expect(suggestPersonalMealCompanion('omelette', history)).toBe('newest spelling');
+  });
+
   it('does not double-count duplicate companion tokens within one meal', () => {
     const history = [
       { items: ['بيض', 'خبز', 'خبز', 'خبز'] },

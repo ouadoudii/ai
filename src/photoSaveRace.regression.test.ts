@@ -12,14 +12,14 @@ describe('selected photo save readiness regression (#267)', () => {
     expect(source).toContain('reader.onerror=()=>{if(readId!==imageReadId.current)return;');
   });
 
-  it('cannot emit a meal while the selected image bytes are still pending', () => {
-    expect(source).toContain('const save=()=>{if(imageReading)return;');
-    expect(source).toContain("disabled={imageReading||(Boolean(clarificationQuestion)&&clarificationResolution==='pending')}");
-    expect(source).toContain('data-testid="meal-clarification-save" onClick={save} disabled={imageReading}');
+  it('cannot emit a meal while image bytes or photo confirmation are still pending', () => {
+    expect(source).toContain('const save=()=>{if(imageReading||photoConfirmationPending)return;');
+    expect(source).toContain("disabled={imageReading||photoConfirmationPending||(Boolean(clarificationQuestion)&&clarificationResolution==='pending')}");
+    expect(source).toContain('data-testid="meal-clarification-save" onClick={save} disabled={imageReading||photoConfirmationPending}');
   });
 
-  it('invalidates stale reads when the editor session closes or resets', () => {
-    expect(source).toContain("if(!isOpen){imageReadId.current+=1;setImageReading(false);return;}");
-    expect(source).toContain('imageReadId.current+=1;setImageReading(false);setShowMainMeals(false)');
+  it('invalidates stale reads and pending recognition when the editor session closes or resets', () => {
+    expect(source).toContain("if(!isOpen){imageReadId.current+=1;setImageReading(false);setPhotoRecognition(createPhotoRecognitionState([]));return;}");
+    expect(source).toContain("imageReadId.current+=1;setImageReading(false);setShowMainMeals(false);setClarificationAnswer('');setPhotoRecognition(createPhotoRecognitionState([]));");
   });
 });

@@ -41,10 +41,12 @@ export function suggestPersonalMealCompanion(
       if (item.key === currentKey || seen.has(item.key)) return;
       seen.add(item.key);
       const previous = candidates.get(item.key);
+      const parsedOrder = entry.createdAt == null ? entryIndex : new Date(entry.createdAt).getTime();
+      const latestOrder = Number.isFinite(parsedOrder) ? parsedOrder : entryIndex;
       candidates.set(item.key, {
         count: (previous?.count ?? 0) + 1,
-        latest: item.raw,
-        latestOrder: entryIndex,
+        latest: !previous || latestOrder >= previous.latestOrder ? item.raw : previous.latest,
+        latestOrder: Math.max(previous?.latestOrder ?? Number.NEGATIVE_INFINITY, latestOrder),
       });
     });
   });
