@@ -14,6 +14,23 @@ export function mergeVoiceText(existing?: string, incoming?: string): string | u
   return `${first}\n${second}`;
 }
 
+function isExplicitWellbeingCorrection(transcript?: string): boolean {
+  const text = normalize(transcript);
+  if (!text) return false;
+  return [
+    /\b(?:no|actually|rather|instead)\b.*\b(?:not|wasn't|was not|but)\b/iu,
+    /\b(?:nein|eigentlich|doch)\b.*\b(?:nicht|sondern)\b/iu,
+    /\b(?:non|en fait|plutôt)\b.*\b(?:pas|mais)\b/iu,
+    /(?:لا|كلا|بالعكس|في الحقيقة|فالحقيقة).*?(?:ماشي|مش|ليس|مو|بل|ولكن|لكن)/u,
+  ].some(pattern => pattern.test(text));
+}
+
+function mergeWellbeingNote(existing?: string, incoming?: string, transcript?: string): string | undefined {
+  const next = (incoming || '').trim();
+  if (next && isExplicitWellbeingCorrection(transcript)) return next;
+  return mergeVoiceText(existing, incoming);
+}
+
 function mergeMealTitle(existing: string, incoming: string): string {
   const first = existing.trim();
   const second = incoming.trim();
@@ -91,7 +108,7 @@ export function mergeVoiceCheckIns(existing: DailyCheckIn[], incoming: DailyChec
     next[index] = {
       ...current, ...item, id: current.id, createdAt: current.createdAt,
       sleep: { ...(current.sleep || {}), ...(item.sleep || {}) }, food,
-      wellbeing: { ...(current.wellbeing || {}), ...(item.wellbeing || {}), note: mergeVoiceText(current.wellbeing?.note, item.wellbeing?.note), voiceTranscription: mergeVoiceText(current.wellbeing?.voiceTranscription, item.wellbeing?.voiceTranscription) },
+      wellbeing: { ...(current.wellbeing || {}), ...(item.wellbeing || {}), note: mergeWellbeingNote(current.wellbeing?.note, item.wellbeing?.note, item.wellbeing?.voiceTranscription), voiceTranscription: mergeVoiceText(current.wellbeing?.voiceTranscription, item.wellbeing?.voiceTranscription) },
     };
   }
   return next;

@@ -29,6 +29,8 @@ import { evaluateNutritionAlarms, GuardianStatus } from '../utils/interventionEn
 import { restoreCoachSessionOrDefault, writeCoachSession } from '../utils/coachSession';
 import { SmartInterventionGuardian } from './SmartInterventionGuardian';
 import { askGeminiCoach } from '../apiClient';
+import { buildCoachFollowUps } from '../utils/coachFollowUps';
+import { useLanguage } from '../i18n';
 
 interface FoodCoachViewProps {
   moments: FoodMoment[];
@@ -38,6 +40,7 @@ interface FoodCoachViewProps {
   onSelectMoment: (moment: FoodMoment) => void;
   onNavigateToTimeline?: () => void;
   onNavigateToTypeAnalysis?: () => void;
+  prefillQuestion?: string;
 }
 
 export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
@@ -48,7 +51,9 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   onSelectMoment,
   onNavigateToTimeline,
   onNavigateToTypeAnalysis,
+  prefillQuestion,
 }) => {
+  const { language } = useLanguage();
   const metrics = React.useMemo(() => calculateCoachingMetrics(moments), [moments]);
   const nutritionProfile = React.useMemo(() => analyzeNutritionType(moments, checkIns), [moments, checkIns]);
   const [goals, setGoals] = React.useState<CoachingGoal[]>(INITIAL_COACHING_GOALS);
@@ -169,9 +174,15 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       },
     ])
   );
-  const [inputQuery, setInputQuery] = React.useState('');
+  const [inputQuery, setInputQuery] = React.useState(prefillQuestion ?? '');
   const [isTyping, setIsTyping] = React.useState(false);
   const chatEndRef = React.useRef<HTMLDivElement>(null);
+  const composerRef = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    if (!prefillQuestion) return;
+    const frame = requestAnimationFrame(() => composerRef.current?.scrollIntoView({ block: 'center' }));
+    return () => cancelAnimationFrame(frame);
+  }, [prefillQuestion]);
 
   const toggleGoal = (goalId: string) => {
     setGoals((prev) =>
@@ -221,6 +232,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           sender: 'coach',
           text: reply,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          suggestions: buildCoachFollowUps(query, reply, language),
         };
         setChatMessages((prev) => [...prev, coachMsg]);
       })
@@ -232,6 +244,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           sender: 'coach',
           text: fallbackReply,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          suggestions: buildCoachFollowUps(query, fallbackReply, language),
         };
         setChatMessages((prev) => [...prev, coachMsg]);
       })
@@ -520,12 +533,12 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
 
                 {/* Suggestions Pills if provided */}
                 {isCoach && msg.suggestions && msg.suggestions.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1 max-w-full">
+                  <div data-testid={msg.id === 'msg-1' ? undefined : 'cary-contextual-followups'} className="flex flex-wrap gap-1.5 pt-1 max-w-full">
                     {msg.suggestions.map((sug, i) => (
                       <button
                         key={i}
                         type="button"
-                        onClick={() => handleSendMessage(sug)}
+                        onClick={() => msg.id === 'msg-1' ? handleSendMessage(sug) : setInputQuery(sug)}
                         className="text-left px-2.5 py-1.5 rounded-xl bg-white hover:bg-amber-50 border border-stone-200 hover:border-amber-300 text-stone-700 text-xs font-medium transition-colors shadow-2xs"
                       >
                         {sug}
@@ -551,6 +564,8 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
         {/* Input Bar */}
         <div className="flex gap-2 pt-1">
           <input
+            ref={composerRef}
+            data-testid="cary-chat-composer"
             type="text"
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}

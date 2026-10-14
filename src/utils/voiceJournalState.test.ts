@@ -58,6 +58,26 @@ describe('durable voice journal state',()=>{
     expect(result[0].food?.mealTitle).toBe('Couscous · Salad');
   });
 
+  it.each([
+    ['German','Ich war heute sehr gestresst.','Ich war heute entspannt.','Nein, ich war heute eigentlich entspannt, nicht gestresst.'],
+    ['English','I was very stressed.','I was relaxed.','No, actually I was relaxed, not stressed.'],
+    ['French','J’étais très stressé.','J’étais détendu.','Non, en fait j’étais détendu, pas stressé.'],
+    ['Darija','كنت مقلق بزاف.','كنت مرتاح.','لا، فالحقيقة كنت مرتاح، ماشي مقلق.'],
+  ])('replaces a contradicted wellbeing note for an explicit %s correction',(_language,oldNote,newNote,transcript)=>{
+    const current=check('old','evening','Earlier statement'); current.wellbeing.note=oldNote;
+    const incoming=check('new','evening',transcript); incoming.wellbeing.note=newNote;
+    const result=mergeVoiceCheckIns([current],[incoming]);
+    expect(result[0].wellbeing.note).toBe(newNote);
+    expect(result[0].wellbeing.voiceTranscription).toContain(transcript);
+  });
+
+  it('keeps genuinely additive wellbeing context instead of replacing it',()=>{
+    const current=check('old','evening','I felt relaxed'); current.wellbeing.note='I felt relaxed.';
+    const incoming=check('new','evening','I also had a headache'); incoming.wellbeing.note='I also had a headache.';
+    const result=mergeVoiceCheckIns([current],[incoming]);
+    expect(result[0].wellbeing.note).toBe('I felt relaxed.\nI also had a headache.');
+  });
+
   it('does not duplicate the same meal when a whole-day recap has no exact clock time',()=>{
     const existing=moment('m1','كسكس بالخضرة','13:15','الغدا كان كسكس بالخضرة'); const recap=moment('m2','كسكس بالخضرة','','عاودت فملخص النهار أن الغدا كان كسكس بالخضرة');
     const result=mergeVoiceMoments([existing],[recap]); expect(result).toHaveLength(1); expect(result[0].id).toBe('m1'); expect(result[0].time).toBe('13:15'); expect(result[0].notes).toContain('الغدا كان كسكس بالخضرة'); expect(result[0].notes).toContain('عاودت فملخص النهار');
