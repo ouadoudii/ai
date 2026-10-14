@@ -30,8 +30,13 @@ async function openHarness(browser: Browser, device: DeviceCase, language: Langu
       lang = ''; interimResults = false; continuous = false;
       onresult: ((event: unknown) => void) | null = null;
       onend: (() => void) | null = null;
-      start() {}
+      private active = false;
+      start() { this.active = true; }
       stop() {
+        // The browser emits a final result/end only once. App cleanup may call
+        // stop() again after the modal closes; that must not eat Voice B's transcript.
+        if (!this.active) return;
+        this.active = false;
         const result = Object.assign([{ transcript: queue.shift() || '' }], { isFinal: true });
         this.onresult?.({ resultIndex: 0, results: [result] });
         this.onend?.();
