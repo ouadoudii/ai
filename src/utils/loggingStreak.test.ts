@@ -4,7 +4,7 @@ import { FoodMoment } from '../types';
 
 const meal = (id: string, date: string, tags: string[] = []): FoodMoment => ({
   id, date, tags, title: 'بيض + pain', label: 'Breakfast', category: 'breakfast', time: '08:00',
-  location: '', imageUrl: '', rating: 0, mood: 'neutral', createdAt: 1,
+  location: '', locationCategory: 'home', imageUrl: '', rating: 0, mood: 'satisfied', createdAt: 1,
 });
 
 describe('deriveMealLoggingStreak', () => {
