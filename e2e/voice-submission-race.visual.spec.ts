@@ -21,8 +21,8 @@ async function openHarness(browser: Browser, device: DeviceCase, language: Langu
       firstPlan: { title: 'A small step', rationale: 'A small step', focusAreas: [],
         firstStep: 'Start with a moment.', phase: 'midday' }, confirmedAt: 1,
     }));
-    localStorage.setItem('nimmapp_moments_v1', '[]');
-    localStorage.setItem('nimmapp_checkins_v1', '[]');
+    if (localStorage.getItem('nimmapp_moments_v1') === null) localStorage.setItem('nimmapp_moments_v1', '[]');
+    if (localStorage.getItem('nimmapp_checkins_v1') === null) localStorage.setItem('nimmapp_checkins_v1', '[]');
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
 
     const queue = [...transcripts];
