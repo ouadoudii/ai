@@ -21,6 +21,7 @@ describe('deriveWeekdayMealShortcut', () => {
     const moments = [
       meal('Couscous', '2026-09-02'),
       meal('Couscous', '2026-09-09', 'lunch', ['demo']),
+      meal('Couscous', '2026-08-26', 'lunch', ['sample']),
       meal('Couscous', 'bad-date'),
       meal('   ', '2026-09-16'),
       meal('Couscous', '2026-09-23', 'dinner'),

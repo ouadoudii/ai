@@ -27,7 +27,7 @@ const localWeekday = (date: string): number | null => {
 };
 
 const isDemo = (moment: WeekdayMealMoment) =>
-  (moment.tags ?? []).some(tag => /^(demo|seed)$/i.test(tag.trim()));
+  (moment.tags ?? []).some(tag => /^(demo|seed|sample)$/i.test(tag.trim()));
 
 export function deriveWeekdayMealShortcut(
   moments: WeekdayMealMoment[],

@@ -27,6 +27,11 @@ export interface GuardianStatus {
 /**
  * Evaluates user's recent data for physiological alarm signals,
  * tailored to their dominant nutrition archetype.
+ *
+ * Alarm IDs identify the source occurrence, not the evaluation run. This is
+ * important because acknowledgements are persisted by alarm ID: re-evaluating
+ * the same check-in/moment after a reload must produce the same ID, while a
+ * later source occurrence must remain independently actionable.
  */
 export function evaluateNutritionAlarms(
   moments: FoodMoment[],
@@ -39,8 +44,6 @@ export function evaluateNutritionAlarms(
   const now = new Date();
   const currentHour = now.getHours();
 
-  // 1. ALARM: Critical Sleep Deficit + Morning Ghrelin Surge
-  // Trigger: sleep < 6h or wakeFeeling === 'exhausted' or 'tired'
   if (latestCheckIn?.sleep) {
     const { durationHours, wakeFeeling, quality } = latestCheckIn.sleep;
     if (durationHours < 6 || wakeFeeling === 'exhausted' || quality <= 2) {
@@ -56,7 +59,7 @@ export function evaluateNutritionAlarms(
       }
 
       alarms.push({
-        id: `alarm-sleep-${Date.now()}`,
+        id: `alarm-sleep-${latestCheckIn.id}`,
         triggerKey: 'sleep_deficit',
         severity: 'high',
         title: '⚠️ Erhöhtes Heißhunger-Risiko durch Schlafmangel',
@@ -70,8 +73,6 @@ export function evaluateNutritionAlarms(
     }
   }
 
-  // 2. ALARM: Screen-Distraction + Gehetztes Essen (Sättigungsverlust)
-  // Trigger: Latest meal had eatingPace === 'rushed' OR distraction === 'screen' and fullness >= 4
   const latestMoment = recentMoments[0];
   if (latestMoment && (latestMoment.eatingPace === 'rushed' || latestMoment.distraction === 'screen')) {
     let archetypeAdvice = '';
@@ -82,7 +83,7 @@ export function evaluateNutritionAlarms(
     }
 
     alarms.push({
-      id: `alarm-mindless-${Date.now()}`,
+      id: `alarm-mindless-${latestMoment.id}`,
       triggerKey: 'distracted_meal',
       severity: 'medium',
       title: '⚠️ Achtsamkeits-Warnung: Gehetzte Mahlzeit am Bildschirm',
@@ -95,8 +96,6 @@ export function evaluateNutritionAlarms(
     });
   }
 
-  // 3. ALARM: Nachmittags-Tief & Energieabsturz (Blutzucker-Spike)
-  // Trigger: energyLevel <= 2 or mood === 'sluggish' between 13:00 and 17:00
   const isAfternoon = currentHour >= 13 && currentHour <= 17;
   const lowEnergyCheckIn = checkIns.find(c => c.wellbeing.energyLevel <= 2);
   const lowEnergyMoment = recentMoments.find(m => m.energyAfter === 'sluggish');
@@ -110,9 +109,9 @@ export function evaluateNutritionAlarms(
     } else {
       archetypeAdvice = 'Trinke 0,5L kühles Wasser und strecke den Rücken. Oft wird Dehydration fälschlicherweise als Energieloch interpretiert.';
     }
-
+    const sourceOccurrenceId = lowEnergyCheckIn ? `checkin-${lowEnergyCheckIn.id}` : `moment-${lowEnergyMoment!.id}`;
     alarms.push({
-      id: `alarm-afternoon-crash-${Date.now()}`,
+      id: `alarm-afternoon-crash-${sourceOccurrenceId}`,
       triggerKey: 'afternoon_crash',
       severity: 'high',
       title: '⚠️ Akutes Nachmittagstief erkannt',
@@ -125,16 +124,15 @@ export function evaluateNutritionAlarms(
     });
   }
 
-  // 4. ALARM: Spätes schweres Abendessen (> 20:30 Uhr) mit Völlegefühl
-  // Trigger: dinner logged after 20:30 with fullness >= 4 or category === 'dinner'
   const lateDinner = recentMoments.find(m => {
     const hour = parseInt(m.time?.split(':')[0] || '0', 10);
     return hour >= 20 && m.fullnessLevel >= 4;
   });
 
   if (lateDinner || (currentHour >= 21 && latestMoment?.category === 'dinner' && latestMoment.fullnessLevel >= 4)) {
+    const sourceDinner = lateDinner || latestMoment!;
     alarms.push({
-      id: `alarm-late-dinner-${Date.now()}`,
+      id: `alarm-late-dinner-${sourceDinner.id}`,
       triggerKey: 'circadian_late_food',
       severity: 'medium',
       title: '⚠️ Schlaf-Regenerations-Bremse: Späte üppige Mahlzeit',
@@ -147,7 +145,6 @@ export function evaluateNutritionAlarms(
     });
   }
 
-  // Determine overall guardian status
   if (alarms.length === 0) {
     return {
       hasAlarms: false,
@@ -159,7 +156,6 @@ export function evaluateNutritionAlarms(
   }
 
   const hasHighSeverity = alarms.some(a => a.severity === 'high');
-
   return {
     hasAlarms: true,
     activeAlarms: alarms,

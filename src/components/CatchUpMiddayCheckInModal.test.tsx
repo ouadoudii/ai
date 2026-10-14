@@ -20,6 +20,13 @@ describe('CatchUpMiddayCheckInModal explicit data', () => {
     expect(source).toContain("energyTouched?`${energyLevel}/5`:'—'");
   });
 
+  it('cannot submit a completely untouched catch-up as personal history', () => {
+    expect(source).toContain("const hasMeaningfulInput=Boolean(mealTitle.trim()||note.trim()||hungerTouched||fullnessTouched||energyTouched)");
+    expect(source).toContain('if(!hasMeaningfulInput)return');
+    expect(source).toContain('disabled={!hasMeaningfulInput}');
+    expect(source).toContain('aria-disabled={!hasMeaningfulInput}');
+  });
+
   it('contains localized German and French catch-up chrome and explicit Arabic RTL', () => {
     expect(source).toContain('Möchtest du ergänzen, was du gegessen hast?');
     expect(source).toContain('Tu veux ajouter ce que tu as mangé ?');
