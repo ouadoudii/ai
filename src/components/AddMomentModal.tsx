@@ -18,6 +18,7 @@ import { mealEditorCopy, mealLabels } from '../utils/mealEditorCopy';
 import { shouldClearAutoMatchedMealImage } from '../utils/mealImagePolicy';
 import { derivePersonalFrequentLocation } from '../utils/personalFrequentLocation';
 import { deriveUsualMealTime } from '../usualMealTime';
+import { suggestPersonalMealCompanion } from '../utils/personalMealCompanion';
 import { acceptPhotoRecognition, createPhotoRecognitionState, resolveConfirmedMealInput, type PhotoRecognitionState } from '../utils/photoRecognitionConfirmation';
 
 interface AddMomentModalProps { isOpen:boolean; onClose:()=>void; onBack?:()=>void; onSave:(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>void; editingMoment?:FoodMoment|null; initialCategory?:MomentCategory|null; initialText?:string; initialItems?:string[]; initialNotes?:string; initialVoiceTranscript?:string; clarificationQuestion?:string; voiceUnderstandingFailed?:boolean; completedMealCategories?:Set<MomentCategory>; moments?:FoodMoment[]; }
@@ -59,6 +60,25 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   const fileRef=React.useRef<HTMLInputElement>(null);
   const requestId=React.useRef(0);
   const imageReadId=React.useRef(0);
+  const companionCopy={
+    en:{label:'Often together in your meals',help:'Nothing is added until you choose it.',use:(item:string)=>`Add ${item}`},
+    de:{label:'Oft zusammen in deinen Mahlzeiten',help:'Nichts wird hinzugefügt, bis du es auswählst.',use:(item:string)=>`${item} hinzufügen`},
+    fr:{label:'Souvent ensemble dans tes repas',help:'Rien n’est ajouté avant que tu le choisisses.',use:(item:string)=>`Ajouter ${item}`},
+    ar:{label:'غالباً معاً في وجباتك',help:'لن تتم إضافة أي شيء حتى تختاره.',use:(item:string)=>`أضف ${item}`},
+  }[language];
+  const companionSuggestion=React.useMemo(()=>{
+    if(editingMoment||items.length===0)return null;
+    const history=(moments.length?moments:storedHistory).map(moment=>({
+      items:parseMealTitle(moment.title),
+      isDemo:(moment.tags??[]).some(tag=>['demo','seed','sample'].includes(tag.toLocaleLowerCase())),
+      createdAt:moment.createdAt,
+    }));
+    const suggestion=suggestPersonalMealCompanion(items[items.length-1],history);
+    if(!suggestion)return null;
+    const key=normalizeFoodSearchText(suggestion);
+    return items.some(item=>normalizeFoodSearchText(item)===key)?null:suggestion;
+  },[editingMoment,items,moments,storedHistory]);
+
 
   React.useEffect(()=>{if(!isOpen){imageReadId.current+=1;setImageReading(false);setPhotoRecognition(createPhotoRecognitionState([]));return;}imageReadId.current+=1;setImageReading(false);setShowMainMeals(false);setClarificationAnswer('');setPhotoRecognition(createPhotoRecognitionState([]));setChosenLocation(null);setChosenTime(null);try{const stored=JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]');setStoredHistory(Array.isArray(stored)?stored:[])}catch{setStoredHistory([])}setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems(parseMealTitle(editingMoment.title));setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const suggested=initialCategory||'snack';const next=(initialCategory?[initialCategory]:extraMomentCategories).includes(suggested)?suggested:'snack';setCategory(next);setImageUrl('');setTitle(initialText);setFocused(Boolean(initialText));setItems(initialItems);setNotes(initialNotes);setShowMore(Boolean(initialNotes));setAiSuggestions([]);setImageRecognitionNote('')},[isOpen,editingMoment,initialCategory,initialText,initialItems,initialNotes]);
   React.useEffect(()=>{if(isOpen)setClarificationResolution('pending')},[isOpen,clarificationQuestion]);
@@ -130,6 +150,12 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
       </div>
 
       {items.length>0&&<div className="mt-3 flex flex-wrap gap-2">{items.map((item,index)=><span key={`${item}-${index}`} className="inline-flex max-w-full items-center gap-2 rounded-full bg-[#E8EFE1] px-3 py-2 text-xs font-bold text-[#455744]"><span className="truncate">{item}</span><button type="button" onClick={()=>setItems(removeMealItem(items,index))} aria-label={copy.remove} className="grid h-5 w-5 place-items-center rounded-full bg-white/70 text-[#6A795F]"><X className="h-3 w-3"/></button></span>)}</div>}
+
+      {companionSuggestion&&<section data-testid="personal-meal-companion-suggestion" className="mt-3 rounded-[18px] border border-[#D8E2D0] bg-[#F3F7F0] px-4 py-3">
+        <p className="text-xs font-bold text-[#526B48]">{companionCopy.label}</p>
+        <p className="mt-1 text-[11px] text-[#6C7F60]">{companionCopy.help}</p>
+        <button type="button" onClick={()=>addItem(companionSuggestion,'local')} className="mt-2 rounded-full bg-[#526B48] px-3 py-2 text-xs font-bold text-white" dir="auto">{companionCopy.use(companionSuggestion)}</button>
+      </section>}
 
       <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#918D84]"><Globe2 className="w-3.5 h-3.5"/>{items.length?copy.selected(items.length):country?copy.regionPriority:copy.justType}</div>
 
