@@ -4,11 +4,11 @@ const MOMENTS_KEY = 'nimmapp_moments_v1';
 const VOCABULARY_KEY = 'moment.personalMealVocabulary.v1';
 
 for (const viewport of [
-  { name: 'desktop', width: 1280, height: 900, language: 'en' },
-  { name: 'mobile', width: 390, height: 844, language: 'ar' },
+  { name: 'desktop', width: 1280, height: 900, language: 'en', originalTitle: 'Harira' },
+  { name: 'mobile', width: 390, height: 844, language: 'ar', originalTitle: 'حريرة' },
 ] as const) test(`confirmed meal edit becomes an opt-in wording suggestion on ${viewport.name}`, async ({ page }, testInfo) => {
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
-  await page.addInitScript(({ momentsKey, vocabularyKey, language }) => {
+  await page.addInitScript(({ momentsKey, vocabularyKey, language, originalTitle }) => {
     const now = new Date();
     localStorage.setItem('rhythm_language_v1', language);
     localStorage.setItem('cary_access_mode_v1', 'guest');
@@ -18,7 +18,7 @@ for (const viewport of [
     localStorage.removeItem(vocabularyKey);
     localStorage.setItem(momentsKey, JSON.stringify([{
       id: 'vocabulary-meal',
-      title: 'Harira',
+      title: originalTitle,
       label: 'Lunch',
       category: 'lunch',
       date: now.toISOString().slice(0, 10),
@@ -31,10 +31,10 @@ for (const viewport of [
       tags: [],
       createdAt: now.getTime(),
     }]));
-  }, { momentsKey: MOMENTS_KEY, vocabularyKey: VOCABULARY_KEY, language: viewport.language });
+  }, { momentsKey: MOMENTS_KEY, vocabularyKey: VOCABULARY_KEY, language: viewport.language, originalTitle: viewport.originalTitle });
 
   await page.goto('/');
-  await page.getByText('Harira', { exact: true }).first().click();
+  await page.getByText(viewport.originalTitle, { exact: true }).first().click();
   await page.getByRole('button', { name: viewport.language === 'ar' ? 'تعديل' : 'Edit' }).click();
   const editor = page.locator('input[autocomplete="off"]');
   await editor.fill('with lemon');
@@ -44,19 +44,19 @@ for (const viewport of [
   await expect.poll(async () => page.evaluate((key) => {
     const entries = JSON.parse(localStorage.getItem(key) || '[]');
     return entries[0]?.preferred || '';
-  }, VOCABULARY_KEY)).toBe('Harira · with lemon');
+  }, VOCABULARY_KEY)).toBe(`${viewport.originalTitle} · with lemon`);
 
   await page.getByTestId(viewport.name === 'desktop' ? 'desktop-capture-button' : 'primary-capture-button').click();
   await page.locator('[data-capture-method="text"]').click();
-  await editor.fill('Harira');
+  await editor.fill(viewport.originalTitle);
   const suggestion = page.getByTestId('remembered-meal-correction');
   await expect(suggestion).toBeVisible();
-  await expect(suggestion).toContainText('Harira · with lemon');
+  await expect(suggestion).toContainText(`${viewport.originalTitle} · with lemon`);
   await expect.poll(async () => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '[]').length, MOMENTS_KEY)).toBe(1);
   await page.screenshot({ path: testInfo.outputPath(`personal-meal-vocabulary-before-${viewport.name}.png`), fullPage: true });
 
   await suggestion.click();
-  await expect(editor).toHaveValue('Harira · with lemon');
+  await expect(editor).toHaveValue(`${viewport.originalTitle} · with lemon`);
   await expect.poll(async () => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '[]').length, MOMENTS_KEY)).toBe(1);
   await page.screenshot({ path: testInfo.outputPath(`personal-meal-vocabulary-after-${viewport.name}.png`), fullPage: true });
 });
