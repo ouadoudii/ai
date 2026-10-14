@@ -43,11 +43,11 @@ describe('suggestPersonalMealCompanion', () => {
 
   it('uses createdAt to preserve the newest spelling when history is not sorted', () => {
     const history = [
-      { items: ['omelette', 'newest spelling'], createdAt: 30 },
-      { items: ['omelette', 'oldest spelling'], createdAt: 10 },
+      { items: ['omelette', 'Newest Spelling'], createdAt: 30 },
+      { items: ['omelette', 'NEWEST SPELLING'], createdAt: 10 },
       { items: ['omelette', 'newest spelling'], createdAt: 20 },
     ];
-    expect(suggestPersonalMealCompanion('omelette', history)).toBe('newest spelling');
+    expect(suggestPersonalMealCompanion('omelette', history)).toBe('Newest Spelling');
   });
 
   it('does not double-count duplicate companion tokens within one meal', () => {
