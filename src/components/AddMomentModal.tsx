@@ -19,6 +19,7 @@ import { shouldClearAutoMatchedMealImage } from '../utils/mealImagePolicy';
 import { derivePersonalFrequentLocation } from '../utils/personalFrequentLocation';
 import { deriveUsualMealTime } from '../usualMealTime';
 import { suggestPersonalMealCompanion } from '../utils/personalMealCompanion';
+import { deriveWeekdayMealShortcut } from '../weekdayMealShortcut';
 import { acceptPhotoRecognition, createPhotoRecognitionState, resolveConfirmedMealInput, type PhotoRecognitionState } from '../utils/photoRecognitionConfirmation';
 
 interface AddMomentModalProps { isOpen:boolean; onClose:()=>void; onBack?:()=>void; onSave:(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>void; editingMoment?:FoodMoment|null; initialCategory?:MomentCategory|null; initialText?:string; initialItems?:string[]; initialNotes?:string; initialVoiceTranscript?:string; clarificationQuestion?:string; voiceUnderstandingFailed?:boolean; completedMealCategories?:Set<MomentCategory>; moments?:FoodMoment[]; }
@@ -66,6 +67,17 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
     fr:{label:'Souvent ensemble dans tes repas',help:'Rien n’est ajouté avant que tu le choisisses.',use:(item:string)=>`Ajouter ${item}`},
     ar:{label:'غالباً معاً في وجباتك',help:'لن تتم إضافة أي شيء حتى تختاره.',use:(item:string)=>`أضف ${item}`},
   }[language];
+  const weekdayCopy={
+    en:{label:'Your usual meal for this weekday',help:'Nothing is added or saved until you choose it.',use:(item:string)=>`Use ${item}`},
+    de:{label:'Deine übliche Mahlzeit für diesen Wochentag',help:'Nichts wird hinzugefügt oder gespeichert, bis du es auswählst.',use:(item:string)=>`${item} übernehmen`},
+    fr:{label:'Ton repas habituel pour ce jour',help:'Rien n’est ajouté ni enregistré avant ton choix.',use:(item:string)=>`Utiliser ${item}`},
+    ar:{label:'وجبتك المعتادة لهذا اليوم من الأسبوع',help:'لن تتم إضافة أو حفظ أي شيء حتى تختاره.',use:(item:string)=>`استخدم ${item}`},
+  }[language];
+  const weekdaySuggestion=React.useMemo(()=>{
+    if(editingMoment||items.length>0||title.trim())return null;
+    return deriveWeekdayMealShortcut(moments.length?moments:storedHistory,getLocalDateKey(new Date()),category);
+  },[editingMoment,items.length,title,moments,storedHistory,category]);
+
   const companionSuggestion=React.useMemo(()=>{
     if(editingMoment||items.length===0)return null;
     const history=(moments.length?moments:storedHistory).map(moment=>({
@@ -130,6 +142,12 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
         <p className="text-xs font-bold text-[#526B48]">{locationCopy.label}</p>
         <p data-testid="frequent-location-name" dir="auto" className="mt-1 text-sm font-semibold text-[#343631]">{locationSuggestion.location}</p>
         <button type="button" data-testid="use-frequent-location" aria-pressed={chosenLocation===locationSuggestion.location} onClick={()=>setChosenLocation(locationSuggestion.location)} className="mt-2 rounded-full bg-[#526B48] px-3 py-2 text-xs font-bold text-white">{chosenLocation===locationSuggestion.location?locationCopy.selected:locationCopy.use}</button>
+      </section>}
+
+      {weekdaySuggestion&&<section data-testid="weekday-meal-shortcut" className="mt-3 rounded-[18px] border border-[#D8E2D0] bg-[#F3F7F0] px-4 py-3">
+        <p className="text-xs font-bold text-[#526B48]">{weekdayCopy.label}</p>
+        <p className="mt-1 text-[11px] text-[#6C7F60]">{weekdayCopy.help}</p>
+        <button type="button" data-testid="use-weekday-meal-shortcut" onClick={()=>setItems(parseMealTitle(weekdaySuggestion.title))} className="mt-2 rounded-full bg-[#526B48] px-3 py-2 text-xs font-bold text-white" dir="auto">{weekdayCopy.use(weekdaySuggestion.title)}</button>
       </section>}
 
       {usualTime&&<section data-testid="usual-meal-time-suggestion" className="mt-3 rounded-[18px] border border-[#D8E2D0] bg-[#F3F7F0] px-4 py-3">
