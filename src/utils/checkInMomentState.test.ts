@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DailyCheckIn, FoodMoment, TimeOfDayPhase } from '../types';
-import { CHECKIN_SOURCE_TAG, reconcileCheckInMoments } from './checkInMomentState';
+import { CHECKIN_SOURCE_TAG, reconcileCheckInFromMomentEdit, reconcileCheckInMoments } from './checkInMomentState';
 
 const checkIn = (id: string, date = '2026-09-23', timeOfDay: TimeOfDayPhase = 'midday'): DailyCheckIn => ({
   id,
@@ -63,5 +63,73 @@ describe('reconcileCheckInMoments', () => {
 
     expect(reconcileCheckInMoments([keepPhase, keepDate], [corrected, otherPhase, otherDate], corrected.date, corrected.timeOfDay))
       .toEqual([keepPhase, keepDate]);
+  });
+});
+
+describe('reconcileCheckInFromMomentEdit', () => {
+  it('updates the linked check-in fields while preserving unrelated wellbeing and sleep history', () => {
+    const source: DailyCheckIn = {
+      ...checkIn('checkin-linked'),
+      sleep: { durationHours: 7.5, quality: 4 },
+      food: { mealTitle: 'Couscous', category: 'lunch', hungerBefore: 4, fullnessAfter: 3 },
+      wellbeing: { energyLevel: 2, stressLevel: 4, waterGlasses: 1, mood: 'satisfied', note: 'old note', voiceTranscription: 'original voice' },
+    };
+    const original = { ...moment('meal-linked', source.id), title: 'Couscous', notes: 'old note' };
+    const edited: FoodMoment = {
+      ...original,
+      title: 'سلطة · Salat',
+      date: '2026-09-24',
+      time: '13:15',
+      category: 'snack',
+      hungerLevel: 2,
+      fullnessLevel: 4,
+      eatingPace: 'slow',
+      distraction: 'social',
+      mood: 'energized',
+      notes: 'corrected note',
+    };
+
+    const [updated] = reconcileCheckInFromMomentEdit([source], original, edited);
+
+    expect(updated).toMatchObject({
+      id: source.id,
+      date: edited.date,
+      time: edited.time,
+      food: {
+        mealTitle: edited.title,
+        category: edited.category,
+        hungerBefore: 2,
+        fullnessAfter: 4,
+        eatingPace: 'slow',
+        distraction: 'social',
+      },
+      wellbeing: {
+        energyLevel: 2,
+        stressLevel: 4,
+        waterGlasses: 1,
+        mood: 'energized',
+        note: 'corrected note',
+        voiceTranscription: 'original voice',
+      },
+      sleep: source.sleep,
+    });
+  });
+
+  it('does not mutate check-ins for a standalone meal edit', () => {
+    const existing = checkIn('checkin-unrelated');
+    const standalone = moment('manual-meal');
+
+    expect(reconcileCheckInFromMomentEdit([existing], standalone, { ...standalone, title: 'Edited' }))
+      .toBeInstanceOf(Array);
+    expect(reconcileCheckInFromMomentEdit([existing], standalone, { ...standalone, title: 'Edited' }))
+      .toEqual([existing]);
+  });
+
+  it('leaves all check-ins unchanged when the source id no longer exists', () => {
+    const existing = checkIn('checkin-current');
+    const linked = moment('linked-meal', 'checkin-missing');
+
+    expect(reconcileCheckInFromMomentEdit([existing], linked, { ...linked, title: 'Edited' }))
+      .toEqual([existing]);
   });
 });
