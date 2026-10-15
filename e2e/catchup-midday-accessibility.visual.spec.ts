@@ -22,7 +22,8 @@ for (const viewport of [
     await page.clock.setFixedTime(new Date(browserTime.now + hoursToCatchUp * 60 * 60 * 1000));
     await page.reload();
 
-    const opener = page.getByRole('button').filter({ hasText: 'Good evening' });
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const opener = page.getByRole('button', { name: 'Check-in starten' });
     await expect(opener).toBeVisible();
     await opener.click();
 
