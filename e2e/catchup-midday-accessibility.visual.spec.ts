@@ -23,7 +23,7 @@ for (const viewport of [
     await page.reload();
 
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
-    const opener = page.getByRole('button', { name: 'Check-in starten' });
+    const opener = page.getByRole('button', { name: 'Check-in starten', exact: true });
     await expect(opener).toBeVisible();
     await opener.click();
 
