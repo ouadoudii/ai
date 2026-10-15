@@ -18,4 +18,26 @@ describe('latest request guard',()=>{
     const reopened=guard.start();
     expect(guard.isCurrent(reopened)).toBe(true);
   });
+
+  it('keeps a reopened meal unchanged when an abandoned photo resolves late',async()=>{
+    const guard=createLatestRequestGuard();
+    const abandonedPhoto=guard.start();
+    let resolvePhotoA!:(value:string)=>void;
+    const photoA=new Promise<string>(resolve=>{resolvePhotoA=resolve});
+    let mealTitle='';
+
+    const applyPhotoA=photoA.then(label=>{
+      if(guard.isCurrent(abandonedPhoto))mealTitle=label;
+    });
+
+    guard.invalidate();
+    const reopenedMeal=guard.start();
+    mealTitle='unrelated vegetable soup';
+    resolvePhotoA('pizza');
+    await applyPhotoA;
+
+    expect(guard.isCurrent(reopenedMeal)).toBe(true);
+    expect(mealTitle).toBe('unrelated vegetable soup');
+  });
+
 });
