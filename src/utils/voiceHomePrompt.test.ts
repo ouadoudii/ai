@@ -15,6 +15,12 @@ describe('voice-first home prompt',()=>{
     expect(shouldUseFullDayVoiceRecap(21,['morning','midday','evening'])).toBe(false);
   });
 
+  it('switches off again when the final phase completes and before the evening boundary',()=>{
+    expect(shouldUseFullDayVoiceRecap(18,['morning','midday'])).toBe(true);
+    expect(shouldUseFullDayVoiceRecap(18,['morning','midday','evening'])).toBe(false);
+    expect(shouldUseFullDayVoiceRecap(17,['morning'])).toBe(false);
+  });
+
   it('localizes the full-day voice CTA including Darija',()=>{
     expect(voiceHomePrompt('ar',true).title).toBe('عاود ليا نهارك كامل');
     expect(voiceHomePrompt('de',true).title).toContain('ganzen Tag');
