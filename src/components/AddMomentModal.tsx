@@ -18,7 +18,11 @@ import { createLatestRequestGuard } from '../utils/latestRequestGuard';
 import { mealEditorCopy, mealLabels } from '../utils/mealEditorCopy';
 import { shouldClearAutoMatchedMealImage } from '../utils/mealImagePolicy';
 import { derivePersonalFrequentLocation } from '../utils/personalFrequentLocation';
+import { deriveUsualMealTime } from '../usualMealTime';
+import { suggestPersonalMealCompanion } from '../utils/personalMealCompanion';
+import { deriveWeekdayMealShortcut } from '../weekdayMealShortcut';
 import { acceptPhotoRecognition, createPhotoRecognitionState, resolveConfirmedMealInput, type PhotoRecognitionState } from '../utils/photoRecognitionConfirmation';
+import { findRememberedMealCorrection, loadPersonalMealVocabulary, rememberMealCorrection, savePersonalMealVocabulary, type PersonalMealVocabularyEntry } from '../personalMealVocabulary';
 
 interface AddMomentModalProps { isOpen:boolean; onClose:()=>void; onBack?:()=>void; onSave:(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>void; editingMoment?:FoodMoment|null; initialCategory?:MomentCategory|null; initialText?:string; initialItems?:string[]; initialNotes?:string; initialVoiceTranscript?:string; clarificationQuestion?:string; voiceUnderstandingFailed?:boolean; completedMealCategories?:Set<MomentCategory>; moments?:FoodMoment[]; }
 const extraMomentCategories:MomentCategory[]=['snack','coffee','dessert'];
@@ -30,14 +34,18 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   const visibleCategories=editingMoment?[editingMoment.category]:initialCategory?[initialCategory]:[...extraMomentCategories,...(showMainMeals?availableMainMeals:[])];
   const [category,setCategory]=React.useState<MomentCategory>('lunch');
   const [chosenLocation,setChosenLocation]=React.useState<string|null>(null);
+  const [chosenTime,setChosenTime]=React.useState<string|null>(null);
   const [storedHistory,setStoredHistory]=React.useState<FoodMoment[]>([]);
+  const [personalVocabulary,setPersonalVocabulary]=React.useState<PersonalMealVocabularyEntry[]>([]);
   const locationSuggestion=React.useMemo(()=>editingMoment?null:derivePersonalFrequentLocation(moments.length?moments:storedHistory,category),[moments,storedHistory,category,editingMoment]);
+  const usualTime=React.useMemo(()=>editingMoment?null:deriveUsualMealTime(moments.length?moments:storedHistory,category),[moments,storedHistory,category,editingMoment]);
   const locationCopy={
     en:{label:'Your usual place for this meal',use:'Use this place',selected:'Place selected'},
     de:{label:'Dein häufiger Ort für diese Mahlzeit',use:'Diesen Ort übernehmen',selected:'Ort übernommen'},
     fr:{label:'Ton lieu habituel pour ce repas',use:'Utiliser ce lieu',selected:'Lieu sélectionné'},
     ar:{label:'مكانك المعتاد لهذه الوجبة',use:'استخدم هذا المكان',selected:'تم اختيار المكان'},
   }[language];
+  const timeCopy={en:{label:'Your usual time for this meal',use:'Use this time',selected:'Time selected'},de:{label:'Deine übliche Zeit für diese Mahlzeit',use:'Diese Uhrzeit übernehmen',selected:'Uhrzeit übernommen'},fr:{label:'Ton heure habituelle pour ce repas',use:'Utiliser cette heure',selected:'Heure sélectionnée'},ar:{label:'وقتك المعتاد لهذه الوجبة',use:'استخدم هذا الوقت',selected:'تم اختيار الوقت'}}[language];
   const [imageUrl,setImageUrl]=React.useState('');
   const [title,setTitle]=React.useState('');
   const [items,setItems]=React.useState<string[]>([]);
@@ -70,13 +78,50 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   const closeEditor=()=>{invalidatePhotoAnalysis();onClose()};
   const backEditor=()=>{invalidatePhotoAnalysis();onBack?.()};
 
-  React.useEffect(()=>{photoAnalysisGuard.current.invalidate();setImageAnalyzing(false);if(!isOpen){imageReadId.current+=1;setImageReading(false);setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote('');return;}imageReadId.current+=1;setImageReading(false);setShowMainMeals(false);setClarificationAnswer('');setPhotoRecognition(createPhotoRecognitionState([]));setChosenLocation(null);try{const stored=JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]');setStoredHistory(Array.isArray(stored)?stored:[])}catch{setStoredHistory([])}setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems(parseMealTitle(editingMoment.title));setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const suggested=initialCategory||'snack';const next=(initialCategory?[initialCategory]:extraMomentCategories).includes(suggested)?suggested:'snack';setCategory(next);setImageUrl('');setTitle(initialText);setFocused(Boolean(initialText));setItems(initialItems);setNotes(initialNotes);setShowMore(Boolean(initialNotes));setAiSuggestions([]);setImageRecognitionNote('')},[isOpen,editingMoment,initialCategory,initialText,initialItems,initialNotes]);
+  const companionCopy={
+    en:{label:'Often together in your meals',help:'Nothing is added until you choose it.',use:(item:string)=>`Add ${item}`},
+    de:{label:'Oft zusammen in deinen Mahlzeiten',help:'Nichts wird hinzugefügt, bis du es auswählst.',use:(item:string)=>`${item} hinzufügen`},
+    fr:{label:'Souvent ensemble dans tes repas',help:'Rien n’est ajouté avant que tu le choisisses.',use:(item:string)=>`Ajouter ${item}`},
+    ar:{label:'غالباً معاً في وجباتك',help:'لن تتم إضافة أي شيء حتى تختاره.',use:(item:string)=>`أضف ${item}`},
+  }[language];
+  const weekdayCopy={
+    en:{label:'Your usual meal for this weekday',help:'Nothing is added or saved until you choose it.',use:(item:string)=>`Use ${item}`},
+    de:{label:'Deine übliche Mahlzeit für diesen Wochentag',help:'Nichts wird hinzugefügt oder gespeichert, bis du es auswählst.',use:(item:string)=>`${item} übernehmen`},
+    fr:{label:'Ton repas habituel pour ce jour',help:'Rien n’est ajouté ni enregistré avant ton choix.',use:(item:string)=>`Utiliser ${item}`},
+    ar:{label:'وجبتك المعتادة لهذا اليوم من الأسبوع',help:'لن تتم إضافة أو حفظ أي شيء حتى تختاره.',use:(item:string)=>`استخدم ${item}`},
+  }[language];
+  const vocabularyCopy={
+    en:{label:'Your remembered wording',help:'Nothing is changed or saved until you choose and confirm it.',use:(item:string)=>`Use ${item}`},
+    de:{label:'Deine gemerkte Formulierung',help:'Nichts wird geändert oder gespeichert, bis du sie auswählst und bestätigst.',use:(item:string)=>`${item} übernehmen`},
+    fr:{label:'Ta formulation mémorisée',help:'Rien n’est modifié ni enregistré avant ton choix et ta confirmation.',use:(item:string)=>`Utiliser ${item}`},
+    ar:{label:'تسميتك المحفوظة',help:'لن يتم تغيير أو حفظ أي شيء حتى تختارها وتؤكدها.',use:(item:string)=>`استخدم ${item}`},
+  }[language];
+  const weekdaySuggestion=React.useMemo(()=>{
+    if(editingMoment||items.length>0||title.trim())return null;
+    return deriveWeekdayMealShortcut(moments.length?moments:storedHistory,getLocalDateKey(new Date()),category);
+  },[editingMoment,items.length,title,moments,storedHistory,category]);
+
+  const companionSuggestion=React.useMemo(()=>{
+    if(editingMoment||items.length===0)return null;
+    const history=(moments.length?moments:storedHistory).map(moment=>({
+      items:parseMealTitle(moment.title),
+      isDemo:(moment.tags??[]).some(tag=>['demo','seed','sample'].includes(tag.toLocaleLowerCase())),
+      createdAt:moment.createdAt,
+    }));
+    const suggestion=suggestPersonalMealCompanion(items[items.length-1],history);
+    if(!suggestion)return null;
+    const key=normalizeFoodSearchText(suggestion);
+    return items.some(item=>normalizeFoodSearchText(item)===key)?null:suggestion;
+  },[editingMoment,items,moments,storedHistory]);
+
+  React.useEffect(()=>{photoAnalysisGuard.current.invalidate();setImageAnalyzing(false);if(!isOpen){imageReadId.current+=1;setImageReading(false);setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote('');return;}imageReadId.current+=1;setImageReading(false);setShowMainMeals(false);setClarificationAnswer('');setPhotoRecognition(createPhotoRecognitionState([]));setChosenLocation(null);setChosenTime(null);setPersonalVocabulary(loadPersonalMealVocabulary(localStorage));try{const stored=JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]');setStoredHistory(Array.isArray(stored)?stored:[])}catch{setStoredHistory([])}setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems(parseMealTitle(editingMoment.title));setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const suggested=initialCategory||'snack';const next=(initialCategory?[initialCategory]:extraMomentCategories).includes(suggested)?suggested:'snack';setCategory(next);setImageUrl('');setTitle(initialText);setFocused(Boolean(initialText));setItems(initialItems);setNotes(initialNotes);setShowMore(Boolean(initialNotes));setAiSuggestions([]);setImageRecognitionNote('')},[isOpen,editingMoment,initialCategory,initialText,initialItems,initialNotes]);
   React.useEffect(()=>{if(isOpen)setClarificationResolution('pending')},[isOpen,clarificationQuestion]);
   React.useEffect(()=>{photoAnalysisGuard.current.invalidate();setImageAnalyzing(false);setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote('')},[language]);
 
   const all=React.useMemo(()=>getFoodSuggestions(country,title.trim()?undefined:category),[country,category,title]);
   const localizedAll=React.useMemo(()=>localizeFoodSuggestions(all,language),[all,language]);
   const aliasMatch=React.useMemo(()=>{const alias=resolveArabFoodAlias(title,country);return alias?(language==='ar'?alias.canonicalAr:alias.canonicalEn):null},[title,country,language]);
+  const rememberedCorrection=React.useMemo(()=>findRememberedMealCorrection(personalVocabulary,title),[personalVocabulary,title]);
   const localMatches=React.useMemo(()=>{const ranked=rankLocalAutocomplete(localizedAll.map(x=>x.name),title,6);return aliasMatch&&title.trim()?[aliasMatch,...ranked.filter(name=>normalizeFoodSearchText(name)!==normalizeFoodSearchText(aliasMatch))].slice(0,6):ranked},[localizedAll,title,aliasMatch]);
   const safeAiSuggestions=React.useMemo(()=>ar?aiSuggestions.filter(name=>/[\u0600-\u06FF]/.test(name)&&!/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(name)):aiSuggestions,[aiSuggestions,ar]);
   const mergedSuggestions=React.useMemo(()=>mergeAutocompleteSuggestions(localMatches,safeAiSuggestions,title,6),[localMatches,safeAiSuggestions,title]);
@@ -92,7 +137,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
 
   React.useEffect(()=>{if(!isOpen||title.trim().length<2){setAiSuggestions([]);setAiLoading(false);return;}const q=title.trim();const id=++requestId.current;const timer=setTimeout(async()=>{setAiLoading(true);const results=await fetchFoodAutocomplete({query:q,category,language,country});if(id!==requestId.current)return;const safe=language==='ar'?results.filter(name=>/[\u0600-\u06FF]/.test(name)&&!/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(name)):results;setAiSuggestions(safe);setAiLoading(false);if(safe.length)trackUx({eventName:'autocomplete_returned',surface:'meal_editor',language,metadata:{source:'ai',count:safe.length,category}})},450);return()=>clearTimeout(timer)},[title,category,language,country,isOpen]);
 
-  const chooseCategory=(next:MomentCategory)=>{invalidatePhotoAnalysis();setCategory(next);setChosenLocation(null);setTitle('');setItems([]);setPhotoRecognition(createPhotoRecognitionState([]));if(!editingMoment)setImageUrl('');setAiSuggestions([])};
+  const chooseCategory=(next:MomentCategory)=>{invalidatePhotoAnalysis();setCategory(next);setChosenLocation(null);setChosenTime(null);setTitle('');setItems([]);setPhotoRecognition(createPhotoRecognitionState([]));if(!editingMoment)setImageUrl('');setAiSuggestions([])};
   const addItem=(name:string,source:'local'|'ai'|'typed')=>{const next=addMealItem(items,name);if(next.length===items.length){setTitle('');setFocused(true);return;}setItems(next);setTitle('');setAiSuggestions([]);setFocused(true);if(next.length===1){const photo=getDishPhoto(name,category);if(photo&&!imageUrl)setImageUrl(photo.url)}else if(shouldClearAutoMatchedMealImage({isEditing:Boolean(editingMoment),currentImageUrl:imageUrl,matchedImageUrl:matchedPhoto?.url}))setImageUrl('');trackUx({eventName:source==='typed'?'autocomplete_confirmed':'autocomplete_selected',surface:'meal_editor',language,metadata:{source,category,count:next.length}})};
   const chooseDish=(name:string,source:'local'|'ai'='local')=>addItem(name,source);
   const chooseVisual=(visual:FoodVisual)=>{const name=localizeFoodVisualName(visual,language);const next=addMealItem(items,name);setItems(next);setTitle('');setFocused(false);setAiSuggestions([]);setImageUrl(visual.imageUrl);trackUx({eventName:'food_image_selected',surface:'meal_editor',language,metadata:{source:'image_matrix',category,count:next.length}})};
@@ -105,7 +150,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   const editPhotoSuggestion=(name:string)=>{setPhotoRecognition(current=>acceptPhotoRecognition(current,name));setTitle(name);setFocused(true)};
   const handleUpload=async(event:React.ChangeEvent<HTMLInputElement>)=>{const file=event.target.files?.[0];if(!file)return;const analysisToken=photoAnalysisGuard.current.start();setPhotoRecognition(createPhotoRecognitionState([]));const readId=++imageReadId.current;setImageReading(true);const reader=new FileReader();reader.onload=()=>{if(readId!==imageReadId.current)return;if(typeof reader.result==='string')setImageUrl(reader.result);setImageReading(false)};reader.onerror=()=>{if(readId!==imageReadId.current)return;setImageReading(false);setImageRecognitionNote(copy.photoUnavailable)};reader.readAsDataURL(file);setImageAnalyzing(true);setImageRecognitionNote(copy.photoAnalyzingNote);try{const results=await recognizeFoodImage(file);if(!photoAnalysisGuard.current.isCurrent(analysisToken))return;const foodAr:Record<string,string>={'boiled eggs':'بيض مسلوق','fried eggs':'بيض مقلي','omelette':'أومليت','eggs with tomato':'بيض ومطيشة','chicken tagine':'طاجين دجاج','beef tagine with prunes':'طاجين اللحم بالبرقوق','vegetable couscous':'كسكس بالخضر','meat couscous':'كسكس باللحم','harira soup':'حريرة','msemen flatbread':'مسمن','baghrir pancakes':'بغرير','rfissa':'رفيسة','pastilla':'بسطيلة','bissara soup':'بيصارة','zaalouk':'زعلوك','taktouka':'تكتوكة','grilled sardines':'سردين مشوي','kefta':'كفتة','bread with olive oil':'خبز وزيت الزيتون','mint tea':'أتاي بالنعناع','coffee with milk':'قهوة بالحليب','salad':'سلطة','pasta':'باستا','rice dish':'أرز','sandwich':'ساندويتش','pizza':'بيتزا','fruit':'فواكه','yogurt':'زبادي','dessert':'حلويات'};const strong=results.filter(r=>r.score>=0.12);const names=strong.map(r=>ar?(foodAr[r.label]||r.label):r.label);if(names.length){setPhotoRecognition(createPhotoRecognitionState(names.slice(0,4)));setImageRecognitionNote(copy.photoSuggestion)}else{setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote(copy.photoLowConfidence)}}catch{if(photoAnalysisGuard.current.isCurrent(analysisToken)){setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote(copy.photoUnavailable)}}finally{if(photoAnalysisGuard.current.isCurrent(analysisToken))setImageAnalyzing(false)}};
 
-  const save=()=>{if(imageReading||photoConfirmationPending)return;const now=new Date();const confirmed=resolveConfirmedMealInput({typedTitle:title,items,photoRecognition});const mealTitle=buildMealTitle(confirmed.items,confirmed.title)||labels[category];onSave({title:mealTitle,label:labels[category],category,date:editingMoment?.date||getLocalDateKey(now),time:editingMoment ? editingMoment.time : now.toTimeString().slice(0,5),location:editingMoment?.location||chosenLocation||copy.defaultLocation,locationCategory:editingMoment?.locationCategory||'home',imageUrl,rating:editingMoment?.rating||5,mood:editingMoment?.mood||'satisfied',hungerLevel:editingMoment?.hungerLevel,fullnessLevel:editingMoment?.fullnessLevel,eatingPace:editingMoment?.eatingPace,distraction:editingMoment?.distraction,energyAfter:editingMoment?.energyAfter,coachFeedback:editingMoment?.coachFeedback,notes:notes.trim()||undefined,tags:editingMoment?.tags||[],isFavorite:editingMoment?.isFavorite||false,nutrition:editingMoment?.nutrition||{},price:editingMoment?.price,companions:editingMoment?.companions});closeEditor()};
+  const save=()=>{if(imageReading||photoConfirmationPending)return;const now=new Date();const confirmed=resolveConfirmedMealInput({typedTitle:title,items,photoRecognition});const mealTitle=buildMealTitle(confirmed.items,confirmed.title)||labels[category];if(editingMoment){const nextVocabulary=rememberMealCorrection(personalVocabulary,editingMoment.title,mealTitle,now.toISOString());if(nextVocabulary!==personalVocabulary&&savePersonalMealVocabulary(localStorage,nextVocabulary))setPersonalVocabulary(nextVocabulary)}const defaultTime={time:editingMoment ? editingMoment.time : now.toTimeString().slice(0,5)}.time;onSave({title:mealTitle,label:labels[category],category,date:editingMoment?.date||getLocalDateKey(now),time:editingMoment ? defaultTime : chosenTime||defaultTime,location:editingMoment?.location||chosenLocation||copy.defaultLocation,locationCategory:editingMoment?.locationCategory||'home',imageUrl,rating:editingMoment?.rating||5,mood:editingMoment?.mood||'satisfied',hungerLevel:editingMoment?.hungerLevel,fullnessLevel:editingMoment?.fullnessLevel,eatingPace:editingMoment?.eatingPace,distraction:editingMoment?.distraction,energyAfter:editingMoment?.energyAfter,coachFeedback:editingMoment?.coachFeedback,notes:notes.trim()||undefined,tags:editingMoment?.tags||[],isFavorite:editingMoment?.isFavorite||false,nutrition:editingMoment?.nutrition||{},price:editingMoment?.price,companions:editingMoment?.companions});closeEditor()};
   if(!isOpen)return null;
 
   return <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/45 backdrop-blur-sm sm:p-4"><div className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-[34px] sm:rounded-[34px] bg-[#F7F5F0] shadow-2xl">
@@ -123,6 +168,18 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
         <button type="button" data-testid="use-frequent-location" aria-pressed={chosenLocation===locationSuggestion.location} onClick={()=>setChosenLocation(locationSuggestion.location)} className="mt-2 rounded-full bg-[#526B48] px-3 py-2 text-xs font-bold text-white">{chosenLocation===locationSuggestion.location?locationCopy.selected:locationCopy.use}</button>
       </section>}
 
+      {weekdaySuggestion&&<section data-testid="weekday-meal-shortcut" className="mt-3 rounded-[18px] border border-[#D8E2D0] bg-[#F3F7F0] px-4 py-3">
+        <p className="text-xs font-bold text-[#526B48]">{weekdayCopy.label}</p>
+        <p className="mt-1 text-[11px] text-[#6C7F60]">{weekdayCopy.help}</p>
+        <button type="button" data-testid="use-weekday-meal-shortcut" onClick={()=>setItems(parseMealTitle(weekdaySuggestion.title))} className="mt-2 rounded-full bg-[#526B48] px-3 py-2 text-xs font-bold text-white" dir="auto">{weekdayCopy.use(weekdaySuggestion.title)}</button>
+      </section>}
+
+      {usualTime&&<section data-testid="usual-meal-time-suggestion" className="mt-3 rounded-[18px] border border-[#D8E2D0] bg-[#F3F7F0] px-4 py-3">
+        <p className="text-xs font-bold text-[#526B48]">{timeCopy.label}</p>
+        <p data-testid="usual-meal-time-value" className="mt-1 text-sm font-semibold text-[#343631]">{usualTime}</p>
+        <button type="button" data-testid="use-usual-meal-time" aria-pressed={chosenTime===usualTime} onClick={()=>setChosenTime(usualTime)} className="mt-2 rounded-full bg-[#526B48] px-3 py-2 text-xs font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#252824]">{chosenTime===usualTime?timeCopy.selected:timeCopy.use}</button>
+      </section>}
+
       <div className="mt-4 relative">
         <Search className={`absolute z-10 ${ar?'right-4':'left-4'} top-[26px] -translate-y-1/2 w-4 h-4 text-[#918D84]`}/>
         <input value={title} onFocus={()=>setFocused(true)} onChange={e=>changeTitle(e.target.value)} onKeyDown={handleKeyDown} placeholder={copy.placeholder} autoComplete="off" className={`w-full rounded-[22px] border ${items.length?'border-[#789267]':'border-[#DED8CF]'} bg-white py-4 ${ar?'pr-11 pl-14 text-right':'pl-11 pr-14'} text-[15px] font-semibold outline-none transition`}/>
@@ -130,11 +187,17 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
 
         {focused&&title.trim()&&<div className="absolute z-30 mt-2 w-full overflow-hidden rounded-[22px] border border-[#E4DDD2] bg-[#FFFDF9] shadow-[0_18px_45px_rgba(48,38,28,.16)]">
           <div className="px-4 pt-3 pb-2 flex items-center justify-between"><span className="text-[10px] font-black text-[#8A867E]">{copy.smartSuggestions}</span>{aiLoading&&<span className="flex items-center gap-1 text-[10px] font-bold text-[#6C7F60]"><Sparkles className="w-3 h-3 animate-pulse"/>{copy.thinking}</span>}</div>
-          {(aliasMatch||mergedSuggestions.length>0)?<div className="pb-2">{aliasMatch&&<button type="button" data-testid="recognized-food-alias" onMouseDown={e=>e.preventDefault()} onClick={()=>chooseDish(aliasMatch,'local')} className="w-full px-4 py-3 flex items-center gap-3 text-start bg-[#EEF3E8] hover:bg-[#E7EEE0] active:bg-[#DDE8D5]"><span className="w-8 h-8 rounded-full grid place-items-center shrink-0 bg-[#526B48] text-white"><Check className="w-4 h-4"/></span><span className="flex-1"><span className="block text-sm font-black text-[#373933]">{aliasMatch}</span><span className="block text-[10px] font-bold text-[#6C7F60]">{copy.recognized}</span></span><span className="text-[#6C7F60]">›</span></button>}{mergedSuggestions.filter(name=>!aliasMatch||normalizeFoodSearchText(name)!==normalizeFoodSearchText(aliasMatch)).map(name=>{const ai=safeAiSuggestions.includes(name);return <button type="button" key={name} onMouseDown={e=>e.preventDefault()} onClick={()=>chooseDish(name,ai?'ai':'local')} className="w-full px-4 py-3 flex items-center gap-3 text-start hover:bg-[#F3EFE6] active:bg-[#ECE6DA]"><span className={`w-8 h-8 rounded-full grid place-items-center shrink-0 ${ai?'bg-[#E8EFE1] text-[#526B48]':'bg-[#F3EADF] text-[#9B704A]'}`}>{ai?<Sparkles className="w-4 h-4"/>:<Search className="w-4 h-4"/>}</span><span className="flex-1 text-sm font-bold text-[#373933]">{name}</span><span className="text-[#9A958D]">›</span></button>})}</div>:!aiLoading&&<div className="px-4 pb-4 text-xs text-[#77736B]">{copy.noMatch}</div>}
+          {(rememberedCorrection||aliasMatch||mergedSuggestions.length>0)?<div className="pb-2">{rememberedCorrection&&<button type="button" data-testid="remembered-meal-correction" onMouseDown={e=>e.preventDefault()} onClick={()=>{setTitle(rememberedCorrection.preferred);setFocused(true)}} className="w-full px-4 py-3 text-start bg-[#FFF4E8] hover:bg-[#FCE9D6] active:bg-[#F8DFC5]"><span className="block text-[10px] font-black uppercase tracking-[.08em] text-[#9B704A]">{vocabularyCopy.label}</span><span className="mt-1 block text-sm font-black text-[#373933]" dir="auto">{vocabularyCopy.use(rememberedCorrection.preferred)}</span><span className="mt-1 block text-[10px] font-semibold text-[#7C6B5B]">{vocabularyCopy.help}</span></button>}{aliasMatch&&<button type="button" data-testid="recognized-food-alias" onMouseDown={e=>e.preventDefault()} onClick={()=>chooseDish(aliasMatch,'local')} className="w-full px-4 py-3 flex items-center gap-3 text-start bg-[#EEF3E8] hover:bg-[#E7EEE0] active:bg-[#DDE8D5]"><span className="w-8 h-8 rounded-full grid place-items-center shrink-0 bg-[#526B48] text-white"><Check className="w-4 h-4"/></span><span className="flex-1"><span className="block text-sm font-black text-[#373933]">{aliasMatch}</span><span className="block text-[10px] font-bold text-[#6C7F60]">{copy.recognized}</span></span><span className="text-[#6C7F60]">›</span></button>}{mergedSuggestions.filter(name=>!aliasMatch||normalizeFoodSearchText(name)!==normalizeFoodSearchText(aliasMatch)).map(name=>{const ai=safeAiSuggestions.includes(name);return <button type="button" key={name} onMouseDown={e=>e.preventDefault()} onClick={()=>chooseDish(name,ai?'ai':'local')} className="w-full px-4 py-3 flex items-center gap-3 text-start hover:bg-[#F3EFE6] active:bg-[#ECE6DA]"><span className={`w-8 h-8 rounded-full grid place-items-center shrink-0 ${ai?'bg-[#E8EFE1] text-[#526B48]':'bg-[#F3EADF] text-[#9B704A]'}`}>{ai?<Sparkles className="w-4 h-4"/>:<Search className="w-4 h-4"/>}</span><span className="flex-1 text-sm font-bold text-[#373933]">{name}</span><span className="text-[#9A958D]">›</span></button>})}</div>:!aiLoading&&<div className="px-4 pb-4 text-xs text-[#77736B]">{copy.noMatch}</div>}
         </div>}
       </div>
 
       {items.length>0&&<div className="mt-3 flex flex-wrap gap-2">{items.map((item,index)=><span key={`${item}-${index}`} className="inline-flex max-w-full items-center gap-2 rounded-full bg-[#E8EFE1] px-3 py-2 text-xs font-bold text-[#455744]"><span className="truncate">{item}</span><button type="button" onClick={()=>setItems(removeMealItem(items,index))} aria-label={copy.remove} className="grid h-5 w-5 place-items-center rounded-full bg-white/70 text-[#6A795F]"><X className="h-3 w-3"/></button></span>)}</div>}
+
+      {companionSuggestion&&<section data-testid="personal-meal-companion-suggestion" className="mt-3 rounded-[18px] border border-[#D8E2D0] bg-[#F3F7F0] px-4 py-3">
+        <p className="text-xs font-bold text-[#526B48]">{companionCopy.label}</p>
+        <p className="mt-1 text-[11px] text-[#6C7F60]">{companionCopy.help}</p>
+        <button type="button" onClick={()=>addItem(companionSuggestion,'local')} className="mt-2 rounded-full bg-[#526B48] px-3 py-2 text-xs font-bold text-white" dir="auto">{companionCopy.use(companionSuggestion)}</button>
+      </section>}
 
       <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#918D84]"><Globe2 className="w-3.5 h-3.5"/>{items.length?copy.selected(items.length):country?copy.regionPriority:copy.justType}</div>
 

@@ -30,6 +30,7 @@ import { restoreCoachSessionOrDefault, writeCoachSession } from '../utils/coachS
 import { SmartInterventionGuardian } from './SmartInterventionGuardian';
 import { askGeminiCoach } from '../apiClient';
 import { buildCoachFollowUps } from '../utils/coachFollowUps';
+import { useLanguage } from '../i18n';
 
 interface FoodCoachViewProps {
   moments: FoodMoment[];
@@ -52,6 +53,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   onNavigateToTypeAnalysis,
   prefillQuestion,
 }) => {
+  const { language } = useLanguage();
   const metrics = React.useMemo(() => calculateCoachingMetrics(moments), [moments]);
   const nutritionProfile = React.useMemo(() => analyzeNutritionType(moments, checkIns), [moments, checkIns]);
   const [goals, setGoals] = React.useState<CoachingGoal[]>(INITIAL_COACHING_GOALS);
@@ -230,7 +232,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           sender: 'coach',
           text: reply,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          suggestions: buildCoachFollowUps(query, reply, 'de'),
+          suggestions: buildCoachFollowUps(query, reply, language),
         };
         setChatMessages((prev) => [...prev, coachMsg]);
       })
@@ -242,7 +244,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           sender: 'coach',
           text: fallbackReply,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          suggestions: buildCoachFollowUps(query, fallbackReply, 'de'),
+          suggestions: buildCoachFollowUps(query, fallbackReply, language),
         };
         setChatMessages((prev) => [...prev, coachMsg]);
       })

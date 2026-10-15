@@ -98,3 +98,58 @@ describe('persisted storage validation', () => {
     expect(JSON.parse(localStorage.getItem(CHECKINS_KEY) || '[]')).toEqual([voiceOnly]);
   });
 });
+
+describe('legacy migration data safety', () => {
+  const legacyKey = 'food_journey_moments_v1';
+  const meal = { id: 'legacy', title: 'كسكس Couscous', date: '2026-10-12', time: '12:00' };
+  beforeEach(() => vi.stubGlobal('localStorage', createLocalStorage()));
+
+  it('copies legacy meals and sparse check-ins before removing their source', () => {
+    const checkIn = { id: 'check', date: '2026-10-12', time: '12:00', timeOfDay: 'midday', wellbeing: {} };
+    localStorage.setItem(legacyKey, JSON.stringify([meal]));
+    localStorage.setItem('getyourcoach_checkins_v1', JSON.stringify([checkIn]));
+    migrateLegacyStorage();
+    expect(loadPersistedMoments()).toEqual([meal]);
+    expect(loadPersistedCheckIns()).toEqual([checkIn]);
+    migrateLegacyStorage();
+    expect(loadPersistedMoments()).toEqual([meal]);
+  });
+
+  it('merges distinct legacy records without overwriting newer same-id edits', () => {
+    const updated = { ...meal, title: 'Edited meal' };
+    const older = { ...meal, id: 'older' };
+    localStorage.setItem(MOMENTS_KEY, JSON.stringify([updated]));
+    localStorage.setItem(legacyKey, JSON.stringify([meal, older]));
+    migrateLegacyStorage();
+    expect(loadPersistedMoments()).toEqual([updated, older]);
+  });
+
+  it('keeps source and migration pending when destination persistence fails', () => {
+    const raw = JSON.stringify([meal]);
+    localStorage.setItem(legacyKey, raw);
+    const setItem = localStorage.setItem.bind(localStorage);
+    vi.spyOn(localStorage, 'setItem').mockImplementation((key, value) => {
+      if (key === MOMENTS_KEY) throw new Error('quota exceeded');
+      setItem(key, value);
+    });
+    migrateLegacyStorage();
+    expect(localStorage.getItem(legacyKey)).toBe(raw);
+    expect(localStorage.getItem(MIGRATION_KEY)).not.toBe('done');
+  });
+
+  it('does not delete current history when sanitization cannot be persisted', () => {
+    const raw = JSON.stringify([meal, null]);
+    localStorage.setItem(MOMENTS_KEY, raw);
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => { throw new Error('quota exceeded'); });
+    migrateLegacyStorage();
+    expect(localStorage.getItem(MOMENTS_KEY)).toBe(raw);
+    expect(loadPersistedMoments()).toEqual([meal]);
+  });
+
+  it('keeps malformed legacy data recoverable without marking migration done', () => {
+    localStorage.setItem(legacyKey, '{broken');
+    migrateLegacyStorage();
+    expect(localStorage.getItem(legacyKey)).toBe('{broken');
+    expect(localStorage.getItem(MIGRATION_KEY)).not.toBe('done');
+  });
+});

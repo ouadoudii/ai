@@ -18,6 +18,19 @@ const moment = (id: string, title: string, createdAt: number, tags: string[] = [
 });
 
 describe('recurring meal memory', () => {
+  it('reads older journal entries with no tags', () => {
+    const older = { ...moment('legacy-a', 'Harira', 1), tags: undefined } as unknown as FoodMoment;
+    const newer = { ...moment('legacy-b', 'HARIRA', 2), tags: undefined } as unknown as FoodMoment;
+    expect(deriveRecurringMealMemory([older, newer])).toMatchObject([{ occurrenceCount: 2, displayTitle: 'HARIRA' }]);
+  });
+  it('keeps newest Arabic wording and excludes demo moments from visible memory', () => {
+    const memories = deriveRecurringMealMemory([
+      moment('older', 'بيض مسلوق', 10),
+      moment('newer', 'بيض، مسلوق!', 20),
+      moment('demo', 'بيض مسلوق', 30, ['demo']),
+    ]);
+    expect(memories).toEqual([{ key: 'بيض مسلوق', displayTitle: 'بيض، مسلوق!', occurrenceCount: 2, lastSeenAt: 20 }]);
+  });
   it('matches harmless Arabic spacing and punctuation while preserving newest wording', () => {
     const memories = deriveRecurringMealMemory([
       moment('1', 'بيض مسلوق', 1),
