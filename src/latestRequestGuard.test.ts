@@ -40,4 +40,22 @@ describe('latest request guard',()=>{
     expect(mealTitle).toBe('unrelated vegetable soup');
   });
 
+
+  it('lets a newer photo win when two uploads resolve out of order',async()=>{
+    const guard=createLatestRequestGuard();
+    const firstPhoto=guard.start();
+    const secondPhoto=guard.start();
+    let recognized='';
+
+    const apply=(token:ReturnType<typeof guard.start>,label:string)=>{
+      if(guard.isCurrent(token))recognized=label;
+    };
+
+    apply(secondPhoto,'fresh salad');
+    await Promise.resolve();
+    apply(firstPhoto,'stale pizza');
+
+    expect(recognized).toBe('fresh salad');
+  });
+
 });
