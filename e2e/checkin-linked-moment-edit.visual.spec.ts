@@ -6,6 +6,8 @@ const CHECKINS_KEY = 'nimmapp_checkins_v1';
 async function prepare(page: Page, viewport: { width: number; height: number }) {
   await page.setViewportSize(viewport);
   await page.addInitScript(({ momentsKey, checkInsKey }) => {
+    if (sessionStorage.getItem('linked-checkin-edit-seeded') === 'true') return;
+    sessionStorage.setItem('linked-checkin-edit-seeded', 'true');
     const now = new Date();
     const date = now.toISOString().slice(0, 10);
     const checkInId = 'linked-checkin';
