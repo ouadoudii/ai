@@ -11,6 +11,9 @@ for(const viewport of [
   {name:'mobile',width:390,height:844,language:'ar'},
 ] as const)test(`weekday meal shortcut stays opt-in on ${viewport.name}`,async({page},testInfo)=>{
   await page.setViewportSize({width:viewport.width,height:viewport.height});
+  // Keep the application on the same weekday as the seeded history so this
+  // regression remains deterministic regardless of the calendar day in CI.
+  await page.clock.setFixedTime(new Date('2026-10-14T12:00:00Z'));
   await page.addInitScript(({seed,language})=>{
     localStorage.setItem('nimmapp_moments_v1',JSON.stringify(seed));
     localStorage.setItem('rhythm_language_v1',language);
