@@ -22,7 +22,7 @@ import { classifyVoiceIntent, processVoiceCheckIn } from './apiClient';
 import { getLocalDateKey } from './utils/dateKey';
 import { getDishPhoto } from './utils/dishPhoto';
 import { getCheckInMomentCopy } from './utils/checkInMomentLocalization';
-import { CHECKIN_SOURCE_TAG, reconcileCheckInMoments } from './utils/checkInMomentState';
+import { CHECKIN_SOURCE_TAG, reconcileCheckInFromMomentEdit, reconcileCheckInMoments } from './utils/checkInMomentState';
 import { createEntityId } from './utils/entityId';
 import { localizeCheckInMoment } from './utils/localizeCheckInMoment';
 import { getCurrentPhase } from './utils/phaseAvailability';
@@ -84,13 +84,15 @@ export default function App(){
   const openVoiceJournal=React.useCallback((source='today_voice')=>{invalidateVoiceSubmission();trackUx({eventName:'flow_started',surface:'voice_journal',language,metadata:{source}});setIsCaptureOpen(false);setIsProfileOnboardingVoice(false);setIsVoiceCaptureOpen(true)},[language]);
 
   const handleSaveMoment=(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>{
+    const editedMoment=editingMoment?{...momentData,id:editingMoment.id,createdAt:editingMoment.createdAt}:null;
     const nextMoments=editingMoment
-      ? moments.map(m=>m.id===editingMoment.id?{...momentData,id:m.id,createdAt:m.createdAt}:m)
+      ? moments.map(m=>m.id===editingMoment.id?editedMoment!:m)
       : [{...momentData,id:`moment-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,createdAt:Date.now()},...moments];
     const persistence=persistMoments(nextMoments);
     if(persistence.ok===false){setMomentPersistenceError(persistence.reason);return;}
     setMomentPersistenceError(null);
     setMoments(nextMoments);
+    if(editingMoment&&editedMoment)setCheckIns(prev=>reconcileCheckInFromMomentEdit(prev,editingMoment,editedMoment));
     if(mealStartedAt.current){trackUx({eventName:'flow_finished',surface:'meal_editor',language,durationMs:Date.now()-mealStartedAt.current,outcome:'completed',metadata:{category:momentData.category,has_photo:Boolean(momentData.imageUrl)}});mealStartedAt.current=null;}
     if(editingMoment)setEditingMoment(null);
   };
