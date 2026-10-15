@@ -19,7 +19,17 @@ describe('selected photo save readiness regression (#267)', () => {
   });
 
   it('invalidates stale reads and pending recognition when the editor session closes or resets', () => {
-    expect(source).toContain("if(!isOpen){imageReadId.current+=1;setImageReading(false);setPhotoRecognition(createPhotoRecognitionState([]));return;}");
+    expect(source).toContain('const photoAnalysisGuard=React.useRef(createLatestRequestGuard());');
+    expect(source).toContain('const invalidatePhotoAnalysis=()=>{');
+    expect(source).toContain('photoAnalysisGuard.current.invalidate();');
+    expect(source).toContain("if(!isOpen){imageReadId.current+=1;setImageReading(false);setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote('');return;}");
     expect(source).toContain("imageReadId.current+=1;setImageReading(false);setShowMainMeals(false);setClarificationAnswer('');setPhotoRecognition(createPhotoRecognitionState([]));");
+  });
+
+  it('accepts recognition output only for the active photo capture token', () => {
+    expect(source).toContain('const analysisToken=photoAnalysisGuard.current.start();');
+    expect(source).toContain('if(!photoAnalysisGuard.current.isCurrent(analysisToken))return;');
+    expect(source).toContain('if(photoAnalysisGuard.current.isCurrent(analysisToken)){setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote(copy.photoUnavailable)}');
+    expect(source).toContain('if(photoAnalysisGuard.current.isCurrent(analysisToken))setImageAnalyzing(false)');
   });
 });
