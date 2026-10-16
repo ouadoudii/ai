@@ -38,8 +38,8 @@ async function exercise(browser: Browser, mobile: boolean) {
     extractedData:{meals:[],sleepHours:6,sleepQuality:1,wakeFeeling:'exhausted',wakeCount:2,awakeMinutes:30,sleepExplicitFields:['wakeCount'],wellbeingEntries:[{timeOfDay:'morning',energyLevel:5,mood:'comfort',stressLevel:1,waterGlasses:8,note:'',explicitFields:[]}]},
   })}));
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
+  await page.getByTestId(mobile?'primary-capture-button':'desktop-capture-button').click();
+  await page.locator('[data-capture-method="voice"]').click();
   await page.getByRole('button',{name:'Start recording'}).click();
   await page.getByRole('button',{name:'Stop recording'}).click();
   await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_checkins_v1')||'[]')[0])).toMatchObject({
