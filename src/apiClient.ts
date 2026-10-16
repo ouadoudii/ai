@@ -8,10 +8,10 @@ export type VoiceIntent = 'profile_goal' | 'journal' | 'meal' | 'other';
 
 export interface VoiceIntentResult { intent: VoiceIntent; confidence: number; reason?: string; }
 export interface VoiceMealEntry { category: string; timeOfDay: string; time: string; mealTitle: string; mealItems: string[]; hungerBefore: number; fullnessAfter: number; }
-export interface VoiceWellbeingEntry { timeOfDay: string; energyLevel: number; mood: string; stressLevel: number; waterGlasses: number; note: string; }
+export interface VoiceWellbeingEntry { timeOfDay: string; energyLevel: number; mood: string; stressLevel: number; waterGlasses: number; note: string; explicitFields?: Array<'energyLevel'|'mood'|'stressLevel'|'waterGlasses'|'note'>; }
 export interface VoiceCheckInResult {
   coachFeedback: CoachFeedback;
-  extractedData?: { mealTitle?: string; mealItems?: string[]; mealCategory?: string; mealContext?: string; clarificationQuestion?: string; meals?: VoiceMealEntry[]; sleepHours?: number | null; sleepQuality?: number; wakeFeeling?: string; wellbeingEntries?: VoiceWellbeingEntry[]; energyLevel?: number; mood?: string; hungerBefore?: number; fullnessAfter?: number; };
+  extractedData?: { mealTitle?: string; mealItems?: string[]; mealCategory?: string; mealContext?: string; clarificationQuestion?: string; meals?: VoiceMealEntry[]; sleepHours?: number | null; sleepQuality?: number; wakeFeeling?: string; wakeCount?: number; awakeMinutes?: number; sleepExplicitFields?: Array<'durationHours'|'quality'|'wakeFeeling'|'wakeCount'|'awakeMinutes'>; wellbeingEntries?: VoiceWellbeingEntry[]; energyLevel?: number; mood?: string; hungerBefore?: number; fullnessAfter?: number; };
 }
 
 export async function transcribeRecordedAudio(blob:Blob,language:VoiceLanguage):Promise<string>{

@@ -70,6 +70,9 @@ export interface FoodMoment {
 
 export type ActiveTab = 'today' | 'coach' | 'type_analysis' | 'timeline' | 'calendar' | 'stats' | 'favorites';
 export type TimeOfDayPhase = 'morning' | 'midday' | 'evening';
+export type VoiceExplicitField =
+  | 'sleep.durationHours' | 'sleep.quality' | 'sleep.wakeFeeling' | 'sleep.wakeCount' | 'sleep.awakeMinutes'
+  | 'wellbeing.energyLevel' | 'wellbeing.mood' | 'wellbeing.stressLevel' | 'wellbeing.waterGlasses';
 
 export interface DailyCheckIn {
   id: string;
@@ -102,6 +105,8 @@ export interface DailyCheckIn {
     voiceTranscription?: string;
   };
   coachSummary?: string;
+  /** Fields the latest voice transcript explicitly stated; never inferred defaults. */
+  voiceExplicitFields?: VoiceExplicitField[];
   createdAt: number;
 }
 
