@@ -1,4 +1,5 @@
 import { DailyCheckIn, FoodMoment } from '../types';
+import { normalizeVoiceExplicitFields } from './voiceFieldProvenance';
 
 const normalize = (value?: string) => (value || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
 
@@ -105,10 +106,18 @@ export function mergeVoiceCheckIns(existing: DailyCheckIn[], incoming: DailyChec
     const food = clearMeal ? undefined : currentFood && incomingFood
       ? { ...currentFood, ...incomingFood, mealTitle: replaceMeal ? incomingFood.mealTitle : mergeMealTitle(currentFood.mealTitle, incomingFood.mealTitle) }
       : incomingFood || currentFood;
+    const explicitFields = new Set(normalizeVoiceExplicitFields(item.voiceExplicitFields, item.wellbeing?.voiceTranscription));
+    const sleep = item.wellbeing?.voiceTranscription
+      ? { ...(current.sleep || {}), ...Object.fromEntries(Object.entries(item.sleep || {}).filter(([field]) => explicitFields.has(`sleep.${field}` as never))) }
+      : { ...(current.sleep || {}), ...(item.sleep || {}) };
+    const incomingWellbeing = item.wellbeing?.voiceTranscription
+      ? Object.fromEntries(Object.entries(item.wellbeing || {}).filter(([field]) => field === 'note' || field === 'voiceTranscription' || explicitFields.has(`wellbeing.${field}` as never)))
+      : item.wellbeing;
     next[index] = {
       ...current, ...item, id: current.id, createdAt: current.createdAt,
-      sleep: { ...(current.sleep || {}), ...(item.sleep || {}) }, food,
-      wellbeing: { ...(current.wellbeing || {}), ...(item.wellbeing || {}), note: mergeWellbeingNote(current.wellbeing?.note, item.wellbeing?.note, item.wellbeing?.voiceTranscription), voiceTranscription: mergeVoiceText(current.wellbeing?.voiceTranscription, item.wellbeing?.voiceTranscription) },
+      sleep: Object.keys(sleep).length ? sleep : undefined, food,
+      wellbeing: { ...(current.wellbeing || {}), ...incomingWellbeing, note: mergeWellbeingNote(current.wellbeing?.note, item.wellbeing?.note, item.wellbeing?.voiceTranscription), voiceTranscription: mergeVoiceText(current.wellbeing?.voiceTranscription, item.wellbeing?.voiceTranscription) },
+      voiceExplicitFields: Array.from(explicitFields),
     };
   }
   return next;
