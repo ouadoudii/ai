@@ -67,7 +67,13 @@ export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, 
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-  const choose = (fn:()=>void, source:string) => { trackUx({eventName:'capture_choice_selected',surface:'capture_choice',language,metadata:{step:source}}); restoreOpenerRef.current=false; onClose(); fn(); };
+  const choose = (fn:()=>void, source:string) => {
+    trackUx({eventName:'capture_choice_selected',surface:'capture_choice',language,metadata:{step:source}});
+    if (source === 'voice') openerRef.current?.setAttribute('data-voice-return-focus', 'true');
+    restoreOpenerRef.current=false;
+    onClose();
+    fn();
+  };
   const repeat=(moment:FoodMoment,source:'recent'|'favorite')=>{trackUx({eventName:'capture_choice_selected',surface:'capture_choice',language,metadata:{step:`repeat_${source}`}});localStorage.setItem(KEY,JSON.stringify([repeatMeal(moment),...read()]));restoreOpenerRef.current=false;onClose();window.location.reload();};
   const changeLanguage=(lang:AppLanguage)=>{if(lang===language)return;trackUx({eventName:'language_selected',surface:'capture_choice',language:lang,metadata:{source:'capture_language_picker'}});setLanguage(lang);};
 
