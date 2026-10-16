@@ -2,7 +2,7 @@ import React from 'react';
 import {describe,expect,it,beforeAll,afterAll} from 'vitest';
 import {renderToString} from 'react-dom/server';
 import {LanguageProvider} from './i18n';
-import {DailyCheckInModal} from './components/DailyCheckInModal';
+import {DailyCheckInModal,resolveCheckInDate} from './components/DailyCheckInModal';
 
 let oldStorage:any;
 beforeAll(()=>{oldStorage=(globalThis as any).localStorage;(globalThis as any).localStorage={getItem:()=>null,setItem:()=>{}}});
@@ -28,5 +28,9 @@ describe('targeted day-phase check-ins',()=>{
     const html=renderToString(<LanguageProvider><DailyCheckInModal isOpen onClose={noop} onSaveCheckIn={noop as any} phase="evening"/></LanguageProvider>);
     expect(html).toContain('Your evening');
     expect(html).toContain('How did today feel?');
+  });
+
+  it('keeps an explicitly selected previous date instead of silently using today',()=>{
+    expect(resolveCheckInDate('2026-10-15',new Date('2026-10-16T02:00:00'))).toBe('2026-10-15');
   });
 });
