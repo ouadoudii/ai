@@ -41,7 +41,7 @@ for (const device of [
     await catchUp.click();
 
     await expect(page.getByRole('dialog')).toContainText('Your evening');
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'One more step' }).click();
     await page.getByRole('button', { name: 'Done' }).click();
 
     await expect.poll(async () => page.evaluate(date => {
