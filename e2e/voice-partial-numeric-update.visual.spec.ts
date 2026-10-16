@@ -7,6 +7,10 @@ async function installHarness(page: Page, transcript: string) {
     localStorage.setItem('rhythm_language_v1','en');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
+    localStorage.setItem('rhythm_intro_profile_v1',JSON.stringify({
+      summary:'Track my rhythm.',priorities:[],preferences:[],rawIntro:'Track my rhythm.',confirmedAt:1,
+      firstPlan:{title:'Observe',rationale:'Notice patterns.',focusAreas:[],firstStep:'Capture the next check-in.',phase:'morning'},
+    }));
     localStorage.setItem('nimmapp_checkins_v1',JSON.stringify([{
       id:'existing-morning',date,time:'08:00',timeOfDay:'morning',
       sleep:{durationHours:7.5,quality:4,wakeCount:0},

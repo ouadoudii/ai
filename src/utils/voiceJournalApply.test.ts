@@ -1,9 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { buildVoiceJournalEntries } from './voiceJournalApply';
+import { inferVoiceExplicitFields } from './voiceFieldProvenance';
 
 const feedback = { title:'ok', message:'ok', type:'praise' as const, badge:'voice' };
 
 describe('buildVoiceJournalEntries', () => {
+  it('recognizes a Darija word-number sleep duration as explicitly stated', () => {
+    expect(inferVoiceExplicitFields('نعست سبع ساعات ونص وفقت عيان شوية.')).toEqual(expect.arrayContaining([
+      'sleep.durationHours',
+      'sleep.wakeFeeling',
+    ]));
+  });
+
   it('creates separate meal moments and assigns primary meals to their matching day check-ins', () => {
     const result = buildVoiceJournalEntries({
       coachFeedback: feedback,

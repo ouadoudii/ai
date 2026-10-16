@@ -2,8 +2,8 @@ import { VoiceExplicitField } from '../types';
 
 const fieldPatterns: Record<VoiceExplicitField, RegExp[]> = {
   'sleep.durationHours': [
-    /\b(?:slept|sleep|schlaf|geschlafen|dormi|sommeil)\b.*\b\d+(?:[.,]\d+)?\s*(?:h|hours?|stunden?|heures?)\b/iu,
-    /(?:نمت|نعست).*?\d+(?:[.,]\d+)?\s*(?:ساعات?|ساعة)/u,
+    /\b(?:slept|sleep|schlaf|geschlafen|dormi|sommeil)\b.*\b(?:\d+(?:[.,]\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|ein|eine|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)\s*(?:h|hours?|stunden?|heures?)\b/iu,
+    /(?:نمت|نعست).*?(?:\d+(?:[.,]\d+)?|واحد(?:ة)?|جوج|اثنين|ثلاث(?:ة)?|أربع(?:ة)?|خمس(?:ة)?|ست(?:ة)?|سبع(?:ة)?|ثمان(?:ية)?|تسع(?:ة)?|عشر(?:ة)?)\s*(?:ساعات?|ساعة)/u,
   ],
   'sleep.quality': [/\b(?:sleep quality|slept (?:well|badly)|schlafqualit|gut geschlafen|schlecht geschlafen|bien dormi|mal dormi)\b/iu, /(?:نوم|نعاس).*?(?:مزيان|خايب|جيد|سيئ)/u],
   'sleep.wakeFeeling': [/\b(?:woke|wake|aufgewacht|aufgewacht|réveill|reveille).*(?:refreshed|tired|exhausted|fit|müde|erschöpft|repos|fatigu)/iu, /(?:فقت|استيقظت).*?(?:مرتاح|عيان|متعب|منهك)/u],
