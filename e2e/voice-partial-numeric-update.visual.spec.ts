@@ -11,7 +11,7 @@ async function installHarness(page: Page, transcript: string) {
       summary:'Track my rhythm.',priorities:[],preferences:[],rawIntro:'Track my rhythm.',confirmedAt:1,
       firstPlan:{title:'Observe',rationale:'Notice patterns.',focusAreas:[],firstStep:'Capture the next check-in.',phase:'morning'},
     }));
-    localStorage.setItem('nimmapp_checkins_v1',JSON.stringify([{
+    if(localStorage.getItem('nimmapp_checkins_v1')===null)localStorage.setItem('nimmapp_checkins_v1',JSON.stringify([{
       id:'existing-morning',date,time:'08:00',timeOfDay:'morning',
       sleep:{durationHours:7.5,quality:4,wakeCount:0},
       wellbeing:{energyLevel:2,stressLevel:4,waterGlasses:1,voiceTranscription:'I slept 7.5 hours. Energy 2, stress 4, water 1.'},createdAt:1,
