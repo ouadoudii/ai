@@ -64,6 +64,7 @@ test('Escape during recording uses the same stop-and-cancel path exactly once', 
       stop() { (window as any).__voiceStops = ((window as any).__voiceStops || 0) + 1; }
     }
     (window as any).SpeechRecognition = FakeSpeechRecognition;
+    (window as any).webkitSpeechRecognition = FakeSpeechRecognition;
   });
   await prepare(page);
   const captureViewport = await page.getByTestId('desktop-capture-button').isVisible() ? 'desktop' : 'mobile';
