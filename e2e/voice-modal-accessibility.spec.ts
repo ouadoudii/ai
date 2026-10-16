@@ -66,7 +66,8 @@ test('Escape during recording uses the same stop-and-cancel path exactly once', 
     (window as any).SpeechRecognition = FakeSpeechRecognition;
   });
   await prepare(page);
-  const { dialog } = await openVoice(page, 'desktop');
+  const captureViewport = await page.getByTestId('desktop-capture-button').isVisible() ? 'desktop' : 'mobile';
+  const { dialog } = await openVoice(page, captureViewport);
   await dialog.getByRole('button', { name: 'Start recording' }).click();
   await expect(dialog.getByRole('button', { name: 'Stop recording' })).toBeVisible();
 
