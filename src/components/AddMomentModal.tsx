@@ -27,6 +27,13 @@ import { findRememberedMealCorrection, loadPersonalMealVocabulary, rememberMealC
 interface AddMomentModalProps { isOpen:boolean; onClose:()=>void; onBack?:()=>void; onSave:(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>void; editingMoment?:FoodMoment|null; initialCategory?:MomentCategory|null; initialText?:string; initialItems?:string[]; initialNotes?:string; initialVoiceTranscript?:string; clarificationQuestion?:string; voiceUnderstandingFailed?:boolean; completedMealCategories?:Set<MomentCategory>; moments?:FoodMoment[]; }
 const extraMomentCategories:MomentCategory[]=['snack','coffee','dessert'];
 const mainMealCategories:MomentCategory[]=['breakfast','lunch','dinner'];
+const FOCUSABLE_SELECTOR='button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+export const getMealEditorFocusDestination=(shiftKey:boolean,activeInside:boolean,activeIsFirst:boolean,activeIsLast:boolean):'first'|'last'|null=>{
+  if(!activeInside)return shiftKey?'last':'first';
+  if(shiftKey&&activeIsFirst)return'last';
+  if(!shiftKey&&activeIsLast)return'first';
+  return null;
+};
 export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBack,onSave,editingMoment,initialCategory,initialText='',initialItems=[],initialNotes='',initialVoiceTranscript='',clarificationQuestion='',voiceUnderstandingFailed=false,completedMealCategories=new Set(),moments=[]})=>{
   const {language}=useLanguage(); const ar=language==='ar'; const labels=mealLabels[language]; const copy=mealEditorCopy[language]; const hour=new Date().getHours();
   const [showMainMeals,setShowMainMeals]=React.useState(false);
@@ -62,6 +69,11 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   const [imageRecognitionNote,setImageRecognitionNote]=React.useState('');
   const [photoRecognition,setPhotoRecognition]=React.useState<PhotoRecognitionState>(()=>createPhotoRecognitionState([]));
   const fileRef=React.useRef<HTMLInputElement>(null);
+  const overlayRef=React.useRef<HTMLDivElement>(null);
+  const dialogRef=React.useRef<HTMLDivElement>(null);
+  const closeButtonRef=React.useRef<HTMLButtonElement>(null);
+  const openerRef=React.useRef<HTMLElement|null>(null);
+  const restoreOpenerRef=React.useRef(true);
   const requestId=React.useRef(0);
   const imageReadId=React.useRef(0);
   // Each capture session owns its pending photo result. A later session must
@@ -76,7 +88,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
     setPhotoRecognition(createPhotoRecognitionState([]));
   };
   const closeEditor=()=>{invalidatePhotoAnalysis();onClose()};
-  const backEditor=()=>{invalidatePhotoAnalysis();onBack?.()};
+  const backEditor=()=>{restoreOpenerRef.current=false;invalidatePhotoAnalysis();onBack?.()};
 
   const companionCopy={
     en:{label:'Often together in your meals',help:'Nothing is added until you choose it.',use:(item:string)=>`Add ${item}`},
@@ -116,6 +128,24 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
 
   React.useEffect(()=>{photoAnalysisGuard.current.invalidate();setImageAnalyzing(false);if(!isOpen){imageReadId.current+=1;setImageReading(false);setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote('');return;}imageReadId.current+=1;setImageReading(false);setShowMainMeals(false);setClarificationAnswer('');setPhotoRecognition(createPhotoRecognitionState([]));setChosenLocation(null);setChosenTime(null);setPersonalVocabulary(loadPersonalMealVocabulary(localStorage));try{const stored=JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]');setStoredHistory(Array.isArray(stored)?stored:[])}catch{setStoredHistory([])}setCountry(null);fetch('/api/locale',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setCountry(data?.country?String(data.country).toUpperCase():null)).catch(()=>setCountry(null));if(editingMoment){setCategory(editingMoment.category);setImageUrl(editingMoment.imageUrl);setTitle('');setItems(parseMealTitle(editingMoment.title));setNotes(editingMoment.notes||'');setShowMore(Boolean(editingMoment.notes));return;}const suggested=initialCategory||'snack';const next=(initialCategory?[initialCategory]:extraMomentCategories).includes(suggested)?suggested:'snack';setCategory(next);setImageUrl('');setTitle(initialText);setFocused(Boolean(initialText));setItems(initialItems);setNotes(initialNotes);setShowMore(Boolean(initialNotes));setAiSuggestions([]);setImageRecognitionNote('')},[isOpen,editingMoment,initialCategory,initialText,initialItems,initialNotes]);
   React.useEffect(()=>{if(isOpen)setClarificationResolution('pending')},[isOpen,clarificationQuestion]);
+  React.useEffect(()=>{
+    if(!isOpen)return;
+    openerRef.current=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    restoreOpenerRef.current=true;
+    closeButtonRef.current?.focus();
+    const overlay=overlayRef.current;
+    const siblings=overlay?.parentElement?Array.from(overlay.parentElement.children).filter(element=>element!==overlay&&element instanceof HTMLElement) as HTMLElement[]:[];
+    const previous=siblings.map(element=>({element,inert:element.inert,ariaHidden:element.getAttribute('aria-hidden')}));
+    siblings.forEach(element=>{element.inert=true;element.setAttribute('aria-hidden','true')});
+    return()=>{
+      previous.forEach(({element,inert,ariaHidden})=>{element.inert=inert;if(ariaHidden===null)element.removeAttribute('aria-hidden');else element.setAttribute('aria-hidden',ariaHidden)});
+      if(!restoreOpenerRef.current)return;
+      const opener=openerRef.current;
+      if(opener?.isConnected){opener.focus();return;}
+      const candidates=Array.from(document.querySelectorAll<HTMLElement>('[data-testid="desktop-capture-button"], [data-testid="primary-capture-button"]'));
+      candidates.find(element=>element.offsetParent!==null)?.focus();
+    };
+  },[isOpen]);
   React.useEffect(()=>{photoAnalysisGuard.current.invalidate();setImageAnalyzing(false);setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote('')},[language]);
 
   const all=React.useMemo(()=>getFoodSuggestions(country,title.trim()?undefined:category),[country,category,title]);
@@ -145,7 +175,16 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   const confirmTitle=()=>{if(!title.trim())return;addItem(title,'typed')};
   const confirmClarification=()=>{const answer=clarificationAnswer.trim();if(!answer)return;setItems(current=>addMealItem(current,answer));setClarificationAnswer('');setClarificationResolution('answered');trackUx({eventName:'autocomplete_confirmed',surface:'meal_editor',language,metadata:{source:'clarification',category}})};
   const skipClarification=()=>{setClarificationAnswer('');setClarificationResolution('skipped');trackUx({eventName:'autocomplete_confirmed',surface:'meal_editor',language,metadata:{source:'clarification_skipped',category}})};
-  const handleKeyDown=(e:React.KeyboardEvent<HTMLInputElement>)=>{if(e.key==='Enter'){e.preventDefault();confirmTitle()}else if(e.key==='Escape'){setFocused(false)}};
+  const handleKeyDown=(e:React.KeyboardEvent<HTMLInputElement>)=>{if(e.key==='Enter'){e.preventDefault();confirmTitle()}else if(e.key==='Escape'&&focused&&Boolean(title.trim())){e.preventDefault();e.stopPropagation();setFocused(false)}};
+  const handleDialogKeyDown=(event:React.KeyboardEvent<HTMLDivElement>)=>{
+    if(event.key==='Escape'){event.preventDefault();closeEditor();return;}
+    if(event.key!=='Tab')return;
+    const focusable:HTMLElement[]=dialogRef.current?Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)):[];
+    if(!focusable.length){event.preventDefault();dialogRef.current?.focus();return;}
+    const active=document.activeElement;
+    const destination=getMealEditorFocusDestination(event.shiftKey,Boolean(active&&dialogRef.current?.contains(active)),active===focusable[0],active===focusable[focusable.length-1]);
+    if(destination){event.preventDefault();(destination==='first'?focusable[0]:focusable[focusable.length-1]).focus()}
+  };
   const acceptPhotoSuggestion=(name:string)=>setPhotoRecognition(current=>acceptPhotoRecognition(current,name));
   const editPhotoSuggestion=(name:string)=>{setPhotoRecognition(current=>acceptPhotoRecognition(current,name));setTitle(name);setFocused(true)};
   const handleUpload=async(event:React.ChangeEvent<HTMLInputElement>)=>{const file=event.target.files?.[0];if(!file)return;const analysisToken=photoAnalysisGuard.current.start();setPhotoRecognition(createPhotoRecognitionState([]));const readId=++imageReadId.current;setImageReading(true);const reader=new FileReader();reader.onload=()=>{if(readId!==imageReadId.current)return;if(typeof reader.result==='string')setImageUrl(reader.result);setImageReading(false)};reader.onerror=()=>{if(readId!==imageReadId.current)return;setImageReading(false);setImageRecognitionNote(copy.photoUnavailable)};reader.readAsDataURL(file);setImageAnalyzing(true);setImageRecognitionNote(copy.photoAnalyzingNote);try{const results=await recognizeFoodImage(file);if(!photoAnalysisGuard.current.isCurrent(analysisToken))return;const foodAr:Record<string,string>={'boiled eggs':'بيض مسلوق','fried eggs':'بيض مقلي','omelette':'أومليت','eggs with tomato':'بيض ومطيشة','chicken tagine':'طاجين دجاج','beef tagine with prunes':'طاجين اللحم بالبرقوق','vegetable couscous':'كسكس بالخضر','meat couscous':'كسكس باللحم','harira soup':'حريرة','msemen flatbread':'مسمن','baghrir pancakes':'بغرير','rfissa':'رفيسة','pastilla':'بسطيلة','bissara soup':'بيصارة','zaalouk':'زعلوك','taktouka':'تكتوكة','grilled sardines':'سردين مشوي','kefta':'كفتة','bread with olive oil':'خبز وزيت الزيتون','mint tea':'أتاي بالنعناع','coffee with milk':'قهوة بالحليب','salad':'سلطة','pasta':'باستا','rice dish':'أرز','sandwich':'ساندويتش','pizza':'بيتزا','fruit':'فواكه','yogurt':'زبادي','dessert':'حلويات'};const strong=results.filter(r=>r.score>=0.12);const names=strong.map(r=>ar?(foodAr[r.label]||r.label):r.label);if(names.length){setPhotoRecognition(createPhotoRecognitionState(names.slice(0,4)));setImageRecognitionNote(copy.photoSuggestion)}else{setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote(copy.photoLowConfidence)}}catch{if(photoAnalysisGuard.current.isCurrent(analysisToken)){setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote(copy.photoUnavailable)}}finally{if(photoAnalysisGuard.current.isCurrent(analysisToken))setImageAnalyzing(false)}};
@@ -153,8 +192,8 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   const save=()=>{if(imageReading||photoConfirmationPending)return;const now=new Date();const confirmed=resolveConfirmedMealInput({typedTitle:title,items,photoRecognition});const mealTitle=buildMealTitle(confirmed.items,confirmed.title)||labels[category];if(editingMoment){const nextVocabulary=rememberMealCorrection(personalVocabulary,editingMoment.title,mealTitle,now.toISOString());if(nextVocabulary!==personalVocabulary&&savePersonalMealVocabulary(localStorage,nextVocabulary))setPersonalVocabulary(nextVocabulary)}const defaultTime={time:editingMoment ? editingMoment.time : now.toTimeString().slice(0,5)}.time;onSave({title:mealTitle,label:labels[category],category,date:editingMoment?.date||getLocalDateKey(now),time:editingMoment ? defaultTime : chosenTime||defaultTime,location:editingMoment?.location||chosenLocation||copy.defaultLocation,locationCategory:editingMoment?.locationCategory||'home',imageUrl,rating:editingMoment?.rating||5,mood:editingMoment?.mood||'satisfied',hungerLevel:editingMoment?.hungerLevel,fullnessLevel:editingMoment?.fullnessLevel,eatingPace:editingMoment?.eatingPace,distraction:editingMoment?.distraction,energyAfter:editingMoment?.energyAfter,coachFeedback:editingMoment?.coachFeedback,notes:notes.trim()||undefined,tags:editingMoment?.tags||[],isFavorite:editingMoment?.isFavorite||false,nutrition:editingMoment?.nutrition||{},price:editingMoment?.price,companions:editingMoment?.companions});closeEditor()};
   if(!isOpen)return null;
 
-  return <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/45 backdrop-blur-sm sm:p-4"><div className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-[34px] sm:rounded-[34px] bg-[#F7F5F0] shadow-2xl">
-    <div className="sticky top-0 z-10 flex items-center justify-between bg-[#F7F5F0]/95 px-5 pt-5 pb-3 backdrop-blur-xl"><div className="flex items-center gap-3">{onBack&&<button type="button" onClick={backEditor} className="grid h-10 w-10 place-items-center rounded-full bg-white border border-[#E5E0D7]" aria-label={copy.back}><ArrowLeft className={`h-4 w-4 ${ar?'rotate-180':''}`}/></button>}<div><p className="text-[11px] font-extrabold uppercase tracking-[.18em] text-[#8A867E]">{copy.food}</p><h2 className="mt-1 text-2xl font-display font-black text-[#252824]">{copy.title}</h2></div></div><button onClick={closeEditor} className="grid h-10 w-10 place-items-center rounded-full bg-white border border-[#E5E0D7]" aria-label={copy.close}><X className="h-5 w-5"/></button></div>
+  return <div ref={overlayRef} className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/45 backdrop-blur-sm sm:p-4"><div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="meal-editor-title" tabIndex={-1} onKeyDown={handleDialogKeyDown} className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-[34px] sm:rounded-[34px] bg-[#F7F5F0] shadow-2xl">
+    <div className="sticky top-0 z-10 flex items-center justify-between bg-[#F7F5F0]/95 px-5 pt-5 pb-3 backdrop-blur-xl"><div className="flex items-center gap-3">{onBack&&<button type="button" onClick={backEditor} className="grid h-10 w-10 place-items-center rounded-full bg-white border border-[#E5E0D7]" aria-label={copy.back}><ArrowLeft className={`h-4 w-4 ${ar?'rotate-180':''}`}/></button>}<div><p className="text-[11px] font-extrabold uppercase tracking-[.18em] text-[#8A867E]">{copy.food}</p><h2 id="meal-editor-title" className="mt-1 text-2xl font-display font-black text-[#252824]">{copy.title}</h2></div></div><button ref={closeButtonRef} type="button" onClick={closeEditor} className="grid h-10 w-10 place-items-center rounded-full bg-white border border-[#E5E0D7]" aria-label={copy.close}><X className="h-5 w-5"/></button></div>
     <div className="px-5 pb-6">
       {!editingMoment&&!initialCategory&&<div className="mb-3 rounded-[20px] border border-[#E4DDD2] bg-[#FFFDF9] px-4 py-3"><p className="text-xs font-black text-[#4A4C46]">{copy.extraTitle}</p><p className="mt-1 text-[11px] text-[#817C73]">{copy.extraHelp}</p></div>}
       {initialVoiceTranscript&&<div data-testid="voice-understanding-card" className="mb-4 rounded-[20px] border border-[#DED7CC] bg-white px-4 py-4"><p className="text-[11px] font-black uppercase tracking-[.12em] text-[#8A867E]">{copy.voiceMessage}</p><p className="mt-2 text-sm font-semibold text-[#343631]">{initialVoiceTranscript}</p>{voiceUnderstandingFailed?<div className="mt-3 rounded-[14px] bg-[#FFF4E8] px-3 py-2 text-xs font-bold text-[#8A5A2B]">{copy.voiceFailed}</div>:<div className="mt-3 rounded-[14px] bg-[#EEF5EA] px-3 py-2 text-xs font-bold text-[#526B48]">{copy.voiceUnderstood}</div>}</div>}
