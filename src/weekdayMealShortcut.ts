@@ -42,6 +42,7 @@ export function deriveWeekdayMealShortcut(
     .map((moment, index) => ({ moment, index, weekday: localWeekday(moment.date) }))
     .filter(({ moment, weekday: candidateWeekday }) =>
       candidateWeekday === weekday &&
+      moment.date < targetDate &&
       moment.category === category &&
       !isDemo(moment) &&
       normalizeTitle(moment.title).length > 0,
