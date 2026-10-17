@@ -1,7 +1,11 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { copyMealShareText, MomentDetailModal } from './components/MomentDetailModal';
+import {
+  copyMealShareText,
+  getMomentDetailFocusDestination,
+  MomentDetailModal,
+} from './components/MomentDetailModal';
 
 const moment = {
   id: 'favorite-a11y',
@@ -35,6 +39,29 @@ describe('MomentDetailModal favorite accessibility state', () => {
 
   it('exposes the favorited state as aria-pressed=true', () => {
     expect(renderFavorite(true)).toContain('aria-label="Favorite" aria-pressed="true"');
+  });
+});
+
+describe('MomentDetailModal dialog accessibility contract', () => {
+  it('exposes a modal dialog named by the meal title', () => {
+    const html = renderFavorite(false);
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain('aria-modal="true"');
+    const labelId = html.match(/aria-labelledby="([^"]+)"/)?.[1];
+    expect(labelId).toBeTruthy();
+    expect(html).toContain(`id="${labelId}"`);
+    expect(html).toContain('Harira accessibility');
+  });
+
+  it('wraps Tab and Shift+Tab at both dialog boundaries', () => {
+    expect(getMomentDetailFocusDestination(false, true, false, true)).toBe('first');
+    expect(getMomentDetailFocusDestination(true, true, true, false)).toBe('last');
+  });
+
+  it('recaptures focus that starts outside the dialog', () => {
+    expect(getMomentDetailFocusDestination(false, false, false, false)).toBe('first');
+    expect(getMomentDetailFocusDestination(true, false, false, false)).toBe('last');
+    expect(getMomentDetailFocusDestination(false, true, false, false)).toBeNull();
   });
 });
 
