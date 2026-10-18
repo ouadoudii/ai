@@ -60,10 +60,14 @@ for (const layout of layouts) {
       await page.keyboard.press('Tab');
       await expect(first).toBeFocused();
 
-      const fileChooserPromise = page.waitForEvent('filechooser');
-      await dialog.getByRole('button', { name: 'Add your photo' }).click();
-      await fileChooserPromise;
+      const uploadButton = dialog.getByRole('button', { name: 'Add your photo' });
+      await uploadButton.focus();
+      // A cancelled native chooser reports an empty file list. Dispatch that
+      // result directly so the regression covers app behavior without waiting
+      // on browser/OS picker UI that cannot be dismissed in headless CI.
+      await dialog.getByTestId('meal-photo-input').dispatchEvent('change');
       await expect(dialog).toBeVisible();
+      await expect(uploadButton).toBeFocused();
       await expect.poll(async () => page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]')))).toBe(true);
 
       const input = dialog.getByPlaceholder('Start typing… e.g. chicken pasta');

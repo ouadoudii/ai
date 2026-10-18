@@ -74,6 +74,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   const closeButtonRef=React.useRef<HTMLButtonElement>(null);
   const openerRef=React.useRef<HTMLElement|null>(null);
   const restoreOpenerRef=React.useRef(true);
+  const focusRestoreFrameRef=React.useRef<number|null>(null);
   const requestId=React.useRef(0);
   const imageReadId=React.useRef(0);
   // Each capture session owns its pending photo result. A later session must
@@ -130,6 +131,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   React.useEffect(()=>{if(isOpen)setClarificationResolution('pending')},[isOpen,clarificationQuestion]);
   React.useEffect(()=>{
     if(!isOpen)return;
+    if(focusRestoreFrameRef.current!==null){cancelAnimationFrame(focusRestoreFrameRef.current);focusRestoreFrameRef.current=null}
     openerRef.current=document.activeElement instanceof HTMLElement?document.activeElement:null;
     restoreOpenerRef.current=true;
     closeButtonRef.current?.focus();
@@ -141,9 +143,15 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
       previous.forEach(({element,inert,ariaHidden})=>{element.inert=inert;if(ariaHidden===null)element.removeAttribute('aria-hidden');else element.setAttribute('aria-hidden',ariaHidden)});
       if(!restoreOpenerRef.current)return;
       const opener=openerRef.current;
-      if(opener?.isConnected){opener.focus();return;}
-      const candidates=Array.from(document.querySelectorAll<HTMLElement>('[data-testid="desktop-capture-button"], [data-testid="primary-capture-button"]'));
-      candidates.find(element=>element.offsetParent!==null)?.focus();
+      // React can run this cleanup before removing the detail dialog that
+      // contained the original Edit button. Restore after the commit so a
+      // disconnected opener falls back to the visible capture control.
+      focusRestoreFrameRef.current=requestAnimationFrame(()=>{
+        focusRestoreFrameRef.current=null;
+        if(opener?.isConnected&&opener.offsetParent!==null&&!opener.closest('[inert], [aria-hidden="true"]')){opener.focus();return;}
+        const candidates=Array.from(document.querySelectorAll<HTMLElement>('[data-testid="desktop-capture-button"], [data-testid="primary-capture-button"]'));
+        candidates.find(element=>element.offsetParent!==null&&!element.closest('[inert], [aria-hidden="true"]'))?.focus();
+      });
     };
   },[isOpen]);
   React.useEffect(()=>{photoAnalysisGuard.current.invalidate();setImageAnalyzing(false);setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote('')},[language]);
@@ -246,7 +254,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
       </div>
 
       <div className="mt-5"><p className="mb-2 text-xs font-bold text-[#6F6C65]">{copy.photo}</p><div className="grid grid-cols-2 gap-2">{imageUrl&&(!matchedPhoto||imageUrl!==matchedPhoto.url)&&<div className="relative aspect-[4/3] overflow-hidden rounded-[20px] border border-[#E5E0D7]"><img src={imageUrl} alt={copy.yourPhoto} className="w-full h-full object-cover"/><span className="absolute bottom-2 end-2 rounded-full bg-black/55 px-2 py-1 text-[9px] font-bold text-white">{imageAnalyzing?copy.analyzing:copy.yourPhoto}</span></div>}{matchedPhoto&&items.length<=1&&imageUrl===matchedPhoto.url&&<div className="relative aspect-[4/3] overflow-hidden rounded-[20px] border border-[#E5E0D7]"><img src={matchedPhoto.url} alt={title} className="w-full h-full object-cover"/><span className="absolute bottom-2 right-2 rounded-full bg-black/55 px-2 py-1 text-[9px] font-bold text-white">{copy.matchedDish}</span></div>}<button onClick={()=>fileRef.current?.click()} disabled={imageAnalyzing||imageReading} className="aspect-[4/3] rounded-[20px] border-2 border-dashed border-[#D8D1C7] bg-white flex flex-col items-center justify-center text-[#77736B] disabled:opacity-60">{imageAnalyzing||imageReading?<LoaderCircle className="w-6 h-6 animate-spin"/>:<Camera className="w-6 h-6"/>}<span className="mt-2 text-[10px] font-bold">{imageAnalyzing||imageReading?copy.analyzingPhoto:copy.addPhoto}</span></button></div>{imageRecognitionNote&&<p className="mt-2 text-[11px] font-semibold text-[#6C7F60]">{imageRecognitionNote}</p>}{photoRecognition.suggestions.length>0&&<div data-testid="photo-recognition-suggestions" className="mt-3 rounded-[18px] border border-[#D8E2D0] bg-[#F3F7F0] p-3"><div className="flex items-center gap-2 text-[11px] font-black text-[#526B48]"><Sparkles className="h-3.5 w-3.5"/>{photoSuggestionTitle}</div><div className="mt-2 space-y-2">{photoRecognition.suggestions.map((name,index)=>{const selected=photoRecognition.accepted===name;return <div key={`${name}-${index}`} className="flex items-center gap-2 rounded-[14px] bg-white px-3 py-2"><span className="min-w-0 flex-1 truncate text-xs font-bold text-[#373933]" dir="auto">{name}</span><button type="button" data-testid={`photo-suggestion-use-${index}`} aria-pressed={selected} onClick={()=>acceptPhotoSuggestion(name)} className={`rounded-full px-3 py-1.5 text-[10px] font-black ${selected?'bg-[#526B48] text-white':'bg-[#E8EFE1] text-[#526B48]'}`}>{selected?photoSelectedLabel:photoUseLabel}</button>{selected&&<button type="button" data-testid={`photo-suggestion-edit-${index}`} onClick={()=>editPhotoSuggestion(name)} className="rounded-full border border-[#C8D5BE] px-3 py-1.5 text-[10px] font-black text-[#526B48]">{photoEditLabel}</button>}</div>})}</div><p className="mt-2 text-[10px] leading-4 text-[#6C7F60]">{photoConfirmationHelp}</p></div>}{(title.trim()||items.length>0)&&!matchedPhoto&&!imageUrl&&<p className="mt-2 text-[11px] text-[#918D84]">{copy.noRandomPhoto}</p>}</div>
-      <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleUpload} className="hidden"/>
+      <input ref={fileRef} data-testid="meal-photo-input" type="file" accept="image/*" capture="environment" onChange={handleUpload} className="hidden"/>
       <button onClick={()=>setShowMore(v=>!v)} className="mt-5 flex w-full items-center justify-between rounded-[18px] bg-[#EFE9DE] px-4 py-3 text-sm font-bold text-[#5E5D57]"><span className="flex items-center gap-2"><ImagePlus className="w-4 h-4"/>{copy.addNote}</span><ChevronDown className={`w-4 h-4 ${showMore?'rotate-180':''}`}/></button>
       {showMore&&<textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder={copy.optionalContext} rows={3} className="mt-3 w-full resize-none rounded-[18px] bg-white px-4 py-3 text-sm outline-none border border-[#E1DBD2]"/>}
       <button onClick={save} disabled={imageReading||photoConfirmationPending||(Boolean(clarificationQuestion)&&clarificationResolution==='pending')} aria-describedby={Boolean(clarificationQuestion)&&clarificationResolution==='pending'?'meal-clarification-question':undefined} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#E76F45] px-5 py-4 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-40"><Check className="h-5 w-5"/>{editingMoment?copy.saveChanges:copy.saveMeal}</button>
