@@ -36,7 +36,7 @@ for (const layout of layouts) {
     try {
       const opener = await visibleCaptureButton(page, layout);
       await opener.click();
-      const chooser = page.getByRole('dialog', { name: 'What would you like to add?' });
+      const chooser = page.getByRole('dialog', { name: 'What would you like to capture?' });
       await chooser.locator('[data-capture-method="text"]').click();
 
       const dialog = page.getByRole('dialog', { name: 'What did you have?' });
