@@ -22,8 +22,9 @@ describe('capture draft recovery', () => {
   it('replaces, loads and explicitly clears the single local draft', () => {
     const storage = new MemoryStorage();
     saveCaptureDraft(storage, { title: 'Harira', titleConfirmedByUser: true });
-    saveCaptureDraft(storage, { title: 'كسكس', titleConfirmedByUser: true, note: 'vendredi' });
+    saveCaptureDraft(storage, { title: 'كسكس', titleConfirmedByUser: true, note: 'vendredi', category: 'lunch' });
     expect(loadCaptureDraft(storage)?.title).toBe('كسكس');
+    expect(loadCaptureDraft(storage)?.category).toBe('lunch');
     expect(storage.data.size).toBe(1);
     clearCaptureDraft(storage);
     expect(storage.getItem(CAPTURE_DRAFT_STORAGE_KEY)).toBeNull();
@@ -33,5 +34,17 @@ describe('capture draft recovery', () => {
     const storage = new MemoryStorage();
     storage.setItem(CAPTURE_DRAFT_STORAGE_KEY, '{bad json');
     expect(loadCaptureDraft(storage)).toBeNull();
+  });
+
+  it('ignores an invalid persisted category without losing valid user text', () => {
+    const storage = new MemoryStorage();
+    storage.setItem(CAPTURE_DRAFT_STORAGE_KEY, JSON.stringify({
+      version: 1,
+      updatedAt: '2026-10-03T00:00:00.000Z',
+      title: 'Harira',
+      category: 'not-a-category',
+    }));
+    expect(loadCaptureDraft(storage)).toMatchObject({ title: 'Harira' });
+    expect(loadCaptureDraft(storage)?.category).toBeUndefined();
   });
 });

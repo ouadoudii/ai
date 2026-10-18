@@ -1,3 +1,5 @@
+import type { MomentCategory } from './types';
+
 export const CAPTURE_DRAFT_STORAGE_KEY = 'moment:capture-draft:v1';
 
 export type CaptureDraft = {
@@ -5,11 +7,13 @@ export type CaptureDraft = {
   updatedAt: string;
   title?: string;
   note?: string;
+  category?: MomentCategory;
 };
 
 export type CaptureDraftInput = {
   title?: string;
   note?: string;
+  category?: MomentCategory;
   /** True only when the title came from explicit user input/acceptance. */
   titleConfirmedByUser?: boolean;
 };
@@ -23,7 +27,13 @@ export function buildCaptureDraft(
   const title = input.titleConfirmedByUser ? clean(input.title) : undefined;
   const note = clean(input.note);
   if (!title && !note) return null;
-  return { version: 1, updatedAt: now.toISOString(), ...(title ? { title } : {}), ...(note ? { note } : {}) };
+  return {
+    version: 1,
+    updatedAt: now.toISOString(),
+    ...(title ? { title } : {}),
+    ...(note ? { note } : {}),
+    ...(input.category ? { category: input.category } : {}),
+  };
 }
 
 export function saveCaptureDraft(storage: Pick<Storage, 'setItem' | 'removeItem'>, input: CaptureDraftInput, now = new Date()) {
@@ -45,7 +55,14 @@ export function loadCaptureDraft(storage: Pick<Storage, 'getItem'>): CaptureDraf
     const title = clean(value.title);
     const note = clean(value.note);
     if (!title && !note) return null;
-    return { version: 1, updatedAt: value.updatedAt, ...(title ? { title } : {}), ...(note ? { note } : {}) };
+    const category = isMomentCategory(value.category) ? value.category : undefined;
+    return {
+      version: 1,
+      updatedAt: value.updatedAt,
+      ...(title ? { title } : {}),
+      ...(note ? { note } : {}),
+      ...(category ? { category } : {}),
+    };
   } catch {
     return null;
   }
@@ -54,3 +71,7 @@ export function loadCaptureDraft(storage: Pick<Storage, 'getItem'>): CaptureDraf
 export function clearCaptureDraft(storage: Pick<Storage, 'removeItem'>) {
   storage.removeItem(CAPTURE_DRAFT_STORAGE_KEY);
 }
+
+const momentCategories: MomentCategory[] = ['breakfast', 'lunch', 'dinner', 'snack', 'coffee', 'dessert', 'drinks', 'travel'];
+const isMomentCategory = (value: unknown): value is MomentCategory =>
+  typeof value === 'string' && momentCategories.includes(value as MomentCategory);
