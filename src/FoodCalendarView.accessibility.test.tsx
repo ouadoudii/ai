@@ -31,4 +31,17 @@ describe('FoodCalendarView timeline accessibility', () => {
     expect(html).toContain('<button type="button" data-testid="timeline-moment-keyboard-meal"');
     expect(html).toContain('بيض مسلوق');
   });
+
+  it('labels an absent clock time instead of rendering a blank time', () => {
+    const html = renderToStaticMarkup(
+      <FoodCalendarView
+        moments={[{ ...moment, id: 'untimed-meal', time: '' } as any]}
+        onSelectMoment={vi.fn()}
+        onOpenAddModal={vi.fn()}
+      />,
+    );
+
+    expect(html).toContain('Time unknown');
+    expect(html).not.toContain('undefined');
+  });
 });
