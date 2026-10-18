@@ -1,15 +1,18 @@
 import React from "react";
 import { renderToString } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DailyCheckIn } from "./types";
 import { LanguageProvider } from "./i18n";
 import { TodayHomeView } from "./components/TodayHomeView";
 import { getCheckInEditInitialState } from "./components/DailyCheckInModal";
-import { getLocalDateKey } from "./utils/dateKey";
+
+vi.mock("./utils/useLocalNow", () => ({
+  useLocalNow: () => new Date("2026-10-18T13:00:00"),
+}));
 
 const existing: DailyCheckIn = {
   id: "existing-midday",
-  date: getLocalDateKey(),
+  date: "2026-10-18",
   time: "12:35",
   timeOfDay: "midday",
   food: {
