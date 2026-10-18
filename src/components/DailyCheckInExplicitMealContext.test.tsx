@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { getCheckInEditInitialState } from './DailyCheckInModal';
 
 const source = readFileSync(new URL('./DailyCheckInModal.tsx', import.meta.url), 'utf8');
 
@@ -12,8 +13,8 @@ describe('DailyCheckInModal explicit meal context', () => {
   });
 
   it('resets meal-context touched state for every fresh check-in', () => {
-    expect(source).toContain('setHungerTouched(false)');
-    expect(source).toContain('setFullnessTouched(false)');
+    expect(getCheckInEditInitialState(null).hungerTouched).toBe(false);
+    expect(getCheckInEditInitialState(null).fullnessTouched).toBe(false);
   });
 
   it('does not fabricate unasked pace or distraction observations', () => {

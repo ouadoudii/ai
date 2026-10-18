@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { getCheckInEditInitialState } from './DailyCheckInModal';
 
 const source = readFileSync(new URL('./DailyCheckInModal.tsx', import.meta.url), 'utf8');
 
@@ -24,9 +25,12 @@ describe('DailyCheckInModal explicit sleep', () => {
   });
 
   it('resets explicit-answer state for every fresh check-in', () => {
-    for (const setter of ['setSleepHoursTouched(false)','setSleepQualityTouched(false)','setBedtimeTouched(false)','setWakeTimeTouched(false)','setWakeFeelingTouched(false)']) {
-      expect(source).toContain(setter);
-    }
+    const fresh = getCheckInEditInitialState(null);
+    expect(fresh.sleepHoursTouched).toBe(false);
+    expect(fresh.sleepQualityTouched).toBe(false);
+    expect(fresh.bedtimeTouched).toBe(false);
+    expect(fresh.wakeTimeTouched).toBe(false);
+    expect(fresh.wakeFeelingTouched).toBe(false);
   });
 
   it('does not visually present default quality or wake feeling as user-selected', () => {

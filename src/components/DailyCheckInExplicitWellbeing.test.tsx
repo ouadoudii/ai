@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { getCheckInEditInitialState } from './DailyCheckInModal';
 
 const source = readFileSync(new URL('./DailyCheckInModal.tsx', import.meta.url), 'utf8');
 
@@ -12,8 +13,8 @@ describe('DailyCheckInModal explicit wellbeing', () => {
   });
 
   it('resets touched state whenever a fresh check-in opens', () => {
-    expect(source).toContain('setEnergyTouched(false)');
-    expect(source).toContain('setMoodTouched(false)');
+    expect(getCheckInEditInitialState(null).energyTouched).toBe(false);
+    expect(getCheckInEditInitialState(null).moodTouched).toBe(false);
   });
 
   it('does not persist invented stress or water observations', () => {
