@@ -27,4 +27,36 @@ export function reconcileCheckInMoments(
   return [unratedReplacement, ...retained];
 }
 
+export function reconcileCheckInFromMomentEdit(
+  checkIns: DailyCheckIn[],
+  previousMoment: FoodMoment,
+  editedMoment: FoodMoment,
+): DailyCheckIn[] {
+  const sourceId = getCheckInSourceId(previousMoment);
+  if (!sourceId) return checkIns;
+
+  return checkIns.map(checkIn => {
+    if (checkIn.id !== sourceId) return checkIn;
+    return {
+      ...checkIn,
+      date: editedMoment.date,
+      time: editedMoment.time,
+      food: {
+        ...(checkIn.food || {}),
+        mealTitle: editedMoment.title,
+        category: editedMoment.category,
+        hungerBefore: editedMoment.hungerLevel,
+        fullnessAfter: editedMoment.fullnessLevel,
+        eatingPace: editedMoment.eatingPace,
+        distraction: editedMoment.distraction,
+      },
+      wellbeing: {
+        ...checkIn.wellbeing,
+        mood: editedMoment.mood,
+        note: editedMoment.notes,
+      },
+    };
+  });
+}
+
 export { CHECKIN_SOURCE_TAG };

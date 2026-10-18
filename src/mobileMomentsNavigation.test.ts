@@ -15,6 +15,8 @@ describe('mobile moments navigation', () => {
   it('renders the existing chronology when the timeline tab is selected', () => {
     expect(appSource).toContain("activeTab==='timeline'");
     expect(appSource).toContain('<FoodCalendarView moments={localizedMoments}');
-    expect(appSource).toContain("onNavigateToTimeline={()=>setActiveTab('timeline')}");
+    expect(appSource).toContain("onNavigateToTimeline={()=>go('timeline')}");
+    expect(appSource).toContain("const go=(tab:ActiveTab)=>{invalidateVoiceSubmission();");
+    expect(appSource).toContain("<MobileBottomNav activeTab={activeTab} setActiveTab={go}");
   });
 });

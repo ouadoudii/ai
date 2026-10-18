@@ -1,4 +1,5 @@
 import { DailyCheckIn, FoodMoment } from '../types';
+import { normalizeVoiceExplicitFields } from './voiceFieldProvenance';
 
 const normalize = (value?: string) => (value || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
 
@@ -12,6 +13,23 @@ export function mergeVoiceText(existing?: string, incoming?: string): string | u
   if (a === b || a.includes(b)) return first;
   if (b.includes(a)) return second;
   return `${first}\n${second}`;
+}
+
+function isExplicitWellbeingCorrection(transcript?: string): boolean {
+  const text = normalize(transcript);
+  if (!text) return false;
+  return [
+    /\b(?:no|actually|rather|instead)\b.*\b(?:not|wasn't|was not|but)\b/iu,
+    /\b(?:nein|eigentlich|doch)\b.*\b(?:nicht|sondern)\b/iu,
+    /\b(?:non|en fait|plutôt)\b.*\b(?:pas|mais)\b/iu,
+    /(?:لا|كلا|بالعكس|في الحقيقة|فالحقيقة).*?(?:ماشي|مش|ليس|مو|بل|ولكن|لكن)/u,
+  ].some(pattern => pattern.test(text));
+}
+
+function mergeWellbeingNote(existing?: string, incoming?: string, transcript?: string): string | undefined {
+  const next = (incoming || '').trim();
+  if (next && isExplicitWellbeingCorrection(transcript)) return next;
+  return mergeVoiceText(existing, incoming);
 }
 
 function mergeMealTitle(existing: string, incoming: string): string {
@@ -88,10 +106,18 @@ export function mergeVoiceCheckIns(existing: DailyCheckIn[], incoming: DailyChec
     const food = clearMeal ? undefined : currentFood && incomingFood
       ? { ...currentFood, ...incomingFood, mealTitle: replaceMeal ? incomingFood.mealTitle : mergeMealTitle(currentFood.mealTitle, incomingFood.mealTitle) }
       : incomingFood || currentFood;
+    const explicitFields = new Set(normalizeVoiceExplicitFields(item.voiceExplicitFields, item.wellbeing?.voiceTranscription));
+    const sleep = item.wellbeing?.voiceTranscription
+      ? { ...(current.sleep || {}), ...Object.fromEntries(Object.entries(item.sleep || {}).filter(([field]) => explicitFields.has(`sleep.${field}` as never))) }
+      : { ...(current.sleep || {}), ...(item.sleep || {}) };
+    const incomingWellbeing = item.wellbeing?.voiceTranscription
+      ? Object.fromEntries(Object.entries(item.wellbeing || {}).filter(([field]) => field === 'note' || field === 'voiceTranscription' || explicitFields.has(`wellbeing.${field}` as never)))
+      : item.wellbeing;
     next[index] = {
       ...current, ...item, id: current.id, createdAt: current.createdAt,
-      sleep: { ...(current.sleep || {}), ...(item.sleep || {}) }, food,
-      wellbeing: { ...(current.wellbeing || {}), ...(item.wellbeing || {}), note: mergeVoiceText(current.wellbeing?.note, item.wellbeing?.note), voiceTranscription: mergeVoiceText(current.wellbeing?.voiceTranscription, item.wellbeing?.voiceTranscription) },
+      sleep: Object.keys(sleep).length ? sleep : undefined, food,
+      wellbeing: { ...(current.wellbeing || {}), ...incomingWellbeing, note: mergeWellbeingNote(current.wellbeing?.note, item.wellbeing?.note, item.wellbeing?.voiceTranscription), voiceTranscription: mergeVoiceText(current.wellbeing?.voiceTranscription, item.wellbeing?.voiceTranscription) },
+      voiceExplicitFields: Array.from(explicitFields),
     };
   }
   return next;

@@ -27,9 +27,10 @@ test('mobile language picker exposes dialog state, traps focus and restores it t
   await expect(page.locator('[data-language-option="en"]')).toBeFocused();
 
   const close = dialog.getByRole('button', { name: 'Close' });
+  const exportButton = page.getByTestId('personal-data-export');
   await close.focus();
   await page.keyboard.press('Shift+Tab');
-  await expect(page.locator('[data-language-option="ar"]')).toBeFocused();
+  await expect(exportButton).toBeFocused();
 
   await page.keyboard.press('Tab');
   await expect(close).toBeFocused();

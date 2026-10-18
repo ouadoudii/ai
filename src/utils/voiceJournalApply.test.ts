@@ -1,9 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { buildVoiceJournalEntries } from './voiceJournalApply';
+import { inferVoiceExplicitFields } from './voiceFieldProvenance';
 
 const feedback = { title:'ok', message:'ok', type:'praise' as const, badge:'voice' };
 
 describe('buildVoiceJournalEntries', () => {
+  it('recognizes a Darija word-number sleep duration as explicitly stated', () => {
+    expect(inferVoiceExplicitFields('نعست سبع ساعات ونص وفقت عيان شوية.')).toEqual(expect.arrayContaining([
+      'sleep.durationHours',
+      'sleep.wakeFeeling',
+    ]));
+  });
+
   it('creates separate meal moments and assigns primary meals to their matching day check-ins', () => {
     const result = buildVoiceJournalEntries({
       coachFeedback: feedback,
@@ -16,9 +24,10 @@ describe('buildVoiceJournalEntries', () => {
         sleepHours: 7.5,
         sleepQuality: 4,
         wakeFeeling: 'tired',
+        sleepExplicitFields: ['durationHours','quality','wakeFeeling'],
         wellbeingEntries: [
-          { timeOfDay:'morning', energyLevel:2, mood:'', stressLevel:0, waterGlasses:0, note:'فقت عيان شوية' },
-          { timeOfDay:'midday', energyLevel:4, mood:'energized', stressLevel:2, waterGlasses:3, note:'من بعد الغدا حسيت مزيان' },
+          { timeOfDay:'morning', energyLevel:2, mood:'', stressLevel:0, waterGlasses:0, note:'فقت عيان شوية', explicitFields:['energyLevel','note'] },
+          { timeOfDay:'midday', energyLevel:4, mood:'energized', stressLevel:2, waterGlasses:3, note:'من بعد الغدا حسيت مزيان', explicitFields:['energyLevel','mood','stressLevel','waterGlasses','note'] },
         ],
       },
     }, 'free transcript', 'ar', new Date('2026-09-10T14:00:00'));
@@ -114,11 +123,22 @@ describe('buildVoiceJournalEntries', () => {
   it('does not fabricate unmentioned wellbeing values', () => {
     const result = buildVoiceJournalEntries({
       coachFeedback: feedback,
-      extractedData: { meals:[], sleepHours:0, wellbeingEntries:[{timeOfDay:'evening',energyLevel:2,mood:'',stressLevel:0,waterGlasses:0,note:''}] },
+      extractedData: { meals:[], sleepHours:0, wellbeingEntries:[{timeOfDay:'evening',energyLevel:2,mood:'',stressLevel:0,waterGlasses:0,note:'',explicitFields:['energyLevel']}] },
     }, 'كنت عيان فالعشية', 'ar', new Date('2026-09-10T20:00:00'));
     expect(result.checkIns[0].wellbeing).toEqual({ energyLevel:2, voiceTranscription:'كنت عيان فالعشية' });
     expect(result.checkIns[0].wellbeing).not.toHaveProperty('stressLevel');
     expect(result.checkIns[0].wellbeing).not.toHaveProperty('mood');
+  });
+
+  it('carries field provenance and drops parser defaults that were not stated', () => {
+    const result = buildVoiceJournalEntries({ coachFeedback: feedback, extractedData:{
+      meals:[], sleepHours:6, sleepQuality:1, wakeFeeling:'exhausted', wakeCount:2,
+      sleepExplicitFields:['wakeCount'],
+      wellbeingEntries:[{timeOfDay:'morning',energyLevel:1,mood:'comfort',stressLevel:5,waterGlasses:8,note:'',explicitFields:[]}],
+    } }, 'Actually I woke up twice; otherwise keep what I told you.', 'en', new Date('2026-09-10T08:00:00'));
+    expect(result.checkIns[0].sleep).toEqual({wakeCount:2});
+    expect(result.checkIns[0].wellbeing).toEqual({voiceTranscription:'Actually I woke up twice; otherwise keep what I told you.'});
+    expect(result.checkIns[0].voiceExplicitFields).toEqual(['sleep.wakeCount']);
   });
 
   it('keeps backwards compatibility with a legacy single meal payload and assigns it to the right slot', () => {
