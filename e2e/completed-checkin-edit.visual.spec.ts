@@ -24,8 +24,13 @@ const existingCheckIn = {
 };
 
 async function seedExistingCheckIn(page: Page) {
-  await page.clock.setFixedTime(new Date("2026-10-18T13:00:00"));
   await page.goto("/");
+  const localMidday = await page.evaluate(() => {
+    const value = new Date();
+    value.setHours(13, 0, 0, 0);
+    return value.getTime();
+  });
+  await page.clock.setFixedTime(localMidday);
   await page.evaluate((seed) => {
     const now = new Date();
     const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
