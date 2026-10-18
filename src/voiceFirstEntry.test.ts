@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PROFILE_INTRO_KEY, parseOnboardingWeight, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from './components/VoiceFirstEntryOverlay';
+import { getModalFocusTargetIndex, PROFILE_INTRO_KEY, parseOnboardingWeight, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from './components/VoiceFirstEntryOverlay';
 
 describe('required first onboarding',()=>{
   it('only unlocks once an intro profile exists',()=>{
@@ -35,5 +35,14 @@ describe('required first onboarding',()=>{
 
   it('keeps optional empty weight valid',()=>{
     expect(parseOnboardingWeight('')).toBeUndefined();
+  });
+
+  it('wraps focus at both modal boundaries and recovers focus that escaped',()=>{
+    expect(getModalFocusTargetIndex(0,6,true)).toBe(5);
+    expect(getModalFocusTargetIndex(5,6,false)).toBe(0);
+    expect(getModalFocusTargetIndex(2,6,false)).toBeNull();
+    expect(getModalFocusTargetIndex(-1,6,false)).toBe(0);
+    expect(getModalFocusTargetIndex(-1,6,true)).toBe(5);
+    expect(getModalFocusTargetIndex(-1,0,false)).toBeNull();
   });
 });
