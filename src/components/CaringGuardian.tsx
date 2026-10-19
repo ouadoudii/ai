@@ -55,7 +55,7 @@ export const CaringGuardian: React.FC<CaringGuardianProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-emerald-950">
-                Alles im grünen Bereich • Cary wacht fürsorglich über deinen Tag
+                Alles im grünen Bereich • Moment behält deinen Tag im Blick
               </span>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 hidden sm:inline-block">
                 Typ: {getArchetypeName(userArchetype)}

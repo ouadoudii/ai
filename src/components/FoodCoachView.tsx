@@ -163,11 +163,11 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       {
         id: 'msg-1',
         sender: 'coach',
-        text: `Hallo! ${timeGreeting}! Ich bin Cary, deine fürsorgliche Begleiterin. Ich passe auf dein Zusammenspiel aus Schlaf, Mahlzeiten und Wohlbefinden auf. Wie kann ich dir jetzt guttun?`,
+        text: `Hallo! ${timeGreeting}! Ich bin dein Moment-Coach. Ich begleite dein Zusammenspiel aus Schlaf, Mahlzeiten und Wohlbefinden. Wie kann ich dir jetzt guttun?`,
         timestamp: 'Heute',
         suggestions: [
           '📊 Welcher Ernährungstyp bin ich?',
-          '🛡️ Welche Frühwarnzeichen überwacht Cary?',
+          '🛡️ Welche Frühwarnzeichen überwacht mein Coach?',
           '🎙️ Sprach-Check-in starten',
           '⚡ Wie vermeide ich das Nachmittagstief?',
         ],
@@ -310,7 +310,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/60">
               <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              <span>Cary • Fürsorgliche Begleitung für Körper & Geist</span>
+              <span>Moment • Fürsorgliche Begleitung für Körper & Geist</span>
             </div>
             
             <h1 className="text-2xl sm:text-3xl font-display font-bold text-stone-900 leading-tight">
@@ -482,7 +482,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
 
       </div>
 
-      {/* Interactive Coach Chat Section ("Frag Cary") */}
+      {/* Interactive coach chat section */}
       <section className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-xs space-y-4">
         
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
@@ -493,7 +493,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-display font-bold text-base text-stone-900">
-                  Frag Cary
+                  Coach fragen
                 </h3>
                 <span className="w-2 h-2 rounded-full bg-emerald-500" title="Online & Fürsorglich" />
               </div>
@@ -555,7 +555,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" />
               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]" />
               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.4s]" />
-              <span className="ml-1 text-[11px]">Cary überlegt fürsorglich...</span>
+              <span className="ml-1 text-[11px]">Dein Coach überlegt...</span>
             </div>
           )}
           <div ref={chatEndRef} />

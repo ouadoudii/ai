@@ -20,7 +20,7 @@ test('Cary keeps a conversation after navigation and reload',async({page},testIn
   await page.goto('/');
 
   await page.getByTestId('desktop-coach-nav').click();
-  await expect(page.getByRole('heading',{name:'Frag Cary'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Coach fragen'})).toBeVisible();
 
   const question='Merke dir bitte meinen heutigen Spaziergang.';
   await page.getByPlaceholder(/Frage stellen/).fill(question);
@@ -42,7 +42,7 @@ test('Cary keeps a conversation after navigation and reload',async({page},testIn
   await page.screenshot({path:testInfo.outputPath('cary-session-restored-desktop.png'),fullPage:true});
 });
 
-test('Cary is reachable from the mobile app shell',async({page},testInfo)=>{
+test('Coach is reachable from the mobile app shell',async({page},testInfo)=>{
   await page.setViewportSize({width:390,height:844});
   await prepare(page);
   await page.goto('/');
@@ -50,6 +50,6 @@ test('Cary is reachable from the mobile app shell',async({page},testInfo)=>{
   const cary=page.getByTestId('mobile-coach-nav');
   await expect(cary).toBeVisible();
   await cary.click();
-  await expect(page.getByRole('heading',{name:'Frag Cary'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Coach fragen'})).toBeVisible();
   await page.screenshot({path:testInfo.outputPath('cary-mobile-entry.png'),fullPage:true});
 });

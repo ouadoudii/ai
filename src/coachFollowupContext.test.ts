@@ -9,7 +9,7 @@ const message = (id: string, sender: 'user' | 'coach', text: string): CoachChatM
   timestamp: 'Heute',
 });
 
-describe('Cary follow-up conversation context', () => {
+describe('Coach follow-up conversation context', () => {
   it('keeps the recent dialogue so a short follow-up has its referent', () => {
     const history = [
       message('1', 'user', 'Ich hatte gestern nach dem Couscous ein starkes Nachmittagstief.'),
@@ -19,7 +19,7 @@ describe('Cary follow-up conversation context', () => {
     const query = buildContextualCoachQuery('Und heute?', history);
 
     expect(query).toContain('Nutzer: Ich hatte gestern nach dem Couscous ein starkes Nachmittagstief.');
-    expect(query).toContain('Cary: Das könnte mit Portionsgröße, Tempo oder Schlaf zusammenhängen.');
+    expect(query).toContain('Coach: Das könnte mit Portionsgröße, Tempo oder Schlaf zusammenhängen.');
     expect(query).toContain('Aktuelle Frage:\nUnd heute?');
   });
 

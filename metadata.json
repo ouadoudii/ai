@@ -1,6 +1,6 @@
 {
-  "name": "Cary",
-  "description": "Cary — Caring companion for sleep, mindful nutrition & wellbeing with voice check-ins and archetype matrix in English and Arabic (العربية).",
+  "name": "Moment",
+  "description": "Moment — A caring companion for sleep, mindful nutrition and wellbeing with voice check-ins in English and Arabic (العربية).",
   "requestFramePermissions": [
     "microphone"
   ],

@@ -243,21 +243,21 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
   const q = userQuestion.toLowerCase();
 
   if (q.includes('alarm') || q.includes('eingreif') || q.includes('warn') || q.includes('notfall') || q.includes('rote flagge') || q.includes('frühwarn')) {
-    return `Cary achtet kontinuierlich auf 4 physiologische Schlüsselmomente und meldet sich sanft, wenn dein Körper Unterstützung braucht:\n1. ⚠️ Schlafmangel (<6h): Schützt dich vor der hormonellen Ghrelin-Heißhungerfalle.\n2. ⚠️ Gehetztes Essen am Bildschirm: Verhindert unbemerktes Überessen & Völlegefühl.\n3. ⚠️ Kritisches Nachmittagstief: Schneller, sanfter Impuls gegen den Blutzucker-Absturz.\n4. ⚠️ Spätes, schweres Abendessen: Sichert deine erholsame Tiefschlaf-Phase.\nSolange alles im Gleichgewicht ist, wacht Cary dezent im Hintergrund.`;
+    return `Dein Coach achtet kontinuierlich auf 4 physiologische Schlüsselmomente und meldet sich sanft, wenn dein Körper Unterstützung braucht:\n1. ⚠️ Schlafmangel (<6h): Schützt dich vor der hormonellen Ghrelin-Heißhungerfalle.\n2. ⚠️ Gehetztes Essen am Bildschirm: Verhindert unbemerktes Überessen & Völlegefühl.\n3. ⚠️ Kritisches Nachmittagstief: Schneller, sanfter Impuls gegen den Blutzucker-Absturz.\n4. ⚠️ Spätes, schweres Abendessen: Sichert deine erholsame Tiefschlaf-Phase.\nSolange alles im Gleichgewicht ist, bleibt Moment dezent im Hintergrund.`;
   }
 
   if (q.includes('tag') || q.includes('heute') || q.includes('analyse') || q.includes('bilanz')) {
     const todayMoments = moments.slice(0, 3);
     const count = todayMoments.length;
-    return `Hier ist deine fürsorgliche Tagesbilanz von Cary: Du hast heute ${count} kulinarische Momente erfasst. Deine Mahlzeiten waren nahrhaft und boten eine wunderbare Mischung aus Genuss und Wohlbefinden. Dein Achtsamkeits-Score liegt bei schönen 88%! Tipp für den Abend: Mach es dir gemütlich, halte das Abendessen leicht und nimm dir mindestens 15 Minuten echte Ruhe.`;
+    return `Hier ist deine fürsorgliche Tagesbilanz von Moment: Du hast heute ${count} kulinarische Momente erfasst. Deine Mahlzeiten waren nahrhaft und boten eine wunderbare Mischung aus Genuss und Wohlbefinden. Dein Achtsamkeits-Score liegt bei schönen 88%! Tipp für den Abend: Mach es dir gemütlich, halte das Abendessen leicht und nimm dir mindestens 15 Minuten echte Ruhe.`;
   }
 
   if (q.includes('heißhunger') || q.includes('süß') || q.includes('nachmittag')) {
-    return `Cary hilft dir durch das Nachmittagstief mit drei sanften Schritten:\n1. 💧 Trinke zuerst ein großes Glas warmes Wasser oder Kräutertee – der Körper verwechselt oft Durst mit Verlangen.\n2. 🥜 Eine kleine Handvoll Mandeln oder Nüsse stabilisiert deinen Blutzucker sanft.\n3. 🪟 Einmal kurz das Fenster öffnen und 3 tiefe Atemzüge nehmen stoppt das Verlangen im Gehirn.`;
+    return `Dein Coach hilft dir durch das Nachmittagstief mit drei sanften Schritten:\n1. 💧 Trinke zuerst ein großes Glas warmes Wasser oder Kräutertee – der Körper verwechselt oft Durst mit Verlangen.\n2. 🥜 Eine kleine Handvoll Mandeln oder Nüsse stabilisiert deinen Blutzucker sanft.\n3. 🪟 Einmal kurz das Fenster öffnen und 3 tiefe Atemzüge nehmen stoppt das Verlangen im Gehirn.`;
   }
 
   if (q.includes('abendessen') || q.includes('dinner') || q.includes('schlaf')) {
-    return `Für einen tiefen, erholsamen Schlaf empfiehlt dir Cary: Leicht bekömmliches Protein (z. B. milder Lachs, Eier, Tofu) kombiniert mit gedünstetem Gemüse oder einer warmen Suppe. Vermeide schwere, frittierte Speisen nach 20:00 Uhr, damit deine Verdauung zur Ruhe kommen kann.`;
+    return `Für einen tiefen, erholsamen Schlaf empfiehlt dein Coach: Leicht bekömmliches Protein (z. B. milder Lachs, Eier, Tofu) kombiniert mit gedünstetem Gemüse oder einer warmen Suppe. Vermeide schwere, frittierte Speisen nach 20:00 Uhr, damit deine Verdauung zur Ruhe kommen kann.`;
   }
 
   if (q.includes('protein') || q.includes('eiweiß') || q.includes('muskel')) {
@@ -265,8 +265,8 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
   }
 
   if (q.includes('sättigung') || q.includes('portion') || q.includes('zu viel')) {
-    return `Dein Körper braucht 15–20 Minuten, bis das Sättigungssignal im Gehirn ankommt. Carys Tipp: Nimm dir Zeit für jeden Bissen, kaue genussvoll und spüre bei Stufe 4 nach, ob du schon vollkommen zufrieden bist.`;
+    return `Dein Körper braucht 15–20 Minuten, bis das Sättigungssignal im Gehirn ankommt. Tipp deines Coaches: Nimm dir Zeit für jeden Bissen, kaue genussvoll und spüre bei Stufe 4 nach, ob du schon vollkommen zufrieden bist.`;
   }
 
-  return `Als deine fürsorgliche Begleiterin Cary bin ich immer an deiner Seite. Mir geht es darum, dass du dich in deinem Körper rundum wohlfühlst – ohne Druck oder strenge Regeln. Worüber möchtest du sprechen? (Achtsamkeit, Schlaferholung, Genussmomente oder Energie?)`;
+  return `Als dein fürsorglicher Moment-Coach bin ich immer an deiner Seite. Mir geht es darum, dass du dich in deinem Körper rundum wohlfühlst – ohne Druck oder strenge Regeln. Worüber möchtest du sprechen? (Achtsamkeit, Schlaferholung, Genussmomente oder Energie?)`;
 }
