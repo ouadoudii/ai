@@ -98,4 +98,22 @@ describe('getLocalDateKey non-hour timezone regressions', () => {
     expect(getLocalDateKey(new Date('2026-12-31T23:59:59.999Z'), 'UTC')).toBe('2026-12-31');
     expect(getLocalDateKey(new Date('2027-01-01T00:00:00.000Z'), 'UTC')).toBe('2027-01-01');
   });
+
+  it('keeps the Casablanca date stable across the exact Ramadan clock rollback', () => {
+    expect(getLocalDateKey(new Date('2026-02-15T01:59:59.999Z'), 'Africa/Casablanca')).toBe('2026-02-15');
+    expect(getLocalDateKey(new Date('2026-02-15T02:00:00.000Z'), 'Africa/Casablanca')).toBe('2026-02-15');
+    expect(getLocalDateKey(new Date('2026-02-15T02:00:00.000Z'), 'UTC')).toBe('2026-02-15');
+  });
+
+  it('keeps the Casablanca date stable across the exact post-Ramadan clock jump', () => {
+    expect(getLocalDateKey(new Date('2026-03-22T01:59:59.999Z'), 'Africa/Casablanca')).toBe('2026-03-22');
+    expect(getLocalDateKey(new Date('2026-03-22T02:00:00.000Z'), 'Africa/Casablanca')).toBe('2026-03-22');
+  });
+
+  it('uses the correct UTC midnight boundary on both sides of Ramadan DST suspension', () => {
+    expect(getLocalDateKey(new Date('2026-02-15T23:59:59.999Z'), 'Africa/Casablanca')).toBe('2026-02-15');
+    expect(getLocalDateKey(new Date('2026-02-16T00:00:00.000Z'), 'Africa/Casablanca')).toBe('2026-02-16');
+    expect(getLocalDateKey(new Date('2026-03-22T22:59:59.999Z'), 'Africa/Casablanca')).toBe('2026-03-22');
+    expect(getLocalDateKey(new Date('2026-03-22T23:00:00.000Z'), 'Africa/Casablanca')).toBe('2026-03-23');
+  });
 });
