@@ -43,19 +43,37 @@ async function exercisePinFlow(page: import('@playwright/test').Page, mobile: bo
   await pin.click();
   await expect(pin).toHaveAttribute('aria-pressed', 'true');
   await expect.poll(() => page.evaluate(() => localStorage.getItem('moment_pinned_meals_v1'))).toBe(JSON.stringify([meal.id]));
-  await page.screenshot({ path: screenshotPath, fullPage: true });
 
   await page.reload();
   await openTimeline(page, mobile);
   await page.getByTestId(`timeline-moment-${meal.id}`).click();
   await expect(page.getByTestId('pin-meal-button')).toHaveAttribute('aria-pressed', 'true');
+
+  await page.goto('/');
+  const shortcuts = page.getByTestId('pinned-meals-shortcuts');
+  await expect(shortcuts).toBeVisible();
+  await expect(shortcuts).toContainText('Angeheftete Mahlzeiten');
+  await expect(shortcuts).toContainText(meal.title);
+  const repeat = page.getByTestId(`repeat-pinned-meal-${meal.id}`);
+  await expect(repeat).toHaveAccessibleName(`Erneut verwenden: ${meal.title}`);
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+  await repeat.click();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').length)).toBe(2);
+  const repeated = await page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]')[0]);
+  expect(repeated.title).toBe(meal.title);
+  expect(repeated.category).toBe(meal.category);
+  expect(repeated.id).not.toBe(meal.id);
+  expect(repeated.tags).toEqual(['Repeated']);
+  expect(repeated.notes).toBeUndefined();
+  expect(repeated.rating).toBeUndefined();
+  expect(repeated.location).toBe('');
 }
 
 for (const viewport of [
   { name: 'desktop', width: 1280, height: 900 },
   { name: 'mobile', width: 390, height: 844 },
 ]) {
-  test(`pins a meal and keeps it pinned after reload on ${viewport.name}`, async ({ page }, testInfo) => {
+  test(`pins and safely reuses a meal after reload on ${viewport.name}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await exercisePinFlow(page, viewport.name === 'mobile', testInfo.outputPath(`pinned-meal-${viewport.name}.png`));
   });
