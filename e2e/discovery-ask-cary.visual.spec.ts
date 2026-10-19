@@ -40,7 +40,7 @@ test('Discovery to Cary prefill stays unsent on mobile Arabic', async ({ page },
   await page.getByRole('button', { name:'اكتشافاتك', exact:true }).click();
   const card = page.locator('[data-pattern-id="late-lunch-snacking"]');
   const evidence = await card.getByTestId('pattern-evidence').innerText();
-  await expect(card.getByTestId('ask-cary-late-lunch-snacking')).toHaveText('اسأل كاري');
+  await expect(card.getByTestId('ask-cary-late-lunch-snacking')).toHaveText('اسأل المرشد');
   await card.getByTestId('ask-cary-late-lunch-snacking').click();
   const composer = page.getByTestId('cary-chat-composer');
   const draft = await composer.inputValue();

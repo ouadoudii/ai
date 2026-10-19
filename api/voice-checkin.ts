@@ -8,7 +8,7 @@ let genAiClient: GoogleGenAI | null = null;
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
-  if (!genAiClient) genAiClient = new GoogleGenAI({ apiKey, httpOptions: { headers: { 'User-Agent': 'cary-app' } } });
+  if (!genAiClient) genAiClient = new GoogleGenAI({ apiKey, httpOptions: { headers: { 'User-Agent': 'moment-app' } } });
   return genAiClient;
 }
 
@@ -87,22 +87,22 @@ function localizeDeterministicMeal(extraction: ReturnType<typeof extractMealItem
 
 function fallbackFeedback(language: VoiceLanguage, captured: boolean) {
   if (language === 'ar') return {
-    title: captured ? 'تسجلات رسالتك 💚' : 'كاري معاك 💚',
+    title: captured ? 'تسجلات رسالتك 💚' : 'مومنت معاك 💚',
     message: captured ? 'فهمت رسالتك ووزعت المعلومات على الوجبات والطاقة وباقي اليوم.' : 'سمعتك وسجلت كلامك.',
     badge: 'تسجيل بالصوت', habitScore: 88, type: 'praise',
   };
   if (language === 'de') return {
-    title: captured ? 'Sprachnotiz erfasst 💚' : 'Cary ist bei dir 💚',
+    title: captured ? 'Sprachnotiz erfasst 💚' : 'Moment ist bei dir 💚',
     message: captured ? 'Ich habe deine Notiz verstanden und Mahlzeiten sowie Wohlbefinden passend zugeordnet.' : 'Ich habe deine Sprachnotiz gespeichert.',
     badge: 'Sprach-Check-in', habitScore: 88, type: 'praise',
   };
   if (language === 'fr') return {
-    title: captured ? 'Note vocale enregistrée 💚' : 'Cary est avec toi 💚',
+    title: captured ? 'Note vocale enregistrée 💚' : 'Moment est avec toi 💚',
     message: captured ? 'J’ai compris ta note et classé les repas et le bien-être au bon endroit.' : 'J’ai enregistré ta note vocale.',
     badge: 'Check-in vocal', habitScore: 88, type: 'praise',
   };
   return {
-    title: captured ? 'Voice journal captured 💚' : 'Cary is with you 💚',
+    title: captured ? 'Voice journal captured 💚' : 'Moment is with you 💚',
     message: captured ? 'I understood the note and assigned the details to meals and wellbeing.' : 'I captured what you said.',
     badge: 'Voice check-in', habitScore: 88, type: 'praise',
   };

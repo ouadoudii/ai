@@ -24,7 +24,7 @@ export async function transcribeRecordedAudio(blob:Blob,language:VoiceLanguage):
 
 export async function processVoiceCheckIn(transcript:string,timeOfDay:string,userArchetype?:string,language:VoiceLanguage='en'):Promise<VoiceCheckInResult>{
   try { const currentHour=new Date().getHours(); const res=await fetch('/api/voice-checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript,timeOfDay,userArchetype,currentHour,language})}); if(!res.ok)throw new Error(`API returned status ${res.status}`); return await res.json(); }
-  catch(error) { console.warn('Backend /api/voice-checkin not reachable, using client fallback:',error); const feedback = language==='ar' ? {title:'تسجلات الرسالة الصوتية 💚',message:'سمعتك وسجلت الرسالة. تقدر تصحح التفاصيل يدوياً.',type:'praise' as const,badge:'تسجيل بالصوت',habitScore:92} : language==='de' ? {title:'Sprachnotiz gespeichert 💚',message:`Danke fürs Teilen. Cary hat „${transcript.slice(0,80)}...“ für dein Tagebuch gespeichert.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92} : language==='fr' ? {title:'Note vocale enregistrée 💚',message:`Merci pour ce partage. Cary a enregistré « ${transcript.slice(0,80)}... » dans ton journal.`,type:'praise' as const,badge:'Check-in vocal',habitScore:92} : {title:'Voice note captured 💚',message:`Thanks for sharing. Cary captured “${transcript.slice(0,80)}...” for your journal.`,type:'praise' as const,badge:'Cary Check-in',habitScore:92}; return {coachFeedback:feedback,extractedData:{}}; }
+  catch(error) { console.warn('Backend /api/voice-checkin not reachable, using client fallback:',error); const feedback = language==='ar' ? {title:'تسجلات الرسالة الصوتية 💚',message:'سمعتك وسجلت الرسالة. تقدر تصحح التفاصيل يدوياً.',type:'praise' as const,badge:'تسجيل بالصوت',habitScore:92} : language==='de' ? {title:'Sprachnotiz gespeichert 💚',message:`Danke fürs Teilen. Moment hat „${transcript.slice(0,80)}...“ für dein Tagebuch gespeichert.`,type:'praise' as const,badge:'Moment Check-in',habitScore:92} : language==='fr' ? {title:'Note vocale enregistrée 💚',message:`Merci pour ce partage. Moment a enregistré « ${transcript.slice(0,80)}... » dans ton journal.`,type:'praise' as const,badge:'Check-in vocal',habitScore:92} : {title:'Voice note captured 💚',message:`Thanks for sharing. Moment captured “${transcript.slice(0,80)}...” for your journal.`,type:'praise' as const,badge:'Moment Check-in',habitScore:92}; return {coachFeedback:feedback,extractedData:{}}; }
 }
 
 export async function classifyVoiceIntent(transcript:string,language:VoiceLanguage='en'):Promise<VoiceIntentResult>{
@@ -41,7 +41,7 @@ export function buildCoachConversationContext(messages:CoachChatMessage[]):Array
 }
 export function buildContextualCoachQuery(query:string,messages:CoachChatMessage[]):string{
   const context=buildCoachConversationContext(messages); if(context.length===0)return query;
-  const transcript=context.map((message)=>`${message.role==='user'?'Nutzer':'Cary'}: ${message.text}`).join('\n');
+  const transcript=context.map((message)=>`${message.role==='user'?'Nutzer':'Coach'}: ${message.text}`).join('\n');
   return `Bisheriges Gespräch:\n${transcript}\n\nAktuelle Frage:\n${query}`;
 }
 function readRecentCoachMessages():CoachChatMessage[]{ if(typeof localStorage==='undefined')return []; return readCoachSession(localStorage); }

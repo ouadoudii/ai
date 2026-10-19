@@ -142,7 +142,7 @@ export const CaringVoiceHero: React.FC<CaringVoiceHeroProps> = ({
       {/* Background soft ambient badge */}
       <div className="absolute top-4 right-4 hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 backdrop-blur-xs border border-amber-200/80 text-[11px] font-semibold text-amber-900 shadow-xs">
         <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-        <span>Cary sorgt für dich</span>
+        <span>Moment ist für dich da</span>
       </div>
 
       <div className="max-w-2xl space-y-4">
@@ -231,7 +231,7 @@ export const CaringVoiceHero: React.FC<CaringVoiceHeroProps> = ({
 
               <div className="space-y-0.5 hidden sm:block">
                 <span className="text-xs font-bold text-stone-900 block">
-                  {isRecording ? '🔴 Cary hört dir aufmerksam zu...' : 'WhatsApp Voice Check-in'}
+                  {isRecording ? '🔴 Moment hört dir aufmerksam zu...' : 'WhatsApp Voice Check-in'}
                 </span>
                 <span className="text-[11px] text-stone-500">
                   {isRecording ? 'Sprich frei heraus.' : 'Schnell, unkompliziert & herzlich.'}
@@ -273,7 +273,7 @@ export const CaringVoiceHero: React.FC<CaringVoiceHeroProps> = ({
                 {isProcessingAI ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Cary denkt nach...</span>
+                    <span>Moment denkt nach...</span>
                   </>
                 ) : (
                   <>
@@ -305,7 +305,7 @@ export const CaringVoiceHero: React.FC<CaringVoiceHeroProps> = ({
             {feedbackSent && !aiCoachFeedback && (
               <div className="p-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Danke! Cary hat deine Nachricht erfasst und deinen Tag fürsorglich angepasst.</span>
+                <span>Danke! Moment hat deine Nachricht erfasst und deinen Tag fürsorglich angepasst.</span>
               </div>
             )}
           </div>
