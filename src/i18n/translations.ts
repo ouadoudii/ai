@@ -90,7 +90,7 @@ export interface Translations {
   voiceStopListening: string;
   fullQuestionnaireBtn: string;
   quickQuestionsTitle: string;
-  caryCaresBadge: string;
+  momentCaresBadge: string;
 
   // Caring Guardian & Alarms
   guardianBalancedTitle: string;
@@ -121,7 +121,7 @@ export interface Translations {
   // Coach & Chat View
   coachTitle: string;
   coachSubtitle: string;
-  coachAskCary: string;
+  coachAskCoach: string;
   coachOnlineStatus: string;
   coachInputPlaceholder: string;
   coachSend: string;
@@ -284,9 +284,9 @@ export interface Translations {
 export const translations: Record<SupportedLanguage, Translations> = {
   en: {
     // Brand & General
-    appName: 'Cary',
+    appName: 'Moment',
     appTagline: 'Care • Mindfulness • Wellbeing',
-    appDescription: 'Cary — Your caring companion for restorative sleep, mindful nutrition & holistic wellbeing.',
+    appDescription: 'Moment — Your caring companion for restorative sleep, mindful nutrition & holistic wellbeing.',
     active: 'Active',
     caring: 'Caring',
     close: 'Close',
@@ -321,7 +321,7 @@ export const translations: Record<SupportedLanguage, Translations> = {
 
     // Navigation Tabs
     navToday: 'Today',
-    navCoach: 'Ask Cary',
+    navCoach: 'Coach',
     navTypeAnalysis: 'Type Analysis',
     navTimeline: 'Moments',
     navCalendar: 'Calendar',
@@ -331,7 +331,7 @@ export const translations: Record<SupportedLanguage, Translations> = {
 
     // Header Actions
     tellMeVoice: "Tell me!",
-    tellMeVoiceTitle: 'Start voice check-in with Cary',
+    tellMeVoiceTitle: 'Start voice check-in with Moment',
     logMeal: 'Log Meal',
     logMealShort: '+ New',
     switchLanguage: 'Language',
@@ -364,21 +364,21 @@ export const translations: Record<SupportedLanguage, Translations> = {
     heroTipNight: 'Set your screen to night mode and dim the lights. Sleep peacefully!',
     voiceCheckInTitle: 'WhatsApp Voice Check-in',
     voiceCheckInSubtitle: 'Quick, natural & caring check-in.',
-    voiceRecordingActive: '🔴 Cary is listening attentively to you...',
-    voiceRecordingProcessing: 'Cary is thinking caring thoughts...',
+    voiceRecordingActive: '🔴 Moment is listening attentively to you...',
+    voiceRecordingProcessing: 'Moment is thinking caring thoughts...',
     voiceRecordingPlaceholder: 'Speak naturally or tap quick chips below...',
-    voiceRecordingSuccess: 'Thank you! Cary captured your check-in and tailored your day with care.',
-    voiceStartListening: "Tell Cary! (Mic)",
+    voiceRecordingSuccess: 'Thank you! Moment captured your check-in and tailored your day with care.',
+    voiceStartListening: "Tell Moment! (Mic)",
     voiceStopListening: 'Done Speaking',
     fullQuestionnaireBtn: 'Full Questionnaire',
     quickQuestionsTitle: 'Quick caring prompts:',
-    caryCaresBadge: 'Cary is here for you',
+    momentCaresBadge: 'Moment is here for you',
 
     // Caring Guardian & Alarms
-    guardianBalancedTitle: 'All in balance • Cary is watching over your day',
+    guardianBalancedTitle: 'All in balance • Moment is watching over your day',
     guardianBalancedDesc: 'Your rhythm of sleep, meals, and energy is in harmony. I am resting quietly in the background.',
-    guardianAlarmTitle: 'Cary Guardian Alert',
-    guardianSystemTitle: 'Cary Care & Early Warning System',
+    guardianAlarmTitle: 'Moment Guardian Alert',
+    guardianSystemTitle: 'Moment Care & Early Warning System',
     guardianSystemSubtitle: 'Gently intervenes only when physiological signals need attention.',
     alarmSleepTitle: '⚠️ Increased Craving Risk from Sleep Deficit',
     alarmSleepSubtitle: 'Short sleep registered – body may seek fast energy',
@@ -401,21 +401,21 @@ export const translations: Record<SupportedLanguage, Translations> = {
     markResolved: 'Mark as Handled',
 
     // Coach & Chat View
-    coachTitle: 'Mindful Guidance with Cary',
+    coachTitle: 'Mindful guidance with your coach',
     coachSubtitle: 'Your personalized advisor for chronobiology, intuitive eating & restorative habits.',
-    coachAskCary: 'Ask Cary',
+    coachAskCoach: 'Ask the coach',
     coachOnlineStatus: 'Online & Caring',
-    coachInputPlaceholder: 'Ask Cary anything about meals, sleep or habits...',
+    coachInputPlaceholder: 'Ask your coach anything about meals, sleep or habits...',
     coachSend: 'Send',
-    coachThinking: 'Cary is reflecting...',
-    coachIntroGreeting: 'Hello! I am Cary, your caring companion. I watch over your harmony of sleep, food, and wellbeing. How can I brighten your day right now?',
+    coachThinking: 'Your coach is reflecting...',
+    coachIntroGreeting: 'Hello! I am your Moment coach. I support the harmony of sleep, food, and wellbeing. How can I brighten your day right now?',
     coachPromptType: '📊 Which nutrition archetype am I?',
-    coachPromptAlarms: '🛡️ What early warnings does Cary monitor?',
+    coachPromptAlarms: '🛡️ What early warnings does my coach monitor?',
     coachPromptVoice: '🎙️ Start voice check-in',
     coachPromptSlump: '⚡ How to conquer the 3 PM energy slump?',
     coachPromptSleep: '🌙 Best bedtime meals for deep sleep?',
     coachPromptPortions: '🍽️ How to recognize natural satiety?',
-    coachingGoalsTitle: 'Cary Caring Habits & Goals',
+    coachingGoalsTitle: 'Moment Caring Habits & Goals',
     coachingGoalsSubtitle: 'Simple daily intentions to nourish body and mind.',
     weeklyMindfulness: 'Mindfulness Score',
     dailyStreak: 'Day Streak',
@@ -424,8 +424,8 @@ export const translations: Record<SupportedLanguage, Translations> = {
     // Nutrition Type Analysis
     typeAnalysisTitle: 'Nutrition Archetype Matrix',
     typeAnalysisSubtitle: 'Discover how your unique chronobiology and food choices shape your daily vitality.',
-    typeAnalysisHeaderBadge: 'Cary Matrix Analysis',
-    typeMatrixTitle: 'All 4 Archetypes in the Cary Matrix',
+    typeAnalysisHeaderBadge: 'Moment Matrix Analysis',
+    typeMatrixTitle: 'All 4 Archetypes in the Moment Matrix',
     typeConfidenceScore: 'Profile Confidence',
     typeDataPointsNeeded: 'More moments needed to unlock',
     typeUnlockMsg: 'Log at least 3 meals or check-ins to reveal your personalized archetype profile.',
@@ -455,7 +455,7 @@ export const translations: Record<SupportedLanguage, Translations> = {
     archetypeIntermittentDesc: 'Your body wakes up energized with light morning liquids. Your peak nutrient intake occurs during midday with steady afternoon stamina.',
 
     // Daily Check-in Modal
-    checkInModalTitle: 'Daily Check-in with Cary',
+    checkInModalTitle: 'Daily Check-in with Moment',
     checkInTimeOfDayMorning: 'Morning Check-in (05:00 - 11:00)',
     checkInTimeOfDayMidday: 'Midday Check-in (11:00 - 16:00)',
     checkInTimeOfDayEvening: 'Evening Check-in (16:00 - 04:00)',
@@ -487,7 +487,7 @@ export const translations: Record<SupportedLanguage, Translations> = {
     checkInStressLevel: 'Stress Level (1: Zen, 5: High Tension)',
     checkInWaterGlasses: 'Water Intake so far (Glasses)',
     checkInNotes: 'Personal reflection or voice notes',
-    checkInSuccessToast: 'Check-in saved successfully! Cary updated your daily insights.',
+    checkInSuccessToast: 'Check-in saved successfully! Moment updated your daily insights.',
 
     // Add / Edit Moment Modal
     addMomentModalTitle: 'Log a Mindful Food Moment',
@@ -565,9 +565,9 @@ export const translations: Record<SupportedLanguage, Translations> = {
 
   ar: {
     // Brand & General
-    appName: 'كاري',
+    appName: 'مومنت',
     appTagline: 'العناية • اليقظة • الصحة',
-    appDescription: 'كاري — مرافقتكِ ومرافقك الحنون للنوم الهانئ، والتغذية الواعية، والعافية الشاملة.',
+    appDescription: 'مومنت — مرافقتكِ ومرافقك الحنون للنوم الهانئ، والتغذية الواعية، والعافية الشاملة.',
     active: 'نشط',
     caring: 'مستعدة دائماً',
     close: 'إغلاق',
@@ -602,7 +602,7 @@ export const translations: Record<SupportedLanguage, Translations> = {
 
     // Navigation Tabs
     navToday: 'اليوم',
-    navCoach: 'اسأل كاري',
+    navCoach: 'المرشد',
     navTypeAnalysis: 'تحليل النمط',
     navTimeline: 'سجل الوجبات',
     navCalendar: 'التقويم',
@@ -612,7 +612,7 @@ export const translations: Record<SupportedLanguage, Translations> = {
 
     // Header Actions
     tellMeVoice: '!أخبرني',
-    tellMeVoiceTitle: 'بدء التسجيل الصوتي مع كاري',
+    tellMeVoiceTitle: 'بدء التسجيل الصوتي مع مومنت',
     logMeal: 'إضافة وجبة',
     logMealShort: '+ جديد',
     switchLanguage: 'اللغة',
@@ -645,21 +645,21 @@ export const translations: Record<SupportedLanguage, Translations> = {
     heroTipNight: 'فعّل الوضع الليلي للشاشة وخفف الإضاءة. نوماً هنيئاً وأحلاماً سعيدة!',
     voiceCheckInTitle: 'تسجيل صوتي بأسلوب واتساب',
     voiceCheckInSubtitle: 'تسجيل سريع، طبيعي، ومليء بالاهتمام.',
-    voiceRecordingActive: '🔴 كاري تستمع إليك بكل اهتمام وعناية...',
-    voiceRecordingProcessing: 'كاري تفكر في نصيحة تناسبك...',
+    voiceRecordingActive: '🔴 مومنت تستمع إليك بكل اهتمام وعناية...',
+    voiceRecordingProcessing: 'مومنت تفكر في نصيحة تناسبك...',
     voiceRecordingPlaceholder: 'تحدث بطبيعتك أو اختر أحد الأسئلة السريعة أدناه...',
-    voiceRecordingSuccess: 'شكراً لك! استمعت كاري لرسالتك ونسقت خطة يومك بكل عناية.',
-    voiceStartListening: 'تحدث مع كاري! (صوت)',
+    voiceRecordingSuccess: 'شكراً لك! استمعت مومنت لرسالتك ونسقت خطة يومك بكل عناية.',
+    voiceStartListening: 'تحدث مع مومنت! (صوت)',
     voiceStopListening: 'إنهاء الحديث',
     fullQuestionnaireBtn: 'الاستبيان الكامل',
     quickQuestionsTitle: 'أسئلة سريعة للعناية بك:',
-    caryCaresBadge: 'كاري هنا من أجلك',
+    momentCaresBadge: 'مومنت هنا من أجلك',
 
     // Caring Guardian & Alarms
-    guardianBalancedTitle: 'كل شيء متناغم • كاري تعتني بيومك في الخلفية',
+    guardianBalancedTitle: 'كل شيء متناغم • مومنت تعتني بيومك في الخلفية',
     guardianBalancedDesc: 'إيقاع نومك ووجباتك وطاقتك في تناسق تام. أراقب الوضع بهدوء ولطف.',
-    guardianAlarmTitle: 'تنبيه نظام كاري الحارس',
-    guardianSystemTitle: 'نظام كاري للرعاية والإنذار المبكر',
+    guardianAlarmTitle: 'تنبيه نظام مومنت الحارس',
+    guardianSystemTitle: 'نظام مومنت للرعاية والإنذار المبكر',
     guardianSystemSubtitle: 'يتدخل بلطف فقط عندما ترسل الإشارات الحيوية لجسمك تنبيهاً بالاحتياج.',
     alarmSleepTitle: '⚠️ احتمال زيادة الرغبة الشديدة في الأكل بسبب قلة النوم',
     alarmSleepSubtitle: 'تم رصد قلة ساعات النوم – الجسم قد يبحث غريزياً عن طاقة سريعة',
@@ -682,21 +682,21 @@ export const translations: Record<SupportedLanguage, Translations> = {
     markResolved: 'تم بنجاح',
 
     // Coach & Chat View
-    coachTitle: 'التوجيه الواعي مع كاري',
+    coachTitle: 'توجيه واعٍ مع مرشدك',
     coachSubtitle: 'مستشارتك الشخصية للإيقاع الحيوي، والتغذية الواعية، والعادات الصحية.',
-    coachAskCary: 'اسأل كاري',
+    coachAskCoach: 'اسأل المرشد',
     coachOnlineStatus: 'متصلة وبكل اهتمام',
-    coachInputPlaceholder: 'اسأل كاري أي سؤال عن الوجبات، النوم، أو عاداتك اليومية...',
+    coachInputPlaceholder: 'اسأل مرشدك أي سؤال عن الوجبات، النوم، أو عاداتك اليومية...',
     coachSend: 'إرسال',
-    coachThinking: 'كاري تفكر بعناية...',
-    coachIntroGreeting: 'أهلاً بك! أنا كاري، رفيقتك الحنونة. أحرص على تناغم نومك وغذائك وعافيتك. كيف يمكنني أن أعتني بك وأسعدك اليوم؟',
+    coachThinking: 'مرشدك يفكر بعناية...',
+    coachIntroGreeting: 'أهلاً بك! أنا مرشدك في مومنت. أحرص على تناغم نومك وغذائك وعافيتك. كيف يمكنني أن أساعدك اليوم؟',
     coachPromptType: '📊 ما هو نمطي الغذائي الخاص بي؟',
-    coachPromptAlarms: '🛡️ ما هي إشارات الإنذار التي تراقبها كاري؟',
+    coachPromptAlarms: '🛡️ ما هي إشارات الإنذار التي يراقبها مرشدي؟',
     coachPromptVoice: '🎙️ بدء التسجيل الصوتي اليومي',
     coachPromptSlump: '⚡ كيف أتغلب على خمول ما بعد الظهيرة؟',
     coachPromptSleep: '🌙 ما هي أفضل وجبات العشاء لنوم عميق؟',
     coachPromptPortions: '🍽️ كيف أستشعر شبع جسدي الطبيعي؟',
-    coachingGoalsTitle: 'عادات وأهداف كاري للعناية',
+    coachingGoalsTitle: 'عادات وأهداف مومنت للعناية',
     coachingGoalsSubtitle: 'نوايا وخطوات يومية بسيطة تغذي الجسد والروح.',
     weeklyMindfulness: 'مؤشر اليقظة الغذائية',
     dailyStreak: 'أيام الالتزام المستمر',
@@ -705,8 +705,8 @@ export const translations: Record<SupportedLanguage, Translations> = {
     // Nutrition Type Analysis
     typeAnalysisTitle: 'مصفوفة الأنماط الغذائية',
     typeAnalysisSubtitle: 'اكتشف كيف يرسم إيقاعك الحيوي وخياراتك اليومية مستوى حيويتك ونشاطك.',
-    typeAnalysisHeaderBadge: 'تحليل مصفوفة كاري',
-    typeMatrixTitle: 'جميع الأنماط الـ 4 في مصفوفة كاري',
+    typeAnalysisHeaderBadge: 'تحليل مصفوفة مومنت',
+    typeMatrixTitle: 'جميع الأنماط الـ 4 في مصفوفة مومنت',
     typeConfidenceScore: 'مستوى دقة النمط',
     typeDataPointsNeeded: 'المزيد من الوجبات المطلوبة لإتمام التحليل',
     typeUnlockMsg: 'قم بتسجيل 3 وجبات أو استبيانات على الأقل للكشف عن نمطك الغذائي الخاص بدقة.',
@@ -736,7 +736,7 @@ export const translations: Record<SupportedLanguage, Translations> = {
     archetypeIntermittentDesc: 'يستيقظ جسمك بنشاط مع السوائل الخفيفة صباحاً، وتفتح أولى نوافذ طاقتك عند الظهيرة بوجبة غنية تعزز نشاطك.',
 
     // Daily Check-in Modal
-    checkInModalTitle: 'الاستبيان اليومي مع كاري',
+    checkInModalTitle: 'الاستبيان اليومي مع مومنت',
     checkInTimeOfDayMorning: 'فحص الصباح (05:00 - 11:00)',
     checkInTimeOfDayMidday: 'فحص الظهيرة (11:00 - 16:00)',
     checkInTimeOfDayEvening: 'فحص المساء والليل (16:00 - 04:00)',
@@ -768,7 +768,7 @@ export const translations: Record<SupportedLanguage, Translations> = {
     checkInStressLevel: 'مستوى التوتر (1: هدوء تام، 5: ضغط عالي)',
     checkInWaterGlasses: 'كمية الماء المشروبة حتى الآن (أكواب)',
     checkInNotes: 'ملاحظاتك ومشاعرك أو تسجيل صوتي',
-    checkInSuccessToast: 'تم حفظ الاستبيان بنجاح! قامت كاري بتحديث تحليلاتك اليومية.',
+    checkInSuccessToast: 'تم حفظ الاستبيان بنجاح! قامت مومنت بتحديث تحليلاتك اليومية.',
 
     // Add / Edit Moment Modal
     addMomentModalTitle: 'تسجيل لحظة غذائية واعية',

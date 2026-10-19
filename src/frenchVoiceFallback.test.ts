@@ -121,7 +121,7 @@ describe('French voice fallback contractions', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body.coachFeedback).toMatchObject({
-      title: 'Cary est avec toi 💚',
+      title: 'Moment est avec toi 💚',
       message: 'J’ai enregistré ta note vocale.',
       badge: 'Check-in vocal',
     });

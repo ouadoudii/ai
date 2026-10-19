@@ -127,7 +127,7 @@ describe('voice check-in endpoint', () => {
     expect(response.body.extractedData.mealItems).toEqual(expect.arrayContaining(['Brot','Kaffee mit Milch']));
     expect(response.body.extractedData.mealTitle).toContain('Brot');
     expect(response.body.extractedData.mealTitle).not.toMatch(/[\u0600-\u06FF]/);
-    expect(response.body.coachFeedback.title).toMatch(/Sprachnotiz|Cary ist bei dir/);
+    expect(response.body.coachFeedback.title).toMatch(/Sprachnotiz|Moment ist bei dir/);
     expect(response.body.coachFeedback.badge).toBe('Sprach-Check-in');
   });
 
