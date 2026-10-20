@@ -56,7 +56,7 @@ describe('Today late-night catch-up card', () => {
 
     expect(html).toContain('data-testid="late-night-evening-catch-up"');
     expect(html).toContain(`data-target-date="${previousDate}"`);
-    expect(html).toContain('Finish yesterday');
+    expect(html).toContain('كمّل عشاء البارح');
   });
 
   it('does not render the action when yesterday evening is already complete', () => {

@@ -12,8 +12,8 @@ describe('desktop Header timeline navigation', () => {
       </LanguageProvider>,
     );
 
-    expect(html).toContain('Main navigation');
-    expect(html).toContain('moments');
+    expect(html).toContain('التنقل الرئيسي');
+    expect(html).toContain('لحظات');
     expect(html).toContain('bg-[#526B48] text-white');
   });
 });

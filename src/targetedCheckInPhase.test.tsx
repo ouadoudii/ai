@@ -11,23 +11,23 @@ afterAll(()=>{(globalThis as any).localStorage=oldStorage});
 const noop=()=>{};
 
 describe('targeted day-phase check-ins',()=>{
-  it('renders Morning when Morning was explicitly selected, independent of clock time',()=>{
+  it('renders Arabic Morning when Morning was explicitly selected, independent of clock time',()=>{
     const html=renderToString(<LanguageProvider><DailyCheckInModal isOpen onClose={noop} onSaveCheckIn={noop as any} phase="morning"/></LanguageProvider>);
-    expect(html).toContain('Your morning');
-    expect(html).toContain('How did your day begin?');
-    expect(html).not.toContain('Your evening');
+    expect(html).toContain('صباحك');
+    expect(html).toContain('كيف بدأت يومك؟');
+    expect(html).not.toContain('مساؤك');
   });
 
-  it('renders Midday when Midday was explicitly selected',()=>{
+  it('renders Arabic Midday when Midday was explicitly selected',()=>{
     const html=renderToString(<LanguageProvider><DailyCheckInModal isOpen onClose={noop} onSaveCheckIn={noop as any} phase="midday"/></LanguageProvider>);
-    expect(html).toContain('Your midday');
-    expect(html).toContain('How is your day going?');
+    expect(html).toContain('منتصف يومك');
+    expect(html).toContain('كيف يسير يومك؟');
   });
 
-  it('renders Evening when Evening was explicitly selected',()=>{
+  it('renders Arabic Evening when Evening was explicitly selected',()=>{
     const html=renderToString(<LanguageProvider><DailyCheckInModal isOpen onClose={noop} onSaveCheckIn={noop as any} phase="evening"/></LanguageProvider>);
-    expect(html).toContain('Your evening');
-    expect(html).toContain('How did today feel?');
+    expect(html).toContain('مساؤك');
+    expect(html).toContain('كيف كان يومك؟');
   });
 
   it('keeps an explicitly selected previous date instead of silently using today',()=>{

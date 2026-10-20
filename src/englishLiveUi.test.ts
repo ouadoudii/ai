@@ -35,28 +35,28 @@ function setEnglishLanguage(){
   (globalThis as any).localStorage={getItem:(key:string)=>key==='rhythm_language_v1'?'en':null,setItem:()=>{}};
 }
 
-describe('English live V2', () => {
+describe('Arabic-only live V2', () => {
   it.each(liveFiles)('%s has no accidental hard-coded German UI copy', (file) => {
     const source = readFileSync(file, 'utf8');
     for (const term of forbiddenVisibleGerman) expect(source, `${file} contains ${term}`).not.toContain(term);
   });
 
-  it('renders the multilingual meal editor in English without leaking German copy',()=>{
+  it('renders the meal editor in Arabic without leaking German copy',()=>{
     setEnglishLanguage();
     const tree=React.createElement(LanguageProvider,null,React.createElement(AddMomentModal,{isOpen:true,onClose:noop,onSave:noop as any}));
     const html=renderToString(tree);
-    expect(html).toContain('Food');
-    expect(html).toContain('What did you have?');
-    expect(html).toContain('Save meal');
+    expect(html).toContain('الطعام');
+    expect(html).toContain('ماذا أكلت؟');
+    expect(html).toContain('حفظ الوجبة');
     for(const term of forbiddenVisibleGerman) expect(html,`meal editor rendered ${term}`).not.toContain(term);
   });
 
-  it('renders the multilingual Today screen in English without leaking German copy',()=>{
+  it('renders the Today screen in Arabic without leaking legacy copy',()=>{
     setEnglishLanguage();
     const tree=React.createElement(LanguageProvider,null,React.createElement(TodayHomeView,{moments:[],checkIns:[],onOpenAddModal:noop,onOpenSnack:noop,onOpenCheckInModal:noop as any,onSelectMoment:noop as any,onNavigateToCoach:noop,onNavigateToTypeAnalysis:noop,onNavigateToTimeline:noop}));
     const html=renderToString(tree);
-    expect(html).toContain('Welcome back');
-    expect(html).toContain('Your recent moments');
+    expect(html).toContain('مرحباً بك');
+    expect(html).toContain('لحظاتك الأخيرة');
     expect(html).not.toContain('Willkommen zurück');
     expect(html).not.toContain('Deine letzten Momente');
     expect(html).not.toContain('Guten Morgen');
