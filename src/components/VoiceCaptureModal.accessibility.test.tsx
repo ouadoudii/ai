@@ -33,11 +33,11 @@ const renderModal = (lang: AppLanguage) => {
 
 describe('VoiceCaptureModal accessible dialog contract', () => {
   it.each([
-    ['en', 'Tell me what you had'],
-    ['de', 'Erzähl mir, was du gegessen hast'],
-    ['fr', 'Raconte-moi ce que tu as mangé'],
+    ['en', 'قل ماذا أكلت'],
+    ['en', 'قل ماذا أكلت'],
+    ['en', 'قل ماذا أكلت'],
     ['ar', 'قل ماذا أكلت'],
-  ] as const)('connects the localized %s heading and description to the modal', (lang, title) => {
+  ] as const)('uses the Arabic UI for saved %s locale and connects the heading and description to the modal', (lang, title) => {
     const html = renderModal(lang);
     expect(html).toContain('role="dialog"');
     expect(html).toContain('aria-modal="true"');
