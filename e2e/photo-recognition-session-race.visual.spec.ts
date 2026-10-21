@@ -38,8 +38,7 @@ async function prepare(page:Page){
 }
 
 async function openEditor(page:Page,mobile:boolean,method:'photo'|'text'){
-  const add=mobile?page.getByTestId('primary-capture-button'):
-    page.getByRole('button',{name:'Add a moment',exact:true}).filter({visible:true}).first();
+  const add=page.getByTestId(mobile?'primary-capture-button':'desktop-capture-button');
   await expect(add).toBeVisible();
   await add.click();
   await page.locator('[data-capture-method="'+method+'"]').click();
@@ -63,7 +62,7 @@ for(const viewport of [
     await prepare(page);
     await openEditor(page,viewport.mobile,'photo');
     await upload(page);
-    await page.getByRole('button',{name:'Close',exact:true}).last().click();
+    await page.getByRole('button',{name:'إغلاق',exact:true}).last().click();
     await openEditor(page,viewport.mobile,'text');
     const input=page.locator('input[autocomplete="off"]');
     await input.fill('unrelated vegetable soup');
@@ -78,7 +77,7 @@ for(const viewport of [
     await prepare(page);
     await openEditor(page,viewport.mobile,'photo');
     await upload(page);
-    await page.getByRole('button',{name:'Coffee',exact:true}).last().click();
+    await page.getByRole('button',{name:'قهوة واستراحة',exact:true}).last().click();
     const input=page.locator('input[autocomplete="off"]');
     await input.fill('fresh mint tea');
     await page.evaluate(()=>(window as any).__resolvePhoto(0,'pizza'));
@@ -92,7 +91,7 @@ for(const viewport of [
     await openEditor(page,viewport.mobile,'photo');
     await upload(page);
     await page.evaluate(()=>(window as any).__resolvePhoto(0,'pizza'));
-    await expect(page.getByTestId('photo-recognition-suggestions')).toContainText('pizza');
+    await expect(page.getByTestId('photo-recognition-suggestions')).toContainText('بيتزا');
     await page.screenshot({path:testInfo.outputPath('photo-current-session-'+viewport.name+'.png'),fullPage:true});
   });
 
@@ -101,7 +100,7 @@ for(const viewport of [
     await prepare(page);
     await openEditor(page,viewport.mobile,'photo');
     await upload(page);
-    await page.getByRole('button',{name:'Close',exact:true}).last().click();
+    await page.getByRole('button',{name:'إغلاق',exact:true}).last().click();
     await openEditor(page,viewport.mobile,'text');
     const input=page.locator('input[autocomplete="off"]');
     await input.fill('fresh vegetable soup');
