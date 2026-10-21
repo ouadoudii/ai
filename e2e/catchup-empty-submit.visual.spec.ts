@@ -22,22 +22,14 @@ for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',wid
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
 
     await page.getByTestId(viewport.name === 'mobile' ? 'mobile-coach-nav' : 'desktop-coach-nav').click();
-    const startCheckInCandidates=page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/});
-    let startCheckIn=startCheckInCandidates.first();
-    for(let index=0;index<await startCheckInCandidates.count();index+=1){
-      const candidate=startCheckInCandidates.nth(index);
-      if(await candidate.isVisible()){
-        startCheckIn=candidate;
-        break;
-      }
-    }
+    const startCheckIn=page.getByRole('button',{name:'Check-in starten',exact:true});
     await expect(startCheckIn).toBeVisible();
     await startCheckIn.click();
 
     const dialog=page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     await expect(dialog).toHaveAccessibleName(/.+/);
-    const add=dialog.getByRole('button',{name:'سجّل لحظة',exact:true});
+    const add=dialog.getByRole('button',{name:'أضف اللحظة',exact:true});
     await expect(add).toBeDisabled();
     await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_checkins_v1')||'[]').length)).toBe(0);
     await page.screenshot({path:testInfo.outputPath(`catchup-empty-${viewport.name}.png`),fullPage:true});

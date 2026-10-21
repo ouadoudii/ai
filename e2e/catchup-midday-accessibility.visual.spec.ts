@@ -25,15 +25,7 @@ for (const viewport of [
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
-    const openerCandidates = page.getByRole('button', { name: /تسجيل|مساء|منتصف|يومك/ });
-    let opener = openerCandidates.first();
-    for (let index = 0; index < await openerCandidates.count(); index += 1) {
-      const candidate = openerCandidates.nth(index);
-      if (await candidate.isVisible()) {
-        opener = candidate;
-        break;
-      }
-    }
+    const opener = page.getByRole('button', { name: 'Check-in starten', exact: true });
     await expect(opener).toBeVisible();
     await opener.click();
 
