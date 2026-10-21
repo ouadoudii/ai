@@ -63,6 +63,8 @@ for(const {name,viewport} of [
     await expect(page.locator('html')).toHaveAttribute('lang','ar');
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
     await expect(dialog.getByText('ما اللحظة التي تريد تسجيلها؟',{exact:true})).toBeVisible();
+    await expect(dialog.getByRole('button',{name:/صورة/})).toBeVisible();
+    await expect(dialog.getByRole('button',{name:/احكِ لي/})).toBeVisible();
     await expect(dialog.locator('[data-language-option]')).toHaveCount(0);
     await expect(dialog.getByRole('button',{name:/English|Deutsch|Français/})).toHaveCount(0);
   });
