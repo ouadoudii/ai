@@ -46,12 +46,18 @@ test('capture dialog keeps keyboard focus inside the modal', async ({ page }) =>
   await page.getByTestId('primary-capture-button').click();
 
   const dialog = page.getByRole('dialog');
-  const firstFocusable = dialog.getByRole('button', { name: 'إغلاق', exact: true });
-  const lastFocusable = dialog.locator('[data-capture-method="text"]');
+  const closeButton = dialog.getByRole('button', { name: 'إغلاق', exact: true });
+  const focusable = dialog.locator(
+    'button:not([disabled]):visible, input:not([disabled]):visible, select:not([disabled]):visible, textarea:not([disabled]):visible, [tabindex]:not([tabindex="-1"]):visible',
+  );
 
   await expect(dialog).toBeVisible();
-  await expect(firstFocusable).toBeFocused();
+  await expect(closeButton).toBeFocused();
+  expect(await focusable.count()).toBeGreaterThan(1);
 
+  const firstFocusable = focusable.first();
+  const lastFocusable = focusable.last();
+  await firstFocusable.focus();
   await page.keyboard.press('Shift+Tab');
   await expect(lastFocusable).toBeFocused();
 
