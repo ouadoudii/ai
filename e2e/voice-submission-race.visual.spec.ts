@@ -72,13 +72,13 @@ async function openHarness(browser: Browser, device: DeviceCase, language: Langu
   return { page, context };
 }
 
-async function capture(page: Page, device: DeviceCase, language: Language) {
+async function capture(page: Page, device: DeviceCase) {
   await page.getByTestId(device === 'desktop' ? 'desktop-capture-button' : 'primary-capture-button').click();
   await page.locator('[data-capture-method="voice"]').click();
-  const start = language === 'de' ? 'Aufnahme starten' : language === 'fr' ? 'Commencer' : language === 'ar' ? 'ابدأ التسجيل' : 'Start recording';
-  const stop = language === 'de' ? 'Aufnahme stoppen' : language === 'fr' ? 'Arrêter' : language === 'ar' ? 'إيقاف التسجيل' : 'Stop recording';
-  await page.getByRole('button', { name: start }).click();
-  await page.getByRole('button', { name: stop }).click();
+  // The product UI is Arabic-only even when a persisted legacy locale exists.
+  // `language` still selects the transcript transport exercised by this harness.
+  await page.getByRole('button', { name: 'ابدأ التسجيل' }).click();
+  await page.getByRole('button', { name: 'إيقاف التسجيل' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
@@ -124,7 +124,7 @@ for (const device of cases) {
     try {
       const pending: Route[] = [];
       await page.route('**/api/voice-checkin', route => { pending.push(route); });
-      await capture(page, device, 'en');
+      await capture(page, device);
       await expect.poll(() => pending.length).toBe(1);
       const draft = await startText(page, device);
       await draft.fill('Fresh meal B - untouched');
@@ -146,9 +146,9 @@ for (const device of cases) {
       try {
         const pending: Route[] = [];
         await page.route('**/api/voice-checkin', route => { pending.push(route); });
-        await capture(page, device, 'de');
+        await capture(page, device);
         await expect.poll(() => pending.length).toBe(1);
-        await capture(page, device, 'de');
+        await capture(page, device);
         await expect.poll(() => pending.length).toBe(2);
         if (order === 'A then B') {
           await fulfill(pending[0], journal('old-couscous-A'));
@@ -171,7 +171,7 @@ for (const device of cases) {
       await page.route('**/api/voice-checkin', route => fulfill(route, emptyResult));
       const intents: Route[] = [];
       await page.route('**/api/voice-intent', route => { intents.push(route); });
-      await capture(page, device, 'en');
+      await capture(page, device);
       await expect.poll(() => intents.length).toBe(1);
       const draft = await startText(page, device);
       await draft.fill('New meal after intent request');
@@ -188,9 +188,9 @@ test('#234 mobile Arabic transcription A cannot replace an English/mixed-languag
   try {
     const pending: Route[] = [];
     await page.route('**/api/voice-checkin', route => { pending.push(route); });
-    await capture(page, 'mobile', 'ar');
+    await capture(page, 'mobile');
     await expect.poll(() => pending.length).toBe(1);
-    await capture(page, 'mobile', 'ar');
+    await capture(page, 'mobile');
     await expect.poll(() => pending.length).toBe(2);
     await fulfill(pending[1], journal('سلطة جديدة'));
     await expect.poll(async () => await titles(page)).toEqual(['سلطة جديدة']);
@@ -206,12 +206,12 @@ test('#234 mobile: navigating to Timeline abandons pending Voice before fallback
   try {
     const pending: Route[] = [];
     await page.route('**/api/voice-checkin', route => { pending.push(route); });
-    await capture(page, 'mobile', 'en');
+    await capture(page, 'mobile');
     await expect.poll(() => pending.length).toBe(1);
     await page.getByTestId('mobile-moments-nav').click();
-    await expect(page.getByRole('heading', { name: 'Journal & timeline' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'اليوميات والتسلسل الزمني' })).toBeVisible();
     await fulfill(pending[0], clarification('old fallback'));
-    await expect(page.getByRole('heading', { name: 'Journal & timeline' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'اليوميات والتسلسل الزمني' })).toBeVisible();
     await expect(page.getByTestId('voice-understanding-card')).toHaveCount(0);
     await expect(page.getByTestId('meal-clarification-card')).toHaveCount(0);
     expect(await titles(page)).toEqual([]);
