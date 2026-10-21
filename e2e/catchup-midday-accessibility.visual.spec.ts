@@ -21,25 +21,42 @@ for (const viewport of [
     const hoursToCatchUp = (17 - browserTime.hour + 24) % 24;
     await page.clock.setFixedTime(new Date(browserTime.now + hoursToCatchUp * 60 * 60 * 1000));
     await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
-    const opener = page.getByRole('button', { name: 'Check-in starten', exact: true });
+    const openerCandidates = page.getByRole('button', { name: /تسجيل|مساء|منتصف|يومك/ });
+    let opener = openerCandidates.first();
+    for (let index = 0; index < await openerCandidates.count(); index += 1) {
+      const candidate = openerCandidates.nth(index);
+      if (await candidate.isVisible()) {
+        opener = candidate;
+        break;
+      }
+    }
     await expect(opener).toBeVisible();
     await opener.click();
 
-    const dialog = page.getByRole('dialog', { name: 'Want to add what you ate?' });
-    const close = dialog.getByRole('button', { name: 'Close' });
-    const later = dialog.getByRole('button', { name: 'Not now' });
+    const dialog = page.getByRole('dialog');
+    const close = dialog.getByRole('button', { name: 'إغلاق', exact: true });
+    const focusable = dialog.locator(
+      'button:not([disabled]):visible, input:not([disabled]):visible, select:not([disabled]):visible, textarea:not([disabled]):visible, [tabindex]:not([tabindex="-1"]):visible',
+    );
     await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAccessibleName(/.+/);
     await expect(dialog).toHaveAttribute('aria-modal', 'true');
     await expect(page.locator('#root')).toHaveAttribute('inert', '');
     await expect(page.locator('#root')).toHaveAttribute('aria-hidden', 'true');
     await expect(close).toBeFocused();
+    expect(await focusable.count()).toBeGreaterThan(1);
 
+    const firstFocusable = focusable.first();
+    const lastFocusable = focusable.last();
+    await firstFocusable.focus();
     await page.keyboard.press('Shift+Tab');
-    await expect(later).toBeFocused();
+    await expect(lastFocusable).toBeFocused();
     await page.keyboard.press('Tab');
-    await expect(close).toBeFocused();
+    await expect(firstFocusable).toBeFocused();
 
     await page.screenshot({ path: testInfo.outputPath(`catchup-${viewport.name}.png`), fullPage: true });
     await page.keyboard.press('Escape');
