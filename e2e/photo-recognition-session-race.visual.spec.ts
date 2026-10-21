@@ -77,7 +77,7 @@ for(const viewport of [
     await prepare(page);
     await openEditor(page,viewport.mobile,'photo');
     await upload(page);
-    await page.getByRole('button',{name:'قهوة واستراحة',exact:true}).last().click();
+    await page.getByRole('button',{name:'قهوة',exact:true}).last().click();
     const input=page.locator('input[autocomplete="off"]');
     await input.fill('fresh mint tea');
     await page.evaluate(()=>(window as any).__resolvePhoto(0,'pizza'));
