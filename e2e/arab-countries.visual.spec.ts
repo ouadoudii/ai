@@ -109,36 +109,33 @@ test('Add menu keeps only photo and voice, with working back navigation',async({
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
   const dialog=page.getByRole('dialog');
-  await expect(dialog.getByRole('button',{name:/Photo/})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/Tell me/})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/Quick check/})).toHaveCount(0);
-  await dialog.getByRole('button',{name:/Photo/}).click();
-  await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
-  await page.getByRole('button',{name:'Back'}).click();
-  await expect(page.getByRole('dialog').getByRole('button',{name:/Tell me/})).toBeVisible();
-  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
-  await expect(page.getByRole('heading',{name:/Tell me what you had/})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
-  await page.getByRole('button',{name:'Back'}).click();
-  await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/صورة/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/احكِ لي/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/اختيار سريع/})).toHaveCount(0);
+  await dialog.getByRole('button',{name:/صورة/}).click();
+  await expect(page.getByRole('button',{name:'رجوع'})).toBeVisible();
+  await page.getByRole('button',{name:'رجوع'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/احكِ لي/})).toBeVisible();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await expect(page.getByRole('heading',{name:/احكِ لي ماذا أكلت/})).toBeVisible();
+  await expect(page.getByRole('button',{name:'رجوع'})).toBeVisible();
+  await page.getByRole('button',{name:'رجوع'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
 });
 
-test('English switch changes the real capture UI to LTR',async({page},testInfo)=>{
+test('legacy English locale cannot switch the real capture UI away from RTL',async({page})=>{
   await page.addInitScript(()=>{
-    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('rhythm_language_v1','en');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  const captureButton=page.getByTestId('primary-capture-button');
-  await captureButton.click();
-  const english=page.getByRole('button',{name:/English/}).first();
-  await expect(english).toBeVisible();
-  await english.click();
-  await expect(page.locator('html')).toHaveAttribute('dir','ltr');
-  await expect(page.getByText(/What would you like to capture\?/)).toBeVisible();
-  await page.screenshot({path:testInfo.outputPath('english-switch.png'),fullPage:true});
+  await page.getByTestId('primary-capture-button').click();
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/English/})).toHaveCount(0);
 });
 
 test('guest mode persists locally without requiring an account',async({page})=>{
@@ -192,13 +189,13 @@ test('photo meal flow stores two selected dishes in one meal',async({page})=>{
   });
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('dialog').getByRole('button',{name:/Photo/}).click();
-  await expect(page.getByRole('heading',{name:/What did you have\?/})).toBeVisible();
+  await page.getByRole('dialog').getByRole('button',{name:/صورة/}).click();
+  await expect(page.getByRole('heading',{name:/ماذا أكلت؟/})).toBeVisible();
   await page.getByTestId('food-visual-pasta').click();
   await page.getByTestId('food-visual-salad').click();
   await expect(page.getByTestId('food-visual-pasta')).toHaveAttribute('aria-pressed','true');
   await expect(page.getByTestId('food-visual-salad')).toHaveAttribute('aria-pressed','true');
-  await page.getByRole('button',{name:/Save meal/}).click();
+  await page.getByRole('button',{name:/حفظ الوجبة/}).click();
   await expect.poll(async()=>{
     const raw=await page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1'));
     return raw||'';
@@ -401,11 +398,11 @@ test('Voice capture handles denied microphone permission without trapping the us
   await page.addInitScript(()=>{delete (window as any).SpeechRecognition;delete (window as any).webkitSpeechRecognition;localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true')});
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:'Start recording'}).click();
   await expect(page.getByText('Microphone permission is needed to record.')).toBeVisible();
-  await page.getByRole('button',{name:'Back'}).click();
-  await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
+  await page.getByRole('button',{name:'رجوع'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
 });
 
 test('Voice capture starts, stops, transcribes and stores the recognized meal',async({page})=>{
@@ -446,7 +443,7 @@ test('Voice capture starts, stops, transcribes and stores the recognized meal',a
   });
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:'Start recording'}).click();
   await expect(page.getByRole('button',{name:'Stop recording'})).toBeVisible();
   await page.getByRole('button',{name:'Stop recording'}).click();
@@ -470,10 +467,10 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
   });
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:'Start recording'}).click();
-  await page.getByRole('button',{name:'Back'}).click();
-  await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
+  await page.getByRole('button',{name:'رجوع'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
   await expect(page.getByRole('heading',{name:'What did you have?'})).toHaveCount(0);
 });
 
