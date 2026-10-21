@@ -45,6 +45,29 @@ test('real Arabic first-run journey: guest to onboarding to app',async({page},te
   await page.screenshot({path:testInfo.outputPath('03-home-after-onboarding.png'),fullPage:true});
 });
 
+for(const {name,viewport} of [
+  {name:'mobile',viewport:{width:390,height:844}},
+  {name:'desktop',viewport:{width:1440,height:900}},
+]){
+  test(`capture stays Arabic-only without legacy language controls on ${name}`,async({page})=>{
+    await page.setViewportSize(viewport);
+    await page.addInitScript(()=>{
+      localStorage.setItem('rhythm_language_v1','en');
+      localStorage.setItem('cary_access_mode_v1','guest');
+      localStorage.setItem('cary_onboarding_v2_complete','true');
+      sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    });
+    await page.goto('/');
+    await page.getByTestId('primary-capture-button').click();
+    const dialog=page.getByRole('dialog');
+    await expect(page.locator('html')).toHaveAttribute('lang','ar');
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+    await expect(dialog.getByText('ما اللحظة التي تريد تسجيلها؟',{exact:true})).toBeVisible();
+    await expect(dialog.locator('[data-language-option]')).toHaveCount(0);
+    await expect(dialog.getByRole('button',{name:/English|Deutsch|Français/})).toHaveCount(0);
+  });
+}
+
 for(const country of countries){
   test(`${country} Arabic mobile app journey`,async({page},testInfo)=>{
     await page.route('**/api/locale',async route=>{
@@ -68,10 +91,11 @@ for(const country of countries){
     await captureButton.click();
     await expect(page.locator('html')).toHaveAttribute('lang','ar');
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
-    await expect(page.getByText('English',{exact:true})).toHaveCount(0);
+    const captureDialog=page.getByRole('dialog');
+    await expect(captureDialog.locator('[data-language-option]')).toHaveCount(0);
+    await expect(captureDialog.getByRole('button',{name:/English|Deutsch|Français/})).toHaveCount(0);
     await page.screenshot({path:testInfo.outputPath(`${country}-02-capture.png`),fullPage:true});
 
-    const captureDialog=page.getByRole('dialog');
     await expect(captureDialog).toBeVisible();
     const photoButton=captureDialog.getByRole('button',{name:/صورة/});
     await expect(photoButton).toBeVisible();
