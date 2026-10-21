@@ -58,7 +58,7 @@ for(const {name,viewport} of [
       sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
     });
     await page.goto('/');
-    await page.getByTestId('primary-capture-button').click();
+    await page.getByTestId(name==='desktop'?'desktop-capture-button':'primary-capture-button').click();
     const dialog=page.getByRole('dialog');
     await expect(page.locator('html')).toHaveAttribute('lang','ar');
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
