@@ -143,7 +143,7 @@ test('Add menu keeps only photo and voice, with working back navigation',async({
   await page.getByRole('button',{name:'رجوع'}).click();
   await expect(page.getByRole('dialog').getByRole('button',{name:/احكِ لي/})).toBeVisible();
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
-  await expect(page.getByRole('heading',{name:/احكِ لي ماذا أكلت/})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'قل ماذا أكلت'})).toBeVisible();
   await expect(page.getByRole('button',{name:'رجوع'})).toBeVisible();
   await page.getByRole('button',{name:'رجوع'}).click();
   await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
@@ -173,7 +173,7 @@ test('guest mode persists locally without requiring an account',async({page})=>{
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await expect(page.getByRole('button',{name:/Open account/})).toContainText(/Guest/);
+  await expect(page.getByRole('button',{name:/فتح الحساب/})).toContainText(/ضيف/);
   const stored=await page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1'));
   expect(stored).toContain('guest-local');
 });
@@ -199,8 +199,8 @@ test('returning account mode restores a stored session and keeps cloud sync avai
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await expect(page.getByRole('button',{name:/Open account/})).toContainText('returning@example.com');
-  await expect(page.getByText(/Start on this device/)).not.toBeVisible();
+  await expect(page.getByRole('button',{name:/فتح الحساب/})).toContainText('returning@example.com');
+  await expect(page.getByText(/ابدأ على هذا الجهاز/)).not.toBeVisible();
 });
 
 
@@ -225,7 +225,7 @@ test('photo meal flow stores two selected dishes in one meal',async({page})=>{
   await expect.poll(async()=>{
     const raw=await page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1'));
     return raw||'';
-  }).toContain('Pasta · Fresh salad');
+  }).toContain('باستا · سلطة طازجة');
 });
 
 
@@ -425,8 +425,8 @@ test('Voice capture handles denied microphone permission without trapping the us
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
-  await page.getByRole('button',{name:'Start recording'}).click();
-  await expect(page.getByText('Microphone permission is needed to record.')).toBeVisible();
+  await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
+  await expect(page.getByText('نحتاج إذن الميكروفون للتسجيل.')).toBeVisible();
   await page.getByRole('button',{name:'رجوع'}).click();
   await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
 });
@@ -470,9 +470,9 @@ test('Voice capture starts, stops, transcribes and stores the recognized meal',a
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
-  await page.getByRole('button',{name:'Start recording'}).click();
-  await expect(page.getByRole('button',{name:'Stop recording'})).toBeVisible();
-  await page.getByRole('button',{name:'Stop recording'}).click();
+  await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
+  await expect(page.getByRole('button',{name:'إيقاف التسجيل'})).toBeVisible();
+  await page.getByRole('button',{name:'إيقاف التسجيل'}).click();
   await expect.poll(async()=>page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1')||'')).toContain('boiled eggs');
   await expect(page.getByTestId('voice-understanding-card')).toHaveCount(0);
   await expect(page.getByRole('heading',{name:'What did you have?'})).toHaveCount(0);
@@ -494,7 +494,7 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
-  await page.getByRole('button',{name:'Start recording'}).click();
+  await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
   await page.getByRole('button',{name:'رجوع'}).click();
   await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
   await expect(page.getByRole('heading',{name:'What did you have?'})).toHaveCount(0);
