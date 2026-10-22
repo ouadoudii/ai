@@ -77,7 +77,7 @@ for (const viewport of [
 
     if (viewport.edit) {
       await page.getByTestId('photo-suggestion-edit-1').click();
-      await expect(typedInput).toHaveValue('sandwich');
+      await expect(typedInput).toHaveValue('ساندويتش');
       await typedInput.fill('grilled sandwich');
     }
 
