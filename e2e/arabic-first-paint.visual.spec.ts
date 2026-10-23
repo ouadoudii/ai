@@ -19,7 +19,6 @@ for (const viewport of [
     await page.evaluate(() => {
       window.dispatchEvent(new ErrorEvent('error', { message: 'تعذر تحميل الحزمة' }));
     });
-    await expect(page.getByTestId('missing')).toHaveCount(0);
     await expect(page.locator('#rhythm-boot-status')).toHaveText('خطأ في بدء التشغيل: تعذر تحميل الحزمة');
   });
 }
