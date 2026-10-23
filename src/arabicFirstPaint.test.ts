@@ -11,11 +11,12 @@ describe('Arabic first-paint document contract', () => {
     expect(html).toContain('جارٍ تشغيل التطبيق.');
   });
 
-  it('keeps startup failure and timeout fallbacks in Arabic', () => {
-    expect(html).toContain('خطأ في بدء التشغيل:');
-    expect(html).toContain('خطأ JavaScript غير معروف');
-    expect(html).toContain('لم يبدأ التطبيق بعد 8 ثوانٍ. ربما تعذر تحميل حزمة JavaScript.');
+  it('keeps startup failure and timeout fallbacks Arabic-only without raw exception details', () => {
+    expect(html).toContain('تعذر بدء التطبيق. يُرجى تحديث الصفحة والمحاولة مرة أخرى.');
+    expect(html).toContain('لم يبدأ التطبيق بعد 8 ثوانٍ. يُرجى تحديث الصفحة والمحاولة مرة أخرى.');
 
+    expect(html).not.toContain('event.message');
+    expect(html).not.toContain('String(event.reason');
     expect(html).not.toContain('Moment is loading…');
     expect(html).not.toContain('Starting the app.');
     expect(html).not.toContain('Startup error:');
