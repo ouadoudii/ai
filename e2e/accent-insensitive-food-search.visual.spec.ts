@@ -40,5 +40,11 @@ test('Arabic meal capture still finds accented French foods typed without accent
   await expect(input).toHaveValue('');
 
   await page.getByRole('button', { name: 'حفظ الوجبة', exact: true }).click();
-  await expect(page.getByText('Crème brûlée', { exact: true })).toBeVisible();
+  await expect(page.getByText('كريم بروليه', { exact: true })).toBeVisible();
+
+  const storedTitle = await page.evaluate(() => {
+    const moments = JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]');
+    return moments[0]?.title;
+  });
+  expect(storedTitle).toBe('Crème brûlée');
 });
