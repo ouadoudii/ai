@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Moment — Food, Sleep & Everyday Rhythm</title>
-    <meta name="description" content="Moment helps you capture food, sleep, energy and wellbeing with minimal effort, then surfaces patterns only when they genuinely repeat." />
+    <title>Moment — الطعام والنوم وإيقاع الحياة اليومية</title>
+    <meta name="description" content="يساعدك Moment على تسجيل الطعام والنوم والطاقة والعافية بسهولة، ثم يوضح الأنماط عندما تتكرر فعلاً." />
     <meta property="og:title" content="Moment" />
-    <meta property="og:description" content="Notice what shapes your everyday rhythm without turning life into a tracking project." />
+    <meta property="og:description" content="اكتشف ما يؤثر في إيقاع حياتك اليومية بدون أن تتحول حياتك إلى مشروع للتتبع." />
     <meta property="og:type" content="website" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,23 +17,23 @@
       <main id="rhythm-boot" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f7f2ea;font-family:system-ui,-apple-system,sans-serif;color:#292524">
         <section style="max-width:520px;width:100%;background:#fff;border:1px solid #e7e5e4;border-radius:24px;padding:28px;box-shadow:0 14px 40px rgba(57,45,35,.08)">
           <div style="font-size:30px;margin-bottom:8px">◌</div>
-          <h1 style="font-size:22px;margin:0 0 8px">Moment is loading…</h1>
-          <p id="rhythm-boot-status" style="margin:0;color:#78716c;line-height:1.5">Starting the app.</p>
+          <h1 style="font-size:22px;margin:0 0 8px">يتم تحميل Moment…</h1>
+          <p id="rhythm-boot-status" style="margin:0;color:#78716c;line-height:1.5">جارٍ تشغيل التطبيق.</p>
         </section>
       </main>
     </div>
     <script>
       window.addEventListener('error', function (event) {
         var status = document.getElementById('rhythm-boot-status');
-        if (status) status.textContent = 'Startup error: ' + (event.message || 'Unknown JavaScript error');
+        if (status) status.textContent = 'خطأ في بدء التشغيل: ' + (event.message || 'خطأ JavaScript غير معروف');
       });
       window.addEventListener('unhandledrejection', function (event) {
         var status = document.getElementById('rhythm-boot-status');
-        if (status) status.textContent = 'Startup error: ' + String(event.reason || 'Unknown promise error');
+        if (status) status.textContent = 'خطأ في بدء التشغيل: ' + String(event.reason || 'خطأ غير معروف');
       });
       setTimeout(function () {
         var status = document.getElementById('rhythm-boot-status');
-        if (status) status.textContent = 'The app has not started after 8 seconds. The JavaScript bundle may have failed to load.';
+        if (status) status.textContent = 'لم يبدأ التطبيق بعد 8 ثوانٍ. ربما تعذر تحميل حزمة JavaScript.';
       }, 8000);
     </script>
     <script type="module" src="/src/main.tsx"></script>
