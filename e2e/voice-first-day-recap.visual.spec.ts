@@ -52,10 +52,10 @@ test('voice is the primary home action on mobile and opens recording directly',a
   const voice=page.getByTestId('voice-home-mic');
   await expect(voice).toBeVisible();
   await expect(voice).toHaveAttribute('data-full-day-recap','false');
-  await expect(voice).toContainText('Sprich mit Moment');
+  await expect(voice).toContainText('هضر مع Moment');
   await page.screenshot({path:testInfo.outputPath('voice-first-home-mobile.png'),fullPage:true});
   await voice.click();
-  await expect(page.getByRole('button',{name:'Aufnahme starten'})).toBeVisible();
+  await expect(page.getByRole('button',{name:/ابدأ التسجيل/})).toBeVisible();
 });
 
 test('after 18:00 an incomplete day collapses to one Darija whole-day voice recap',async({page},testInfo)=>{
