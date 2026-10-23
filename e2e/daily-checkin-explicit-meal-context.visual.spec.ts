@@ -17,13 +17,15 @@ test('daily check-in does not invent untouched meal context', async ({ page }, t
   });
 
   await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await page.getByTestId('personal-plan-start').click();
   const dialog = page.getByRole('dialog');
-  const mealInput = dialog.getByPlaceholder('What did you eat? Search or type…');
+  const mealInput = dialog.getByPlaceholder('ماذا أكلت؟ ابحث أو اكتب…');
   await mealInput.fill('Loop A meal');
   await mealInput.press('Enter');
-  await dialog.getByRole('button', { name: 'Noch ein Schritt', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Fertig', exact: true }).click();
+  await dialog.getByRole('button', { name: 'خطوة أخيرة', exact: true }).click();
+  await dialog.getByRole('button', { name: 'تم', exact: true }).click();
 
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]').length)).toBe(1);
   const food = await page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]')[0]?.food);
