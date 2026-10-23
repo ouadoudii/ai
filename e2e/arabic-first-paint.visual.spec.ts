@@ -18,8 +18,9 @@ for (const viewport of [
     expect(blockedEntryUrl).toMatch(/\/assets\/index-[^/?]+\.js/);
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page).toHaveTitle('Moment — الطعام والنوم وإيقاع الحياة اليومية');
-    await expect(page.getByRole('heading', { name: 'يتم تحميل Moment…' })).toBeVisible();
+    await expect(page).toHaveTitle('ريثم — الطعام والنوم وإيقاع الحياة اليومية');
+    await expect(page.getByRole('heading', { name: 'يتم تحميل ريثم…' })).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('Moment');
     await expect(page.getByText('جارٍ تشغيل التطبيق.', { exact: true })).toBeVisible();
 
     await page.evaluate(() => {
