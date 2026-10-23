@@ -52,7 +52,8 @@ test('voice is the primary home action on mobile and opens recording directly',a
   const voice=page.getByTestId('voice-home-mic');
   await expect(voice).toBeVisible();
   await expect(voice).toHaveAttribute('data-full-day-recap','false');
-  await expect(voice).toContainText('هضر مع Moment');
+  await expect(voice).toContainText('هضر مع ريثم');
+  await expect(voice).not.toContainText('Moment');
   await page.screenshot({path:testInfo.outputPath('voice-first-home-mobile.png'),fullPage:true});
   await voice.click();
   await expect(page.getByRole('button',{name:/ابدأ التسجيل/})).toBeVisible();
@@ -65,6 +66,8 @@ test('after 18:00 an incomplete day collapses to one Darija whole-day voice reca
   const voice=page.getByTestId('voice-home-mic');
   await expect(voice).toHaveAttribute('data-full-day-recap','true');
   await expect(voice).toContainText('عاود ليا نهارك كامل');
+  await expect(voice).toContainText('ريثم');
+  await expect(voice).not.toContainText('Moment');
   await expect(page.getByText('صباح الخير',{exact:true})).toHaveCount(0);
   await expect(page.getByText('منتصف اليوم',{exact:true})).toHaveCount(0);
   await expect(page.getByText('وجبة خفيفة',{exact:true})).toHaveCount(0);
