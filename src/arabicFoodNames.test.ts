@@ -27,6 +27,19 @@ describe('Arabic food suggestions across countries and the full day', () => {
     const localized = localizeFoodSuggestions(english, 'en');
     expect(localized[0].name).toBe(english[0].name);
   });
+
+  it('preserves an accent-insensitive Latin match in Arabic mode', () => {
+    const french = getFoodSuggestions('FR');
+    const localized = localizeFoodSuggestions(french, 'ar', 'creme bru');
+    expect(localized.map(item => item.name)).toContain('Crème brûlée');
+  });
+
+  it('keeps Arabic suggestions localized for an Arabic query', () => {
+    const french = getFoodSuggestions('FR');
+    const localized = localizeFoodSuggestions(french, 'ar', 'كريم بروليه');
+    expect(localized.map(item => item.name)).toContain('كريم بروليه');
+    expect(localized.some(item => item.name === 'Crème brûlée')).toBe(false);
+  });
 });
 
 describe('legacy repeated meals in Arabic mode', () => {
