@@ -23,17 +23,17 @@
       </main>
     </div>
     <script>
-      window.addEventListener('error', function (event) {
+      window.addEventListener('error', function () {
         var status = document.getElementById('rhythm-boot-status');
-        if (status) status.textContent = 'خطأ في بدء التشغيل: ' + (event.message || 'خطأ JavaScript غير معروف');
+        if (status) status.textContent = 'تعذر بدء التطبيق. يُرجى تحديث الصفحة والمحاولة مرة أخرى.';
       });
-      window.addEventListener('unhandledrejection', function (event) {
+      window.addEventListener('unhandledrejection', function () {
         var status = document.getElementById('rhythm-boot-status');
-        if (status) status.textContent = 'خطأ في بدء التشغيل: ' + String(event.reason || 'خطأ غير معروف');
+        if (status) status.textContent = 'تعذر بدء التطبيق. يُرجى تحديث الصفحة والمحاولة مرة أخرى.';
       });
       setTimeout(function () {
         var status = document.getElementById('rhythm-boot-status');
-        if (status) status.textContent = 'لم يبدأ التطبيق بعد 8 ثوانٍ. ربما تعذر تحميل حزمة JavaScript.';
+        if (status) status.textContent = 'لم يبدأ التطبيق بعد 8 ثوانٍ. يُرجى تحديث الصفحة والمحاولة مرة أخرى.';
       }, 8000);
     </script>
     <script type="module" src="/src/main.tsx"></script>
