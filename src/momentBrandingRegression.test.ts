@@ -7,10 +7,10 @@ const html = readFileSync(indexPath, 'utf8');
 
 describe('Moment browser branding', () => {
   it('uses Moment consistently in title, social metadata and boot copy', () => {
-    expect(html).toContain('<title>Moment — Food, Sleep & Everyday Rhythm</title>');
-    expect(html).toContain('content="Moment helps you capture food, sleep, energy and wellbeing');
+    expect(html).toContain('<title>Moment — الطعام والنوم وإيقاع الحياة اليومية</title>');
+    expect(html).toContain('content="يساعدك Moment على تسجيل الطعام والنوم والطاقة والعافية');
     expect(html).toContain('<meta property="og:title" content="Moment" />');
-    expect(html).toContain('Moment is loading…');
+    expect(html).toContain('يتم تحميل Moment…');
     expect(html).not.toContain('<title>Cary');
     expect(html).not.toContain('content="Cary helps');
     expect(html).not.toContain('Cary is loading…');
