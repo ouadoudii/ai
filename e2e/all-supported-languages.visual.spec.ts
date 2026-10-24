@@ -8,6 +8,7 @@ const arabic = {
   today: 'اليوم',
   discoveries: 'اكتشافاتك',
   moments: 'لحظاتي',
+  desktopMoments: 'لحظات',
   chooseLanguage: 'اختر اللغة',
   homeHeading: 'مرحباً بك 👋',
   captureDay: 'سجّل يومك',
@@ -54,7 +55,7 @@ for (const legacyLanguage of legacyLanguages) {
     if (testInfo.project.name === 'android-arabic') {
       await expect(page.getByTestId('mobile-moments-nav')).toBeVisible();
     } else {
-      await expect(page.getByRole('navigation').getByRole('button', { name: arabic.moments, exact: true })).toBeVisible();
+      await expect(page.getByRole('navigation').getByRole('button', { name: arabic.desktopMoments, exact: true })).toBeVisible();
     }
     await expect(page.getByRole('button', { name: arabic.chooseLanguage, exact: true })).toBeVisible();
     await expect(page.getByText(arabic.today, { exact: true }).last()).toBeVisible();
