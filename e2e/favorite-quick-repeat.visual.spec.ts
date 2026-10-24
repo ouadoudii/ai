@@ -1,6 +1,7 @@
 import { expect,test } from '@playwright/test';
 
 const favoriteTitle='My favorite bowl';
+const favoriteDisplayTitle='وجبة عشاء سابقة';
 const moments=[
  {id:'favorite-old',title:favoriteTitle,label:'Meal',category:'dinner',date:'2026-09-20',time:'19:00',location:'',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt:1,isFavorite:true},
  {id:'recent',title:'Recent soup',label:'Meal',category:'lunch',date:'2026-09-28',time:'12:00',location:'',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt:10,isFavorite:false}
@@ -11,9 +12,9 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
  await page.setViewportSize({width:viewport.width,height:viewport.height});await prepare(page);await page.goto('/');
  await expect(page.locator('html')).toHaveAttribute('lang','ar');await expect(page.locator('html')).toHaveAttribute('dir','rtl');
  await page.getByRole('button',{name:'سجّل لحظة'}).first().click();
- const favorites=page.locator('[data-favorite-quick-repeat="true"]');await expect(favorites).toContainText('المفضلة');await expect(favorites.getByRole('button',{name:favoriteTitle})).toBeVisible();
+ const favorites=page.locator('[data-favorite-quick-repeat="true"]');await expect(favorites).toContainText('المفضلة');await expect(favorites.getByRole('button',{name:favoriteDisplayTitle})).toBeVisible();await expect(favorites).not.toContainText(favoriteTitle);
  await page.screenshot({path:testInfo.outputPath(`favorite-quick-repeat-${viewport.name}.png`),fullPage:true});
- await favorites.getByRole('button',{name:favoriteTitle}).click();await page.waitForLoadState('domcontentloaded');
+ await favorites.getByRole('button',{name:favoriteDisplayTitle}).click();await page.waitForLoadState('domcontentloaded');
  const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]'));
  expect(stored).toHaveLength(3);expect(stored[0].title).toBe(favoriteTitle);expect(stored[0].tags).toEqual(['Repeated']);expect(stored[0].isFavorite).toBe(false);expect(stored[0].id).not.toBe('favorite-old');
  await page.reload();
