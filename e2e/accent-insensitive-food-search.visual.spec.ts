@@ -27,7 +27,7 @@ test('Arabic meal capture still finds accented French foods typed without accent
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button', { name: 'سجّل لحظة' }).first().click();
   await page.getByRole('button', { name: 'صورة', exact: true }).click();
 
   const input = page.getByPlaceholder('ابدأ بالكتابة… مثلاً طاجين');
