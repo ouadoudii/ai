@@ -29,6 +29,12 @@ async function suppressAutoCapture(page:any){
   });
 }
 
+async function openCapture(page:any){
+  const captureButton=page.getByRole('button',{name:'سجّل لحظة'}).first();
+  await expect(captureButton).toBeVisible();
+  await captureButton.click();
+}
+
 test('real Arabic first-run journey: guest to onboarding to app',async({page},testInfo)=>{
   await page.addInitScript(()=>localStorage.setItem('rhythm_language_v1','ar'));
   await suppressAutoCapture(page);
@@ -88,9 +94,7 @@ for(const country of countries){
     await expect(page.getByText(/مرحباً بك/)).toBeVisible();
     await page.screenshot({path:testInfo.outputPath(`${country}-01-home.png`),fullPage:true});
 
-    const captureButton=page.getByTestId('primary-capture-button');
-    await expect(captureButton).toBeVisible();
-    await captureButton.click();
+    await openCapture(page);
     await expect(page.locator('html')).toHaveAttribute('lang','ar');
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
     const captureDialog=page.getByRole('dialog');
@@ -119,7 +123,7 @@ test('legacy stored English preference cannot change the Arabic capture and food
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang','ar');
   await expect(page.locator('html')).toHaveAttribute('dir','rtl');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   const dialog=page.getByRole('dialog');
   await expect(dialog.getByRole('button',{name:/صورة/})).toBeVisible();
   await expect(dialog.getByRole('button',{name:/احكِ لي/})).toBeVisible();
@@ -133,7 +137,7 @@ test('legacy stored English preference cannot change the Arabic capture and food
 test('Add menu keeps only photo and voice, with working back navigation',async({page})=>{
   await page.addInitScript(()=>{localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true')});
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   const dialog=page.getByRole('dialog');
   await expect(dialog.getByRole('button',{name:/صورة/})).toBeVisible();
   await expect(dialog.getByRole('button',{name:/احكِ لي/})).toBeVisible();
@@ -157,7 +161,7 @@ test('legacy English locale cannot switch the real capture UI away from RTL',asy
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await expect(page.locator('html')).toHaveAttribute('dir','rtl');
   await expect(page.locator('html')).toHaveAttribute('lang','ar');
   await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
@@ -214,7 +218,7 @@ test('photo meal flow stores two selected dishes in one meal',async({page})=>{
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/صورة/}).click();
   await expect(page.getByRole('heading',{name:/ماذا أكلت؟/})).toBeVisible();
   await page.getByTestId('food-visual-pasta').click();
@@ -245,7 +249,7 @@ test('fresh guest sees only the intentional voice-first entry before manual capt
   await expect(voiceEntry.getByRole('heading',{name:'ما الذي أتى بك إلينا؟ احكِ لي قليلاً عنك.',exact:true})).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(1);
   await expect(page.locator('#root')).toHaveAttribute('inert','');
-  await expect(page.getByTestId('primary-capture-button')).toBeVisible();
+  await expect(page.getByRole('button',{name:'سجّل لحظة'}).first()).toBeVisible();
   await expect(page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/})).toHaveCount(0);
 });
 
@@ -259,7 +263,7 @@ test('Arabic food search recognizes بيض in the real meal editor',async({page}
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/صورة/}).click();
   const input=page.getByPlaceholder(/ابدأ بالكتابة/);
   await input.fill('بيض');
@@ -277,7 +281,7 @@ test('Moroccan Arabic autocomplete recognizes common real foods',async({page})=>
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/صورة/}).click();
   const input=page.getByPlaceholder(/ابدأ بالكتابة/);
   const cases=[
@@ -423,7 +427,7 @@ test('Voice capture handles denied microphone permission without trapping the us
   await context.clearPermissions();
   await page.addInitScript(()=>{delete (window as any).SpeechRecognition;delete (window as any).webkitSpeechRecognition;localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true')});
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
   await expect(page.getByText('نحتاج إذن الميكروفون للتسجيل.')).toBeVisible();
@@ -468,7 +472,7 @@ test('Voice capture starts, stops, transcribes and stores the recognized meal',a
     (window as any).Worker=FakeWorker;
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
   await expect(page.getByRole('button',{name:'إيقاف التسجيل'})).toBeVisible();
@@ -492,7 +496,7 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
     Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
   await page.getByRole('button',{name:'رجوع'}).click();
@@ -556,7 +560,7 @@ test('Arabic Whisper understands a full Darija message semantically with multipl
     (window as any).Worker=FakeWorker;
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
@@ -606,7 +610,7 @@ test('Arabic Whisper semantic failure keeps the full message out of autocomplete
     ;(window as any).Worker=FakeWorker;
   },raw);
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
@@ -658,7 +662,7 @@ test('Arabic Whisper transcript is sent once as one complete message',async({pag
     ;(window as any).Worker=FakeWorker;
   },raw);
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
@@ -688,7 +692,7 @@ test('Arabic voice deliberately uses local Whisper even when Chrome speech recog
     Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await expect(page.getByTestId('voice-diagnostic')).toContainText('Whisper');
