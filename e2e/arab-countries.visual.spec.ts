@@ -249,7 +249,7 @@ test('fresh guest sees only the intentional voice-first entry before manual capt
   await expect(voiceEntry.getByRole('heading',{name:'ما الذي أتى بك إلينا؟ احكِ لي قليلاً عنك.',exact:true})).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(1);
   await expect(page.locator('#root')).toHaveAttribute('inert','');
-  await expect(page.getByRole('button',{name:'سجّل لحظة'}).first()).toBeVisible();
+  await expect(page.getByRole('button',{name:'سجّل لحظة'})).toHaveCount(0);
   await expect(page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/})).toHaveCount(0);
 });
 
