@@ -11,6 +11,7 @@ const arabic = {
   chooseLanguage: 'اختر اللغة',
   homeHeading: 'مرحباً بك 👋',
   captureDay: 'سجّل يومك',
+  captureAction: 'سجّل لحظة',
   recentMoments: 'لحظاتك الأخيرة',
   captureTitle: 'ما اللحظة التي تريد تسجيلها؟',
   photo: 'صورة',
@@ -40,7 +41,7 @@ async function seedReturningGuest(page: any, language: LegacyLanguage) {
 }
 
 for (const legacyLanguage of legacyLanguages) {
-  test(`legacy ${legacyLanguage} keeps the full mobile food flow in Arabic`, async ({ page }) => {
+  test(`legacy ${legacyLanguage} keeps the full mobile food flow in Arabic`, async ({ page }, testInfo) => {
     await seedReturningGuest(page, legacyLanguage);
     await page.goto('/');
 
@@ -50,11 +51,15 @@ for (const legacyLanguage of legacyLanguages) {
     await expect(page.getByText(arabic.captureDay, { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: arabic.recentMoments, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: arabic.discoveries, exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: arabic.moments, exact: true })).toBeVisible();
+    if (testInfo.project.name === 'android-arabic') {
+      await expect(page.getByTestId('mobile-moments-nav')).toBeVisible();
+    } else {
+      await expect(page.getByRole('navigation').getByRole('button', { name: arabic.moments, exact: true })).toBeVisible();
+    }
     await expect(page.getByRole('button', { name: arabic.chooseLanguage, exact: true })).toBeVisible();
     await expect(page.getByText(arabic.today, { exact: true }).last()).toBeVisible();
 
-    await page.getByTestId('primary-capture-button').click();
+    await page.getByRole('button', { name: arabic.captureAction }).first().click();
     await expect(page.getByRole('heading', { name: arabic.captureTitle, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: arabic.photo, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: arabic.speak, exact: true })).toBeVisible();
