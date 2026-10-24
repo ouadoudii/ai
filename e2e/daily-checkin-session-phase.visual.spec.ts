@@ -45,10 +45,10 @@ test('open generic daily check-in keeps its phase after wall-clock boundary', as
   await expect(start).toBeEnabled();
   await start.click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading')).toHaveText('صباحك · 1/2');
+  await expect(dialog.locator('#daily-checkin-title')).toHaveText('صباحك · 1/2');
   await page.evaluate(() => (window as unknown as { __advanceCheckInClock: () => void }).__advanceCheckInClock());
   await page.getByTestId('personal-plan-start').evaluate((button) => button.setAttribute('data-boundary-rerender', '11:01'));
-  await expect(dialog.getByRole('heading')).toHaveText('صباحك · 1/2');
-  await expect(dialog.getByRole('heading')).not.toHaveText('منتصف يومك · 1/2');
+  await expect(dialog.locator('#daily-checkin-title')).toHaveText('صباحك · 1/2');
+  await expect(dialog.locator('#daily-checkin-title')).not.toHaveText('منتصف يومك · 1/2');
   await page.screenshot({ path: testInfo.outputPath('daily-checkin-session-phase.png'), fullPage: true });
 });
