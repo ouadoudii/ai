@@ -56,6 +56,10 @@ export default defineConfig({
     },
   },
   webServer:{command:'npm run build && npm run preview -- --host 127.0.0.1 --port 4173',url:'http://127.0.0.1:4173',reuseExistingServer:false,timeout:120_000},
-  projects:[{name:'android-arabic',use:{...devices['Pixel 7']}}],
+  // Exercise Arabic/RTL journeys in genuine desktop Chromium and Android contexts.
+  projects:[
+    {name:'desktop-arabic',use:{...devices['Desktop Chrome']}},
+    {name:'android-arabic',use:{...devices['Pixel 7']}},
+  ],
   reporter:[['list'],['html',{outputFolder:'playwright-report',open:'never'}]],
 });

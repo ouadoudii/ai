@@ -24,7 +24,9 @@ for (const surface of [
     await seed(page);
     await page.goto('/');
 
-    const languageOpener = page.getByRole('button', { name: 'Choose language' });
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    const languageOpener = page.getByRole('button', { name: 'اختر اللغة' });
     await expect(languageOpener).toBeVisible();
     await languageOpener.click();
 

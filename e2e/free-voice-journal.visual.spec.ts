@@ -48,27 +48,27 @@ async function stored(page:any,key:string){
 }
 
 test('Voice capture stores a recognized meal instead of requiring a second editor step',async({page})=>{
-  const transcript='boiled eggs';
+  const transcript='كليت بيض مسلوق';
   let calls=0;
   await page.route('**/api/voice-checkin',async route=>{
     calls++;
     const body=JSON.parse(route.request().postData()||'{}');
     expect(body.transcript).toBe(transcript);
-    expect(body.language).toBe('en');
+    expect(body.language).toBe('ar');
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
-      coachFeedback:{title:'Got it',message:'Understood',type:'praise',badge:'Voice',habitScore:90},
+      coachFeedback:{title:'تمام',message:'فهمت',type:'praise',badge:'Voice',habitScore:90},
       extractedData:{
-        mealDetected:true,mealItems:['boiled eggs'],mealTitle:'boiled eggs',mealCategory:'breakfast',mealContext:'',
-        meals:[{category:'breakfast',timeOfDay:'morning',time:'',mealTitle:'boiled eggs',mealItems:['boiled eggs'],hungerBefore:0,fullnessAfter:0}],
+        mealDetected:true,mealItems:['بيض مسلوق'],mealTitle:'بيض مسلوق',mealCategory:'breakfast',mealContext:'',
+        meals:[{category:'breakfast',timeOfDay:'morning',time:'',mealTitle:'بيض مسلوق',mealItems:['بيض مسلوق'],hungerBefore:0,fullnessAfter:0}],
         sleepHours:0,sleepQuality:0,wakeFeeling:'',wellbeingEntries:[]
       }
     })});
   });
-  await installVoiceHarness(page,'en',transcript);
-  await record(page,'en');
+  await installVoiceHarness(page,'ar',transcript);
+  await record(page,'ar');
   await expect.poll(()=>calls).toBe(1);
-  await expect.poll(async()=>((await stored(page,'nimmapp_moments_v1')) as any[]).some(m=>m.title==='boiled eggs'&&m.category==='breakfast')).toBe(true);
-  await expect(page.getByRole('heading',{name:'What did you have?'})).toHaveCount(0);
+  await expect.poll(async()=>((await stored(page,'nimmapp_moments_v1')) as any[]).some(m=>m.title==='بيض مسلوق'&&m.category==='breakfast')).toBe(true);
+  await expect(page.getByRole('heading',{name:'ماذا أكلت؟'})).toHaveCount(0);
 });
 
 test('Arabic free voice keeps negation out and assigns distinct meal moments',async({page})=>{

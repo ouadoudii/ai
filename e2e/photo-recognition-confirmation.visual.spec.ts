@@ -37,7 +37,7 @@ async function prepare(page: import('@playwright/test').Page) {
 async function openPhotoCapture(page: import('@playwright/test').Page, mobile: boolean) {
   const add = mobile
     ? page.getByTestId('primary-capture-button')
-    : page.getByRole('button', { name: 'Add a moment', exact: true }).filter({ visible: true }).first();
+    : page.getByTestId('desktop-capture-button');
   await expect(add).toBeVisible();
   await add.click();
   await page.locator('[data-capture-method="photo"]').click();
@@ -61,13 +61,13 @@ for (const viewport of [
 
     const suggestions = page.getByTestId('photo-recognition-suggestions');
     await expect(suggestions).toBeVisible();
-    await expect(suggestions).toContainText('pizza');
-    await expect(suggestions).toContainText('sandwich');
+    await expect(suggestions).toContainText('بيتزا');
+    await expect(suggestions).toContainText('ساندويتش');
 
     const typedInput = page.locator('input[autocomplete="off"]');
     await expect(typedInput).toHaveValue('');
 
-    const save = page.getByRole('button', { name: 'Save meal', exact: true });
+    const save = page.getByRole('button', { name: 'حفظ الوجبة', exact: true });
     await expect(save).toBeDisabled();
 
     const useSecond = page.getByTestId('photo-suggestion-use-1');
@@ -77,7 +77,7 @@ for (const viewport of [
 
     if (viewport.edit) {
       await page.getByTestId('photo-suggestion-edit-1').click();
-      await expect(typedInput).toHaveValue('sandwich');
+      await expect(typedInput).toHaveValue('ساندويتش');
       await typedInput.fill('grilled sandwich');
     }
 
@@ -87,6 +87,6 @@ for (const viewport of [
     await expect.poll(async () => page.evaluate(() => {
       const moments = JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]');
       return moments[0]?.title || '';
-    })).toBe(viewport.edit ? 'grilled sandwich' : 'sandwich');
+    })).toBe(viewport.edit ? 'grilled sandwich' : 'ساندويتش');
   });
 }

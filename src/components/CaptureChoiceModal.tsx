@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Keyboard, Mic2, RotateCcw, Star, X, Check, Languages } from 'lucide-react';
+import { Camera, Keyboard, Mic2, RotateCcw, Star, X } from 'lucide-react';
 import type { FoodMoment, MomentCategory } from '../types';
 import { derivePersonalMealRotation } from '../personalMealRotation';
 import { mealLabels } from '../utils/mealEditorCopy';
@@ -24,7 +24,6 @@ function read(): FoodMoment[] {
   try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; }
 }
 
-const languageName: Record<AppLanguage, string> = { en: 'English', ar: 'العربية', de: 'Deutsch', fr: 'Français' };
 const textLabel: Record<AppLanguage, string> = { en: 'Type', de: 'Tippen', fr: 'Écrire', ar: 'اكتب' };
 const photoLabel: Record<AppLanguage, string> = { en: 'Photo', de: 'Foto', fr: 'Photo', ar: 'صورة' };
 const speakLabel: Record<AppLanguage, string> = { en: 'Tell me', de: 'Erzähl mir', fr: 'Raconter', ar: 'احكِ لي' };
@@ -34,7 +33,7 @@ const rotationAction: Record<AppLanguage, string> = { en: 'Try', de: 'Ausprobier
 const rotationCategories = ['breakfast','lunch','dinner'] as const;
 
 export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, onClose, onFood, onText, onTellCary, onSelectRotation }) => {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, t } = useLanguage();
   const [recent, setRecent] = React.useState<FoodMoment[]>([]);
   const [favorites, setFavorites] = React.useState<FoodMoment[]>([]);
   const [rotations, setRotations] = React.useState<{category: typeof rotationCategories[number]; title: string}[]>([]);
@@ -75,12 +74,9 @@ export const CaptureChoiceModal: React.FC<CaptureChoiceModalProps> = ({ isOpen, 
     fn();
   };
   const repeat=(moment:FoodMoment,source:'recent'|'favorite')=>{trackUx({eventName:'capture_choice_selected',surface:'capture_choice',language,metadata:{step:`repeat_${source}`}});localStorage.setItem(KEY,JSON.stringify([repeatMeal(moment),...read()]));restoreOpenerRef.current=false;onClose();window.location.reload();};
-  const changeLanguage=(lang:AppLanguage)=>{if(lang===language)return;trackUx({eventName:'language_selected',surface:'capture_choice',language:lang,metadata:{source:'capture_language_picker'}});setLanguage(lang);};
-
   return <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-[#25231F]/55 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="capture-choice-title">
     <section ref={dialogRef} className="w-full sm:max-w-md rounded-t-[32px] sm:rounded-[32px] bg-[#FCFAF6] p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="inline-flex max-w-[calc(100%-3rem)] items-center gap-1 overflow-x-auto rounded-full border border-[#DED8CF] bg-white p-1 shadow-sm" aria-label={t('chooseLanguage')}><Languages className="mx-1 h-4 w-4 shrink-0 text-[#718067]" />{(['en','de','fr','ar'] as AppLanguage[]).map(lang=><button type="button" key={lang} data-language-option="true" onClick={()=>changeLanguage(lang)} className={`min-w-[68px] shrink-0 rounded-full px-2.5 py-2 text-xs font-black transition ${language===lang?'bg-[#526B48] text-white':'text-[#716D66] hover:bg-[#F0ECE4]'}`} aria-pressed={language===lang}>{language===lang&&<Check className="me-1 inline h-3 w-3"/>}{languageName[lang]}</button>)}</div>
+      <div className="mb-4 flex justify-end">
         <button ref={closeButtonRef} type="button" onClick={onClose} className="w-10 h-10 shrink-0 rounded-full bg-white border border-[#E6E1D8] flex items-center justify-center" aria-label={t('close')}><X className="w-4 h-4"/></button>
       </div>
       <p className="text-xs font-bold text-[#8A867E]">{t('addLabel')}</p><h2 id="capture-choice-title" className="mt-1 text-3xl font-display font-black text-[#252824]">{t('addWhat')}</h2>

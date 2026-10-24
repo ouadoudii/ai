@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 async function installSpeech(page:any,transcript:string){
   await page.addInitScript((text:string)=>{
-    localStorage.setItem('rhythm_language_v1','de');
+    localStorage.setItem('rhythm_language_v1','ar');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
     localStorage.setItem('nimmapp_moments_v1','[]');
@@ -34,14 +34,14 @@ async function speak(page:any){
   await page.goto('/');
   await page.getByTestId('primary-capture-button').click();
   await page.getByRole('dialog').locator('[data-capture-method="voice"]').click();
-  await page.getByRole('button',{name:'Aufnahme starten'}).click();
-  await page.getByRole('button',{name:'Aufnahme stoppen'}).click();
+  await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
+  await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
 }
 
-const emptyVoiceResult={coachFeedback:{title:'Verstanden',message:'Danke',type:'praise',badge:'Voice',habitScore:90},extractedData:{mealDetected:false,mealItems:[],mealTitle:'',mealCategory:'',mealContext:'',meals:[],sleepHours:0,sleepQuality:0,wakeFeeling:'',wellbeingEntries:[]}};
+const emptyVoiceResult={coachFeedback:{title:'فهمتك',message:'شكراً',type:'praise',badge:'Voice',habitScore:90},extractedData:{mealDetected:false,mealItems:[],mealTitle:'',mealCategory:'',mealContext:'',meals:[],sleepHours:0,sleepQuality:0,wakeFeeling:'',wellbeingEntries:[]}};
 
 test('closing profile invalidates a late profile-generation response',async({page})=>{
-  const transcript='Ich möchte meinen Essrhythmus besser verstehen.';
+  const transcript='بغيت نفهم إيقاع الأكل ديالي مزيان.';
   await installSpeech(page,transcript);
   await page.route('**/api/voice-checkin',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(emptyVoiceResult)}));
   await page.route('**/api/voice-intent',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({intent:'profile_goal',confidence:.99})}));
@@ -54,8 +54,8 @@ test('closing profile invalidates a late profile-generation response',async({pag
   await speak(page);
   const modal=page.getByTestId('profile-intro-modal');
   await expect(modal).toBeVisible();
-  await expect(modal.getByText('Ich fasse das für dich zusammen …')).toBeVisible();
-  await modal.getByRole('button',{name:'Zurück'}).click();
+  await expect(modal.getByText('ألخّص ما شاركته الآن …')).toBeVisible();
+  await modal.getByRole('button',{name:'رجوع'}).click();
   await expect(modal).toHaveCount(0);
   release();
   await page.waitForTimeout(100);

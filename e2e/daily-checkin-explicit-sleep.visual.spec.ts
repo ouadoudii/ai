@@ -17,11 +17,13 @@ test('morning check-in saves only explicitly answered sleep fields', async ({ pa
   });
 
   await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await page.getByTestId('personal-plan-start').click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('Schlafen gegangen').fill('22:30');
-  await dialog.getByRole('button', { name: 'Noch ein Schritt', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Fertig', exact: true }).click();
+  await dialog.getByLabel('وقت النوم').fill('22:30');
+  await dialog.getByRole('button', { name: 'خطوة أخيرة', exact: true }).click();
+  await dialog.getByRole('button', { name: 'تم', exact: true }).click();
 
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]').length)).toBe(1);
   const sleep = await page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]')[0]?.sleep);

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('production shell presents Moment branding before and after app startup', async ({ page }) => {
+test('production shell presents Arabic ريثم branding before and after app startup', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('rhythm_language_v1', 'de');
     localStorage.setItem('cary_access_mode_v1', 'guest');
@@ -10,7 +10,10 @@ test('production shell presents Moment branding before and after app startup', a
   });
 
   await page.goto('/');
-  await expect(page).toHaveTitle('Moment — Food, Sleep & Everyday Rhythm');
-  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'Moment');
+  await expect(page).toHaveTitle('ريثم — الطعام والنوم وإيقاع الحياة اليومية');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'ريثم');
+  await expect(page.locator('head')).not.toContainText('Moment');
   await expect(page.getByTestId('primary-capture-button')).toBeVisible();
 });

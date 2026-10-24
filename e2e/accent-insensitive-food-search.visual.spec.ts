@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-async function seedFrenchGuest(page: any) {
+async function seedLegacyFrenchGuest(page: any) {
   await page.addInitScript(() => {
     localStorage.setItem('rhythm_language_v1', 'fr');
     localStorage.setItem('cary_access_mode_v1', 'guest');
@@ -11,8 +11,8 @@ async function seedFrenchGuest(page: any) {
   });
 }
 
-test('French meal capture finds accented foods when typed without accents', async ({ page }) => {
-  await seedFrenchGuest(page);
+test('Arabic meal capture still finds accented French foods typed without accents', async ({ page }) => {
+  await seedLegacyFrenchGuest(page);
   await page.route('**/api/locale', async (route: any) => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -25,10 +25,12 @@ test('French meal capture finds accented foods when typed without accents', asyn
   }));
 
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('button', { name: 'Photo', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await page.getByRole('button', { name: 'سجّل لحظة' }).first().click();
+  await page.getByRole('button', { name: 'صورة', exact: true }).click();
 
-  const input = page.getByPlaceholder('Commence à écrire… ex. pâtes au poulet');
+  const input = page.getByPlaceholder('ابدأ بالكتابة… مثلاً طاجين');
   await expect(input).toBeVisible();
   await input.fill('creme bru');
 
@@ -37,6 +39,12 @@ test('French meal capture finds accented foods when typed without accents', asyn
   await suggestion.click();
   await expect(input).toHaveValue('');
 
-  await page.getByRole('button', { name: 'Enregistrer le repas', exact: true }).click();
-  await expect(page.getByText('Crème brûlée', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'حفظ الوجبة', exact: true }).click();
+  await expect(page.getByText('كريم بروليه', { exact: true })).toBeVisible();
+
+  const storedTitle = await page.evaluate(() => {
+    const moments = JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]');
+    return moments[0]?.title;
+  });
+  expect(storedTitle).toBe('Crème brûlée');
 });

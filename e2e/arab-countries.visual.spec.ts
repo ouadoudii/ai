@@ -29,6 +29,12 @@ async function suppressAutoCapture(page:any){
   });
 }
 
+async function openCapture(page:any){
+  const captureButton=page.getByRole('button',{name:'سجّل لحظة'}).first();
+  await expect(captureButton).toBeVisible();
+  await captureButton.click();
+}
+
 test('real Arabic first-run journey: guest to onboarding to app',async({page},testInfo)=>{
   await page.addInitScript(()=>localStorage.setItem('rhythm_language_v1','ar'));
   await suppressAutoCapture(page);
@@ -44,6 +50,31 @@ test('real Arabic first-run journey: guest to onboarding to app',async({page},te
   await expect(page.getByText(/مرحباً بك/)).toBeVisible();
   await page.screenshot({path:testInfo.outputPath('03-home-after-onboarding.png'),fullPage:true});
 });
+
+for(const {name,viewport} of [
+  {name:'mobile',viewport:{width:390,height:844}},
+  {name:'desktop',viewport:{width:1440,height:900}},
+]){
+  test(`capture stays Arabic-only without legacy language controls on ${name}`,async({page})=>{
+    await page.setViewportSize(viewport);
+    await page.addInitScript(()=>{
+      localStorage.setItem('rhythm_language_v1','en');
+      localStorage.setItem('cary_access_mode_v1','guest');
+      localStorage.setItem('cary_onboarding_v2_complete','true');
+      sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
+    });
+    await page.goto('/');
+    await page.getByTestId(name==='desktop'?'desktop-capture-button':'primary-capture-button').click();
+    const dialog=page.getByRole('dialog');
+    await expect(page.locator('html')).toHaveAttribute('lang','ar');
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+    await expect(dialog.getByText('ما اللحظة التي تريد تسجيلها؟',{exact:true})).toBeVisible();
+    await expect(dialog.getByRole('button',{name:/صورة/})).toBeVisible();
+    await expect(dialog.getByRole('button',{name:/احكِ لي/})).toBeVisible();
+    await expect(dialog.locator('[data-language-option]')).toHaveCount(0);
+    await expect(dialog.getByRole('button',{name:/English|Deutsch|Français/})).toHaveCount(0);
+  });
+}
 
 for(const country of countries){
   test(`${country} Arabic mobile app journey`,async({page},testInfo)=>{
@@ -63,14 +94,14 @@ for(const country of countries){
     await expect(page.getByText(/مرحباً بك/)).toBeVisible();
     await page.screenshot({path:testInfo.outputPath(`${country}-01-home.png`),fullPage:true});
 
-    const captureButton=page.getByTestId('primary-capture-button');
-    await expect(captureButton).toBeVisible();
-    await captureButton.click();
-    await expect(page.getByText('العربية',{exact:true})).toBeVisible();
-    await expect(page.getByText('English',{exact:true})).toBeVisible();
+    await openCapture(page);
+    await expect(page.locator('html')).toHaveAttribute('lang','ar');
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+    const captureDialog=page.getByRole('dialog');
+    await expect(captureDialog.locator('[data-language-option]')).toHaveCount(0);
+    await expect(captureDialog.getByRole('button',{name:/English|Deutsch|Français/})).toHaveCount(0);
     await page.screenshot({path:testInfo.outputPath(`${country}-02-capture.png`),fullPage:true});
 
-    const captureDialog=page.getByRole('dialog');
     await expect(captureDialog).toBeVisible();
     const photoButton=captureDialog.getByRole('button',{name:/صورة/});
     await expect(photoButton).toBeVisible();
@@ -82,100 +113,59 @@ for(const country of countries){
   });
 }
 
-test('language switch translates the complete capture and food flow both ways',async({page},testInfo)=>{
-  await page.route('**/api/locale',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({country:'MA'})}));
+test('legacy stored English preference cannot change the Arabic capture and food UI',async({page})=>{
   await page.addInitScript(()=>{
-    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('rhythm_language_v1','en');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
-    localStorage.setItem('nimmapp_moments_v1',JSON.stringify([{id:'arabic-coffee',title:'قهوة',label:'قهوة',category:'coffee',date:'2026-09-08',time:'16:00',location:'غير محدد',locationCategory:'home',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt:Date.now()}]));
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang','ar');
   await expect(page.locator('html')).toHaveAttribute('dir','rtl');
-
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   const dialog=page.getByRole('dialog');
-  await expect(dialog.getByText('لحظة سريعة')).toBeVisible();
-  await expect(dialog.getByText('ما اللحظة التي تريد تسجيلها؟')).toBeVisible();
   await expect(dialog.getByRole('button',{name:/صورة/})).toBeVisible();
   await expect(dialog.getByRole('button',{name:/احكِ لي/})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/اختيار سريع/})).toHaveCount(0);
-
-  await dialog.getByRole('button',{name:'English',exact:true}).click();
-  await expect(page.locator('html')).toHaveAttribute('lang','en');
-  await expect(page.locator('html')).toHaveAttribute('dir','ltr');
-  await expect(dialog.getByText('One quick moment')).toBeVisible();
-  await expect(dialog.getByText('What would you like to capture?')).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/Photo/})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/Tell me/})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/Quick check/})).toHaveCount(0);
-  await expect(dialog.getByText('Coffee',{exact:true})).toBeVisible();
-  await expect(dialog.getByText('قهوة',{exact:true})).toHaveCount(0);
-  await expect(dialog.getByText(/اختر الأسهل|لحظة سريعة|ما اللحظة/)).toHaveCount(0);
-  await expect.poll(async()=>visibleArabicOutsideLanguageControls(page),{message:'English UI must not contain visible Arabic text outside the Arabic language option'}).toEqual([]);
-  await page.screenshot({path:testInfo.outputPath('language-switch-01-english.png'),fullPage:true});
-
-  await dialog.getByRole('button',{name:/Photo/}).click();
-  await expect(page.getByRole('heading',{name:'What did you have?'})).toBeVisible();
-  await expect(page.getByRole('button',{name:/Save meal/})).toBeVisible();
-  await expect(page.getByText(/ماذا أكلت|حفظ الوجبة|اختر بالصورة/)).toHaveCount(0);
-  await expect.poll(async()=>visibleArabicOutsideLanguageControls(page),{message:'English food flow must not contain visible Arabic text'}).toEqual([]);
-  await page.screenshot({path:testInfo.outputPath('language-switch-02-english-food.png'),fullPage:true});
-
-  await page.getByRole('button',{name:/Close/}).click();
-  await page.getByTestId('primary-capture-button').click();
-  const englishDialog=page.getByRole('dialog');
-  await englishDialog.getByRole('button',{name:'العربية',exact:true}).click();
-  await expect(page.locator('html')).toHaveAttribute('lang','ar');
-  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
-  await expect(englishDialog.getByText('لحظة سريعة')).toBeVisible();
-  await expect(englishDialog.getByText('ما اللحظة التي تريد تسجيلها؟')).toBeVisible();
-  await expect(englishDialog.getByText(/One quick moment|What would you like to capture/)).toHaveCount(0);
-  await englishDialog.getByRole('button',{name:/صورة/}).click();
-  await expect(page.getByRole('heading',{name:'ماذا أكلت؟'})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/Photo|Tell me|English/})).toHaveCount(0);
+  await dialog.getByRole('button',{name:/صورة/}).click();
+  await expect(page.getByRole('heading',{name:/ماذا أكلت؟/})).toBeVisible();
   await expect(page.getByRole('button',{name:/حفظ الوجبة/})).toBeVisible();
-  await expect(page.getByText(/What did you have|Save meal|Choose by picture/)).toHaveCount(0);
-  await page.screenshot({path:testInfo.outputPath('language-switch-03-arabic-food.png'),fullPage:true});
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
 });
-
 
 test('Add menu keeps only photo and voice, with working back navigation',async({page})=>{
   await page.addInitScript(()=>{localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true')});
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   const dialog=page.getByRole('dialog');
-  await expect(dialog.getByRole('button',{name:/Photo/})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/Tell me/})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/Quick check/})).toHaveCount(0);
-  await dialog.getByRole('button',{name:/Photo/}).click();
-  await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
-  await page.getByRole('button',{name:'Back'}).click();
-  await expect(page.getByRole('dialog').getByRole('button',{name:/Tell me/})).toBeVisible();
-  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
-  await expect(page.getByRole('heading',{name:/Tell me what you had/})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Back'})).toBeVisible();
-  await page.getByRole('button',{name:'Back'}).click();
-  await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/صورة/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/احكِ لي/})).toBeVisible();
+  await expect(dialog.getByRole('button',{name:/اختيار سريع/})).toHaveCount(0);
+  await dialog.getByRole('button',{name:/صورة/}).click();
+  await expect(page.getByRole('button',{name:'رجوع'})).toBeVisible();
+  await page.getByRole('button',{name:'رجوع'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/احكِ لي/})).toBeVisible();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await expect(page.getByRole('heading',{name:'قل ماذا أكلت'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'رجوع'})).toBeVisible();
+  await page.getByRole('button',{name:'رجوع'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
 });
 
-test('English switch changes the real capture UI to LTR',async({page},testInfo)=>{
+test('legacy English locale cannot switch the real capture UI away from RTL',async({page})=>{
   await page.addInitScript(()=>{
-    localStorage.setItem('rhythm_language_v1','ar');
+    localStorage.setItem('rhythm_language_v1','en');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  const captureButton=page.getByTestId('primary-capture-button');
-  await captureButton.click();
-  const english=page.getByRole('button',{name:/English/}).first();
-  await expect(english).toBeVisible();
-  await english.click();
-  await expect(page.locator('html')).toHaveAttribute('dir','ltr');
-  await expect(page.getByText(/What would you like to capture\?/)).toBeVisible();
-  await page.screenshot({path:testInfo.outputPath('english-switch.png'),fullPage:true});
+  await openCapture(page);
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/English/})).toHaveCount(0);
 });
 
 test('guest mode persists locally without requiring an account',async({page})=>{
@@ -187,7 +177,7 @@ test('guest mode persists locally without requiring an account',async({page})=>{
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await expect(page.getByRole('button',{name:/Open account/})).toContainText(/Guest/);
+  await expect(page.getByRole('button',{name:/فتح الحساب/})).toContainText(/ضيف/);
   const stored=await page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1'));
   expect(stored).toContain('guest-local');
 });
@@ -213,8 +203,8 @@ test('returning account mode restores a stored session and keeps cloud sync avai
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await expect(page.getByRole('button',{name:/Open account/})).toContainText('returning@example.com');
-  await expect(page.getByText(/Start on this device/)).not.toBeVisible();
+  await expect(page.getByRole('button',{name:/فتح الحساب/})).toContainText('returning@example.com');
+  await expect(page.getByText(/ابدأ على هذا الجهاز/)).not.toBeVisible();
 });
 
 
@@ -228,18 +218,18 @@ test('photo meal flow stores two selected dishes in one meal',async({page})=>{
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('dialog').getByRole('button',{name:/Photo/}).click();
-  await expect(page.getByRole('heading',{name:/What did you have\?/})).toBeVisible();
+  await openCapture(page);
+  await page.getByRole('dialog').getByRole('button',{name:/صورة/}).click();
+  await expect(page.getByRole('heading',{name:/ماذا أكلت؟/})).toBeVisible();
   await page.getByTestId('food-visual-pasta').click();
   await page.getByTestId('food-visual-salad').click();
   await expect(page.getByTestId('food-visual-pasta')).toHaveAttribute('aria-pressed','true');
   await expect(page.getByTestId('food-visual-salad')).toHaveAttribute('aria-pressed','true');
-  await page.getByRole('button',{name:/Save meal/}).click();
+  await page.getByRole('button',{name:/حفظ الوجبة/}).click();
   await expect.poll(async()=>{
     const raw=await page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1'));
     return raw||'';
-  }).toContain('Pasta · Fresh salad');
+  }).toContain('باستا · سلطة طازجة');
 });
 
 
@@ -259,7 +249,7 @@ test('fresh guest sees only the intentional voice-first entry before manual capt
   await expect(voiceEntry.getByRole('heading',{name:'ما الذي أتى بك إلينا؟ احكِ لي قليلاً عنك.',exact:true})).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(1);
   await expect(page.locator('#root')).toHaveAttribute('inert','');
-  await expect(page.getByTestId('primary-capture-button')).toBeVisible();
+  await expect(page.getByRole('button',{name:'سجّل لحظة'}).first()).toBeVisible();
   await expect(page.getByRole('button',{name:/تسجيل|مساء|منتصف|يومك/})).toHaveCount(0);
 });
 
@@ -273,7 +263,7 @@ test('Arabic food search recognizes بيض in the real meal editor',async({page}
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/صورة/}).click();
   const input=page.getByPlaceholder(/ابدأ بالكتابة/);
   await input.fill('بيض');
@@ -291,7 +281,7 @@ test('Moroccan Arabic autocomplete recognizes common real foods',async({page})=>
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/صورة/}).click();
   const input=page.getByPlaceholder(/ابدأ بالكتابة/);
   const cases=[
@@ -437,12 +427,12 @@ test('Voice capture handles denied microphone permission without trapping the us
   await context.clearPermissions();
   await page.addInitScript(()=>{delete (window as any).SpeechRecognition;delete (window as any).webkitSpeechRecognition;localStorage.setItem('rhythm_language_v1','en');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');sessionStorage.setItem('nimmapp_checkin_auto_opened','true')});
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
-  await page.getByRole('button',{name:'Start recording'}).click();
-  await expect(page.getByText('Microphone permission is needed to record.')).toBeVisible();
-  await page.getByRole('button',{name:'Back'}).click();
-  await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
+  await openCapture(page);
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
+  await expect(page.getByText('نحتاج إذن الميكروفون للتسجيل.')).toBeVisible();
+  await page.getByRole('button',{name:'رجوع'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
 });
 
 test('Voice capture starts, stops, transcribes and stores the recognized meal',async({page})=>{
@@ -482,11 +472,11 @@ test('Voice capture starts, stops, transcribes and stores the recognized meal',a
     (window as any).Worker=FakeWorker;
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
-  await page.getByRole('button',{name:'Start recording'}).click();
-  await expect(page.getByRole('button',{name:'Stop recording'})).toBeVisible();
-  await page.getByRole('button',{name:'Stop recording'}).click();
+  await openCapture(page);
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
+  await expect(page.getByRole('button',{name:'إيقاف التسجيل'})).toBeVisible();
+  await page.getByRole('button',{name:'إيقاف التسجيل'}).click();
   await expect.poll(async()=>page.evaluate(()=>localStorage.getItem('nimmapp_moments_v1')||'')).toContain('boiled eggs');
   await expect(page.getByTestId('voice-understanding-card')).toHaveCount(0);
   await expect(page.getByRole('heading',{name:'What did you have?'})).toHaveCount(0);
@@ -506,11 +496,11 @@ test('Voice Back during recording discards audio and returns to Add choices',asy
     Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
-  await page.getByRole('button',{name:'Start recording'}).click();
-  await page.getByRole('button',{name:'Back'}).click();
-  await expect(page.getByRole('dialog').getByRole('button',{name:/Photo/})).toBeVisible();
+  await openCapture(page);
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
+  await page.getByRole('button',{name:'رجوع'}).click();
+  await expect(page.getByRole('dialog').getByRole('button',{name:/صورة/})).toBeVisible();
   await expect(page.getByRole('heading',{name:'What did you have?'})).toHaveCount(0);
 });
 
@@ -570,7 +560,7 @@ test('Arabic Whisper understands a full Darija message semantically with multipl
     (window as any).Worker=FakeWorker;
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
@@ -620,7 +610,7 @@ test('Arabic Whisper semantic failure keeps the full message out of autocomplete
     ;(window as any).Worker=FakeWorker;
   },raw);
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
@@ -672,7 +662,7 @@ test('Arabic Whisper transcript is sent once as one complete message',async({pag
     ;(window as any).Worker=FakeWorker;
   },raw);
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
@@ -702,7 +692,7 @@ test('Arabic voice deliberately uses local Whisper even when Chrome speech recog
     Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await openCapture(page);
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await expect(page.getByTestId('voice-diagnostic')).toContainText('Whisper');

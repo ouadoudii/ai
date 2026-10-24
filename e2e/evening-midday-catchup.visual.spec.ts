@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('evening missed midday collapses into one full-day voice recap',async({page},testInfo)=>{
+test('evening missed midday collapses into one Arabic full-day voice recap',async({page},testInfo)=>{
   await page.setViewportSize({width:390,height:844});
   await page.addInitScript(()=>{
     localStorage.setItem('rhythm_language_v1','en');
@@ -20,17 +20,24 @@ test('evening missed midday collapses into one full-day voice recap',async({page
   await page.clock.setFixedTime(new Date(browserTime.now+hoursToEvening*60*60*1000));
   await page.reload();
 
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+
   const voice=page.getByTestId('voice-home-mic');
+  await expect(voice).toHaveCount(1);
   await expect(voice).toBeVisible();
   await expect(voice).toHaveAttribute('data-full-day-recap','true');
-  await expect(voice).toContainText('Tell me about your whole day');
+  await expect(voice).toContainText('عاود ليا نهارك كامل');
+  await expect(voice).toContainText('ريثم');
+  await expect(voice).not.toContainText('Moment');
 
   // After 18:00, an incomplete day must not create a second evening/midday
   // catch-up path. One voice narration handles the missing parts together.
-  await expect(page.getByRole('button').filter({hasText:'Good evening'})).toHaveCount(0);
-  await expect(page.getByRole('heading',{name:'Want to add what you ate?'})).toHaveCount(0);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.screenshot({path:testInfo.outputPath('evening-whole-day-voice-recap.png'),fullPage:true});
 
   await voice.click();
+  await expect(page.getByRole('dialog')).toHaveCount(1);
   await expect(page.getByRole('dialog')).toBeVisible();
 });
+

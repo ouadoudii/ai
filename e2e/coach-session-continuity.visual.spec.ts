@@ -13,12 +13,14 @@ const prepare=async(page:any)=>{await page.addInitScript((profile)=>{
   sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
 },profile);};
 
-test('Cary keeps a conversation after navigation and reload',async({page},testInfo)=>{
+test('Coach keeps a conversation after Arabic navigation and reload',async({page},testInfo)=>{
   await page.setViewportSize({width:1280,height:900});
   await prepare(page);
   await page.route('**/api/**',route=>route.abort());
   await page.goto('/');
 
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
   await page.getByTestId('desktop-coach-nav').click();
   await expect(page.getByRole('heading',{name:'Coach fragen'})).toBeVisible();
 
@@ -31,25 +33,29 @@ test('Cary keeps a conversation after navigation and reload',async({page},testIn
     return messages.some((message:any)=>message.sender==='user'&&message.text===question);
   },question)).toBe(true);
 
-  await page.getByRole('button',{name:'Heute'}).click();
+  await page.getByRole('button',{name:'اليوم',exact:true}).click();
   await expect(page.getByTestId('voice-home-mic')).toBeVisible();
   await page.getByTestId('desktop-coach-nav').click();
   await expect(page.getByText(question,{exact:true})).toBeVisible();
 
   await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
   await page.getByTestId('desktop-coach-nav').click();
   await expect(page.getByText(question,{exact:true})).toBeVisible();
-  await page.screenshot({path:testInfo.outputPath('cary-session-restored-desktop.png'),fullPage:true});
+  await page.screenshot({path:testInfo.outputPath('coach-session-restored-desktop.png'),fullPage:true});
 });
 
-test('Coach is reachable from the mobile app shell',async({page},testInfo)=>{
+test('Coach is reachable from the Arabic mobile app shell',async({page},testInfo)=>{
   await page.setViewportSize({width:390,height:844});
   await prepare(page);
   await page.goto('/');
 
-  const cary=page.getByTestId('mobile-coach-nav');
-  await expect(cary).toBeVisible();
-  await cary.click();
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+  const coach=page.getByTestId('mobile-coach-nav');
+  await expect(coach).toBeVisible();
+  await coach.click();
   await expect(page.getByRole('heading',{name:'Coach fragen'})).toBeVisible();
-  await page.screenshot({path:testInfo.outputPath('cary-mobile-entry.png'),fullPage:true});
+  await page.screenshot({path:testInfo.outputPath('coach-mobile-entry.png'),fullPage:true});
 });

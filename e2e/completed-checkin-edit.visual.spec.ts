@@ -74,20 +74,20 @@ for (const viewport of [
 
     const phaseCard = page.getByTestId("today-phase-midday");
     await expect(phaseCard).toHaveAttribute("data-completed", "true");
-    await expect(phaseCard).toContainText("Review or edit");
+    await expect(phaseCard).toContainText("راجع أو عدّل");
     await phaseCard.click();
 
     const dialog = page.getByRole("dialog");
-    await expect(dialog).toContainText("Review and edit");
+    await expect(dialog).toContainText("راجع وعدّل");
     await expect(dialog).toContainText("Harira + خبز");
-    await expect(dialog.getByRole("slider", { name: "How hungry were you?" })).toHaveValue("2");
-    await expect(dialog.getByRole("slider", { name: "How full did you feel after?" })).toHaveValue("5");
+    await expect(dialog.getByRole("slider", { name: "قبل الأكل، كم كان جوعك؟" })).toHaveValue("2");
+    await expect(dialog.getByRole("slider", { name: "وبعدها، كم شعرت بالشبع؟" })).toHaveValue("5");
 
-    await dialog.getByRole("button", { name: "One more step" }).click();
-    const energy = dialog.getByRole("slider", { name: "How is your energy right now?" });
+    await dialog.getByRole("button", { name: "خطوة أخيرة" }).click();
+    const energy = dialog.getByRole("slider", { name: "كيف طاقتك الآن؟" });
     await expect(energy).toHaveValue("4");
     await energy.fill("5");
-    await dialog.getByRole("button", { name: "Save changes" }).click();
+    await dialog.getByRole("button", { name: "حفظ التعديلات" }).click();
 
     await expect(dialog).toHaveCount(0);
     const stored = await page.evaluate(() => ({

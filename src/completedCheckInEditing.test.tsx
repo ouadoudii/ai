@@ -65,7 +65,7 @@ describe("completed Today check-in editing", () => {
       </LanguageProvider>,
     );
     expect(html).toContain('data-testid="today-phase-midday"');
-    expect(html).toContain("This moment is captured · Review or edit");
+    expect(html).toContain("تم تسجيل هذه اللحظة · راجع أو عدّل");
     expect(html).not.toContain('aria-disabled="true"');
   });
 });

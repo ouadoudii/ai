@@ -41,7 +41,7 @@ describe('FoodCalendarView timeline accessibility', () => {
       />,
     );
 
-    expect(html).toContain('Time unknown');
+    expect(html).toContain('الوقت غير معروف');
     expect(html).not.toContain('undefined');
   });
 });

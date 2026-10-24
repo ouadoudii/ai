@@ -42,18 +42,21 @@ test('daily check-in traps keyboard focus, names sliders, and restores focus aft
   await trigger.focus();
   await trigger.click();
 
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+
   const dialog=page.getByRole('dialog');
-  const closeButton=page.getByRole('button',{name:'Schließen'});
+  const closeButton=page.getByRole('button',{name:'إغلاق'});
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAttribute('aria-labelledby','daily-checkin-title');
   await expect(dialog).toHaveAttribute('aria-describedby','daily-checkin-description');
   await expect(closeButton).toBeFocused();
 
-  await expect(dialog.getByRole('slider',{name:'Wie hungrig warst du?'})).toBeVisible();
-  await expect(dialog.getByRole('slider',{name:'Wie satt hast du dich danach gefühlt?'})).toBeVisible();
-  await page.getByRole('button',{name:'Noch ein Schritt'}).click();
-  await expect(dialog.getByRole('slider',{name:'Wie ist deine Energie gerade?'})).toBeVisible();
-  await page.getByRole('button',{name:'Zurück'}).click();
+  await expect(dialog.getByRole('slider',{name:'قبل الأكل، كم كان جوعك؟'})).toBeVisible();
+  await expect(dialog.getByRole('slider',{name:'وبعدها، كم شعرت بالشبع؟'})).toBeVisible();
+  await page.getByRole('button',{name:'خطوة أخيرة'}).click();
+  await expect(dialog.getByRole('slider',{name:'كيف طاقتك الآن؟'})).toBeVisible();
+  await page.getByRole('button',{name:'رجوع'}).click();
 
   // Returning from step two removes the focused Back button from the DOM. Put
   // focus on the first boundary explicitly, then verify Shift+Tab wraps to the
@@ -61,7 +64,7 @@ test('daily check-in traps keyboard focus, names sliders, and restores focus aft
   await closeButton.focus();
   await expect(closeButton).toBeFocused();
   await page.keyboard.press('Shift+Tab');
-  await expect(page.getByRole('button',{name:'Noch ein Schritt'})).toBeFocused();
+  await expect(page.getByRole('button',{name:'خطوة أخيرة'})).toBeFocused();
 
   await page.keyboard.press('Tab');
   await expect(closeButton).toBeFocused();
