@@ -5,10 +5,9 @@ import type { DailyCheckIn, FoodMoment } from '../types';
 import { downloadPersonalDataExport } from '../utils/personalDataExport';
 import { trackUx } from '../utils/uxAnalytics';
 
+// Only Arabic may be selected as the visible UI language. Historical locale values
+// remain supported in storage/input contracts but are not user-facing options.
 const languages: Array<{ code: AppLanguage; name: string; native: string }> = [
-  { code: 'en', name: 'English', native: 'English' },
-  { code: 'de', name: 'German', native: 'Deutsch' },
-  { code: 'fr', name: 'French', native: 'Français' },
   { code: 'ar', name: 'Arabic', native: 'العربية' },
 ];
 
