@@ -108,7 +108,10 @@ for(const country of countries){
     await photoButton.click();
 
     await expect(page.getByRole('heading',{name:/ماذا أكلت؟/})).toBeVisible();
-    await expect(page.getByText(new RegExp(country==='MA'?'المغرب|Morocco':'.'))).toBeVisible().catch(()=>{});
+    const foodSearch=page.getByPlaceholder(/ابدأ بالكتابة/);
+    await expect(foodSearch).toBeVisible();
+    await foodSearch.fill('بيض');
+    await expect(page.getByTestId('recognized-food-alias')).toContainText('بيض');
     await page.screenshot({path:testInfo.outputPath(`${country}-03-food-picker.png`),fullPage:true});
   });
 }
