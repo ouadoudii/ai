@@ -34,6 +34,7 @@ test.describe('desktop coach', () => {
 });
 
 test.describe('mobile coach', () => {
+  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   for (const locale of ['ar', 'en'] as const) {
     test('renders ' + locale + ' follow-ups in the actual chat', async ({ page }) => {
       await verifyChat(page, locale, 'mobile-coach-nav');
