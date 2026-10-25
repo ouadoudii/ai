@@ -16,6 +16,7 @@ describe('Arabic-only capture contract',()=>{
       expect(html).not.toContain(`data-language-option="${obsoleteLocale}"`);
     }
     expect(html).not.toContain('English');
+    expect(html).not.toContain('Arabic');
     expect(html).not.toContain('Deutsch');
     expect(html).not.toContain('Français');
     expect(html).toContain('data-testid="personal-data-export"');
