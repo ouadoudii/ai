@@ -57,7 +57,7 @@ for (const legacyLanguage of legacyLanguages) {
       await expect(page.getByTestId('language-picker-opener')).toHaveAttribute('aria-label', arabic.chooseLanguage);
     } else {
       await expect(page.getByRole('navigation').getByRole('button', { name: arabic.desktopMoments, exact: true })).toBeVisible();
-      await expect(page.getByTestId('language-picker-opener')).toHaveAttribute('aria-label', `${arabic.chooseLanguage}: AR`);
+      await expect(page.getByRole('button', { name: `${arabic.chooseLanguage}: AR`, exact: true })).toHaveAttribute('data-testid', 'language-picker-opener');
     }
     await expect(page.getByText(arabic.today, { exact: true }).last()).toBeVisible();
 
