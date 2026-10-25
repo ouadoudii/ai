@@ -54,10 +54,11 @@ for (const legacyLanguage of legacyLanguages) {
     await expect(page.getByRole('button', { name: arabic.discoveries, exact: true })).toBeVisible();
     if (testInfo.project.name === 'android-arabic') {
       await expect(page.getByTestId('mobile-moments-nav')).toBeVisible();
+      await expect(page.getByTestId('language-picker-opener')).toHaveAttribute('aria-label', arabic.chooseLanguage);
     } else {
       await expect(page.getByRole('navigation').getByRole('button', { name: arabic.desktopMoments, exact: true })).toBeVisible();
+      await expect(page.getByTestId('language-picker-opener')).toHaveAttribute('aria-label', `${arabic.chooseLanguage}: AR`);
     }
-    await expect(page.getByRole('button', { name: arabic.chooseLanguage, exact: true })).toBeVisible();
     await expect(page.getByText(arabic.today, { exact: true }).last()).toBeVisible();
 
     await page.getByRole('button', { name: arabic.captureAction }).first().click();
