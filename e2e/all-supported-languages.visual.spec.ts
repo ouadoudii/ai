@@ -59,7 +59,7 @@ for (const legacyLanguage of legacyLanguages) {
       await expect(page.getByRole('navigation').getByRole('button', { name: arabic.desktopMoments, exact: true })).toBeVisible();
       await expect(page.getByRole('button', { name: `${arabic.chooseLanguage}: AR`, exact: true })).toHaveAttribute('data-testid', 'language-picker-opener');
     }
-    await expect(page.getByText(arabic.today, { exact: true }).last()).toBeVisible();
+    await expect(page.getByRole('button', { name: arabic.today, exact: true }).filter({ visible: true }).first()).toBeVisible();
 
     await page.getByRole('button', { name: arabic.captureAction }).first().click();
     await expect(page.getByRole('heading', { name: arabic.captureTitle, exact: true })).toBeVisible();
