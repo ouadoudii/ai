@@ -8,7 +8,7 @@ const prepare=async(page:any)=>page.addInitScript((seed)=>{localStorage.setItem(
 for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',width:390,height:844}])test(`favorite toggle exposes persisted pressed state in Arabic on ${viewport.name}`,async({page},testInfo)=>{
  await page.setViewportSize({width:viewport.width,height:viewport.height});await prepare(page);await page.goto('/');
  await expect(page.locator('html')).toHaveAttribute('lang','ar');await expect(page.locator('html')).toHaveAttribute('dir','rtl');
- if(viewport.name==='mobile')await page.getByTestId('mobile-moments-nav').click();else await page.getByRole('navigation').getByRole('button',{name:'لحظاتي',exact:true}).click();
+ if(viewport.name==='mobile')await page.getByTestId('mobile-moments-nav').click();else await page.getByRole('navigation').getByRole('button',{name:'لحظات',exact:true}).click();
  await page.getByText(displayedTitle,{exact:true}).click();await expect(page.getByText(storedTitle,{exact:true})).toHaveCount(0);
  const favorite=page.getByRole('button',{name:'مفضلة',exact:true});await expect(favorite).toHaveAttribute('aria-pressed','false');
  await favorite.click();await expect(favorite).toHaveAttribute('aria-pressed','true');
@@ -17,6 +17,6 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
  await page.screenshot({path:testInfo.outputPath(`favorite-toggle-a11y-${viewport.name}.png`),fullPage:true});
  await page.reload();
  await expect(page.locator('html')).toHaveAttribute('lang','ar');await expect(page.locator('html')).toHaveAttribute('dir','rtl');
- if(viewport.name==='mobile')await page.getByTestId('mobile-moments-nav').click();else await page.getByRole('navigation').getByRole('button',{name:'لحظاتي',exact:true}).click();
+ if(viewport.name==='mobile')await page.getByTestId('mobile-moments-nav').click();else await page.getByRole('navigation').getByRole('button',{name:'لحظات',exact:true}).click();
  await page.getByText(displayedTitle,{exact:true}).click();await expect(page.getByRole('button',{name:'مفضلة',exact:true})).toHaveAttribute('aria-pressed','true');
 });
