@@ -37,7 +37,9 @@ async function installVoiceHarness(page:any, language:'ar'|'en', transcript:stri
 
 async function record(page:any, language:'ar'|'en') {
   await page.goto('/');
-  await page.getByTestId('desktop-capture-button').click();
+  const desktopCapture = page.getByTestId('desktop-capture-button');
+  const mobileCapture = page.getByTestId('primary-capture-button');
+  await (await desktopCapture.isVisible() ? desktopCapture : mobileCapture).click();
   await page.getByRole('dialog').getByRole('button',{name:language==='ar'?/احكِ لي/:/Tell me/}).click();
   await page.getByRole('button',{name:language==='ar'?/ابدأ التسجيل/:'Start recording'}).click();
   await page.getByRole('button',{name:language==='ar'?/إيقاف التسجيل/:'Stop recording'}).click();
