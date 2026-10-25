@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-async function seedReturningGuest(page: any, language: 'en' | 'fr') {
+type LegacyLanguage = 'en' | 'fr' | 'de' | 'ar';
+
+async function seedReturningGuest(page: any, language: LegacyLanguage) {
   await page.addInitScript(({ language }) => {
     localStorage.setItem('rhythm_language_v1', language);
     localStorage.setItem('cary_access_mode_v1', 'guest');
@@ -11,43 +13,51 @@ async function seedReturningGuest(page: any, language: 'en' | 'fr') {
   }, { language });
 }
 
-test('mobile language menu switches directly between French, Arabic, German and English', async ({ page }) => {
-  await seedReturningGuest(page, 'en');
+for (const legacyLanguage of ['en', 'fr', 'de', 'ar'] as const) {
+  test(`legacy ${legacyLanguage} shows only Arabic in the language picker and keeps data export`, async ({ page }) => {
+    await seedReturningGuest(page, legacyLanguage);
+    await page.goto('/');
 
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    const opener = page.getByTestId('language-picker-opener').filter({ visible: true }).first();
+    await expect(opener).toBeVisible();
+    await opener.click();
+
+    const dialog = page.getByRole('dialog', { name: 'اختر اللغة' });
+    await expect(dialog).toBeVisible();
+    const options = dialog.locator('[data-language-option]');
+    await expect(options).toHaveCount(1);
+    await expect(options.first()).toHaveAttribute('data-language-option', 'ar');
+    await expect(options.first()).toHaveAttribute('aria-pressed', 'true');
+    await expect(dialog.getByTestId('personal-data-export')).toBeVisible();
+    await expect(dialog).toContainText('تصدير بياناتي');
+    await expect(dialog).not.toContainText('English');
+    await expect(dialog).not.toContainText('Deutsch');
+    await expect(dialog).not.toContainText('Français');
+
+    await options.first().click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    // Reading a historical preference must not erase its persisted value.
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('rhythm_language_v1'))).toBe(legacyLanguage);
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  });
+}
+
+test('Arabic-only picker closes on Escape and restores focus for a legacy French profile', async ({ page }) => {
+  await seedReturningGuest(page, 'fr');
   await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Choose language' })).toBeVisible();
-
-  await page.getByRole('button', { name: 'Choose language' }).click();
-  await page.locator('[data-language-option="fr"]').click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  await expect(page.getByRole('button', { name: 'Découvertes', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Mes moments', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Choisir la langue' })).toBeVisible();
-
-  await page.getByRole('button', { name: 'Choisir la langue' }).click();
-  await page.locator('[data-language-option="ar"]').click();
+  const opener = page.getByTestId('language-picker-opener').filter({ visible: true }).first();
+  await opener.click();
+  const dialog = page.getByRole('dialog', { name: 'اختر اللغة' });
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(opener).toBeFocused();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-
-  await page.getByRole('button', { name: 'اختر اللغة' }).click();
-  await page.locator('[data-language-option="de"]').click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'de');
-  await expect(page.getByRole('button', { name: 'Sprache wählen' })).toBeVisible();
-
-  await page.getByRole('button', { name: 'Sprache wählen' }).click();
-  await page.locator('[data-language-option="en"]').click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
-  await expect(page.getByRole('button', { name: 'Choose language' })).toBeVisible();
-});
-
-test('French selection persists after reload', async ({ page }) => {
-  await seedReturningGuest(page, 'fr');
-
-  await page.goto('/');
-  await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  await expect(page.getByRole('button', { name: 'Découvertes', exact: true })).toBeVisible();
-  await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  await expect(page.getByRole('button', { name: 'Choisir la langue' })).toBeVisible();
 });
