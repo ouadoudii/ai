@@ -131,3 +131,48 @@ test('quick form same-tick double activation submits profile generation once',as
   await expect(page.getByTestId('voice-first-entry-overlay')).toHaveCount(0);
   await page.screenshot({path:testInfo.outputPath('onboarding-double-submit-guard.png'),fullPage:true});
 });
+
+for (const [script, enteredWeight] of [
+  ['Arabic-Indic', '٨٢٫٥'],
+  ['Persian', '۸۲٫۵'],
+] as const) {
+  test(`quick form accepts ${script} numerals and stores normalized weight`, async ({ page }) => {
+    await seedNewUser(page, 'en');
+    await page.route('**/api/coach-chat', async route => {
+      const body = JSON.parse(route.request().postData() || '{}');
+      expect(body.query).toContain('الوزن (اختياري): 82.5 كغ');
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          reply: JSON.stringify({
+            summary: 'أريد متابعة صحتي.',
+            priorities: ['متابعة الوزن'],
+            preferences: ['خطوات بسيطة'],
+            firstPlan: {
+              title: 'متابعة يومية',
+              rationale: 'نبدأ بالملاحظة.',
+              focusAreas: ['الوزن'],
+              firstStep: 'سجّل ما تلاحظه اليوم.',
+              phase: 'midday',
+            },
+          }),
+        }),
+      });
+    });
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await page.getByTestId('voice-first-entry-form').click();
+    await page.getByTestId('onboarding-goal').fill('أريد متابعة صحتي.');
+    const weight = page.getByTestId('onboarding-weight');
+    await weight.fill(enteredWeight);
+    await expect(weight).toHaveValue(enteredWeight);
+    await expect(weight).not.toHaveAttribute('aria-invalid', 'true');
+    await page.getByTestId('onboarding-form-save').click();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('rhythm_intro_profile_v1'))).not.toBeNull();
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('rhythm_intro_profile_v1') || '{}'));
+    expect(saved.rawIntro).toContain('82.5 كغ');
+    await expect(page.getByTestId('voice-first-entry-overlay')).toHaveCount(0);
+  });
+}
