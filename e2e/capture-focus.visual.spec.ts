@@ -43,7 +43,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
 
 test('capture dialog keeps keyboard focus inside the modal', async ({ page }) => {
   await prepare(page);
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button', { name: 'سجّل لحظة' }).first().click();
 
   const dialog = page.getByRole('dialog');
   const closeButton = dialog.getByRole('button', { name: 'إغلاق', exact: true });
