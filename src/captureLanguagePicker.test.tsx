@@ -3,11 +3,25 @@ import {describe,expect,it,beforeEach} from 'vitest';
 import {renderToString} from 'react-dom/server';
 import {LanguageProvider} from './i18n';
 import {CaptureChoiceModal} from './components/CaptureChoiceModal';
+import {LanguagePicker} from './components/LanguagePicker';
 
 const noop=()=>{};
 beforeEach(()=>{(globalThis as any).localStorage={getItem:(k:string)=>k==='rhythm_language_v1'?'ar':null,setItem:()=>{}}});
 
 describe('Arabic-only capture contract',()=>{
+  it('shows only Arabic as a selectable UI language while preserving personal data export',()=>{
+    const html=renderToString(<LanguageProvider><LanguagePicker open onClose={noop} surface="bottom_nav"/></LanguageProvider>);
+    expect(html).toContain('data-language-option="ar"');
+    for (const obsoleteLocale of ['en','de','fr']) {
+      expect(html).not.toContain(`data-language-option="${obsoleteLocale}"`);
+    }
+    expect(html).not.toContain('English');
+    expect(html).not.toContain('Deutsch');
+    expect(html).not.toContain('Français');
+    expect(html).toContain('data-testid="personal-data-export"');
+    expect(html).toContain('تصدير بياناتي');
+  });
+
   it('does not render legacy language choices inside capture',()=>{
     const html=renderToString(<LanguageProvider><CaptureChoiceModal isOpen onClose={noop} onFood={noop} onTellCary={noop}/></LanguageProvider>);
     expect(html).not.toContain('English');
