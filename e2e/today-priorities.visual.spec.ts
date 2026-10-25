@@ -48,7 +48,7 @@ test('Today priority and recent moments render from the same hydrated snapshot',
   await prepare(page,'de');
   await page.goto('/');
   await expect(page.getByTestId('today-priorities')).toContainText('3 إدخالات حقيقية');
-  await expect(page.getByRole('heading',{name:/لحظات/})).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'لحظاتك الأخيرة', exact: true })).toBeVisible();
   await expect(page.getByText('Lunch',{exact:true}).first()).toBeVisible();
   await page.screenshot({path:testInfo.outputPath('today-live-snapshot-desktop-legacy-de-arabic.png'),fullPage:true});
 });
