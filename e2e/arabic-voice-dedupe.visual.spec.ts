@@ -48,7 +48,7 @@ test('Arabic voice capture stores one meal when extraction returns spelling vari
   });
   await installArabicVoiceHarness(page,transcript);
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button',{name:'سجّل لحظة'}).first().click();
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();
@@ -70,7 +70,7 @@ test('closing Arabic voice while Whisper is pending ignores the abandoned transc
   });
   await installArabicVoiceHarness(page,'هذا التسجيل يجب تجاهله',1000);
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button',{name:'سجّل لحظة'}).first().click();
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   const voiceDialog=page.getByRole('dialog');
   await voiceDialog.getByRole('button',{name:/ابدأ التسجيل/}).click();
