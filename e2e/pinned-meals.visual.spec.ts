@@ -58,7 +58,7 @@ async function exercisePinFlow(page: import('@playwright/test').Page, mobile: bo
   await expect(shortcuts).toContainText('الوجبات المثبّتة');
   await expect(shortcuts).toContainText(meal.title);
   const repeat = page.getByTestId(`repeat-pinned-meal-${meal.id}`);
-  await expect(repeat).toHaveAccessibleName(`استخدمها مجدداً · ${meal.title}`);
+  await expect(repeat).toHaveAccessibleName(`استخدمها مجدداً: ${meal.title}`);
   await page.screenshot({ path: screenshotPath, fullPage: true });
   await repeat.click();
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').length)).toBe(2);
