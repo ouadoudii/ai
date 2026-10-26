@@ -28,10 +28,12 @@ for (const viewport of [
     await page.setViewportSize({ width:viewport.width, height:viewport.height });
     await seed(page);
     await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang','ar');
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
     const card=page.getByTestId('recurring-social-companion-insight');
     await expect(card).toBeVisible();
     await expect(card).toContainText('Sara');
-    await expect(card).toContainText('3 times');
+    await expect(card).toContainText('سجّلت 3 وجبات مع Sara في هذا الجزء من يومك.');
     await page.screenshot({path:testInfo.outputPath(`recurring-social-companion-${viewport.name}.png`),fullPage:true});
   });
 }
