@@ -47,6 +47,33 @@ for (const legacyLanguage of legacyLanguages) {
 }
 
 
+test('account failures stay Arabic-only for provider and network errors', async ({ page }) => {
+  await seedFreshGate(page, null);
+  let attempt = 0;
+  await page.route('**/auth/v1/token?grant_type=password', async route => {
+    attempt += 1;
+    if (attempt === 1) {
+      await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ msg: 'Invalid login credentials' }) });
+      return;
+    }
+    if (attempt === 2) {
+      await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ message: 'Provider unavailable' }) });
+      return;
+    }
+    await route.abort('failed');
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: /تسجيل الدخول/ }).first().click();
+  await page.getByPlaceholder('البريد الإلكتروني').fill('qa@example.com');
+  await page.getByPlaceholder('كلمة المرور').fill('safe-test-password');
+
+  for (const forbidden of ['Invalid login credentials', 'Provider unavailable', 'Anmeldung fehlgeschlagen', 'Failed to fetch']) {
+    await page.getByRole('button', { name: 'تسجيل الدخول', exact: true }).click();
+    await expect(page.getByText('تعذر تسجيل الدخول', { exact: true })).toBeVisible();
+    await expect(page.getByText(forbidden, { exact: true })).toHaveCount(0);
+  }
+});
+
 test('Arabic-only onboarding keeps the ريثم brand and hides legacy language controls', async ({ page }) => {
   await seedFreshGate(page, null);
   await page.goto('/');
