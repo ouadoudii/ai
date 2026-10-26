@@ -71,7 +71,10 @@ for (const surface of [
 
     await expect(page.locator("html")).toHaveAttribute("lang", "ar");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-    const button = page.getByTestId("personal-data-export");
+    const button = page
+      .getByTestId("personal-data-export")
+      .filter({ visible: true });
+    await expect(button).toHaveCount(1);
     await expect(button).toBeVisible();
     await expect(page.getByTestId("language-picker-opener")).toHaveCount(0);
     await expect(page.locator("[data-language-option]")).toHaveCount(0);

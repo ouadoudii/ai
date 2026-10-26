@@ -66,14 +66,18 @@ for (const legacyLanguage of legacyLanguages) {
     ).toBeVisible();
     if (testInfo.project.name === "android-arabic") {
       await expect(page.getByTestId("mobile-moments-nav")).toBeVisible();
-      await expect(page.getByTestId("personal-data-export")).toBeVisible();
+      await expect(
+        page.getByTestId("personal-data-export").filter({ visible: true }),
+      ).toHaveCount(1);
     } else {
       await expect(
         page
           .getByRole("navigation")
           .getByRole("button", { name: arabic.desktopMoments, exact: true }),
       ).toBeVisible();
-      await expect(page.getByTestId("personal-data-export")).toBeVisible();
+      await expect(
+        page.getByTestId("personal-data-export").filter({ visible: true }),
+      ).toHaveCount(1);
     }
     await expect(
       page
