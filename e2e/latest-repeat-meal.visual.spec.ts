@@ -8,7 +8,9 @@ const prepare=async(page:any)=>page.addInitScript((seed)=>{localStorage.setItem(
 
 for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',width:390,height:844}])test(`latest meal can be safely repeated from Today on ${viewport.name}`,async({page},testInfo)=>{
  await page.setViewportSize({width:viewport.width,height:viewport.height});await prepare(page);await page.goto('/');
- const repeat=page.getByTestId('repeat-latest-meal');await expect(repeat).toBeVisible();await expect(repeat).toContainText('Letzte wiederholen');await expect(repeat).toContainText('Couscous');await repeat.click();
+ await expect(page.locator('html')).toHaveAttribute('lang','ar');
+ await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+ const repeat=page.getByTestId('repeat-latest-meal');await expect(repeat).toBeVisible();await expect(repeat).toContainText('كرر آخر وجبة');await expect(repeat).toContainText('كسكس');await repeat.click();
  await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').length)).toBe(3);
  const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]'));
  expect(stored[0].title).toBe('Couscous');expect(stored[0].category).toBe('lunch');expect(stored[0].id).not.toBe('user-latest');expect(stored[0].tags).toEqual(['Repeated']);expect(stored[0].notes).toBeUndefined();expect(stored[0].rating).toBeUndefined();expect(stored[0].location).toBe('');
