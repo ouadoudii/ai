@@ -28,10 +28,12 @@ for (const viewport of [
     await page.setViewportSize({ width:viewport.width, height:viewport.height });
     await seed(page);
     await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     const card=page.getByTestId('meal-frequency-insight');
     await expect(card).toBeVisible();
     await expect(card).toContainText('Boiled eggs');
-    await expect(card).toContainText('3 times');
+    await expect(card).toContainText('3 مرات خلال آخر 7 أيام');
     await page.screenshot({path:testInfo.outputPath(`meal-frequency-insight-${viewport.name}.png`),fullPage:true});
   });
 }
