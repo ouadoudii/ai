@@ -28,13 +28,15 @@ async function seed(page:any,language:string){
 }
 
 for(const scenario of [
-  {name:'desktop-english',language:'en',width:1280,height:900,title:'3 of the last 7 days are represented'},
+  {name:'desktop-legacy-english',language:'en',width:1280,height:900,title:'سجّلت لحظات في 3 من آخر 7 أيام'},
   {name:'mobile-arabic',language:'ar',width:390,height:844,title:'سجّلت لحظات في 3 من آخر 7 أيام'},
 ]){
   test(`shows distinct real meal-day coverage on ${scenario.name}`,async({page},testInfo)=>{
     await page.setViewportSize({width:scenario.width,height:scenario.height});
     await seed(page,scenario.language);
     await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     const card=page.getByTestId('meal-day-coverage');
     await expect(card).toBeVisible();
     await expect(card).toContainText(scenario.title);
