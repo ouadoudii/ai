@@ -15,5 +15,11 @@ test('production shell presents Arabic ريثم branding before and after app st
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'ريثم');
   await expect(page.locator('head')).not.toContainText('Moment');
-  await expect(page.getByTestId('primary-capture-button')).toBeVisible();
+  // Desktop and mobile render different capture CTAs; both must be accessible in Arabic.
+  const viewport = page.viewportSize();
+  const captureButton = page.getByTestId(viewport && viewport.width < 768
+    ? 'primary-capture-button'
+    : 'desktop-capture-button');
+  await expect(captureButton).toBeVisible();
+  await expect(captureButton).toBeEnabled();
 });
