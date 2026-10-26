@@ -17,7 +17,7 @@ const prepare = async (page:any) => page.addInitScript((seedMoments) => {
 
 const openTimeline = async (page:any,mobile:boolean) => mobile
   ? page.getByTestId('mobile-moments-nav').click()
-  : page.getByRole('button',{name:'Momente',exact:true}).click();
+  : page.getByRole('button',{name:'لحظات',exact:true}).click();
 
 for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'mobile', width: 390, height: 844 }]) {
   test(`journal category filter is visible and filters real history on ${viewport.name}`, async ({ page }, testInfo) => {
