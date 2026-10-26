@@ -1,9 +1,9 @@
 import { expect,test } from '@playwright/test';
 
 const translations={
- de:{label:'Suchbereich',all:'Alle Felder',notes:'Nur Notizen'},
- en:{label:'Search in',all:'All fields',notes:'Notes only'},
- fr:{label:'Rechercher dans',all:'Tous les champs',notes:'Notes uniquement'},
+ de:{label:'نطاق البحث',all:'كل الحقول',notes:'الملاحظات فقط'},
+ en:{label:'نطاق البحث',all:'كل الحقول',notes:'الملاحظات فقط'},
+ fr:{label:'نطاق البحث',all:'كل الحقول',notes:'الملاحظات فقط'},
  ar:{label:'نطاق البحث',all:'كل الحقول',notes:'الملاحظات فقط'},
 } as const;
 const moments=[
