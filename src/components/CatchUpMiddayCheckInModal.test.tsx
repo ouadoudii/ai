@@ -34,6 +34,12 @@ describe('CatchUpMiddayCheckInModal explicit data', () => {
     expect(source).toContain("dir={language === 'ar' ? 'rtl' : 'ltr'}");
   });
 
+  it('keeps the Arabic dialog action labels aligned with the live controls', () => {
+    expect(source).toContain("title: 'تحب تضيف ما أكلته؟'");
+    expect(source).toContain("add: 'أضف اللحظة'");
+    expect(source).toContain("close: 'إغلاق'");
+  });
+
   it('exposes an accessible named dialog and makes the app background inert', () => {
     expect(source).toContain('aria-labelledby="catchup-midday-title"');
     expect(source).toContain('aria-describedby="catchup-midday-description"');

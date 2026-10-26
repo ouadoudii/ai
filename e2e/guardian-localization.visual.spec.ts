@@ -10,7 +10,7 @@ const labels={
 
 for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',width:390,height:844}]){
   for(const language of ['de','en','fr','ar'] as const){
-    test(`guardian chrome is localized in ${language} on ${viewport.name}`,async({page})=>{
+    test(`legacy ${language} renders Arabic guardian chrome on ${viewport.name}`,async({page})=>{
       await page.setViewportSize({width:viewport.width,height:viewport.height});
       await page.addInitScript(({profile,language})=>{
         localStorage.setItem('rhythm_language_v1',language);
@@ -26,12 +26,12 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
       await page.goto('/');
       await page.getByTestId(viewport.name==='desktop'?'desktop-coach-nav':'mobile-coach-nav').click();
       const guardian=page.getByTestId('guardian');
-      await expect(guardian.getByText(labels[language].title)).toBeVisible();
-      await expect(guardian.getByText(labels[language].clear)).toBeVisible();
-      await expect(page.locator('html')).toHaveAttribute('dir',language==='ar'?'rtl':'ltr');
-      await guardian.getByRole('button',{name:labels[language].test}).click();
-      await guardian.getByRole('button',{name:new RegExp(labels[language].sleep)}).click();
-      await expect(guardian.getByRole('button',{name:labels[language].done}).first()).toBeVisible();
+      await expect(guardian.getByText(labels.ar.title)).toBeVisible();
+      await expect(guardian.getByText(labels.ar.clear)).toBeVisible();
+      await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+      await guardian.getByRole('button',{name:labels.ar.test}).click();
+      await guardian.getByRole('button',{name:new RegExp(labels.ar.sleep)}).click();
+      await expect(guardian.getByRole('button',{name:labels.ar.done}).first()).toBeVisible();
     });
   }
 }

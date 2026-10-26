@@ -17,16 +17,16 @@ async function prepareGuest(page:any) {
 }
 
 async function openMealEditor(page:any) {
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button',{name:'سجّل لحظة',exact:true}).filter({visible:true}).first().click();
   await page.locator('[data-capture-method="text"]').click();
-  await expect(page.getByRole('heading', { name: 'What did you have?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'ماذا أكلت؟' })).toBeVisible();
 }
 
 async function saveTypedMeal(page:any, name:string) {
-  const input = page.getByPlaceholder('Start typing… e.g. chicken pasta');
+  const input = page.getByPlaceholder('ابدأ بالكتابة… مثلاً طاجين');
   await input.fill(name);
-  await page.getByRole('button', { name: 'Confirm' }).click();
-  await page.getByRole('button', { name: 'Save meal' }).click();
+  await page.getByRole('button', { name: 'تأكيد', exact: true }).click();
+  await page.getByRole('button', { name: 'حفظ الوجبة', exact: true }).click();
 }
 
 test('quota failure never presents an unsaved moment as durable', async ({ page }) => {
@@ -39,7 +39,7 @@ test('quota failure never presents an unsaved moment as durable', async ({ page 
 
   const alert = page.getByTestId('moment-persistence-error');
   await expect(alert).toBeVisible();
-  await expect(alert).toContainText(/storage|space|photo/i);
+  await expect(alert).toContainText(/مساحة|تخزين|الصور/);
   await expect.poll(async () => page.evaluate(() => {
     const stored = JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]');
     return stored.some((moment:any) => moment.title.includes('Quota test snack'));

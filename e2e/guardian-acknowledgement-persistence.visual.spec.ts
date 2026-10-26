@@ -20,28 +20,31 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
     await prepare(page);
     await page.goto('/');
     await page.getByTestId(viewport.name==='desktop'?'desktop-coach-nav':'mobile-coach-nav').click();
+    const guardian=page.getByTestId('guardian');
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
 
-    await page.getByRole('button',{name:'Alarm testen'}).click();
-    await page.getByRole('button',{name:/Schlafmangel/}).click();
-    const resolve=page.getByRole('button',{name:'Als erledigt abhaken'}).first();
+    await guardian.getByRole('button',{name:'اختبار تنبيه'}).click();
+    await guardian.getByRole('button',{name:/نقص النوم/}).click();
+    const resolve=guardian.getByRole('button',{name:'تم التعامل معه'}).first();
     await expect(resolve).toBeVisible();
     await resolve.click();
-    await expect(page.getByText('Keine Intervention erforderlich')).toBeVisible();
+    await expect(guardian.getByText('لا حاجة إلى تدخل')).toBeVisible();
 
     await expect.poll(async()=>page.evaluate((key)=>JSON.parse(localStorage.getItem(key)||'[]').length,acknowledgementStorageKey)).toBeGreaterThan(0);
 
     await page.reload();
     await page.getByTestId(viewport.name==='desktop'?'desktop-coach-nav':'mobile-coach-nav').click();
-    await page.getByRole('button',{name:'Alarm testen'}).click();
-    await page.getByRole('button',{name:/Schlafmangel/}).click();
-    await expect(page.getByText('Keine Intervention erforderlich')).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+    await guardian.getByRole('button',{name:'اختبار تنبيه'}).click();
+    await guardian.getByRole('button',{name:/نقص النوم/}).click();
+    await expect(guardian.getByText('لا حاجة إلى تدخل')).toBeVisible();
 
     // A different source occurrence must remain independently actionable. Use
     // the rushed-meal simulator because it is not gated by the runner's local
     // wall-clock hour (the afternoon-crash alarm intentionally is).
-    await page.getByRole('button',{name:/Reset/}).click();
-    await page.getByRole('button',{name:/Stress-Essen/}).click();
-    await expect(page.getByRole('button',{name:'Als erledigt abhaken'}).first()).toBeVisible();
+    await guardian.getByRole('button',{name:/إعادة ضبط/}).click();
+    await guardian.getByRole('button',{name:/الأكل تحت الضغط/}).click();
+    await expect(guardian.getByRole('button',{name:'تم التعامل معه'}).first()).toBeVisible();
     await page.screenshot({path:testInfo.outputPath(`guardian-acknowledgement-${viewport.name}.png`),fullPage:true});
   });
 }

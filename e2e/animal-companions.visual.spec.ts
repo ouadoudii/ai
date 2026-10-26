@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('mobile Today home shows Moment animal companions without blocking the main flow', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => {
-    localStorage.setItem('rhythm_language_v1', 'de');
+    localStorage.setItem('rhythm_language_v1', 'ar');
     localStorage.setItem('cary_access_mode_v1', 'guest');
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
@@ -11,7 +11,7 @@ test('mobile Today home shows Moment animal companions without blocking the main
   });
 
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Willkommen zurück/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /مرحباً بك/ })).toBeVisible();
   await expect(page.getByTestId('primary-capture-button')).toBeVisible();
 
   const hero = page.locator('[class*="max-w-[860px]"] > section').first();

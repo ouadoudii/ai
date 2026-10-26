@@ -28,16 +28,18 @@ for(const viewport of [
     await page.clock.setFixedTime(beforeBoundary);
     await page.reload();
 
+    await expect(page.locator('html')).toHaveAttribute('lang','ar');
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
     const voice=page.getByTestId('voice-home-mic');
     await expect(voice).toHaveAttribute('data-full-day-recap','false');
-    await expect(page.getByText('Capture your day',{exact:true})).toBeVisible();
+    await expect(page.getByText('سجّل يومك',{exact:true})).toBeVisible();
 
     const afterBoundary=await page.evaluate(()=>new Date(2026,8,18,18,1,0,0).getTime());
     await page.clock.setFixedTime(afterBoundary);
     await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
 
     await expect(voice).toHaveAttribute('data-full-day-recap','true');
-    await expect(page.getByText('Capture your day',{exact:true})).toHaveCount(0);
+    await expect(page.getByText('سجّل يومك',{exact:true})).toHaveCount(0);
     await page.screenshot({path:testInfo.outputPath(`today-full-day-resume-${viewport.name}.png`),fullPage:true});
   });
 }

@@ -9,16 +9,18 @@ test('voice capture remains available under the shared Today phase policy', asyn
   });
 
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button',{name:'سجّل لحظة',exact:true}).filter({visible:true}).first().click();
 
   const captureDialog = page.getByRole('dialog');
   await expect(captureDialog).toBeVisible();
 
-  const tellButton = captureDialog.getByRole('button', { name: /tell|voice|talk/i });
-  if (await tellButton.count()) {
-    await tellButton.first().click();
-    await expect(page.getByRole('dialog')).toBeVisible();
-  }
+  const tellButton = captureDialog.getByRole('button', { name: 'احكِ لي', exact: true });
+  await expect(tellButton).toBeVisible();
+  await expect(tellButton).toBeEnabled();
+  await tellButton.click();
+  const voiceDialog = page.getByRole('dialog');
+  await expect(voiceDialog).toBeVisible();
+  await expect(voiceDialog.getByRole('button', { name: 'ابدأ التسجيل', exact: true })).toBeVisible();
 
   await page.screenshot({ path: 'visual-artifacts/voice-phase-policy.png', fullPage: true });
 });

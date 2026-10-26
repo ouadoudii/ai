@@ -29,9 +29,11 @@ test('generic daily check-in uses midday policy at 17:00', async ({ page }, test
   });
 
   await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await page.getByTestId('personal-plan-start').click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog).toContainText('Dein Mittag');
-  await expect(dialog).not.toContainText('Dein Abend');
+  await expect(dialog.getByText('منتصف يومك · 1/2', { exact: true })).toBeVisible();
+  await expect(dialog.locator('#daily-checkin-title')).toHaveText('كيف يسير يومك؟');
   await page.screenshot({ path: testInfo.outputPath('daily-checkin-shared-phase-policy.png'), fullPage: true });
 });

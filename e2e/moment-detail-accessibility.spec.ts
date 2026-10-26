@@ -23,9 +23,18 @@ async function openMomentDetail(browser: Browser, layout: typeof layouts[number]
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
   });
   await page.goto('/');
-  const desktopTimeline = page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Moments' });
-  if (await desktopTimeline.isVisible().catch(() => false)) await desktopTimeline.click();
-  else await page.getByTestId('mobile-moments-nav').click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  if (layout === 'desktop') {
+    const desktopTimeline = page.getByRole('navigation', { name: 'التنقل الرئيسي' })
+      .getByRole('button', { name: 'لحظات', exact: true });
+    await expect(desktopTimeline).toBeVisible();
+    await desktopTimeline.click();
+  } else {
+    const mobileTimeline = page.getByTestId('mobile-moments-nav');
+    await expect(mobileTimeline).toBeVisible();
+    await mobileTimeline.click();
+  }
   const opener = page.getByTestId('timeline-moment-accessible-detail');
   await expect(opener).toBeVisible();
   await opener.focus();
@@ -40,7 +49,7 @@ for (const layout of layouts) {
       const dialog = page.getByRole('dialog', { name: 'Harira محفوظة' });
       await expect(dialog).toBeVisible();
       await expect(dialog).toHaveAttribute('aria-modal', 'true');
-      const close = dialog.getByRole('button', { name: 'Close' });
+      const close = dialog.getByRole('button', { name: 'إغلاق', exact: true });
       await expect(close).toBeFocused();
       await expect.poll(() => opener.evaluate((element) => {
         let current: Element | null = element;
@@ -52,7 +61,7 @@ for (const layout of layouts) {
       })).toBe(true);
 
       await page.keyboard.press('Shift+Tab');
-      await expect(dialog.getByRole('button', { name: 'Delete' })).toBeFocused();
+      await expect(dialog.getByRole('button', { name: 'حذف', exact: true })).toBeFocused();
       await page.keyboard.press('Tab');
       await expect(close).toBeFocused();
 
@@ -68,7 +77,7 @@ for (const layout of layouts) {
     const { context, page, opener } = await openMomentDetail(browser, layout);
     try {
       const dialog = page.getByRole('dialog', { name: 'Harira محفوظة' });
-      await dialog.getByRole('button', { name: 'Close' }).click();
+      await dialog.getByRole('button', { name: 'إغلاق', exact: true }).click();
       await expect(dialog).toHaveCount(0);
       await expect(opener).toBeFocused();
     } finally {

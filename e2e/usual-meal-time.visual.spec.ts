@@ -25,7 +25,7 @@ for (const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wi
     await use.click();
     await expect(use).toHaveAttribute('aria-pressed','true');
     await page.locator('input[autocomplete="off"]').fill('Eggs again');
-    await page.getByRole('button',{name:'Save meal'}).click();
+    await page.getByRole('button',{name:'حفظ الوجبة'}).click();
     await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').length)).toBe(4);
     const savedTime=await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]')[0].time);
     expect(savedTime).toBe('05:30');

@@ -4,7 +4,7 @@ type Language='de'|'ar';
 
 async function installSpeech(page:any,language:Language,transcript:string){
   await page.addInitScript(({lang,text}:{lang:string;text:string})=>{
-    localStorage.setItem('rhythm_language_v1',lang);
+    localStorage.setItem('rhythm_language_v1','ar');
     localStorage.setItem('cary_access_mode_v1','guest');
     localStorage.setItem('cary_onboarding_v2_complete','true');
     localStorage.setItem('nimmapp_moments_v1','[]');
@@ -48,11 +48,18 @@ async function installSpeech(page:any,language:Language,transcript:string){
 
 async function speak(page:any,language:Language){
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  // The mobile primary CTA is hidden on desktop. Use the actual visible Arabic
+  // capture control so these tests exercise speech intent, not a hidden button.
+  const capture = page.getByRole('button', { name: 'سجّل لحظة', exact: true }).filter({ visible: true }).first();
+  await expect(capture).toBeVisible();
+  await expect(capture).toBeEnabled();
+  await capture.click();
   const chooser=page.getByRole('dialog');
   await chooser.locator('[data-capture-method="voice"]').click();
-  await page.getByRole('button',{name:language==='de'?'Aufnahme starten':'ابدأ التسجيل'}).click();
-  await page.getByRole('button',{name:language==='de'?'Aufnahme stoppen':'إيقاف التسجيل'}).click();
+  await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
+  await page.getByRole('button',{name:'إيقاف التسجيل'}).click();
 }
 
 const emptyVoiceResult={
@@ -74,7 +81,7 @@ for(const example of[
       intentCalls++;
       const body=JSON.parse(route.request().postData()||'{}');
       expect(body.transcript).toBe(example.text);
-      expect(body.language).toBe(example.language);
+      expect(body.language).toBe('ar');
       await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({intent:'profile_goal',confidence:.96,reason:'lasting personal goal'})});
     });
     await installSpeech(page,example.language,example.text);
@@ -84,7 +91,7 @@ for(const example of[
     await expect(profile).toBeVisible();
     await expect(profile.getByTestId('profile-summary')).toHaveValue(example.text);
     await expect(profile.getByTestId('personal-first-plan')).toBeVisible();
-    await expect(page.getByRole('heading',{name:/Was hast du gegessen\?|What did you have\?/i})).toHaveCount(0);
+    await expect(page.getByRole('heading',{name:/ماذا أكلت؟/})).toHaveCount(0);
     await expect(page.getByTestId('voice-understanding-card')).toHaveCount(0);
   });
 }

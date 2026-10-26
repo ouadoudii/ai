@@ -186,7 +186,7 @@ export const AddMomentModal:React.FC<AddMomentModalProps>=({isOpen,onClose,onBac
   React.useEffect(()=>{photoAnalysisGuard.current.invalidate();setImageAnalyzing(false);setPhotoRecognition(createPhotoRecognitionState([]));setImageRecognitionNote('')},[language]);
 
   const all=React.useMemo(()=>getFoodSuggestions(country,title.trim()?undefined:category),[country,category,title]);
-  const localizedAll=React.useMemo(()=>localizeFoodSuggestions(all,language),[all,language]);
+  const localizedAll=React.useMemo(()=>localizeFoodSuggestions(all,language,title),[all,language,title]);
   const aliasMatch=React.useMemo(()=>{const alias=resolveArabFoodAlias(title,country);return alias?(language==='ar'?alias.canonicalAr:alias.canonicalEn):null},[title,country,language]);
   const rememberedCorrection=React.useMemo(()=>findRememberedMealCorrection(personalVocabulary,title),[personalVocabulary,title]);
   const localMatches=React.useMemo(()=>{const ranked=rankLocalAutocomplete(localizedAll.map(x=>x.name),title,6);return aliasMatch&&title.trim()?[aliasMatch,...ranked.filter(name=>normalizeFoodSearchText(name)!==normalizeFoodSearchText(aliasMatch))].slice(0,6):ranked},[localizedAll,title,aliasMatch]);

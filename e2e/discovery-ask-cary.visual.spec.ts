@@ -8,7 +8,7 @@ const moments = [
   { id:'l3', title:'Lunch C', category:'lunch', date:'2026-09-23', time:'15:00', createdAt:5 },
 ];
 
-test('Discovery to Cary prefill stays unsent on desktop', async ({ page }, testInfo) => {
+test('Discovery to Coach Arabic prefill stays unsent on desktop with legacy English locale', async ({ page }, testInfo) => {
   await page.setViewportSize({ width:1280, height:900 });
   await page.addInitScript((seed) => {
     localStorage.setItem('nimmapp_moments_v1', JSON.stringify(seed));
@@ -17,18 +17,23 @@ test('Discovery to Cary prefill stays unsent on desktop', async ({ page }, testI
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
   }, moments);
   await page.goto('/');
-  await page.getByRole('button', { name:'Discoveries', exact:true }).click();
+
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await page.getByRole('button', { name:'اكتشافاتك', exact:true }).click();
   const card = page.locator('[data-pattern-id="late-lunch-snacking"]');
   const evidence = await card.getByTestId('pattern-evidence').innerText();
+  await expect(card.getByTestId('ask-cary-late-lunch-snacking')).toHaveText('اسأل المرشد');
   await card.getByTestId('ask-cary-late-lunch-snacking').click();
   const composer = page.getByTestId('cary-chat-composer');
   const draft = await composer.inputValue();
+  expect(draft).toContain('ساعدني على فهم هذا النمط الشخصي:');
   expect(draft).toContain(evidence.trim());
   await expect(page.getByText(draft, { exact:true })).toHaveCount(0);
-  await page.screenshot({ path:testInfo.outputPath('discovery-ask-cary-desktop.png'), fullPage:true });
+  await page.screenshot({ path:testInfo.outputPath('discovery-ask-coach-desktop.png'), fullPage:true });
 });
 
-test('Discovery to Cary prefill stays unsent on mobile Arabic', async ({ page }, testInfo) => {
+test('Discovery to Coach prefill stays unsent on mobile Arabic', async ({ page }, testInfo) => {
   await page.setViewportSize({ width:390, height:844 });
   await page.addInitScript((seed) => {
     localStorage.setItem('nimmapp_moments_v1', JSON.stringify(seed));
@@ -37,6 +42,9 @@ test('Discovery to Cary prefill stays unsent on mobile Arabic', async ({ page },
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
   }, moments);
   await page.goto('/');
+
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await page.getByRole('button', { name:'اكتشافاتك', exact:true }).click();
   const card = page.locator('[data-pattern-id="late-lunch-snacking"]');
   const evidence = await card.getByTestId('pattern-evidence').innerText();
@@ -49,5 +57,5 @@ test('Discovery to Cary prefill stays unsent on mobile Arabic', async ({ page },
   await expect(page.getByText(draft, { exact:true })).toHaveCount(0);
   await composer.fill(draft + ' تفاصيل أكثر');
   await expect(composer).toHaveValue(draft + ' تفاصيل أكثر');
-  await page.screenshot({ path:testInfo.outputPath('discovery-ask-cary-mobile.png'), fullPage:true });
+  await page.screenshot({ path:testInfo.outputPath('discovery-ask-coach-mobile.png'), fullPage:true });
 });

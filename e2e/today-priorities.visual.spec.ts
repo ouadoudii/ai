@@ -22,12 +22,14 @@ test('mobile home leads with a cautious data-derived priority',async({page},test
   await page.setViewportSize({width:390,height:844});
   await prepare(page,'de');
   await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
   const card=page.getByTestId('personal-plan-home-card');
-  await expect(card).toContainText('Heute wichtig');
-  await expect(page.getByTestId('today-priorities')).toContainText('Dein Mittagsrhythmus');
-  await expect(page.getByTestId('today-priorities')).toContainText('basiert auf 3 echten Einträgen');
+  await expect(card).toContainText('المهم اليوم');
+  await expect(page.getByTestId('today-priorities')).toContainText('إيقاع الغداء');
+  await expect(page.getByTestId('today-priorities')).toContainText('مبني على 3 إدخالات حقيقية');
   await expect(page.getByTestId('personal-plan-first-step')).toBeVisible();
-  await page.screenshot({path:testInfo.outputPath('today-priority-mobile-de.png'),fullPage:true});
+  await page.screenshot({path:testInfo.outputPath('today-priority-mobile-legacy-de-arabic.png'),fullPage:true});
 });
 
 test('desktop Arabic home keeps the same evidence transparent and localized',async({page},testInfo)=>{
@@ -45,8 +47,13 @@ test('Today priority and recent moments render from the same hydrated snapshot',
   await page.setViewportSize({width:1280,height:900});
   await prepare(page,'de');
   await page.goto('/');
-  await expect(page.getByTestId('today-priorities')).toContainText('3 echten Einträgen');
-  await expect(page.getByRole('heading',{name:'Deine letzten Momente'})).toBeVisible();
-  await expect(page.getByText('Lunch',{exact:true}).first()).toBeVisible();
-  await page.screenshot({path:testInfo.outputPath('today-live-snapshot-desktop-de.png'),fullPage:true});
+  await expect(page.getByTestId('today-priorities')).toContainText('3 إدخالات حقيقية');
+  await expect(page.getByRole('heading', { name: 'لحظاتك الأخيرة', exact: true })).toBeVisible();
+  const recentMeals=page.getByRole('button',{name:/14:\d{2} وجبة غداء سابقة/});
+  await expect(recentMeals).toHaveCount(3);
+  for (const meal of await recentMeals.all()) await expect(meal).toBeVisible();
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').map((meal:{id:string;title:string})=>({id:meal.id,title:meal.title})))).toEqual([
+    {id:'user-lunch-1',title:'Lunch'}, {id:'user-lunch-2',title:'Lunch'}, {id:'user-lunch-3',title:'Lunch'},
+  ]);
+  await page.screenshot({path:testInfo.outputPath('today-live-snapshot-desktop-legacy-de-arabic.png'),fullPage:true});
 });

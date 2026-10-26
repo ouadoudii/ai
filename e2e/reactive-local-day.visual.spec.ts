@@ -34,17 +34,17 @@ const prepareGuest = async (page:any) => {
 test('mounted Today refreshes to the new local day after returning to the app',async({page})=>{
   await installClock(page);
   await prepareGuest(page);
-  await expect(page.getByText(/Sonntag, 27\. September/i)).toBeVisible();
+  await expect(page.getByText('الأحد، 27 شتنبر')).toBeVisible();
 
   await page.evaluate(()=>{
     (window as any).__rhythmNow=new Date(2026,8,28,8,5,0,0).getTime();
     window.dispatchEvent(new Event('focus'));
   });
 
-  await expect(page.getByText(/Montag, 28\. September/i)).toBeVisible();
-  const morning=page.getByRole('button').filter({hasText:'Guten Morgen'});
+  await expect(page.getByText('الاثنين، 28 شتنبر')).toBeVisible();
+  const morning=page.getByRole('button').filter({hasText:'صباح الخير'});
   await expect(morning).toBeVisible();
-  await expect(morning).toContainText('Wie hat dein Tag begonnen?');
+  await expect(morning).toContainText('كيف بدأ يومك؟');
   await morning.click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.screenshot({path:'test-results/reactive-local-day-after-focus.png',fullPage:true});
@@ -54,9 +54,9 @@ test('unsaved meal draft survives local midnight rollover',async({page})=>{
   await installClock(page);
   await prepareGuest(page);
 
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button',{name:'سجّل لحظة',exact:true}).filter({visible:true}).first().click();
   await page.locator('[data-capture-method="text"]').click();
-  const editorHeading=page.getByRole('heading',{name:'Was hast du gegessen?'});
+  const editorHeading=page.getByRole('heading',{name:'ماذا أكلت؟'});
   await expect(editorHeading).toBeVisible();
   const foodInput=page.locator('input:not([type="file"])').first();
   await foodInput.fill('Ungespeicherter Mitternachtssnack');

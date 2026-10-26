@@ -25,11 +25,11 @@ describe('required first onboarding',()=>{
     expect(copy.weightError.length).toBeGreaterThan(10);
   });
 
-  it.each([['72,5',72.5],['72.5',72.5],['72',72],[' 80,25 ',80.25]] as const)('normalizes valid weight %s',(value,expected)=>{
+  it.each([['72,5',72.5],['72.5',72.5],['72',72],[' 80,25 ',80.25],['٧٢٫٥',72.5],['۷۲٫۵',72.5],['٧٢,٥',72.5],['۸۲',82],['٨٢.٢٥',82.25],['٨٢٫٢٥',82.25]] as const)('normalizes valid weight %s',(value,expected)=>{
     expect(parseOnboardingWeight(value)).toBe(expected);
   });
 
-  it.each(['72,5.3','72,,5','.',',','19.9','401','72.555'])('rejects ambiguous or implausible weight %s',value=>{
+  it.each(['72,5.3','72,,5','.',',','19.9','401','72.555','١٩٫٩','٤٠١','٧٢٫٥٥٥','٧٢٬٥','٨٢ كغ'])('rejects ambiguous or implausible weight %s',value=>{
     expect(parseOnboardingWeight(value)).toBeNull();
   });
 

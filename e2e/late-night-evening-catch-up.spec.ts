@@ -19,6 +19,8 @@ for (const device of [
     });
 
     await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     const localTimestamp = await page.evaluate(() => new Date(2026, 9, 16, 2, 0, 0, 0).getTime());
     await page.clock.setFixedTime(localTimestamp);
     const previousDate = await page.evaluate(() => {
@@ -37,12 +39,14 @@ for (const device of [
     const catchUp = page.getByTestId('late-night-evening-catch-up');
     await expect(catchUp).toBeVisible();
     await expect(catchUp).toHaveAttribute('data-target-date', previousDate);
-    await expect(catchUp).toContainText('Finish yesterday');
+    await expect(catchUp).toContainText('كمّل عشاء البارح');
     await catchUp.click();
 
-    await expect(page.getByRole('dialog')).toContainText('Your evening');
-    await page.getByRole('button', { name: 'One more step' }).click();
-    await page.getByRole('button', { name: 'Done' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('مساؤك');
+    await expect(dialog).toContainText('كيف كان يومك؟');
+    await page.getByRole('button', { name: 'خطوة أخيرة' }).click();
+    await page.getByRole('button', { name: 'تم', exact: true }).click();
 
     await expect.poll(async () => page.evaluate(date => {
       const checkIns = JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]');

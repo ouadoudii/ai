@@ -36,13 +36,13 @@ for (const layout of layouts) {
     try {
       const opener = await visibleCaptureButton(page, layout);
       await opener.click();
-      const chooser = page.getByRole('dialog', { name: 'What would you like to capture?' });
+      const chooser = page.getByRole('dialog', { name: 'ما اللحظة التي تريد تسجيلها؟' });
       await chooser.locator('[data-capture-method="text"]').click();
 
-      const dialog = page.getByRole('dialog', { name: 'What did you have?' });
+      const dialog = page.getByRole('dialog', { name: 'ماذا أكلت؟' });
       await expect(dialog).toBeVisible();
       await expect(dialog).toHaveAttribute('aria-modal', 'true');
-      await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused();
+      await expect(dialog.getByRole('button', { name: 'إغلاق' })).toBeFocused();
       await expect.poll(() => opener.evaluate((element) => {
         let current: Element | null = element;
         while (current && current !== document.body) {
@@ -52,15 +52,15 @@ for (const layout of layouts) {
         return false;
       })).toBe(true);
 
-      const first = dialog.getByRole('button', { name: 'Back' });
-      const last = dialog.getByRole('button', { name: 'Save meal' });
+      const first = dialog.getByRole('button', { name: 'رجوع' });
+      const last = dialog.getByRole('button', { name: 'حفظ الوجبة' });
       await first.focus();
       await page.keyboard.press('Shift+Tab');
       await expect(last).toBeFocused();
       await page.keyboard.press('Tab');
       await expect(first).toBeFocused();
 
-      const uploadButton = dialog.getByRole('button', { name: 'Add your photo' });
+      const uploadButton = dialog.getByRole('button', { name: 'أضف صورتك' });
       await uploadButton.focus();
       // A cancelled native chooser reports an empty file list. Dispatch that
       // result directly so the regression covers app behavior without waiting
@@ -70,7 +70,7 @@ for (const layout of layouts) {
       await expect(uploadButton).toBeFocused();
       await expect.poll(async () => page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]')))).toBe(true);
 
-      const input = dialog.getByPlaceholder('Start typing… e.g. chicken pasta');
+      const input = dialog.getByPlaceholder('ابدأ بالكتابة… مثلاً طاجين');
       await input.fill('Pasta');
       await page.keyboard.press('Escape');
       await expect(dialog).toBeVisible();
@@ -87,15 +87,15 @@ for (const layout of layouts) {
     const { context, page } = await createPage(browser, layout, true);
     try {
       const momentsNav = layout === 'desktop'
-        ? page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Moments' })
+        ? page.getByRole('navigation', { name: 'التنقل الرئيسي' }).getByRole('button', { name: 'لحظات' })
         : page.getByTestId('mobile-moments-nav');
       await momentsNav.click();
       await page.getByTestId('timeline-moment-editor-a11y').click();
-      await page.getByRole('dialog', { name: 'Accessibility bowl' }).getByRole('button', { name: 'Edit' }).click();
+      await page.getByRole('dialog', { name: 'Accessibility bowl' }).getByRole('button', { name: 'تعديل' }).click();
 
-      const editor = page.getByRole('dialog', { name: 'What did you have?' });
+      const editor = page.getByRole('dialog', { name: 'ماذا أكلت؟' });
       await expect(editor).toBeVisible();
-      await expect(editor.getByRole('button', { name: 'Close' })).toBeFocused();
+      await expect(editor.getByRole('button', { name: 'إغلاق' })).toBeFocused();
       await page.keyboard.press('Escape');
       await expect(editor).toHaveCount(0);
       await expect(await visibleCaptureButton(page, layout)).toBeFocused();

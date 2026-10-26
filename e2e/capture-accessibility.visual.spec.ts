@@ -8,7 +8,7 @@ test('capture dialog closes with Escape for keyboard users', async ({ page }) =>
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button', { name: 'سجّل لحظة' }).first().click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);

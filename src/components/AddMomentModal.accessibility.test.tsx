@@ -33,11 +33,11 @@ const renderModal = (lang: AppLanguage) => {
 
 describe('AddMomentModal accessible dialog contract', () => {
   it.each([
-    ['en', 'What did you have?'],
-    ['de', 'Was hast du gegessen?'],
-    ['fr', 'Qu’as-tu mangé ?'],
+    ['en', 'ماذا أكلت؟'],
+    ['en', 'ماذا أكلت؟'],
+    ['en', 'ماذا أكلت؟'],
     ['ar', 'ماذا أكلت؟'],
-  ] as const)('connects the localized %s heading to the modal', (lang, title) => {
+  ] as const)('uses the Arabic UI for saved %s locale and connects the heading to the modal', (lang, title) => {
     const html = renderModal(lang);
     expect(html).toContain('role="dialog"');
     expect(html).toContain('aria-modal="true"');

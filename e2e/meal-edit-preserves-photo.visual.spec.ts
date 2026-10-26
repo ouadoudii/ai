@@ -14,7 +14,7 @@ test.describe('meal photo preservation while editing', () => {
       localStorage.setItem('rhythm_intro_profile_v1', '{}');
       sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
       const now = new Date();
-      localStorage.setItem(key, JSON.stringify([{
+      if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify([{
         id: 'photo-edit-meal',
         title,
         label: 'Lunch',
@@ -32,20 +32,27 @@ test.describe('meal photo preservation while editing', () => {
     }, { key: MOMENTS_KEY, photoUrl: PHOTO_URL, title: originalTitle });
 
     await page.goto('/');
-    await page.getByText(originalTitle, { exact: true }).first().click();
-    await page.getByRole('button', { name: 'Edit' }).click();
+    const nav = page.getByRole('navigation', { name: 'التنقل الرئيسي' });
+    const desktop = nav.getByRole('button', { name: 'لحظات', exact: true });
+    if (await desktop.isVisible()) await desktop.click();
+    else await page.getByTestId('mobile-moments-nav').click();
+    await page.getByTestId('timeline-moment-photo-edit-meal').click();
+    await page.getByRole('button', { name: 'تعديل' }).click();
 
     const editor = page.locator('input[autocomplete="off"]');
     await editor.fill(' with lemon');
     await editor.press('Enter');
-    await page.getByRole('button', { name: 'Save changes' }).click();
+    await page.getByRole('button', { name: 'حفظ التغييرات' }).click();
 
     await expect.poll(async () => page.evaluate((key) => {
       const moments = JSON.parse(localStorage.getItem(key) || '[]');
       return moments.find((moment: { id?: string }) => moment.id === 'photo-edit-meal')?.imageUrl || '';
     }, MOMENTS_KEY)).toBe(PHOTO_URL);
 
+    const editedTitle = await page.evaluate(key => JSON.parse(localStorage.getItem(key) || '[]')[0].title, MOMENTS_KEY);
+    expect(editedTitle).toContain('with lemon');
     await page.reload();
+    expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key) || '[]')[0].title, MOMENTS_KEY)).toBe(editedTitle);
 
     const persistedPhoto = await page.evaluate((key) => {
       const moments = JSON.parse(localStorage.getItem(key) || '[]');

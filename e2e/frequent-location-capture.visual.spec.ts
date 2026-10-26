@@ -48,15 +48,15 @@ for (const viewport of [
   { name: 'mobile' as const, width: 390, height: 844 },
 ]) {
   for (const language of ['en', 'de', 'fr', 'ar'] as const) {
-    test(`location is an explicit localized shortcut on ${viewport.name} in ${language}`, async ({ page }, testInfo) => {
+    test(`legacy ${language} keeps the Arabic location shortcut on ${viewport.name}`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await prepare(page, language);
       await openTextCapture(page, viewport.name);
       const suggestion = page.getByTestId('frequent-location-suggestion');
-      await expect(suggestion).toContainText(copy[language].label);
+      await expect(suggestion).toContainText(copy.ar.label);
       await expect(page.getByTestId('frequent-location-name')).toHaveText('Café Atlas');
       const action = page.getByTestId('use-frequent-location');
-      await expect(action).toHaveText(copy[language].action);
+      await expect(action).toHaveText(copy.ar.action);
       await expect(action).toHaveAttribute('aria-pressed', 'false');
       await page.screenshot({ path: testInfo.outputPath(`location-before-${viewport.name}-${language}.png`), fullPage: true });
       expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key) || '[]').length, key)).toBe(history.length);
@@ -64,7 +64,7 @@ for (const viewport of [
       await expect(action).toHaveAttribute('aria-pressed', 'true');
       expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key) || '[]').length, key)).toBe(history.length);
       await page.locator('input[autocomplete="off"]').fill('My snack');
-      await page.getByRole('button', { name: copy[language].save }).click();
+      await page.getByRole('button', { name: copy.ar.save }).click();
       await expect.poll(() => page.evaluate(key => {
         const moments = JSON.parse(localStorage.getItem(key) || '[]');
         return moments.length > 5 ? moments[0].location : null;

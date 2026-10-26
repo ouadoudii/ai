@@ -1,11 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',width:1280,height:900}] as const) {
-  for (const scenario of [
-    {language:'de',category:'Abendessen',location:'Ort',rating:'Bewertung',body:'Körpersignale',hunger:'Hunger vorher',fullness:'Sättigung danach',energy:'Energie danach',note:'Notiz',share:'Teilen',edit:'Bearbeiten',close:'Schließen',favorite:'Favorit',remove:'Löschen',confirm:/Harira maison.*nicht rückgängig/},
-    {language:'fr',category:'Dîner',location:'Lieu',rating:'Évaluation',body:'Signaux du corps',hunger:'Faim avant',fullness:'Satiété après',energy:'Énergie après',note:'Note',share:'Partager',edit:'Modifier',close:'Fermer',favorite:'Favori',remove:'Supprimer',confirm:/Harira maison.*irréversible/},
-  ] as const) {
-    test(`moment detail uses ${scenario.language} chrome and confirms deletion on ${viewport.name}`, async ({page},testInfo) => {
+  for (const language of ['en','de','fr','ar'] as const) {
+    const scenario={language,category:'العشاء',location:'المكان',rating:'التقييم',body:'إشارات الجسم',hunger:'الجوع قبل الأكل',fullness:'الشبع بعد الأكل',energy:'الطاقة بعد الأكل',note:'ملاحظة',share:'مشاركة',edit:'تعديل',close:'إغلاق',favorite:'مفضلة',remove:'حذف',confirm:/Harira maison.*لا يمكن التراجع/};
+    test(`moment detail uses Arabic chrome for legacy ${scenario.language} and confirms deletion on ${viewport.name}`, async ({page},testInfo) => {
       await page.setViewportSize(viewport);
       await page.addInitScript(({language}) => {
         const now=new Date(); const date=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -17,8 +15,10 @@ for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',wid
       },{language:scenario.language});
       await page.goto('/');
       const momentsNav=page.getByTestId('mobile-moments-nav');
-      if(await momentsNav.isVisible()) await momentsNav.click(); else await page.getByRole('button',{name:/Momente|Moments|Journal|Entrées|Einträge/i}).first().click();
+      if(await momentsNav.isVisible()) await momentsNav.click(); else await page.getByRole('navigation',{name:'التنقل الرئيسي'}).getByRole('button',{name:'لحظات',exact:true}).click();
       await page.getByText('Harira maison').first().click();
+      await expect(page.locator('html')).toHaveAttribute('lang','ar');
+      await expect(page.locator('html')).toHaveAttribute('dir','rtl');
       const modal=page.getByTestId('moment-detail-modal');
       await expect(modal.getByTestId('moment-detail-category')).toHaveText(scenario.category);
       await expect(modal.getByText(scenario.location,{exact:true})).toBeVisible();
@@ -37,6 +37,7 @@ for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',wid
       page.once('dialog',async dialog=>{expect(dialog.type()).toBe('confirm');expect(dialog.message()).toMatch(scenario.confirm);await dialog.dismiss();});
       await modal.getByRole('button',{name:scenario.remove}).click();
       await expect(modal).toBeVisible();
+      expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]')[0])).toMatchObject({id:'detail-locale',title:'Harira maison',notes:'User note محفوظة'});
       await expect(page.getByText('Harira maison').first()).toBeVisible();
       await page.screenshot({path:testInfo.outputPath(`moment-detail-${scenario.language}-${viewport.name}.png`),fullPage:true});
     });

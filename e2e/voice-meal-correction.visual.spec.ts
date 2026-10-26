@@ -33,14 +33,16 @@ async function installVoiceHarness(page:any, transcript:string) {
 
 async function capture(page:any) {
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
-  await page.getByRole('dialog').getByRole('button',{name:/Tell me/}).click();
-  await page.getByRole('button',{name:'Start recording'}).click();
-  await page.getByRole('button',{name:'Stop recording'}).click();
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+  await page.getByRole('button',{name:'سجّل لحظة',exact:true}).filter({visible:true}).first().click();
+  await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
+  await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
+  await page.getByRole('button',{name:'إيقاف التسجيل'}).click();
 }
 
 const response = (mealTitle:string) => ({
-  coachFeedback:{title:'Got it',message:'Understood',type:'praise',badge:'Voice',habitScore:90},
+  coachFeedback:{title:'تم',message:'فهمت',type:'praise',badge:'صوت',habitScore:90},
   extractedData:{
     mealDetected:true,mealItems:[mealTitle],mealTitle,mealCategory:'lunch',mealContext:'',
     meals:[{category:'lunch',timeOfDay:'midday',time:'',mealTitle,mealItems:[mealTitle],hungerBefore:0,fullnessAfter:0}],
@@ -86,6 +88,8 @@ test('browser state merge keeps explicit correction semantics',async({page})=>{
   await capture(page);
   await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_checkins_v1')||'[]').find((c:any)=>c.timeOfDay==='midday')?.food?.mealTitle)).toBe('Salad');
   await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
   await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_checkins_v1')||'[]').find((c:any)=>c.timeOfDay==='midday')?.food?.mealTitle)).toBe('Salad');
   await page.screenshot({path:'test-results/voice-meal-correction.png',fullPage:true});
 });

@@ -9,6 +9,8 @@ async function prepare(page: import('@playwright/test').Page) {
     sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
   });
   await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 }
 
 for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'mobile', width: 390, height: 844 }]) {
@@ -16,16 +18,15 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await prepare(page);
 
-    // The mobile shell owns primary-capture-button. On desktop the real opener is
-    // the visible Add a moment action in the desktop shell.
-    const add = viewport.name === 'desktop'
-      ? page.getByRole('button', { name: 'Add a moment', exact: true }).filter({ visible: true }).first()
-      : page.getByTestId('primary-capture-button');
+    const add = page.getByTestId(
+      viewport.name === 'desktop' ? 'desktop-capture-button' : 'primary-capture-button',
+    );
     await expect(add).toBeVisible();
     await add.click();
     const dialog = page.getByRole('dialog');
+    const closeButton = dialog.getByRole('button', { name: 'إغلاق', exact: true });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused();
+    await expect(closeButton).toBeFocused();
 
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
@@ -33,33 +34,29 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
 
     await add.click();
     await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', { name: 'Français', exact: true }).click();
-    await dialog.getByRole('button', { name: 'Fermer' }).click();
+    await closeButton.click();
     await expect(dialog).toBeHidden();
-    // The desktop opener's accessible name is localized after the language switch,
-    // so assert focus by DOM identity rather than re-resolving the stale English locator.
-    await expect.poll(async () => page.evaluate(() => document.activeElement?.getAttribute('data-testid'))).toBe(
-      viewport.name === 'mobile' ? 'primary-capture-button' : 'desktop-capture-button',
-    );
-    if (viewport.name === 'desktop') {
-      await expect.poll(async () => page.evaluate(() => document.activeElement?.textContent?.trim())).toBe('Ajouter un moment');
-    }
+    await expect(add).toBeFocused();
     await page.screenshot({ path: `test-results/capture-focus-${viewport.name}.png`, fullPage: true });
   });
 }
 
 test('capture dialog keeps keyboard focus inside the modal', async ({ page }) => {
   await prepare(page);
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button', { name: 'سجّل لحظة' }).first().click();
 
   const dialog = page.getByRole('dialog');
-  const closeButton = dialog.getByRole('button', { name: 'Close' });
-  const firstFocusable = dialog.getByRole('button', { name: 'English', exact: true });
-  const lastFocusable = dialog.locator('[data-capture-method="text"]');
+  const closeButton = dialog.getByRole('button', { name: 'إغلاق', exact: true });
+  const focusable = dialog.locator(
+    'button:not([disabled]):visible, input:not([disabled]):visible, select:not([disabled]):visible, textarea:not([disabled]):visible, [tabindex]:not([tabindex="-1"]):visible',
+  );
 
   await expect(dialog).toBeVisible();
   await expect(closeButton).toBeFocused();
+  expect(await focusable.count()).toBeGreaterThan(1);
 
+  const firstFocusable = focusable.first();
+  const lastFocusable = focusable.last();
   await firstFocusable.focus();
   await page.keyboard.press('Shift+Tab');
   await expect(lastFocusable).toBeFocused();

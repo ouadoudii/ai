@@ -13,13 +13,9 @@ const history = [
   meal('demo', 'Demo', 'breakfast', '2026-10-09', ['demo']),
   meal('lunch', 'Couscous', 'lunch', '2026-10-09'),
 ];
-const copy = {
-  en: 'Something different from your own meals?',
-  de: 'Etwas anderes aus deinen Mahlzeiten?',
-  fr: 'Autre chose parmi tes repas ?',
-  ar: 'بغيتي تبدّل من وجباتك السابقة؟',
-} as const;
-async function prepare(page: Page, moments: typeof history, language: keyof typeof copy) {
+const legacyLanguages = ['en', 'de', 'fr', 'ar'] as const;
+const arabicRotationCopy = 'بغيتي تبدّل من وجباتك السابقة؟';
+async function prepare(page: Page, moments: typeof history, language: (typeof legacyLanguages)[number]) {
   await page.addInitScript(({ moments, language }) => {
     localStorage.setItem('rhythm_language_v1', language);
     localStorage.setItem('cary_access_mode_v1', 'guest');
@@ -31,13 +27,16 @@ async function prepare(page: Page, moments: typeof history, language: keyof type
   }, { moments, language });
 }
 for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'mobile', width: 390, height: 844 }]) {
-  for (const language of ['en', 'de', 'fr', 'ar'] as const) {
+  for (const language of legacyLanguages) {
     test(`tap-only rotation keeps original meal name on ${viewport.name} in ${language}`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await prepare(page, history, language);
       await page.goto('/');
+      await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+      await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+      expect(await page.evaluate(() => localStorage.getItem('rhythm_language_v1'))).toBe(language);
       await page.getByTestId(viewport.name === 'desktop' ? 'desktop-capture-button' : 'primary-capture-button').click();
-      await expect(page.getByTestId('personal-meal-rotation')).toContainText(copy[language]);
+      await expect(page.getByTestId('personal-meal-rotation')).toContainText(arabicRotationCopy);
       const candidate = page.getByTestId('personal-rotation-breakfast');
       await expect(candidate).toContainText('مسمن بالزبدة');
       await expect(page.getByTestId('personal-rotation-lunch')).toHaveCount(0);
@@ -51,6 +50,8 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await prepare(page, history.filter(m => m.id !== 'two'), 'en');
     await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-capture-button' : 'primary-capture-button').click();
     await expect(page.getByTestId('personal-meal-rotation')).toHaveCount(0);
     await page.screenshot({ path: testInfo.outputPath(`rotation-absent-${viewport.name}.png`), fullPage: true });

@@ -26,22 +26,23 @@ for (const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wi
     await page.setViewportSize({width:viewport.width,height:viewport.height});
     await prepare(page);
     await page.goto('/');
-    await page.getByRole('button',{name:'Discoveries',exact:true}).click();
+    await expect(page.locator('html')).toHaveAttribute('lang','ar');
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+    await page.getByRole('button',{name:'اكتشافاتك',exact:true}).click();
     const insight = page.getByTestId('recurring-meals-insight');
     await expect(insight).toBeVisible();
-    await expect(insight).toContainText('Your recurring meals');
+    await expect(insight).toContainText('وجباتك المتكررة');
     await expect(insight).toContainText('HARIRA');
-    await expect(insight).toContainText('logged 3×');
+    await expect(insight).toContainText('سُجّلت 3×');
     await expect(insight).toContainText('Couscous');
-    await expect(insight).toContainText('logged 2×');
+    await expect(insight).toContainText('سُجّلت 2×');
     await expect(insight).not.toContainText('One off');
     await expect(insight).not.toContainText('Demo meal');
     await expect(insight.getByTestId('recurring-meal-item')).toHaveCount(2);
     await page.screenshot({path:testInfo.outputPath(`recurring-meals-${viewport.name}.png`),fullPage:true});
 
     if (viewport.name === 'mobile') {
-      await page.getByRole('button',{name:'Choose language',exact:true}).click();
-      await page.locator('[data-language-option="ar"]').click();
+      // Arabic is the only visible UI, including for legacy persisted English profiles.
       await expect(insight).toContainText('وجباتك المتكررة');
       await expect(insight).toContainText('سُجّلت 3×');
       await page.screenshot({path:testInfo.outputPath('recurring-meals-mobile-ar.png'),fullPage:true});
@@ -67,7 +68,9 @@ for (const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wi
       ]));
     });
     await page.goto('/');
-    await page.getByRole('button',{name:'Discoveries',exact:true}).click();
+    await expect(page.locator('html')).toHaveAttribute('lang','ar');
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+    await page.getByRole('button',{name:'اكتشافاتك',exact:true}).click();
     const card=page.getByTestId('personal-meal-memory');
     await expect(card).toBeVisible();
     await expect(card).toContainText('بيض، مسلوق!');

@@ -1,13 +1,15 @@
 import { expect, test } from '@playwright/test';
 
 const cases=[
-  {language:'en',title:'Journal & timeline',archive:'Chronological archive',add:'Add entry',today:'Today',category:'Lunch',location:'Not specified'},
-  {language:'fr',title:'Journal & chronologie',archive:'Archive chronologique',add:'Ajouter une entrée',today:'Aujourd’hui',category:'Déjeuner',location:'Non précisé'},
-  {language:'ar',title:'اليوميات والتسلسل الزمني',archive:'الأرشيف الزمني',add:'إضافة تدوينة',today:'اليوم',category:'غداء',location:'غير محدد'},
+  {language:'en'},
+  {language:'fr'},
+  {language:'ar'},
 ] as const;
 
+// Legacy locale values must not change the visible Arabic-only interface.
+
 for(const scenario of cases){
-  test(`My moments chronology is localized in ${scenario.language}`,async({page},testInfo)=>{
+  test(`My moments chronology stays Arabic with persisted ${scenario.language} locale`,async({page},testInfo)=>{
     await page.setViewportSize({width:390,height:844});
     await page.addInitScript(({language})=>{
       const now=new Date();
@@ -22,14 +24,16 @@ for(const scenario of cases){
       sessionStorage.setItem('nimmapp_checkin_auto_opened','true');
     },{language:scenario.language});
     await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang','ar');
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
     await page.getByTestId('mobile-moments-nav').click();
-    await expect(page.getByRole('heading',{name:scenario.title})).toBeVisible();
-    await expect(page.getByText(scenario.archive)).toBeVisible();
-    await expect(page.getByRole('button',{name:scenario.add})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'اليوميات والتسلسل الزمني'})).toBeVisible();
+    await expect(page.getByText('الأرشيف الزمني')).toBeVisible();
+    await expect(page.getByRole('button',{name:'إضافة تدوينة'})).toBeVisible();
     const timeline=page.getByTestId('moments-timeline');
-    await expect(timeline).toContainText(scenario.today);
-    await expect(timeline).toContainText(scenario.category);
-    await expect(timeline).toContainText(scenario.location);
+    await expect(timeline).toContainText('اليوم');
+    await expect(timeline).toContainText('غداء');
+    await expect(timeline).toContainText('غير محدد');
     await expect(timeline).not.toContainText('Chronologisches Archiv');
     await expect(page.getByTestId('timeline-image-fallback-timeline-localization')).toBeVisible();
     await expect(timeline.locator('img[alt="Pizza"]')).toHaveCount(0);

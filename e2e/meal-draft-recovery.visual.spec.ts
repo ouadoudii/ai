@@ -21,7 +21,7 @@ async function prepare(page: Page) {
 async function openTextCapture(page: Page, layout: 'desktop' | 'mobile') {
   await page.getByTestId(layout === 'desktop' ? 'desktop-capture-button' : 'primary-capture-button').click();
   await page.locator('[data-capture-method="text"]').click();
-  return page.getByRole('dialog', { name: 'What did you have?' });
+  return page.getByRole('dialog', { name: 'ماذا أكلت؟' });
 }
 
 for (const layout of [
@@ -34,10 +34,10 @@ for (const layout of [
     await page.goto('/');
 
     let editor = await openTextCapture(page, layout.name);
-    await editor.getByPlaceholder('Start typing… e.g. chicken pasta').fill('بيض مسلوق avec thé');
-    await editor.getByRole('button', { name: 'Add a note' }).click();
-    await editor.getByPlaceholder('Optional context…').fill('Frühstück مع العائلة');
-    await editor.getByRole('button', { name: 'Close' }).click();
+    await editor.getByPlaceholder('ابدأ بالكتابة… مثلاً طاجين').fill('بيض مسلوق avec thé');
+    await editor.getByRole('button', { name: 'أضف ملاحظة' }).click();
+    await editor.getByPlaceholder('معلومة إضافية اختيارية…').fill('Frühstück مع العائلة');
+    await editor.getByRole('button', { name: 'إغلاق' }).click();
 
     expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key) || 'null'), DRAFT_KEY)).toMatchObject({
       title: 'بيض مسلوق avec thé',
@@ -48,12 +48,12 @@ for (const layout of [
 
     editor = await openTextCapture(page, layout.name);
     const recovery = editor.getByTestId('meal-draft-recovery');
-    await expect(recovery).toContainText('Nothing was added to your journal');
+    await expect(recovery).toContainText('لم نضف شيئاً إلى يومياتك');
     await page.screenshot({ path: testInfo.outputPath(`meal-draft-offer-${layout.name}.png`), fullPage: true });
     await recovery.getByTestId('resume-meal-draft').click();
     await expect(editor.getByText('بيض مسلوق avec thé', { exact: true })).toBeVisible();
-    await expect(editor.getByPlaceholder('Optional context…')).toHaveValue('Frühstück مع العائلة');
-    await editor.getByRole('button', { name: 'Save meal' }).click();
+    await expect(editor.getByPlaceholder('معلومة إضافية اختيارية…')).toHaveValue('Frühstück مع العائلة');
+    await editor.getByRole('button', { name: 'حفظ الوجبة' }).click();
 
     await expect(editor).toHaveCount(0);
     expect(await page.evaluate(key => localStorage.getItem(key), DRAFT_KEY)).toBeNull();
@@ -76,11 +76,11 @@ for (const layout of [
     let editor = await openTextCapture(page, layout.name);
     await editor.getByTestId('discard-meal-draft').click();
     expect(await page.evaluate(key => localStorage.getItem(key), DRAFT_KEY)).toBeNull();
-    await editor.getByRole('button', { name: 'Close' }).click();
+    await editor.getByRole('button', { name: 'إغلاق' }).click();
 
     editor = await openTextCapture(page, layout.name);
     await expect(editor.getByTestId('meal-draft-recovery')).toHaveCount(0);
-    await editor.getByRole('button', { name: 'Close' }).click();
+    await editor.getByRole('button', { name: 'إغلاق' }).click();
     expect(await page.evaluate(key => localStorage.getItem(key), DRAFT_KEY)).toBeNull();
   });
 }

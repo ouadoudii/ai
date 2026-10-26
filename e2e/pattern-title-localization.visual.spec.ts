@@ -8,17 +8,13 @@ const moments = [
   { id:'late-lunch-c', title:'Lunch C', category:'lunch', date:'2026-09-23', time:'15:00', createdAt:5 },
 ];
 
-const copies = [
-  { language:'en', languageButton:'Choose language', title:'Late lunch ↔ evening snacking', evidence:'On 2 of 3 days', experiment:'try lunch a little earlier' },
-  { language:'de', languageButton:'Sprache wählen', title:'Spätes Mittagessen und Snacks am Abend', evidence:'An 2 von 3 Tagen', experiment:'früheres Mittagessen' },
-  { language:'fr', languageButton:'Choisir la langue', title:'Déjeuner tardif et grignotage le soir', evidence:'Lors de 2 jours sur 3', experiment:'déjeuner un peu plus tôt' },
-  { language:'ar', languageButton:'اختر اللغة', title:'الغداء المتأخر والوجبات الخفيفة مساءً', evidence:'في 2 من 3 أيام', experiment:'الغداء أبكر' },
-] as const;
+const legacyLanguages = ['en', 'de', 'fr', 'ar'] as const;
+const arabic = { title:'الغداء المتأخر والوجبات الخفيفة مساءً', evidence:'في 2 من 3 أيام', experiment:'الغداء أبكر' };
+const legacyTitles = ['Late lunch ↔ evening snacking', 'Spätes Mittagessen und Snacks am Abend', 'Déjeuner tardif et grignotage le soir'];
 
-type LanguageCopy = (typeof copies)[number];
-
-test('late-lunch pattern exposes concrete localized evidence and experiment across language switching', async ({ page }, testInfo) => {
-  await page.setViewportSize({ width:390, height:844 });
+for (const layout of [{name:'desktop',width:1280,height:900},{name:'mobile',width:390,height:844}]) {
+test(`late-lunch pattern retains evidence and experiment for all legacy locales on ${layout.name}`, async ({ page }, testInfo) => {
+  await page.setViewportSize({ width:layout.width, height:layout.height });
   await page.addInitScript(({ seedMoments }) => {
     if (!localStorage.getItem('rhythm_language_v1')) {
       localStorage.setItem('rhythm_language_v1', 'en');
@@ -35,30 +31,32 @@ test('late-lunch pattern exposes concrete localized evidence and experiment acro
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
   }, { seedMoments: moments });
 
-  await page.goto('/');
-  await page.getByRole('button', { name:'Discoveries', exact:true }).click();
-
-  const assertPattern = async (copy: LanguageCopy) => {
+  const assertPattern = async () => {
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     const card = page.locator('[data-pattern-id="late-lunch-snacking"]');
-    await expect(page.getByRole('heading', { name:copy.title, exact:true })).toBeVisible();
-    await expect(card.getByTestId('pattern-evidence')).toContainText(copy.evidence);
-    await expect(card.getByTestId('pattern-experiment')).toContainText(copy.experiment);
+    await expect(card.getByRole('heading', { name:arabic.title, exact:true })).toBeVisible();
+    await expect(card.getByTestId('pattern-evidence')).toContainText(arabic.evidence);
+    await expect(card.getByTestId('pattern-experiment')).toContainText(arabic.experiment);
+    for (const title of legacyTitles) await expect(page.getByRole('heading',{name:title,exact:true})).toHaveCount(0);
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]'))).toEqual(moments);
   };
-
-  let current: LanguageCopy = copies[0];
-  await assertPattern(current);
-  for (const next of copies.slice(1)) {
-    await page.getByRole('button', { name:current.languageButton, exact:true }).click();
-    await page.locator(`[data-language-option="${next.language}"]`).click();
-    await expect(page.locator('html')).toHaveAttribute('lang', next.language);
-    await assertPattern(next);
-    await expect(page.getByRole('heading', { name:copies[0].title, exact:true })).toHaveCount(0);
-    await page.screenshot({ path:testInfo.outputPath(`late-lunch-pattern-${next.language}.png`), fullPage:true });
-    current = next;
+  await page.goto('/');
+  for (const language of legacyLanguages) {
+    await page.evaluate(language => localStorage.setItem('rhythm_language_v1', language), language);
+    await page.reload();
+    await page.getByRole('button', { name:'اكتشافاتك', exact:true }).click();
+    await assertPattern();
+    const languageOpener=page.getByTestId('language-picker-opener').filter({visible:true});
+    await expect(languageOpener).toHaveCount(1);
+    await languageOpener.click();
+    await expect(page.locator('[data-language-option]')).toHaveCount(1);
+    await page.locator('[data-language-option="ar"]').click();
+    await assertPattern();
+    await page.screenshot({path:testInfo.outputPath(`late-lunch-pattern-${layout.name}-${language}.png`),fullPage:true});
   }
-
   await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await page.getByRole('button', { name:'اكتشافاتك', exact:true }).click();
-  await assertPattern(copies[3]);
+  await assertPattern();
 });
+}

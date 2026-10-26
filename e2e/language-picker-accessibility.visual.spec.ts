@@ -11,22 +11,22 @@ async function seedReturningGuest(page: any) {
   });
 }
 
-test('mobile language picker exposes dialog state, traps focus and restores it to the opener', async ({ page }) => {
+test('Arabic-only language picker exposes dialog state, traps focus and restores it to the opener', async ({ page }) => {
   await seedReturningGuest(page);
   await page.goto('/');
 
-  const opener = page.getByRole('button', { name: 'Choose language' });
+  const opener = page.getByRole('button', { name: 'اختر اللغة' });
   await expect(opener).toBeVisible();
   await expect(opener).toHaveAttribute('aria-haspopup', 'dialog');
   await expect(opener).toHaveAttribute('aria-expanded', 'false');
   await opener.click();
   await expect(opener).toHaveAttribute('aria-expanded', 'true');
 
-  const dialog = page.getByRole('dialog', { name: 'Choose language' });
+  const dialog = page.getByRole('dialog', { name: 'اختر اللغة' });
   await expect(dialog).toBeVisible();
-  await expect(page.locator('[data-language-option="en"]')).toBeFocused();
+  await expect(page.locator('[data-language-option="ar"]')).toBeFocused();
 
-  const close = dialog.getByRole('button', { name: 'Close' });
+  const close = dialog.getByRole('button', { name: 'إغلاق' });
   const exportButton = page.getByTestId('personal-data-export');
   await close.focus();
   await page.keyboard.press('Shift+Tab');

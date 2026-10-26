@@ -34,11 +34,11 @@ const renderFavorite = (isFavorite: boolean) => renderToStaticMarkup(
 
 describe('MomentDetailModal favorite accessibility state', () => {
   it('exposes the unfavorited state as aria-pressed=false', () => {
-    expect(renderFavorite(false)).toContain('aria-label="Favorite" aria-pressed="false"');
+    expect(renderFavorite(false)).toContain('aria-label="مفضلة" aria-pressed="false"');
   });
 
   it('exposes the favorited state as aria-pressed=true', () => {
-    expect(renderFavorite(true)).toContain('aria-label="Favorite" aria-pressed="true"');
+    expect(renderFavorite(true)).toContain('aria-label="مفضلة" aria-pressed="true"');
   });
 });
 

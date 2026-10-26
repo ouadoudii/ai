@@ -53,15 +53,17 @@ for (const viewport of [
   { name: 'mobile', width: 390, height: 844 },
 ] as const) test(`editing a linked timeline meal reconciles its source check-in on ${viewport.name}`, async ({ page }, testInfo) => {
   await prepare(page, viewport);
-  await page.getByText('Couscous', { exact: true }).first().click();
-  await page.getByRole('button', { name: 'Edit' }).click();
-  await page.getByRole('button', { name: 'Remove' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await page.getByText('كسكس', { exact: true }).first().click();
+  await page.getByRole('button', { name: 'تعديل' }).click();
+  await page.getByRole('button', { name: 'حذف' }).click();
   const title = page.locator('input[autocomplete="off"]');
   await title.fill('سلطة Salat');
   await title.press('Enter');
   const note = page.locator('textarea');
   await note.fill('corrected mixed-script note');
-  await page.getByRole('button', { name: 'Save changes' }).click();
+  await page.getByRole('button', { name: 'حفظ التغييرات' }).click();
 
   await expect.poll(() => page.evaluate(({ momentsKey, checkInsKey }) => {
     const moment = JSON.parse(localStorage.getItem(momentsKey) || '[]')[0];

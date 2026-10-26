@@ -38,10 +38,12 @@ async function exercise(browser: Browser, mobile: boolean) {
     extractedData:{meals:[],sleepHours:6,sleepQuality:1,wakeFeeling:'exhausted',wakeCount:2,awakeMinutes:30,sleepExplicitFields:['wakeCount'],wellbeingEntries:[{timeOfDay:'morning',energyLevel:5,mood:'comfort',stressLevel:1,waterGlasses:8,note:'',explicitFields:[]}]},
   })}));
   await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang','ar');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
   await page.getByTestId(mobile?'primary-capture-button':'desktop-capture-button').click();
   await page.locator('[data-capture-method="voice"]').click();
-  await page.getByRole('button',{name:'Start recording'}).click();
-  await page.getByRole('button',{name:'Stop recording'}).click();
+  await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
+  await page.getByRole('button',{name:'إيقاف التسجيل'}).click();
   await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_checkins_v1')||'[]')[0])).toMatchObject({
     sleep:{durationHours:7.5,quality:4,wakeCount:2},wellbeing:{energyLevel:2,stressLevel:4,waterGlasses:1},
   });

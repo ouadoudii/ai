@@ -21,4 +21,12 @@ describe('voice-first home prompt',()=>{
     expect(voiceHomePrompt('fr',true).title).toContain('journée');
     expect(voiceHomePrompt('en',true).title).toContain('whole day');
   });
+
+  it('uses only the Arabic product brand in both Arabic voice paths',()=>{
+    const prompts=[voiceHomePrompt('ar',false),voiceHomePrompt('ar',true)];
+    for(const prompt of prompts){
+      expect(`${prompt.title} ${prompt.body}`).toContain('ريثم');
+      expect(`${prompt.title} ${prompt.body}`).not.toContain('Moment');
+    }
+  });
 });
