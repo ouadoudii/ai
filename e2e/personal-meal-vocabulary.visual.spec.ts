@@ -34,12 +34,14 @@ for (const viewport of [
   }, { momentsKey: MOMENTS_KEY, vocabularyKey: VOCABULARY_KEY, language: viewport.language, originalTitle: viewport.originalTitle });
 
   await page.goto('/');
-  await page.getByText(viewport.originalTitle, { exact: true }).first().click();
-  await page.getByRole('button', { name: viewport.language === 'ar' ? 'تعديل' : 'Edit' }).click();
+  if (viewport.name === 'desktop') await page.getByRole('navigation', { name: 'التنقل الرئيسي' }).getByRole('button', { name: 'لحظات', exact: true }).click();
+  else await page.getByTestId('mobile-moments-nav').click();
+  await page.getByTestId('timeline-moment-vocabulary-meal').click();
+  await page.getByRole('button', { name: 'تعديل' }).click();
   const editor = page.locator('input[autocomplete="off"]');
   await editor.fill('with lemon');
   await editor.press('Enter');
-  await page.getByRole('button', { name: viewport.language === 'ar' ? 'حفظ التغييرات' : 'Save changes' }).click();
+  await page.getByRole('button', { name: 'حفظ التغييرات' }).click();
 
   await expect.poll(async () => page.evaluate((key) => {
     const entries = JSON.parse(localStorage.getItem(key) || '[]');

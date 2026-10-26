@@ -26,7 +26,7 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
         await expect(page.getByTestId('use-usual-meal-time')).toHaveAttribute('aria-pressed','false');
         await page.locator('input[autocomplete="off"]').fill('Eggs again');
         const now=await page.evaluate(()=>new Date().toTimeString().slice(0,5));
-        await page.getByRole('button',{name:'Save meal'}).click();
+        await page.getByRole('button',{name:'حفظ الوجبة'}).click();
         await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').length)).toBe(4);
         const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]')[0].time);
         expect(saved).toBe(now);

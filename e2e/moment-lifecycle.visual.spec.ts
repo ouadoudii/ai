@@ -4,7 +4,7 @@ async function openMoments(page: import('@playwright/test').Page) {
   const momentsNav = page.getByTestId('mobile-moments-nav');
   await momentsNav.click();
   await expect(momentsNav).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('heading', { name: 'Journal & timeline' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'اليوميات والتسلسل الزمني' })).toBeVisible();
 }
 
 test('moment lifecycle persists favorite and deletion across reloads', async ({ page }) => {
@@ -46,8 +46,8 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
   await page.getByTestId('moments-timeline').getByText('Lifecycle bowl', { exact: true }).click();
   await expect(page.locator('h1', { hasText: 'Lifecycle bowl' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Share' }).click();
-  await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
+  await page.getByRole('button', { name: 'مشاركة' }).click();
+  await expect(page.getByRole('button', { name: 'تم النسخ' })).toBeVisible();
   await expect.poll(() => page.evaluate(() => localStorage.getItem('e2e_clipboard_text'))).toContain('Lifecycle bowl');
 
   await page.evaluate(() => {
@@ -56,10 +56,10 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
       value: { writeText: async () => { throw new Error('denied'); } },
     });
   });
-  await page.getByRole('button', { name: 'Copied' }).click();
-  await expect(page.getByRole('button', { name: 'Copy failed' })).toBeVisible();
+  await page.getByRole('button', { name: 'تم النسخ' }).click();
+  await expect(page.getByRole('button', { name: 'تعذر النسخ' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Favorite' }).click();
+  await page.getByRole('button', { name: 'مفضلة' }).click();
 
   await expect.poll(async () => {
     return page.evaluate(() => {
@@ -68,7 +68,7 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
     });
   }).toBe(true);
 
-  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'إغلاق' }).click();
   await page.reload();
   await openMoments(page);
   await expect(page.getByTestId('moments-timeline')).toContainText('Lifecycle bowl');
@@ -83,10 +83,10 @@ test('moment lifecycle persists favorite and deletion across reloads', async ({ 
   page.once('dialog', async dialog => {
     expect(dialog.type()).toBe('confirm');
     expect(dialog.message()).toContain('Lifecycle bowl');
-    expect(dialog.message()).toContain('cannot be undone');
+    expect(dialog.message()).toContain('لا يمكن التراجع عن هذا الإجراء');
     await dialog.accept();
   });
-  await page.getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('button', { name: 'حذف' }).click();
   await expect.poll(async () => {
     return page.evaluate(() => {
       const moments = JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]');

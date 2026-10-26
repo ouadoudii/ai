@@ -21,15 +21,15 @@ async function installReturningState(page:any, language:'de'|'ar') {
   }, { lang: language, meals: lunchHistory });
 }
 
-test('desktop German discoveries show a later personal lunch rhythm', async ({ page }, testInfo) => {
+test('desktop legacy German profile discoveries show a later personal lunch rhythm', async ({ page }, testInfo) => {
   await page.setViewportSize({ width:1440, height:900 });
   await installReturningState(page, 'de');
   await page.goto('/');
-  await page.getByRole('button', { name:'Entdeckungen', exact:true }).click();
+  await page.getByRole('button', { name:'اكتشافاتك', exact:true }).click();
   const insight = page.getByTestId('meal-rhythm-shift-insight');
   await expect(insight).toBeVisible();
-  await expect(insight).toContainText('Dein Essrhythmus verändert sich');
-  await expect(page.getByTestId('meal-rhythm-shift-observation')).toContainText('Mittagessen liegt zuletzt etwa 90 Min. später');
+  await expect(insight).toContainText('إيقاع وجباتك يتغيّر');
+  await expect(page.getByTestId('meal-rhythm-shift-observation')).toContainText('الغداء أصبح مؤخراً متأخراً بحوالي 90 دقيقة مقارنةً بالسابق.');
   await page.screenshot({ path:testInfo.outputPath('meal-rhythm-shift-desktop-de.png'), fullPage:true });
 });
 

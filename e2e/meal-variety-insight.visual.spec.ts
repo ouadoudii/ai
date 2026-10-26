@@ -25,26 +25,28 @@ for (const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wi
     await page.setViewportSize({width:viewport.width,height:viewport.height});
     await prepare(page);
     await page.goto('/');
-    await page.getByRole('button',{name:'Discoveries',exact:true}).click();
+    await page.getByRole('button',{name:'اكتشافاتك',exact:true}).click();
 
     const insight=page.getByTestId('meal-variety-insight');
+    await expect(page.locator('html')).toHaveAttribute('lang','ar');
+    await expect(page.locator('html')).toHaveAttribute('dir','rtl');
     await expect(insight).toBeVisible();
-    await expect(insight).toContainText('Your recent meal variety');
-    await expect(page.getByTestId('meal-variety-summary')).toContainText('5 different meals');
+    await expect(insight).toContainText('تنوع وجباتك مؤخراً');
+    await expect(page.getByTestId('meal-variety-summary')).toContainText('5 وجبات مختلفة');
     await expect(insight).not.toContainText('Demo meal');
     await page.screenshot({path:testInfo.outputPath(`meal-variety-${viewport.name}-en.png`),fullPage:true});
 
     await page.evaluate(() => localStorage.setItem('rhythm_language_v1','de'));
     await page.reload();
-    await page.getByRole('button',{name:'Entdeckungen',exact:true}).click();
-    await expect(insight).toContainText('Deine Mahlzeitenvielfalt zuletzt');
-    await expect(page.getByTestId('meal-variety-summary')).toContainText('5 verschiedene Mahlzeiten');
+    await page.getByRole('button',{name:'اكتشافاتك',exact:true}).click();
+    await expect(insight).toContainText('تنوع وجباتك مؤخراً');
+    await expect(page.getByTestId('meal-variety-summary')).toContainText('5 وجبات مختلفة');
 
     if(viewport.name==='mobile') {
       await page.evaluate(() => localStorage.setItem('rhythm_language_v1','fr'));
       await page.reload();
-      await page.getByRole('button',{name:'Découvertes',exact:true}).click();
-      await expect(insight).toContainText('La variété récente de tes repas');
+      await page.getByRole('button',{name:'اكتشافاتك',exact:true}).click();
+      await expect(insight).toContainText('تنوع وجباتك مؤخراً');
       await page.screenshot({path:testInfo.outputPath('meal-variety-mobile-fr.png'),fullPage:true});
     }
   });
