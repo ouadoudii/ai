@@ -5,25 +5,29 @@ import { describe, expect, it } from 'vitest';
 const component=fs.readFileSync(path.join(process.cwd(),'src/components/CaryAccountGate.tsx'),'utf8');
 const copy=fs.readFileSync(path.join(process.cwd(),'src/components/CaryAccountGateCopy.ts'),'utf8');
 
-describe('account gate localization',()=>{
-  it('keeps all four supported locales selectable instead of a binary Arabic/English toggle',()=>{
-    for(const value of ['de','en','fr','ar']) expect(component).toContain(`<option value="${value}">`);
-    expect(component).toContain('value={language}');
-    expect(component).toContain('setLanguage(e.target.value as AppLanguage)');
-    expect(component).not.toContain("setLanguage(ar?'en':'ar')");
+describe('Arabic-only account gate',()=>{
+  it('does not expose historical language choices',()=>{
+    expect(component).not.toContain('account-language');
+    expect(component).not.toContain('<select');
+    for(const value of ['de','en','fr']) expect(component).not.toContain(`<option value="${value}">`);
+    expect(component).not.toContain('setLanguage');
+    expect(component).not.toContain('AppLanguage');
   });
 
-  it('provides German and French account, login and confirmation copy',()=>{
-    expect(copy).toContain("de:{back:'Zurück'");
-    expect(copy).toContain("created:'Konto erstellt. Bitte bestätige deine E-Mail und melde dich danach an.'");
-    expect(copy).toContain("fr:{back:'Retour'");
-    expect(copy).toContain("created:'Compte créé. Confirme ton e-mail, puis connecte-toi.'");
+  it('keeps account, login and confirmation copy Arabic-only',()=>{
+    expect(copy).toContain("back:'رجوع'");
+    expect(copy).toContain("created:'تم إنشاء الحساب. أكّد بريدك الإلكتروني ثم سجّل الدخول.'");
+    expect(copy).not.toContain("en:{");
+    expect(copy).not.toContain("de:{");
+    expect(copy).not.toContain("fr:{");
     expect(component).toContain('setMessage(c.created)');
   });
 
-  it('uses the selected locale copy throughout the gate while preserving Arabic RTL handling',()=>{
-    expect(component).toContain('const c=accountGateCopy[language]');
-    expect(component).toContain("const ar=language==='ar'");
+  it('uses the Arabic product brand and RTL account flow',()=>{
+    expect(component).toContain('>ريثم</strong>');
+    expect(component).not.toContain('>Moment</strong>');
+    expect(component).toContain('const c=accountGateCopy');
+    expect(component).toContain('rotate-180');
     for(const key of ['c.title','c.intro','c.signin','c.create','c.back','c.email','c.password']) expect(component).toContain(key);
   });
 });
