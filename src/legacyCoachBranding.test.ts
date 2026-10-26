@@ -31,6 +31,6 @@ describe('legacy coach branding', () => {
     expect(app).toContain('data-testid="mobile-coach-nav"');
     expect(app).toContain('>Coach</button>');
     expect(header).toContain('data-testid="desktop-coach-nav"');
-    expect(header).toContain('/>Coach</button>');
+    expect(header).toMatch(/<MessageSquare[^>]*\/>\s*Coach/);
   });
 });

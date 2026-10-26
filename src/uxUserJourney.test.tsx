@@ -38,7 +38,8 @@ describe('Arabic mobile UX day simulation',()=>{
     expect(html).toContain('اكتشافاتك');
     expect(html).toContain('لحظاتي');
     expect(html).toContain('اليوم');
-    expect(html).toContain('اللغة');
+    expect(html).toContain('بياناتي');
+    expect(html).not.toContain('اللغة');
     expect(html).not.toMatch(/Discoveries|My moments|Language/);
   });
 });

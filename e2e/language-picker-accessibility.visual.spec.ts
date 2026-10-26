@@ -1,44 +1,34 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
 async function seedReturningGuest(page: any) {
   await page.addInitScript(() => {
-    localStorage.setItem('rhythm_language_v1', 'en');
-    localStorage.setItem('cary_access_mode_v1', 'guest');
-    localStorage.setItem('cary_onboarding_v2_complete', 'true');
-    localStorage.setItem('nimmapp_moments_v1', '[]');
-    localStorage.setItem('nimmapp_checkins_v1', '[]');
-    sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    localStorage.setItem("rhythm_language_v1", "en");
+    localStorage.setItem("cary_access_mode_v1", "guest");
+    localStorage.setItem("cary_onboarding_v2_complete", "true");
+    localStorage.setItem("nimmapp_moments_v1", "[]");
+    localStorage.setItem("nimmapp_checkins_v1", "[]");
+    sessionStorage.setItem("nimmapp_checkin_auto_opened", "true");
   });
 }
 
-test('Arabic-only language picker exposes dialog state, traps focus and restores it to the opener', async ({ page }) => {
+test("Arabic-only shell removes the language dialog without losing accessible data export", async ({
+  page,
+}) => {
   await seedReturningGuest(page);
-  await page.goto('/');
+  await page.goto("/");
 
-  const opener = page.getByRole('button', { name: 'اختر اللغة' });
-  await expect(opener).toBeVisible();
-  await expect(opener).toHaveAttribute('aria-haspopup', 'dialog');
-  await expect(opener).toHaveAttribute('aria-expanded', 'false');
-  await opener.click();
-  await expect(opener).toHaveAttribute('aria-expanded', 'true');
-
-  const dialog = page.getByRole('dialog', { name: 'اختر اللغة' });
-  await expect(dialog).toBeVisible();
-  await expect(page.locator('[data-language-option="ar"]')).toBeFocused();
-
-  const close = dialog.getByRole('button', { name: 'إغلاق' });
-  const exportButton = page.getByTestId('personal-data-export');
-  await close.focus();
-  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByTestId("language-picker-opener")).toHaveCount(0);
+  await expect(page.locator("[data-language-option]")).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "اختر اللغة" })).toHaveCount(0);
+  const exportButton = page
+    .getByTestId("personal-data-export")
+    .filter({ visible: true });
+  await expect(exportButton).toHaveCount(1);
+  await expect(exportButton).toHaveAccessibleName("تصدير بياناتي");
+  await exportButton.focus();
   await expect(exportButton).toBeFocused();
-
-  await page.keyboard.press('Tab');
-  await expect(close).toBeFocused();
-
-  await page.keyboard.press('Escape');
-  await expect(dialog).toBeHidden();
-  await expect(opener).toHaveAttribute('aria-expanded', 'false');
-  await expect(opener).toBeFocused();
-
-  await page.screenshot({ path: 'test-results/language-picker-accessibility-mobile.png', fullPage: true });
+  await page.screenshot({
+    path: "test-results/arabic-only-export-accessibility.png",
+    fullPage: true,
+  });
 });
