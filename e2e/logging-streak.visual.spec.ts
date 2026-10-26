@@ -30,11 +30,13 @@ for (const viewport of [
     await page.setViewportSize({ width:viewport.width, height:viewport.height });
     await seed(page);
     await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     const card = page.getByTestId('logging-streak-card');
     await expect(card).toBeVisible();
     await expect(page.getByTestId('logging-streak-count')).toHaveText('2');
     await expect(page.getByTestId('logging-best-streak-count')).toHaveText('3');
-    await expect(card).toContainText(/Personal best/i);
+    await expect(card).toContainText('أفضل سلسلة شخصية: 3 أيام');
     await page.screenshot({path:testInfo.outputPath(`logging-best-streak-${viewport.name}.png`),fullPage:true});
   });
 }
