@@ -47,7 +47,9 @@ test(`late-lunch pattern retains evidence and experiment for all legacy locales 
     await page.reload();
     await page.getByRole('button', { name:'اكتشافاتك', exact:true }).click();
     await assertPattern();
-    await page.getByTestId('language-picker-opener').click();
+    const languageOpener=page.getByTestId('language-picker-opener').filter({visible:true});
+    await expect(languageOpener).toHaveCount(1);
+    await languageOpener.click();
     await expect(page.locator('[data-language-option]')).toHaveCount(1);
     await page.locator('[data-language-option="ar"]').click();
     await assertPattern();

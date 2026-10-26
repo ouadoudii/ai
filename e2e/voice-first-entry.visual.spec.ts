@@ -83,7 +83,7 @@ test('typing path creates a semantic personal plan and unlocks only after confir
   await page.getByTestId('profile-confirm').click();
   await expect.poll(()=>page.evaluate(()=>Boolean(localStorage.getItem('rhythm_intro_profile_v1')))).toBe(true);
   await expect(page.getByTestId('voice-first-entry-overlay')).toHaveCount(0);
-  await expect(page.getByTestId('primary-capture-button')).toBeVisible();
+  await expect(page.getByRole('button',{name:'سجّل لحظة',exact:true}).filter({visible:true}).first()).toBeVisible();
 });
 
 test('quick form persists context and unlocks the app',async({page})=>{
@@ -109,7 +109,7 @@ test('quick form persists context and unlocks the app',async({page})=>{
   expect(saved.rawIntro).toContain('الجوع الآن: 4/5');
   expect(saved.rawIntro).toContain('الطاقة الآن: 2/5');
   await expect(page.getByTestId('voice-first-entry-overlay')).toHaveCount(0);
-  await expect(page.getByTestId('primary-capture-button')).toBeVisible();
+  await expect(page.getByRole('button',{name:'سجّل لحظة',exact:true}).filter({visible:true}).first()).toBeVisible();
   await page.reload();
   await expect(page.getByTestId('voice-first-entry-overlay')).toHaveCount(0);
 });

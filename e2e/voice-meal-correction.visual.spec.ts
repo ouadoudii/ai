@@ -35,7 +35,7 @@ async function capture(page:any) {
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang','ar');
   await expect(page.locator('html')).toHaveAttribute('dir','rtl');
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button',{name:'سجّل لحظة',exact:true}).filter({visible:true}).first().click();
   await page.getByRole('dialog').getByRole('button',{name:/احكِ لي/}).click();
   await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
   await page.getByRole('button',{name:'إيقاف التسجيل'}).click();

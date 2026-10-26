@@ -17,7 +17,7 @@ async function prepareGuest(page:any) {
 }
 
 async function openMealEditor(page:any) {
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button',{name:'سجّل لحظة',exact:true}).filter({visible:true}).first().click();
   await page.locator('[data-capture-method="text"]').click();
   await expect(page.getByRole('heading', { name: 'ماذا أكلت؟' })).toBeVisible();
 }

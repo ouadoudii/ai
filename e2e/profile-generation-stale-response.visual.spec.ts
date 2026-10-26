@@ -32,7 +32,7 @@ async function installSpeech(page:any,transcript:string){
 
 async function speak(page:any){
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await page.getByRole('button',{name:'سجّل لحظة',exact:true}).filter({visible:true}).first().click();
   await page.getByRole('dialog').locator('[data-capture-method="voice"]').click();
   await page.getByRole('button',{name:/ابدأ التسجيل/}).click();
   await page.getByRole('button',{name:/إيقاف التسجيل/}).click();

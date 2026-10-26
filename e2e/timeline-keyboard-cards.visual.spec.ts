@@ -27,7 +27,7 @@ test.describe('timeline meal keyboard access', () => {
     }, moment);
     await page.goto('/');
     await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').some((entry: { id?: string }) => entry.id === 'keyboard-meal'))).toBe(true);
-    const desktopTimeline = page.getByRole('button', { name: /entries/i }).first();
+    const desktopTimeline = page.getByRole('navigation',{name:'التنقل الرئيسي'}).getByRole('button',{name:'لحظات',exact:true});
     const mobileTimeline = page.getByTestId('mobile-moments-nav');
     if (await desktopTimeline.isVisible().catch(() => false)) await desktopTimeline.click();
     else await mobileTimeline.click();
@@ -41,7 +41,7 @@ test.describe('timeline meal keyboard access', () => {
     await card.focus();
     await expect(card).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.getByText('بيض مسلوق').last()).toBeVisible();
+    await expect(page.getByRole('dialog',{name:'بيض مسلوق',exact:true})).toBeVisible();
     await page.screenshot({ path: 'test-results/timeline-keyboard-enter.png', fullPage: true });
   });
 
@@ -51,6 +51,6 @@ test.describe('timeline meal keyboard access', () => {
     await card.focus();
     await expect(card).toBeFocused();
     await page.keyboard.press('Space');
-    await expect(page.getByText('بيض مسلوق').last()).toBeVisible();
+    await expect(page.getByRole('dialog',{name:'بيض مسلوق',exact:true})).toBeVisible();
   });
 });

@@ -38,7 +38,7 @@ test('confirmed profile makes the personal plan the primary mobile home action',
   await expect(page.getByRole('dialog')).toBeVisible();
 });
 
-test('home stays generic when no confirmed profile exists',async({page})=>{
+test('home stays generic and requires onboarding when no confirmed profile exists',async({page})=>{
   await page.addInitScript(()=>{
     localStorage.setItem('rhythm_language_v1','en');
     localStorage.setItem('cary_access_mode_v1','guest');
@@ -49,7 +49,9 @@ test('home stays generic when no confirmed profile exists',async({page})=>{
   });
   await page.goto('/');
   await expect(page.getByTestId('personal-plan-home-card')).toHaveCount(0);
-  await expect(page.getByTestId('primary-capture-button')).toBeVisible();
+  await expect(page.getByTestId('voice-first-entry-overlay')).toBeVisible();
+  await expect(page.locator('#root')).toHaveAttribute('inert','');
+  await expect(page.getByTestId('voice-first-entry-overlay').getByRole('button',{name:'أفضل الكتابة',exact:true})).toBeEnabled();
 });
 
 test('mobile My moments navigation opens the chronology instead of returning to Today',async({page},testInfo)=>{

@@ -49,6 +49,11 @@ test('Today priority and recent moments render from the same hydrated snapshot',
   await page.goto('/');
   await expect(page.getByTestId('today-priorities')).toContainText('3 إدخالات حقيقية');
   await expect(page.getByRole('heading', { name: 'لحظاتك الأخيرة', exact: true })).toBeVisible();
-  await expect(page.getByText('Lunch',{exact:true}).first()).toBeVisible();
+  const recentMeals=page.getByRole('button',{name:/14:\d{2} وجبة غداء سابقة/});
+  await expect(recentMeals).toHaveCount(3);
+  for (const meal of await recentMeals.all()) await expect(meal).toBeVisible();
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('nimmapp_moments_v1')||'[]').map((meal:{id:string;title:string})=>({id:meal.id,title:meal.title})))).toEqual([
+    {id:'user-lunch-1',title:'Lunch'}, {id:'user-lunch-2',title:'Lunch'}, {id:'user-lunch-3',title:'Lunch'},
+  ]);
   await page.screenshot({path:testInfo.outputPath('today-live-snapshot-desktop-legacy-de-arabic.png'),fullPage:true});
 });
