@@ -29,12 +29,15 @@ async function seedMeal(page: import('@playwright/test').Page) {
 
 async function openTimeline(page: import('@playwright/test').Page, mobile: boolean) {
   if (mobile) await page.getByTestId('mobile-moments-nav').click();
-  else await page.getByRole('button', { name: 'Momente', exact: true }).click();
+  else await page.getByRole('button', { name: 'لحظات', exact: true }).click();
 }
 
 async function exercisePinFlow(page: import('@playwright/test').Page, mobile: boolean, screenshotPath: string) {
   await seedMeal(page);
   await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  expect(await page.evaluate(() => localStorage.getItem('rhythm_language_v1'))).toBe('de');
   await openTimeline(page, mobile);
   await page.getByTestId(`timeline-moment-${meal.id}`).click();
   const pin = page.getByTestId('pin-meal-button');
@@ -52,10 +55,10 @@ async function exercisePinFlow(page: import('@playwright/test').Page, mobile: bo
   await page.goto('/');
   const shortcuts = page.getByTestId('pinned-meals-shortcuts');
   await expect(shortcuts).toBeVisible();
-  await expect(shortcuts).toContainText('Angeheftete Mahlzeiten');
+  await expect(shortcuts).toContainText('الوجبات المثبّتة');
   await expect(shortcuts).toContainText(meal.title);
   const repeat = page.getByTestId(`repeat-pinned-meal-${meal.id}`);
-  await expect(repeat).toHaveAccessibleName(`Erneut verwenden: ${meal.title}`);
+  await expect(repeat).toHaveAccessibleName(`استخدمها مجدداً · ${meal.title}`);
   await page.screenshot({ path: screenshotPath, fullPage: true });
   await repeat.click();
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').length)).toBe(2);
