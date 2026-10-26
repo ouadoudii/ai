@@ -42,7 +42,7 @@ async function seedReturningGuest(page: any, language: LegacyLanguage) {
 }
 
 for (const legacyLanguage of legacyLanguages) {
-  test(`legacy ${legacyLanguage} keeps the full mobile food flow in Arabic`, async ({ page }, testInfo) => {
+  test(`legacy ${legacyLanguage} keeps the full food flow in Arabic`, async ({ page }, testInfo) => {
     await seedReturningGuest(page, legacyLanguage);
     await page.goto('/');
 
@@ -60,8 +60,10 @@ for (const legacyLanguage of legacyLanguages) {
       await expect(page.getByRole('button', { name: `${arabic.chooseLanguage}: AR`, exact: true })).toHaveAttribute('data-testid', 'language-picker-opener');
     }
     await expect(page.getByRole('button', { name: arabic.today, exact: true }).filter({ visible: true }).first()).toBeVisible();
+    // The capture CTA must remain actionable on both desktop and mobile.
+    await expect(page.getByRole('button', { name: arabic.captureAction, exact: true }).filter({ visible: true }).first()).toBeEnabled();
 
-    await page.getByRole('button', { name: arabic.captureAction }).first().click();
+    await page.getByRole('button', { name: arabic.captureAction, exact: true }).filter({ visible: true }).first().click();
     await expect(page.getByRole('heading', { name: arabic.captureTitle, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: arabic.photo, exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: arabic.speak, exact: true })).toBeVisible();
