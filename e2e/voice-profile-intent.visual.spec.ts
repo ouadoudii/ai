@@ -48,7 +48,14 @@ async function installSpeech(page:any,language:Language,transcript:string){
 
 async function speak(page:any,language:Language){
   await page.goto('/');
-  await page.getByTestId('primary-capture-button').click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  // The mobile primary CTA is hidden on desktop. Use the actual visible Arabic
+  // capture control so these tests exercise speech intent, not a hidden button.
+  const capture = page.getByRole('button', { name: 'سجّل لحظة', exact: true }).filter({ visible: true }).first();
+  await expect(capture).toBeVisible();
+  await expect(capture).toBeEnabled();
+  await capture.click();
   const chooser=page.getByRole('dialog');
   await chooser.locator('[data-capture-method="voice"]').click();
   await page.getByRole('button',{name:'ابدأ التسجيل'}).click();
