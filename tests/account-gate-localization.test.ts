@@ -21,6 +21,8 @@ describe('Arabic-only account gate',()=>{
     expect(copy).not.toContain("de:{");
     expect(copy).not.toContain("fr:{");
     expect(component).toContain('setMessage(c.created)');
+    expect(component).toContain('catch{setError(c.failed)}');
+    expect(component).not.toContain('x instanceof Error?x.message:c.failed');
   });
 
   it('uses the Arabic product brand and RTL account flow',()=>{
