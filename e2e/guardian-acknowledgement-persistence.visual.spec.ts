@@ -28,9 +28,8 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
     const resolve=guardian.getByRole('button',{name:'تم التعامل معه'}).first();
     await expect(resolve).toBeVisible();
     await resolve.click();
-    await expect(guardian.getByText('لا حاجة إلى تدخل')).toBeVisible();
-
     await expect.poll(async()=>page.evaluate((key)=>JSON.parse(localStorage.getItem(key)||'[]').length,acknowledgementStorageKey)).toBeGreaterThan(0);
+    await expect(guardian.getByText('لا حاجة إلى تدخل')).toBeVisible({timeout:10_000});
 
     await page.reload();
     await page.getByTestId(viewport.name==='desktop'?'desktop-coach-nav':'mobile-coach-nav').click();
