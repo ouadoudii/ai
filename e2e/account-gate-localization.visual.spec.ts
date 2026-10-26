@@ -20,6 +20,11 @@ for (const legacyLanguage of legacyLanguages) {
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.getByRole('heading', { name: 'أيامك. أنماطك.' })).toBeVisible();
+    await expect(page.getByText('ريثم', { exact: true })).toBeVisible();
+    await expect(page.locator('#account-language')).toHaveCount(0);
+    await expect(page.getByText('Deutsch', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('English', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Français', { exact: true })).toHaveCount(0);
     await expect(page.getByText('ابدأ على هذا الجهاز أو استخدم حساباً لمزامنة تسجيلاتك.')).toBeVisible();
     await expect(page.getByRole('button', { name: /ابدأ على هذا الجهاز/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /تسجيل الدخول/ }).first()).toBeVisible();
@@ -40,3 +45,20 @@ for (const legacyLanguage of legacyLanguages) {
     await expect(page.getByPlaceholder('كلمة المرور')).toBeVisible();
   });
 }
+
+
+test('Arabic-only onboarding keeps the ريثم brand and hides legacy language controls', async ({ page }) => {
+  await seedFreshGate(page, null);
+  await page.goto('/');
+
+  await page.getByRole('button', { name: /ابدأ على هذا الجهاز/ }).click();
+  await page.getByRole('button', { name: 'ابدأ اكتشاف إيقاعي', exact: true }).click();
+  await page.getByRole('button', { name: 'نموذج سريع', exact: true }).click();
+
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.getByText('لا نحتاج إلى الكمال — فقط نقطة بداية تساعد ريثم على فهمك.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'ابدأ مع ريثم', exact: true })).toBeVisible();
+  await expect(page.getByText('Moment', { exact: true })).toHaveCount(0);
+  await expect(page.locator('#account-language')).toHaveCount(0);
+});
