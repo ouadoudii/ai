@@ -46,5 +46,10 @@ describe("legacy coach branding", () => {
     expect(header).toContain('data-testid="desktop-coach-nav"');
     expect(header).toContain('{t("navCoach")}');
     expect(header).not.toMatch(/<MessageSquare[^>]*\/>\s*Coach/);
+    const translations = readFileSync(
+      fileURLToPath(new URL("./i18n.tsx", import.meta.url)),
+      "utf8",
+    );
+    expect(translations).toMatch(/navCoach:\s*\{en:\s*["\u0027]Coach["\u0027],\s*ar:\s*["\u0027]المرشد["\u0027]\}/u);
   });
 });
