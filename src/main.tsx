@@ -1,37 +1,125 @@
-import React, { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
-import { CaryAccountGate } from './components/CaryAccountGate';
-import { MomentOnboarding } from './components/MomentOnboarding';
-import { CaryCloudMemorySync } from './components/CaryCloudMemorySync';
-import { LanguageProvider, useLanguage } from './i18n';
-import { loadPersistedCheckIns, loadPersistedMoments, migrateLegacyStorage } from './storageMigration';
-import { useLocalNow } from './utils/useLocalNow';
-import './index.css';
+import React, { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import { CaryAccountGate } from "./components/CaryAccountGate";
+import { MomentOnboarding } from "./components/MomentOnboarding";
+import { CaryCloudMemorySync } from "./components/CaryCloudMemorySync";
+import { LanguageProvider, useLanguage } from "./i18n";
+import {
+  loadPersistedCheckIns,
+  loadPersistedMoments,
+  migrateLegacyStorage,
+} from "./storageMigration";
+import { useLocalNow } from "./utils/useLocalNow";
+import {
+  ARABIC_FATAL_MESSAGE,
+  ARABIC_FATAL_TITLE,
+  buildFatalErrorMarkup,
+} from "./utils/fatalUi";
+import "./index.css";
 
-const rootElement = document.getElementById('root');
+const rootElement = document.getElementById("root");
 
-function showFatalError(error: unknown) {
+function showFatalError(_error: unknown) {
   if (!rootElement) return;
-  const message = error instanceof Error ? error.message : String(error || 'Unknown error');
-  rootElement.innerHTML = `<main style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f7f2ea;font-family:system-ui,-apple-system,sans-serif;color:#292524"><section style="max-width:560px;width:100%;background:white;border:1px solid #e7e5e4;border-radius:24px;padding:28px"><h1 style="font-size:22px;margin:0 0 10px">Rhythm could not start</h1><pre style="white-space:pre-wrap;word-break:break-word;background:#fafaf9;border-radius:14px;padding:14px;font-size:12px">${message.replace(/[&<>\"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c))}</pre></section></main>`;
+  rootElement.innerHTML = buildFatalErrorMarkup();
 }
-window.addEventListener('error',(event)=>showFatalError(event.error||event.message));
-window.addEventListener('unhandledrejection',(event)=>showFatalError(event.reason));
-class RuntimeErrorBoundary extends React.Component<React.PropsWithChildren,{error:unknown|null}>{state={error:null};static getDerivedStateFromError(error:unknown){return{error}}render(){if(this.state.error)return <main className="min-h-screen flex items-center justify-center p-6 bg-[#f7f2ea]"><section className="max-w-xl w-full bg-white rounded-3xl p-7"><h1 className="text-xl font-bold">Rhythm could not start</h1></section></main>;return (this as any).props.children;}}
+window.addEventListener("error", (event) =>
+  showFatalError(event.error || event.message),
+);
+window.addEventListener("unhandledrejection", (event) =>
+  showFatalError(event.reason),
+);
+class RuntimeErrorBoundary extends React.Component<
+  React.PropsWithChildren,
+  { error: unknown | null }
+> {
+  state = { error: null };
+  static getDerivedStateFromError(error: unknown) {
+    return { error };
+  }
+  render() {
+    if (this.state.error)
+      return (
+        <main
+          lang="ar"
+          dir="rtl"
+          role="alert"
+          className="min-h-screen flex items-center justify-center p-6 bg-[#f7f2ea]"
+        >
+          <section className="max-w-xl w-full bg-white rounded-3xl p-7">
+            <h1 className="text-xl font-bold">{ARABIC_FATAL_TITLE}</h1>
+            <p className="mt-3 leading-8">{ARABIC_FATAL_MESSAGE}</p>
+          </section>
+        </main>
+      );
+    return (this as any).props.children;
+  }
+}
 
-const AccountButton:React.FC<{accessMode:'guest'|'account';session:any;openAccount:()=>void}>=({accessMode,session,openAccount})=>{const {language}=useLanguage();return <button type="button" onClick={openAccount} className="fixed z-40 top-3 right-3 md:top-auto md:right-5 md:bottom-5 rounded-full border border-[#E5D6CB] bg-white/95 backdrop-blur-xl px-3.5 py-2 shadow-[0_8px_24px_rgba(72,49,38,.14)] text-[11px] font-bold text-[#5F4538]" aria-label={language==='ar'?'فتح الحساب':'Open account'}>{accessMode==='account'?(session?.user.email||(language==='ar'?'حسابي':'My account')):(language==='ar'?'ضيف · تسجيل الدخول':'Guest · Sign in')}</button>};
+const AccountButton: React.FC<{
+  accessMode: "guest" | "account";
+  session: any;
+  openAccount: () => void;
+}> = ({ accessMode, session, openAccount }) => {
+  const { language } = useLanguage();
+  return (
+    <button
+      type="button"
+      onClick={openAccount}
+      className="fixed z-40 top-3 right-3 md:top-auto md:right-5 md:bottom-5 rounded-full border border-[#E5D6CB] bg-white/95 backdrop-blur-xl px-3.5 py-2 shadow-[0_8px_24px_rgba(72,49,38,.14)] text-[11px] font-bold text-[#5F4538]"
+      aria-label={language === "ar" ? "فتح الحساب" : "Open account"}
+    >
+      {accessMode === "account"
+        ? session?.user.email || (language === "ar" ? "حسابي" : "My account")
+        : language === "ar"
+          ? "ضيف · تسجيل الدخول"
+          : "Guest · Sign in"}
+    </button>
+  );
+};
 
-const ReactiveApp:React.FC=()=>{useLocalNow();return <App/>;};
+const ReactiveApp: React.FC = () => {
+  useLocalNow();
+  return <App />;
+};
 
-if(!rootElement)throw new Error('Root element #root is missing');
+if (!rootElement) throw new Error("Root element #root is missing");
 migrateLegacyStorage();
 // Normalize the exact values App will hydrate before React renders. This closes the
 // gap where a stale/corrupt legacy fallback can survive an already-completed migration.
 try {
-  localStorage.setItem('nimmapp_moments_v1', JSON.stringify(loadPersistedMoments()));
-  localStorage.setItem('nimmapp_checkins_v1', JSON.stringify(loadPersistedCheckIns()));
+  localStorage.setItem(
+    "nimmapp_moments_v1",
+    JSON.stringify(loadPersistedMoments()),
+  );
+  localStorage.setItem(
+    "nimmapp_checkins_v1",
+    JSON.stringify(loadPersistedCheckIns()),
+  );
 } catch {
   // Storage can be unavailable in privacy modes; App already falls back in memory.
 }
-createRoot(rootElement).render(<StrictMode><RuntimeErrorBoundary><LanguageProvider><CaryAccountGate>{({accessMode,session,openAccount})=>(<MomentOnboarding><CaryCloudMemorySync session={accessMode==='account'?session:null}/><ReactiveApp/><AccountButton accessMode={accessMode} session={session} openAccount={openAccount}/></MomentOnboarding>)}</CaryAccountGate></LanguageProvider></RuntimeErrorBoundary></StrictMode>);
+createRoot(rootElement).render(
+  <StrictMode>
+    <RuntimeErrorBoundary>
+      <LanguageProvider>
+        <CaryAccountGate>
+          {({ accessMode, session, openAccount }) => (
+            <MomentOnboarding>
+              <CaryCloudMemorySync
+                session={accessMode === "account" ? session : null}
+              />
+              <ReactiveApp />
+              <AccountButton
+                accessMode={accessMode}
+                session={session}
+                openAccount={openAccount}
+              />
+            </MomentOnboarding>
+          )}
+        </CaryAccountGate>
+      </LanguageProvider>
+    </RuntimeErrorBoundary>
+  </StrictMode>,
+);

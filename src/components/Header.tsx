@@ -66,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
             className={`rounded-full px-4 py-2 text-xs font-bold flex gap-1.5 items-center ${activeTab === "coach" ? "bg-[#526B48] text-white" : "text-[#706F68]"}`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            Coach
+            {t("navCoach")}
           </button>
           <button
             onClick={() => setActiveTab("type_analysis")}
