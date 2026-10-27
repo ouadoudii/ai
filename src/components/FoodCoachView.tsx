@@ -573,6 +573,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           />
           <button
             type="button"
+            aria-label="إرسال السؤال"
             onClick={() => handleSendMessage()}
             className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 shadow-xs transition-all"
           >
