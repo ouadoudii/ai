@@ -22,7 +22,7 @@ for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',wid
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
 
     await page.getByTestId(viewport.name === 'mobile' ? 'mobile-coach-nav' : 'desktop-coach-nav').click();
-    const startCheckIn=page.getByRole('button',{name:'Check-in starten',exact:true});
+    const startCheckIn=page.getByRole('button',{name:'ابدأ تسجيل يومك',exact:true});
     await expect(startCheckIn).toBeVisible();
     await startCheckIn.click();
 
