@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FoodMoment } from '../types';
-import { getBestMealLoggingStreak, getMealLoggingStreak } from './loggingStreak';
+import { getBestMealLoggingStreak, getMealLoggingStreak, getLoggedDayCount } from './loggingStreak';
 
 const moment = (id: string, date: string): FoodMoment => ({
   id,
@@ -76,5 +76,30 @@ describe('getBestMealLoggingStreak', () => {
       moment('moment-1', '2026-09-20'),
       moment('bad', '2026-02-30'),
     ])).toBe(0);
+  });
+});
+
+
+describe('getLoggedDayCount for a non-punitive journal', () => {
+  it('counts unique scattered calendar days without resetting for gaps', () => {
+    expect(getLoggedDayCount([
+      moment('a', '2026-09-20'), moment('b', '2026-09-22'),
+      moment('c', '2026-09-22'), moment('d', '2026-10-01'),
+    ], '2026-10-02')).toBe(3);
+  });
+  it('ignores demo, invalid and future dates', () => {
+    expect(getLoggedDayCount([
+      moment('moment-1', '2026-09-30'), moment('bad', '2026-02-30'),
+      moment('future', '2026-10-04'), moment('valid', '2026-10-01'),
+    ], '2026-10-02')).toBe(1);
+  });
+  it('supports leap day and year boundaries without a streak requirement', () => {
+    expect(getLoggedDayCount([
+      moment('a', '2024-02-29'), moment('b', '2024-03-02'),
+      moment('c', '2023-12-31'),
+    ], '2024-03-02')).toBe(3);
+  });
+  it('returns zero for an invalid reference day', () => {
+    expect(getLoggedDayCount([moment('a', '2026-10-01')], 'not-a-date')).toBe(0);
   });
 });
