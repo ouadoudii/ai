@@ -2,178 +2,858 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React from 'react';
-import { FoodMoment, ActiveTab, DailyCheckIn, TimeOfDayPhase } from './types';
-import { Header } from './components/Header';
-import { MobileBottomNav } from './components/MobileBottomNav';
-import { AddMomentModal } from './components/AddMomentModal';
-import { MomentDetailModal } from './components/MomentDetailModal';
-import { TodayHomeView } from './components/TodayHomeView';
-import { DailyCheckInModal } from './components/DailyCheckInModal';
-import { CatchUpMiddayCheckInModal } from './components/CatchUpMiddayCheckInModal';
-import { NutritionTypeAnalysisView } from './components/NutritionTypeAnalysisView';
-import { FoodCalendarView } from './components/FoodCalendarView';
-import { FoodCoachView } from './components/FoodCoachView';
-import { CaptureChoiceModal } from './components/CaptureChoiceModal';
-import { VoiceCaptureModal } from './components/VoiceCaptureModal';
-import { VoiceFirstEntryOverlay } from './components/VoiceFirstEntryOverlay';
-import { ProfileIntroModal } from './components/ProfileIntroModal';
-import { classifyVoiceIntent, processVoiceCheckIn } from './apiClient';
-import { getLocalDateKey } from './utils/dateKey';
-import { getDishPhoto } from './utils/dishPhoto';
-import { getCheckInMomentCopy } from './utils/checkInMomentLocalization';
-import { CHECKIN_SOURCE_TAG, reconcileCheckInFromMomentEdit, reconcileCheckInMoments } from './utils/checkInMomentState';
-import { createEntityId } from './utils/entityId';
-import { localizeCheckInMoment } from './utils/localizeCheckInMoment';
-import { getCurrentPhase } from './utils/phaseAvailability';
-import { getMomentPersistenceMessage, persistMoments } from './utils/momentPersistence';
-import { trackUx } from './utils/uxAnalytics';
-import { buildVoiceJournalEntries } from './utils/voiceJournalApply';
-import { mergeVoiceCheckIns, mergeVoiceMoments } from './utils/voiceJournalState';
-import { getVoiceBackDestination } from './utils/voiceBackNavigation';
-import { createVoiceSubmissionSession } from './utils/voiceSubmissionSession';
-import { useLanguage } from './i18n';
-import { repeatMeal } from './utils/repeatMeal';
-import { buildDiscoveryCoachDraft } from './utils/discoveryCoachDraft';
+import React from "react";
+import { FoodMoment, ActiveTab, DailyCheckIn, TimeOfDayPhase } from "./types";
+import { Header } from "./components/Header";
+import { MobileBottomNav } from "./components/MobileBottomNav";
+import { AddMomentModal } from "./components/AddMomentModal";
+import { MomentDetailModal } from "./components/MomentDetailModal";
+import { TodayHomeView } from "./components/TodayHomeView";
+import { DailyCheckInModal } from "./components/DailyCheckInModal";
+import { CatchUpMiddayCheckInModal } from "./components/CatchUpMiddayCheckInModal";
+import { NutritionTypeAnalysisView } from "./components/NutritionTypeAnalysisView";
+import { FoodCalendarView } from "./components/FoodCalendarView";
+import { FoodCoachView } from "./components/FoodCoachView";
+import { CaptureChoiceModal } from "./components/CaptureChoiceModal";
+import { VoiceCaptureModal } from "./components/VoiceCaptureModal";
+import { VoiceFirstEntryOverlay } from "./components/VoiceFirstEntryOverlay";
+import { ProfileIntroModal } from "./components/ProfileIntroModal";
+import { classifyVoiceIntent, processVoiceCheckIn } from "./apiClient";
+import { getLocalDateKey } from "./utils/dateKey";
+import { getDishPhoto } from "./utils/dishPhoto";
+import { getCheckInMomentCopy } from "./utils/checkInMomentLocalization";
+import {
+  CHECKIN_SOURCE_TAG,
+  reconcileCheckInFromMomentEdit,
+  reconcileCheckInMoments,
+} from "./utils/checkInMomentState";
+import { createEntityId } from "./utils/entityId";
+import { localizeCheckInMoment } from "./utils/localizeCheckInMoment";
+import { getCurrentPhase } from "./utils/phaseAvailability";
+import {
+  getMomentPersistenceMessage,
+  persistMoments,
+} from "./utils/momentPersistence";
+import { trackUx } from "./utils/uxAnalytics";
+import { buildVoiceJournalEntries } from "./utils/voiceJournalApply";
+import {
+  mergeVoiceCheckIns,
+  mergeVoiceMoments,
+} from "./utils/voiceJournalState";
+import { getVoiceBackDestination } from "./utils/voiceBackNavigation";
+import { createVoiceSubmissionSession } from "./utils/voiceSubmissionSession";
+import { useLanguage } from "./i18n";
+import { repeatMeal } from "./utils/repeatMeal";
+import { buildDiscoveryCoachDraft } from "./utils/discoveryCoachDraft";
 
-const STORAGE_KEY='nimmapp_moments_v1';
-const STORAGE_KEY_CHECKINS='nimmapp_checkins_v1';
-const SEEDED_CHECKIN_IDS=new Set(['checkin-1','checkin-2','checkin-3']);
+const STORAGE_KEY = "nimmapp_moments_v1";
+const STORAGE_KEY_CHECKINS = "nimmapp_checkins_v1";
+const SEEDED_CHECKIN_IDS = new Set(["checkin-1", "checkin-2", "checkin-3"]);
 
-export default function App(){
-  const {language}=useLanguage();
-  const [moments,setMoments]=React.useState<FoodMoment[]>(()=>{try{const stored=localStorage.getItem(STORAGE_KEY)||localStorage.getItem('food_journey_moments_v1');if(stored)return JSON.parse(stored);}catch(e){console.error('Failed to load moments from localStorage',e);}return [];});
-  const [checkIns,setCheckIns]=React.useState<DailyCheckIn[]>(()=>{try{const stored=localStorage.getItem(STORAGE_KEY_CHECKINS)||localStorage.getItem('getyourcoach_checkins_v1');if(stored)return JSON.parse(stored);}catch(e){console.error('Failed to load check-ins from localStorage',e);}return [];});
-  const [momentPersistenceError,setMomentPersistenceError]=React.useState<'quota'|'storage'|null>(null);
-  React.useEffect(()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(moments));}catch(e){console.error('Failed to save moments',e)}},[moments]);
-  React.useEffect(()=>{try{localStorage.setItem(STORAGE_KEY_CHECKINS,JSON.stringify(checkIns));}catch(e){console.error('Failed to save check-ins',e)}},[checkIns]);
-  const localizedMoments=React.useMemo(()=>moments.map(moment=>localizeCheckInMoment(moment,language)),[moments,language]);
+export default function App() {
+  const { language, t } = useLanguage();
+  const [moments, setMoments] = React.useState<FoodMoment[]>(() => {
+    try {
+      const stored =
+        localStorage.getItem(STORAGE_KEY) ||
+        localStorage.getItem("food_journey_moments_v1");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {
+      console.error("Failed to load moments from localStorage", e);
+    }
+    return [];
+  });
+  const [checkIns, setCheckIns] = React.useState<DailyCheckIn[]>(() => {
+    try {
+      const stored =
+        localStorage.getItem(STORAGE_KEY_CHECKINS) ||
+        localStorage.getItem("getyourcoach_checkins_v1");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {
+      console.error("Failed to load check-ins from localStorage", e);
+    }
+    return [];
+  });
+  const [momentPersistenceError, setMomentPersistenceError] = React.useState<
+    "quota" | "storage" | null
+  >(null);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(moments));
+    } catch (e) {
+      console.error("Failed to save moments", e);
+    }
+  }, [moments]);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CHECKINS, JSON.stringify(checkIns));
+    } catch (e) {
+      console.error("Failed to save check-ins", e);
+    }
+  }, [checkIns]);
+  const localizedMoments = React.useMemo(
+    () => moments.map((moment) => localizeCheckInMoment(moment, language)),
+    [moments, language],
+  );
 
-  const [activeTab,setActiveTab]=React.useState<ActiveTab>('today');
-  const [coachDraft,setCoachDraft]=React.useState('');
-  const [isCaptureOpen,setIsCaptureOpen]=React.useState(false);
-  const [isVoiceCaptureOpen,setIsVoiceCaptureOpen]=React.useState(false);
-  const [isProfileOnboardingVoice,setIsProfileOnboardingVoice]=React.useState(false);
-  const [isProfileIntroOpen,setIsProfileIntroOpen]=React.useState(false);
-  const [profileIntroTranscript,setProfileIntroTranscript]=React.useState('');
-  const [isAddModalOpen,setIsAddModalOpen]=React.useState(false);
-  const [isCheckInModalOpen,setIsCheckInModalOpen]=React.useState(false);
-  const [requestedPhase,setRequestedPhase]=React.useState<TimeOfDayPhase|null>(null);
-  const [requestedCheckInDate,setRequestedCheckInDate]=React.useState<string|null>(null);
-  const [editingCheckIn,setEditingCheckIn]=React.useState<DailyCheckIn|null>(null);
-  const [initialMealCategory,setInitialMealCategory]=React.useState<import('./types').MomentCategory|null>(null);
-  const [initialMealText,setInitialMealText]=React.useState('');
-  const [initialMealItems,setInitialMealItems]=React.useState<string[]>([]);
-  const [initialMealNotes,setInitialMealNotes]=React.useState('');
-  const [initialVoiceTranscript,setInitialVoiceTranscript]=React.useState('');
-  const [mealClarificationQuestion,setMealClarificationQuestion]=React.useState('');
-  const [voiceUnderstandingFailed,setVoiceUnderstandingFailed]=React.useState(false);
-  const [addModalHasBack,setAddModalHasBack]=React.useState(false);
-  const [isMiddayCatchUpOpen,setIsMiddayCatchUpOpen]=React.useState(false);
-  const [editingMoment,setEditingMoment]=React.useState<FoodMoment|null>(null);
-  const [selectedMomentDetail,setSelectedMomentDetail]=React.useState<FoodMoment|null>(null);
-  const mealStartedAt=React.useRef<number|null>(null);
-  const checkinStartedAt=React.useRef<number|null>(null);
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("today");
+  const [coachDraft, setCoachDraft] = React.useState("");
+  const [isCaptureOpen, setIsCaptureOpen] = React.useState(false);
+  const [isVoiceCaptureOpen, setIsVoiceCaptureOpen] = React.useState(false);
+  const [isProfileOnboardingVoice, setIsProfileOnboardingVoice] =
+    React.useState(false);
+  const [isProfileIntroOpen, setIsProfileIntroOpen] = React.useState(false);
+  const [profileIntroTranscript, setProfileIntroTranscript] =
+    React.useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
+  const [isCheckInModalOpen, setIsCheckInModalOpen] = React.useState(false);
+  const [requestedPhase, setRequestedPhase] =
+    React.useState<TimeOfDayPhase | null>(null);
+  const [requestedCheckInDate, setRequestedCheckInDate] = React.useState<
+    string | null
+  >(null);
+  const [editingCheckIn, setEditingCheckIn] =
+    React.useState<DailyCheckIn | null>(null);
+  const [initialMealCategory, setInitialMealCategory] = React.useState<
+    import("./types").MomentCategory | null
+  >(null);
+  const [initialMealText, setInitialMealText] = React.useState("");
+  const [initialMealItems, setInitialMealItems] = React.useState<string[]>([]);
+  const [initialMealNotes, setInitialMealNotes] = React.useState("");
+  const [initialVoiceTranscript, setInitialVoiceTranscript] =
+    React.useState("");
+  const [mealClarificationQuestion, setMealClarificationQuestion] =
+    React.useState("");
+  const [voiceUnderstandingFailed, setVoiceUnderstandingFailed] =
+    React.useState(false);
+  const [addModalHasBack, setAddModalHasBack] = React.useState(false);
+  const [isMiddayCatchUpOpen, setIsMiddayCatchUpOpen] = React.useState(false);
+  const [editingMoment, setEditingMoment] = React.useState<FoodMoment | null>(
+    null,
+  );
+  const [selectedMomentDetail, setSelectedMomentDetail] =
+    React.useState<FoodMoment | null>(null);
+  const mealStartedAt = React.useRef<number | null>(null);
+  const checkinStartedAt = React.useRef<number | null>(null);
   // Full Voice AI work may outlive its recorder; newer interaction wins.
-  const voiceSubmissionSession=React.useRef(createVoiceSubmissionSession());
-  const invalidateVoiceSubmission=()=>voiceSubmissionSession.current.invalidate();
+  const voiceSubmissionSession = React.useRef(createVoiceSubmissionSession());
+  const invalidateVoiceSubmission = () =>
+    voiceSubmissionSession.current.invalidate();
 
-  React.useEffect(()=>{trackUx({eventName:'app_opened',surface:'app',language,metadata:{route:'today'}})},[]);
-  const completedToday=React.useMemo(()=>{const today=getLocalDateKey();return new Set(checkIns.filter(c=>c.date===today&&!SEEDED_CHECKIN_IDS.has(c.id)).map(c=>c.timeOfDay));},[checkIns]);
+  React.useEffect(() => {
+    trackUx({
+      eventName: "app_opened",
+      surface: "app",
+      language,
+      metadata: { route: "today" },
+    });
+  }, []);
+  const completedToday = React.useMemo(() => {
+    const today = getLocalDateKey();
+    return new Set(
+      checkIns
+        .filter((c) => c.date === today && !SEEDED_CHECKIN_IDS.has(c.id))
+        .map((c) => c.timeOfDay),
+    );
+  }, [checkIns]);
 
-  const beginCheckIn=React.useCallback((source='unknown',phase:TimeOfDayPhase|null=null,targetDate:string|null=null)=>{invalidateVoiceSubmission();checkinStartedAt.current=Date.now();setRequestedPhase(phase);setRequestedCheckInDate(targetDate);const date=targetDate||getLocalDateKey();setEditingCheckIn(phase?(checkIns.find(c=>c.date===date&&c.timeOfDay===phase&&!SEEDED_CHECKIN_IDS.has(c.id))??null):null);trackUx({eventName:'flow_started',surface:'checkin',language,metadata:{source,targetDate:targetDate||undefined}});if(!phase&&new Date().getHours()>=16&&!completedToday.has('midday')){trackUx({eventName:'catchup_shown',surface:'checkin',language,metadata:{phase:'midday'}});setIsMiddayCatchUpOpen(true);return;}setIsCheckInModalOpen(true);},[checkIns,completedToday,language]);
-  const openFoodCapture=React.useCallback((category:import('./types').MomentCategory|null=null,fromCapture=false,initialText='',initialItems:string[]=[],initialNotes='',voiceTranscript='',understandingFailed=false,clarificationQuestion='')=>{invalidateVoiceSubmission();mealStartedAt.current=Date.now();setInitialMealCategory(category);setInitialMealText(initialText);setInitialMealItems(initialItems);setInitialMealNotes(initialNotes);setInitialVoiceTranscript(voiceTranscript);setMealClarificationQuestion(clarificationQuestion);setVoiceUnderstandingFailed(understandingFailed);setAddModalHasBack(fromCapture);trackUx({eventName:'flow_started',surface:'meal_editor',language,metadata:{source:fromCapture?'capture_choice':'direct'}});setEditingMoment(null);setIsAddModalOpen(true);},[language]);
-  const openCapture=React.useCallback(()=>{invalidateVoiceSubmission();trackUx({eventName:'capture_opened',surface:'capture_choice',language});setIsCaptureOpen(true)},[language]);
-  const openVoiceJournal=React.useCallback((source='today_voice')=>{invalidateVoiceSubmission();trackUx({eventName:'flow_started',surface:'voice_journal',language,metadata:{source}});setIsCaptureOpen(false);setIsProfileOnboardingVoice(false);setIsVoiceCaptureOpen(true)},[language]);
+  const beginCheckIn = React.useCallback(
+    (
+      source = "unknown",
+      phase: TimeOfDayPhase | null = null,
+      targetDate: string | null = null,
+    ) => {
+      invalidateVoiceSubmission();
+      checkinStartedAt.current = Date.now();
+      setRequestedPhase(phase);
+      setRequestedCheckInDate(targetDate);
+      const date = targetDate || getLocalDateKey();
+      setEditingCheckIn(
+        phase
+          ? (checkIns.find(
+              (c) =>
+                c.date === date &&
+                c.timeOfDay === phase &&
+                !SEEDED_CHECKIN_IDS.has(c.id),
+            ) ?? null)
+          : null,
+      );
+      trackUx({
+        eventName: "flow_started",
+        surface: "checkin",
+        language,
+        metadata: { source, targetDate: targetDate || undefined },
+      });
+      if (
+        !phase &&
+        new Date().getHours() >= 16 &&
+        !completedToday.has("midday")
+      ) {
+        trackUx({
+          eventName: "catchup_shown",
+          surface: "checkin",
+          language,
+          metadata: { phase: "midday" },
+        });
+        setIsMiddayCatchUpOpen(true);
+        return;
+      }
+      setIsCheckInModalOpen(true);
+    },
+    [checkIns, completedToday, language],
+  );
+  const openFoodCapture = React.useCallback(
+    (
+      category: import("./types").MomentCategory | null = null,
+      fromCapture = false,
+      initialText = "",
+      initialItems: string[] = [],
+      initialNotes = "",
+      voiceTranscript = "",
+      understandingFailed = false,
+      clarificationQuestion = "",
+    ) => {
+      invalidateVoiceSubmission();
+      mealStartedAt.current = Date.now();
+      setInitialMealCategory(category);
+      setInitialMealText(initialText);
+      setInitialMealItems(initialItems);
+      setInitialMealNotes(initialNotes);
+      setInitialVoiceTranscript(voiceTranscript);
+      setMealClarificationQuestion(clarificationQuestion);
+      setVoiceUnderstandingFailed(understandingFailed);
+      setAddModalHasBack(fromCapture);
+      trackUx({
+        eventName: "flow_started",
+        surface: "meal_editor",
+        language,
+        metadata: { source: fromCapture ? "capture_choice" : "direct" },
+      });
+      setEditingMoment(null);
+      setIsAddModalOpen(true);
+    },
+    [language],
+  );
+  const openCapture = React.useCallback(() => {
+    invalidateVoiceSubmission();
+    trackUx({
+      eventName: "capture_opened",
+      surface: "capture_choice",
+      language,
+    });
+    setIsCaptureOpen(true);
+  }, [language]);
+  const openVoiceJournal = React.useCallback(
+    (source = "today_voice") => {
+      invalidateVoiceSubmission();
+      trackUx({
+        eventName: "flow_started",
+        surface: "voice_journal",
+        language,
+        metadata: { source },
+      });
+      setIsCaptureOpen(false);
+      setIsProfileOnboardingVoice(false);
+      setIsVoiceCaptureOpen(true);
+    },
+    [language],
+  );
 
-  const handleSaveMoment=(momentData:Omit<FoodMoment,'id'|'createdAt'>)=>{
-    const editedMoment=editingMoment?{...momentData,id:editingMoment.id,createdAt:editingMoment.createdAt}:null;
-    const nextMoments=editingMoment
-      ? moments.map(m=>m.id===editingMoment.id?editedMoment!:m)
-      : [{...momentData,id:`moment-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,createdAt:Date.now()},...moments];
-    const persistence=persistMoments(nextMoments);
-    if(persistence.ok===false){setMomentPersistenceError(persistence.reason);return;}
+  const handleSaveMoment = (
+    momentData: Omit<FoodMoment, "id" | "createdAt">,
+  ) => {
+    const editedMoment = editingMoment
+      ? {
+          ...momentData,
+          id: editingMoment.id,
+          createdAt: editingMoment.createdAt,
+        }
+      : null;
+    const nextMoments = editingMoment
+      ? moments.map((m) => (m.id === editingMoment.id ? editedMoment! : m))
+      : [
+          {
+            ...momentData,
+            id: `moment-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            createdAt: Date.now(),
+          },
+          ...moments,
+        ];
+    const persistence = persistMoments(nextMoments);
+    if (persistence.ok === false) {
+      setMomentPersistenceError(persistence.reason);
+      return;
+    }
     setMomentPersistenceError(null);
     setMoments(nextMoments);
-    if(editingMoment&&editedMoment)setCheckIns(prev=>reconcileCheckInFromMomentEdit(prev,editingMoment,editedMoment));
-    if(mealStartedAt.current){trackUx({eventName:'flow_finished',surface:'meal_editor',language,durationMs:Date.now()-mealStartedAt.current,outcome:'completed',metadata:{category:momentData.category,has_photo:Boolean(momentData.imageUrl)}});mealStartedAt.current=null;}
-    if(editingMoment)setEditingMoment(null);
+    if (editingMoment && editedMoment)
+      setCheckIns((prev) =>
+        reconcileCheckInFromMomentEdit(prev, editingMoment, editedMoment),
+      );
+    if (mealStartedAt.current) {
+      trackUx({
+        eventName: "flow_finished",
+        surface: "meal_editor",
+        language,
+        durationMs: Date.now() - mealStartedAt.current,
+        outcome: "completed",
+        metadata: {
+          category: momentData.category,
+          has_photo: Boolean(momentData.imageUrl),
+        },
+      });
+      mealStartedAt.current = null;
+    }
+    if (editingMoment) setEditingMoment(null);
   };
 
-  const handleSaveCheckIn=(checkInData:Omit<DailyCheckIn,'id'|'createdAt'>)=>{
-    if(checkinStartedAt.current){trackUx({eventName:'flow_finished',surface:'checkin',language,durationMs:Date.now()-checkinStartedAt.current,outcome:'completed',metadata:{phase:checkInData.timeOfDay,has_photo:false}});checkinStartedAt.current=null;}
-    const now=Date.now();const newCheckIn:DailyCheckIn={...checkInData,id:createEntityId('user-checkin',now),createdAt:now};
-    const previousCheckIns=checkIns.filter(c=>c.date===checkInData.date&&c.timeOfDay===checkInData.timeOfDay&&!SEEDED_CHECKIN_IDS.has(c.id));
-    setCheckIns(prev=>[newCheckIn,...prev.filter(c=>!(c.date===checkInData.date&&c.timeOfDay===checkInData.timeOfDay&&!SEEDED_CHECKIN_IDS.has(c.id)))]);
-    if(checkInData.food?.mealTitle){const category=checkInData.food.category;const matchedPhoto=getDishPhoto(checkInData.food.mealTitle,category);const copy=getCheckInMomentCopy(language,category);const newMoment:FoodMoment={id:createEntityId('moment',now),title:checkInData.food.mealTitle,label:copy.label,category,date:checkInData.date,time:checkInData.time,location:copy.location,locationCategory:'home',imageUrl:matchedPhoto?.url||'',rating:5,mood:checkInData.wellbeing.mood||'satisfied',hungerLevel:checkInData.food.hungerBefore,fullnessLevel:checkInData.food.fullnessAfter,eatingPace:checkInData.food.eatingPace,distraction:checkInData.food.distraction,energyAfter:(checkInData.wellbeing.energyLevel||3)>=4?'energized':'neutral',coachFeedback:{title:copy.captured,message:checkInData.coachSummary||copy.fallbackSummary,type:'praise',badge:copy.badge},notes:checkInData.wellbeing.note,tags:[copy.badge,checkInData.timeOfDay,`${CHECKIN_SOURCE_TAG}${newCheckIn.id}`],createdAt:now};setMoments(prev=>reconcileCheckInMoments(prev,previousCheckIns,checkInData.date,checkInData.timeOfDay,newMoment));}
-    else if(previousCheckIns.length)setMoments(prev=>reconcileCheckInMoments(prev,previousCheckIns,checkInData.date,checkInData.timeOfDay));
+  const handleSaveCheckIn = (
+    checkInData: Omit<DailyCheckIn, "id" | "createdAt">,
+  ) => {
+    if (checkinStartedAt.current) {
+      trackUx({
+        eventName: "flow_finished",
+        surface: "checkin",
+        language,
+        durationMs: Date.now() - checkinStartedAt.current,
+        outcome: "completed",
+        metadata: { phase: checkInData.timeOfDay, has_photo: false },
+      });
+      checkinStartedAt.current = null;
+    }
+    const now = Date.now();
+    const newCheckIn: DailyCheckIn = {
+      ...checkInData,
+      id: createEntityId("user-checkin", now),
+      createdAt: now,
+    };
+    const previousCheckIns = checkIns.filter(
+      (c) =>
+        c.date === checkInData.date &&
+        c.timeOfDay === checkInData.timeOfDay &&
+        !SEEDED_CHECKIN_IDS.has(c.id),
+    );
+    setCheckIns((prev) => [
+      newCheckIn,
+      ...prev.filter(
+        (c) =>
+          !(
+            c.date === checkInData.date &&
+            c.timeOfDay === checkInData.timeOfDay &&
+            !SEEDED_CHECKIN_IDS.has(c.id)
+          ),
+      ),
+    ]);
+    if (checkInData.food?.mealTitle) {
+      const category = checkInData.food.category;
+      const matchedPhoto = getDishPhoto(checkInData.food.mealTitle, category);
+      const copy = getCheckInMomentCopy(language, category);
+      const newMoment: FoodMoment = {
+        id: createEntityId("moment", now),
+        title: checkInData.food.mealTitle,
+        label: copy.label,
+        category,
+        date: checkInData.date,
+        time: checkInData.time,
+        location: copy.location,
+        locationCategory: "home",
+        imageUrl: matchedPhoto?.url || "",
+        rating: 5,
+        mood: checkInData.wellbeing.mood || "satisfied",
+        hungerLevel: checkInData.food.hungerBefore,
+        fullnessLevel: checkInData.food.fullnessAfter,
+        eatingPace: checkInData.food.eatingPace,
+        distraction: checkInData.food.distraction,
+        energyAfter:
+          (checkInData.wellbeing.energyLevel || 3) >= 4
+            ? "energized"
+            : "neutral",
+        coachFeedback: {
+          title: copy.captured,
+          message: checkInData.coachSummary || copy.fallbackSummary,
+          type: "praise",
+          badge: copy.badge,
+        },
+        notes: checkInData.wellbeing.note,
+        tags: [
+          copy.badge,
+          checkInData.timeOfDay,
+          `${CHECKIN_SOURCE_TAG}${newCheckIn.id}`,
+        ],
+        createdAt: now,
+      };
+      setMoments((prev) =>
+        reconcileCheckInMoments(
+          prev,
+          previousCheckIns,
+          checkInData.date,
+          checkInData.timeOfDay,
+          newMoment,
+        ),
+      );
+    } else if (previousCheckIns.length)
+      setMoments((prev) =>
+        reconcileCheckInMoments(
+          prev,
+          previousCheckIns,
+          checkInData.date,
+          checkInData.timeOfDay,
+        ),
+      );
     setEditingCheckIn(null);
   };
 
-  const applyVoiceJournal=React.useCallback((result:Awaited<ReturnType<typeof processVoiceCheckIn>>,transcript:string)=>{
-    const journal=buildVoiceJournalEntries(result,transcript,language);
-    if(journal.moments.length)setMoments(prev=>mergeVoiceMoments(prev,journal.moments));
-    if(journal.checkIns.length)setCheckIns(prev=>mergeVoiceCheckIns(prev,journal.checkIns,SEEDED_CHECKIN_IDS));
-    if(journal.moments.length||journal.checkIns.length){trackUx({eventName:'flow_finished',surface:'voice_journal',language,outcome:'completed',metadata:{meals:journal.moments.length,checkins:journal.checkIns.length}});return true;}
-    return false;
-  },[language]);
-
-  const cancelMeal=()=>{invalidateVoiceSubmission();setInitialMealCategory(null);setInitialMealText('');setInitialMealItems([]);setInitialMealNotes('');setInitialVoiceTranscript('');setMealClarificationQuestion('');setVoiceUnderstandingFailed(false);setAddModalHasBack(false);if(mealStartedAt.current){trackUx({eventName:'flow_finished',surface:'meal_editor',language,durationMs:Date.now()-mealStartedAt.current,outcome:'cancelled'});mealStartedAt.current=null;}setIsAddModalOpen(false);setEditingMoment(null)};
-  const backFromMeal=()=>{invalidateVoiceSubmission();setIsAddModalOpen(false);setInitialMealText('');setInitialMealItems([]);setInitialMealNotes('');setInitialVoiceTranscript('');setMealClarificationQuestion('');setVoiceUnderstandingFailed(false);setInitialMealCategory(null);setAddModalHasBack(false);setIsCaptureOpen(true)};
-  const cancelCheckin=()=>{setRequestedPhase(null);setRequestedCheckInDate(null);setEditingCheckIn(null);if(checkinStartedAt.current){trackUx({eventName:'flow_finished',surface:'checkin',language,durationMs:Date.now()-checkinStartedAt.current,outcome:'cancelled'});checkinStartedAt.current=null;}setIsCheckInModalOpen(false);setIsMiddayCatchUpOpen(false)};
-  const handleDeleteMoment=(id:string)=>{invalidateVoiceSubmission();const moment=moments.find(m=>m.id===id);const sourceCheckInId=moment?.tags.find(tag=>tag.startsWith(CHECKIN_SOURCE_TAG))?.slice(CHECKIN_SOURCE_TAG.length);setMoments(prev=>prev.filter(m=>m.id!==id));if(sourceCheckInId)setCheckIns(prev=>prev.map(checkIn=>checkIn.id===sourceCheckInId?{...checkIn,food:undefined}:checkIn));if(selectedMomentDetail?.id===id)setSelectedMomentDetail(null);};
-  const handleToggleFavorite=(id:string)=>{invalidateVoiceSubmission();setMoments(prev=>prev.map(m=>m.id===id?{...m,isFavorite:!m.isFavorite}:m));if(selectedMomentDetail?.id===id)setSelectedMomentDetail(prev=>prev?{...prev,isFavorite:!prev.isFavorite}:null);};
-  const handleRepeatMeal=(moment:FoodMoment)=>{invalidateVoiceSubmission();setMoments(prev=>[repeatMeal(moment),...prev]);};
-  const go=(tab:ActiveTab)=>{invalidateVoiceSubmission();setCoachDraft('');setActiveTab(tab==='type_analysis'||tab==='timeline'||tab==='coach'?tab:'today');};
-  const askCoachFromDiscovery=(observation:string)=>{invalidateVoiceSubmission();const draft=buildDiscoveryCoachDraft(observation,language);if(!draft)return;setCoachDraft(draft);setActiveTab('coach');};
-
-  const content=activeTab==='type_analysis'
-    ? <NutritionTypeAnalysisView moments={localizedMoments} checkIns={checkIns} onOpenCheckIn={openCapture} onOpenAddMoment={openCapture} onAskCoach={askCoachFromDiscovery}/>
-    : activeTab==='timeline'
-      ? <FoodCalendarView moments={localizedMoments} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={openCapture}/>
-      : activeTab==='coach'
-        ? <FoodCoachView moments={localizedMoments} checkIns={checkIns} onOpenAddModal={openCapture} onOpenCheckInModal={()=>beginCheckIn('coach')} onSelectMoment={setSelectedMomentDetail} onNavigateToTimeline={()=>go('timeline')} onNavigateToTypeAnalysis={()=>go('type_analysis')} prefillQuestion={coachDraft}/>
-        : <TodayHomeView moments={localizedMoments} checkIns={checkIns} onSelectMoment={setSelectedMomentDetail} onOpenAddModal={openCapture} onOpenVoiceJournal={()=>openVoiceJournal('today_home')} onOpenCheckInModal={(phase,targetDate)=>beginCheckIn('today_phase_card',phase==='evening'&&!targetDate&&!completedToday.has('midday')?null:phase,targetDate||null)} onOpenSnack={()=>openFoodCapture('snack')} onNavigateToCoach={()=>go('coach')} onNavigateToTypeAnalysis={()=>go('type_analysis')} onNavigateToTimeline={()=>go('timeline')} onSaveCheckIn={handleSaveCheckIn} onRepeatLatestMeal={handleRepeatMeal}/>;
-
-  return <div className="min-h-screen bg-[#F4EEE4] text-stone-900 pb-28 md:pb-0"><VoiceFirstEntryOverlay onStart={()=>{invalidateVoiceSubmission();trackUx({eventName:'flow_started',surface:'profile_onboarding',language,metadata:{source:'voice'}});setIsProfileOnboardingVoice(true);setIsVoiceCaptureOpen(true)}} onType={()=>{invalidateVoiceSubmission();trackUx({eventName:'flow_started',surface:'profile_onboarding',language,metadata:{source:'type'}});setProfileIntroTranscript('');setIsProfileIntroOpen(true)}}/><Header activeTab={activeTab} setActiveTab={go} onOpenAddModal={openCapture}/>{momentPersistenceError&&<div role="alert" data-testid="moment-persistence-error" className="mx-auto mt-3 max-w-3xl rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">{getMomentPersistenceMessage(language,momentPersistenceError)}</div>}<main className={`mx-auto ${activeTab==='today'?'px-0 sm:px-4 lg:px-6 pt-0 sm:pt-5':'px-3 sm:px-4 lg:px-6 py-4 sm:py-6'} max-w-7xl`}>{content}</main>{activeTab!=='coach'&&<button type="button" data-testid="mobile-coach-nav" onClick={()=>go('coach')} className="fixed z-30 bottom-24 right-4 md:hidden rounded-full bg-[#526B48] text-white px-4 py-3 text-xs font-black shadow-[0_12px_28px_rgba(82,107,72,.35)]">Coach</button>}<MobileBottomNav activeTab={activeTab} setActiveTab={go} onCapture={openCapture} favoriteCount={0}/><CaptureChoiceModal isOpen={isCaptureOpen} onClose={()=>setIsCaptureOpen(false)} onFood={()=>{trackUx({eventName:'capture_choice_selected',surface:'capture_choice',language,metadata:{step:'food'}});openFoodCapture(null,true)}} onText={()=>openFoodCapture(null,true)} onSelectRotation={(category,title)=>openFoodCapture(category,true,title)} onTellCary={()=>openVoiceJournal('capture_choice')}/><VoiceCaptureModal isOpen={isVoiceCaptureOpen} mode={isProfileOnboardingVoice?'profile':'journal'} onClose={()=>{invalidateVoiceSubmission();setIsVoiceCaptureOpen(false);setIsProfileOnboardingVoice(false)}} onBack={()=>{invalidateVoiceSubmission();setIsVoiceCaptureOpen(false);const destination=getVoiceBackDestination(isProfileOnboardingVoice);if(destination==='onboarding-entry'){setIsProfileOnboardingVoice(false);setProfileIntroTranscript('');setIsProfileIntroOpen(false)}else setIsCaptureOpen(true)}} onTranscript={async(text)=>{
-    setIsVoiceCaptureOpen(false);
-    if(isProfileOnboardingVoice){
-      invalidateVoiceSubmission();
-      setIsProfileOnboardingVoice(false);
-      setProfileIntroTranscript(text);
-      setIsProfileIntroOpen(true);
-      return;
-    }
-    const submissionId=voiceSubmissionSession.current.begin();
-    const timeOfDay=getCurrentPhase(new Date().getHours());
-    const result=await processVoiceCheckIn(text,timeOfDay,undefined,language);
-    if(!voiceSubmissionSession.current.isCurrent(submissionId))return;
-    const data=result.extractedData||{};
-    const items=Array.isArray(data.mealItems)?data.mealItems.filter((v):v is string=>typeof v==='string'&&v.trim().length>0):[];
-    const clarification=typeof data.clarificationQuestion==='string'?data.clarificationQuestion.trim():'';
-    const category=(['breakfast','lunch','dinner','snack','coffee','dessert'] as const).includes(data.mealCategory as any)?data.mealCategory as import('./types').MomentCategory:null;
-    if(clarification&&items.length){
-      if(voiceSubmissionSession.current.finish(submissionId))openFoodCapture(category,true,'',items,data.mealContext||'',text,false,clarification);
-      return;
-    }
-    // Journal persistence must never run for a superseded request.
-    if(applyVoiceJournal(result,text)){
-      voiceSubmissionSession.current.finish(submissionId);
-      return;
-    }
-    if(items.length===0){
-      const intent=await classifyVoiceIntent(text,language);
-      // The second async request is subject to the same submission identity.
-      if(!voiceSubmissionSession.current.isCurrent(submissionId))return;
-      if(intent.intent==='profile_goal'&&intent.confidence>=0.65){
-        if(voiceSubmissionSession.current.finish(submissionId)){
-          trackUx({eventName:'flow_started',surface:'profile_onboarding',language,metadata:{source:'voice_intent'}});
-          setProfileIntroTranscript(text);
-          setIsProfileIntroOpen(true);
-        }
-        return;
+  const applyVoiceJournal = React.useCallback(
+    (
+      result: Awaited<ReturnType<typeof processVoiceCheckIn>>,
+      transcript: string,
+    ) => {
+      const journal = buildVoiceJournalEntries(result, transcript, language);
+      if (journal.moments.length)
+        setMoments((prev) => mergeVoiceMoments(prev, journal.moments));
+      if (journal.checkIns.length)
+        setCheckIns((prev) =>
+          mergeVoiceCheckIns(prev, journal.checkIns, SEEDED_CHECKIN_IDS),
+        );
+      if (journal.moments.length || journal.checkIns.length) {
+        trackUx({
+          eventName: "flow_finished",
+          surface: "voice_journal",
+          language,
+          outcome: "completed",
+          metadata: {
+            meals: journal.moments.length,
+            checkins: journal.checkIns.length,
+          },
+        });
+        return true;
       }
+      return false;
+    },
+    [language],
+  );
+
+  const cancelMeal = () => {
+    invalidateVoiceSubmission();
+    setInitialMealCategory(null);
+    setInitialMealText("");
+    setInitialMealItems([]);
+    setInitialMealNotes("");
+    setInitialVoiceTranscript("");
+    setMealClarificationQuestion("");
+    setVoiceUnderstandingFailed(false);
+    setAddModalHasBack(false);
+    if (mealStartedAt.current) {
+      trackUx({
+        eventName: "flow_finished",
+        surface: "meal_editor",
+        language,
+        durationMs: Date.now() - mealStartedAt.current,
+        outcome: "cancelled",
+      });
+      mealStartedAt.current = null;
     }
-    if(voiceSubmissionSession.current.finish(submissionId))openFoodCapture(category,true,'',items,data.mealContext||'',text,items.length===0);
-  }}/><ProfileIntroModal isOpen={isProfileIntroOpen} initialTranscript={profileIntroTranscript} onClose={()=>{trackUx({eventName:'flow_finished',surface:'profile_onboarding',language,outcome:'cancelled'});setIsProfileIntroOpen(false);setProfileIntroTranscript('')}} onSaved={()=>{trackUx({eventName:'flow_finished',surface:'profile_onboarding',language,outcome:'completed'});setIsProfileIntroOpen(false);setProfileIntroTranscript('')}}/><AddMomentModal isOpen={isAddModalOpen} onClose={cancelMeal} onBack={addModalHasBack?backFromMeal:undefined} onSave={handleSaveMoment} editingMoment={editingMoment} initialCategory={initialMealCategory} initialText={initialMealText} initialItems={initialMealItems} initialNotes={initialMealNotes} initialVoiceTranscript={initialVoiceTranscript} clarificationQuestion={mealClarificationQuestion} voiceUnderstandingFailed={voiceUnderstandingFailed} completedMealCategories={new Set(Array.from(completedToday).map(p=>p==='morning'?'breakfast':p==='midday'?'lunch':'dinner'))}/><CatchUpMiddayCheckInModal isOpen={isMiddayCatchUpOpen} onClose={cancelCheckin} onSaveCheckIn={handleSaveCheckIn}/><DailyCheckInModal isOpen={isCheckInModalOpen} onClose={cancelCheckin} onSaveCheckIn={handleSaveCheckIn} existingCheckInsCount={checkIns.length} existingCheckIn={editingCheckIn} phase={requestedPhase} targetDate={requestedCheckInDate}/><MomentDetailModal moment={selectedMomentDetail} onClose={()=>setSelectedMomentDetail(null)} onEdit={(m)=>{invalidateVoiceSubmission();setSelectedMomentDetail(null);setEditingMoment(moments.find(moment=>moment.id===m.id)??m);mealStartedAt.current=Date.now();trackUx({eventName:'flow_started',surface:'meal_editor',language,metadata:{source:'edit'}});setIsAddModalOpen(true)}} onDelete={handleDeleteMoment} onToggleFavorite={handleToggleFavorite}/></div>;
+    setIsAddModalOpen(false);
+    setEditingMoment(null);
+  };
+  const backFromMeal = () => {
+    invalidateVoiceSubmission();
+    setIsAddModalOpen(false);
+    setInitialMealText("");
+    setInitialMealItems([]);
+    setInitialMealNotes("");
+    setInitialVoiceTranscript("");
+    setMealClarificationQuestion("");
+    setVoiceUnderstandingFailed(false);
+    setInitialMealCategory(null);
+    setAddModalHasBack(false);
+    setIsCaptureOpen(true);
+  };
+  const cancelCheckin = () => {
+    setRequestedPhase(null);
+    setRequestedCheckInDate(null);
+    setEditingCheckIn(null);
+    if (checkinStartedAt.current) {
+      trackUx({
+        eventName: "flow_finished",
+        surface: "checkin",
+        language,
+        durationMs: Date.now() - checkinStartedAt.current,
+        outcome: "cancelled",
+      });
+      checkinStartedAt.current = null;
+    }
+    setIsCheckInModalOpen(false);
+    setIsMiddayCatchUpOpen(false);
+  };
+  const handleDeleteMoment = (id: string) => {
+    invalidateVoiceSubmission();
+    const moment = moments.find((m) => m.id === id);
+    const sourceCheckInId = moment?.tags
+      .find((tag) => tag.startsWith(CHECKIN_SOURCE_TAG))
+      ?.slice(CHECKIN_SOURCE_TAG.length);
+    setMoments((prev) => prev.filter((m) => m.id !== id));
+    if (sourceCheckInId)
+      setCheckIns((prev) =>
+        prev.map((checkIn) =>
+          checkIn.id === sourceCheckInId
+            ? { ...checkIn, food: undefined }
+            : checkIn,
+        ),
+      );
+    if (selectedMomentDetail?.id === id) setSelectedMomentDetail(null);
+  };
+  const handleToggleFavorite = (id: string) => {
+    invalidateVoiceSubmission();
+    setMoments((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, isFavorite: !m.isFavorite } : m)),
+    );
+    if (selectedMomentDetail?.id === id)
+      setSelectedMomentDetail((prev) =>
+        prev ? { ...prev, isFavorite: !prev.isFavorite } : null,
+      );
+  };
+  const handleRepeatMeal = (moment: FoodMoment) => {
+    invalidateVoiceSubmission();
+    setMoments((prev) => [repeatMeal(moment), ...prev]);
+  };
+  const go = (tab: ActiveTab) => {
+    invalidateVoiceSubmission();
+    setCoachDraft("");
+    setActiveTab(
+      tab === "type_analysis" || tab === "timeline" || tab === "coach"
+        ? tab
+        : "today",
+    );
+  };
+  const askCoachFromDiscovery = (observation: string) => {
+    invalidateVoiceSubmission();
+    const draft = buildDiscoveryCoachDraft(observation, language);
+    if (!draft) return;
+    setCoachDraft(draft);
+    setActiveTab("coach");
+  };
+
+  const content =
+    activeTab === "type_analysis" ? (
+      <NutritionTypeAnalysisView
+        moments={localizedMoments}
+        checkIns={checkIns}
+        onOpenCheckIn={openCapture}
+        onOpenAddMoment={openCapture}
+        onAskCoach={askCoachFromDiscovery}
+      />
+    ) : activeTab === "timeline" ? (
+      <FoodCalendarView
+        moments={localizedMoments}
+        onSelectMoment={setSelectedMomentDetail}
+        onOpenAddModal={openCapture}
+      />
+    ) : activeTab === "coach" ? (
+      <FoodCoachView
+        moments={localizedMoments}
+        checkIns={checkIns}
+        onOpenAddModal={openCapture}
+        onOpenCheckInModal={() => beginCheckIn("coach")}
+        onSelectMoment={setSelectedMomentDetail}
+        onNavigateToTimeline={() => go("timeline")}
+        onNavigateToTypeAnalysis={() => go("type_analysis")}
+        prefillQuestion={coachDraft}
+      />
+    ) : (
+      <TodayHomeView
+        moments={localizedMoments}
+        checkIns={checkIns}
+        onSelectMoment={setSelectedMomentDetail}
+        onOpenAddModal={openCapture}
+        onOpenVoiceJournal={() => openVoiceJournal("today_home")}
+        onOpenCheckInModal={(phase, targetDate) =>
+          beginCheckIn(
+            "today_phase_card",
+            phase === "evening" && !targetDate && !completedToday.has("midday")
+              ? null
+              : phase,
+            targetDate || null,
+          )
+        }
+        onOpenSnack={() => openFoodCapture("snack")}
+        onNavigateToCoach={() => go("coach")}
+        onNavigateToTypeAnalysis={() => go("type_analysis")}
+        onNavigateToTimeline={() => go("timeline")}
+        onSaveCheckIn={handleSaveCheckIn}
+        onRepeatLatestMeal={handleRepeatMeal}
+      />
+    );
+
+  return (
+    <div className="min-h-screen bg-[#F4EEE4] text-stone-900 pb-28 md:pb-0">
+      <VoiceFirstEntryOverlay
+        onStart={() => {
+          invalidateVoiceSubmission();
+          trackUx({
+            eventName: "flow_started",
+            surface: "profile_onboarding",
+            language,
+            metadata: { source: "voice" },
+          });
+          setIsProfileOnboardingVoice(true);
+          setIsVoiceCaptureOpen(true);
+        }}
+        onType={() => {
+          invalidateVoiceSubmission();
+          trackUx({
+            eventName: "flow_started",
+            surface: "profile_onboarding",
+            language,
+            metadata: { source: "type" },
+          });
+          setProfileIntroTranscript("");
+          setIsProfileIntroOpen(true);
+        }}
+      />
+      <Header
+        activeTab={activeTab}
+        setActiveTab={go}
+        onOpenAddModal={openCapture}
+      />
+      {momentPersistenceError && (
+        <div
+          role="alert"
+          data-testid="moment-persistence-error"
+          className="mx-auto mt-3 max-w-3xl rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950"
+        >
+          {getMomentPersistenceMessage(language, momentPersistenceError)}
+        </div>
+      )}
+      <main
+        className={`mx-auto ${activeTab === "today" ? "px-0 sm:px-4 lg:px-6 pt-0 sm:pt-5" : "px-3 sm:px-4 lg:px-6 py-4 sm:py-6"} max-w-7xl`}
+      >
+        {content}
+      </main>
+      {activeTab !== "coach" && (
+        <button
+          type="button"
+          data-testid="mobile-coach-nav"
+          onClick={() => go("coach")}
+          className="fixed z-30 bottom-24 right-4 md:hidden rounded-full bg-[#526B48] text-white px-4 py-3 text-xs font-black shadow-[0_12px_28px_rgba(82,107,72,.35)]"
+        >
+          {t("navCoach")}
+        </button>
+      )}
+      <MobileBottomNav
+        activeTab={activeTab}
+        setActiveTab={go}
+        onCapture={openCapture}
+        favoriteCount={0}
+      />
+      <CaptureChoiceModal
+        isOpen={isCaptureOpen}
+        onClose={() => setIsCaptureOpen(false)}
+        onFood={() => {
+          trackUx({
+            eventName: "capture_choice_selected",
+            surface: "capture_choice",
+            language,
+            metadata: { step: "food" },
+          });
+          openFoodCapture(null, true);
+        }}
+        onText={() => openFoodCapture(null, true)}
+        onSelectRotation={(category, title) =>
+          openFoodCapture(category, true, title)
+        }
+        onTellCary={() => openVoiceJournal("capture_choice")}
+      />
+      <VoiceCaptureModal
+        isOpen={isVoiceCaptureOpen}
+        mode={isProfileOnboardingVoice ? "profile" : "journal"}
+        onClose={() => {
+          invalidateVoiceSubmission();
+          setIsVoiceCaptureOpen(false);
+          setIsProfileOnboardingVoice(false);
+        }}
+        onBack={() => {
+          invalidateVoiceSubmission();
+          setIsVoiceCaptureOpen(false);
+          const destination = getVoiceBackDestination(isProfileOnboardingVoice);
+          if (destination === "onboarding-entry") {
+            setIsProfileOnboardingVoice(false);
+            setProfileIntroTranscript("");
+            setIsProfileIntroOpen(false);
+          } else setIsCaptureOpen(true);
+        }}
+        onTranscript={async (text) => {
+          setIsVoiceCaptureOpen(false);
+          if (isProfileOnboardingVoice) {
+            invalidateVoiceSubmission();
+            setIsProfileOnboardingVoice(false);
+            setProfileIntroTranscript(text);
+            setIsProfileIntroOpen(true);
+            return;
+          }
+          const submissionId = voiceSubmissionSession.current.begin();
+          const timeOfDay = getCurrentPhase(new Date().getHours());
+          const result = await processVoiceCheckIn(
+            text,
+            timeOfDay,
+            undefined,
+            language,
+          );
+          if (!voiceSubmissionSession.current.isCurrent(submissionId)) return;
+          const data = result.extractedData || {};
+          const items = Array.isArray(data.mealItems)
+            ? data.mealItems.filter(
+                (v): v is string =>
+                  typeof v === "string" && v.trim().length > 0,
+              )
+            : [];
+          const clarification =
+            typeof data.clarificationQuestion === "string"
+              ? data.clarificationQuestion.trim()
+              : "";
+          const category = (
+            [
+              "breakfast",
+              "lunch",
+              "dinner",
+              "snack",
+              "coffee",
+              "dessert",
+            ] as const
+          ).includes(data.mealCategory as any)
+            ? (data.mealCategory as import("./types").MomentCategory)
+            : null;
+          if (clarification && items.length) {
+            if (voiceSubmissionSession.current.finish(submissionId))
+              openFoodCapture(
+                category,
+                true,
+                "",
+                items,
+                data.mealContext || "",
+                text,
+                false,
+                clarification,
+              );
+            return;
+          }
+          // Journal persistence must never run for a superseded request.
+          if (applyVoiceJournal(result, text)) {
+            voiceSubmissionSession.current.finish(submissionId);
+            return;
+          }
+          if (items.length === 0) {
+            const intent = await classifyVoiceIntent(text, language);
+            // The second async request is subject to the same submission identity.
+            if (!voiceSubmissionSession.current.isCurrent(submissionId)) return;
+            if (intent.intent === "profile_goal" && intent.confidence >= 0.65) {
+              if (voiceSubmissionSession.current.finish(submissionId)) {
+                trackUx({
+                  eventName: "flow_started",
+                  surface: "profile_onboarding",
+                  language,
+                  metadata: { source: "voice_intent" },
+                });
+                setProfileIntroTranscript(text);
+                setIsProfileIntroOpen(true);
+              }
+              return;
+            }
+          }
+          if (voiceSubmissionSession.current.finish(submissionId))
+            openFoodCapture(
+              category,
+              true,
+              "",
+              items,
+              data.mealContext || "",
+              text,
+              items.length === 0,
+            );
+        }}
+      />
+      <ProfileIntroModal
+        isOpen={isProfileIntroOpen}
+        initialTranscript={profileIntroTranscript}
+        onClose={() => {
+          trackUx({
+            eventName: "flow_finished",
+            surface: "profile_onboarding",
+            language,
+            outcome: "cancelled",
+          });
+          setIsProfileIntroOpen(false);
+          setProfileIntroTranscript("");
+        }}
+        onSaved={() => {
+          trackUx({
+            eventName: "flow_finished",
+            surface: "profile_onboarding",
+            language,
+            outcome: "completed",
+          });
+          setIsProfileIntroOpen(false);
+          setProfileIntroTranscript("");
+        }}
+      />
+      <AddMomentModal
+        isOpen={isAddModalOpen}
+        onClose={cancelMeal}
+        onBack={addModalHasBack ? backFromMeal : undefined}
+        onSave={handleSaveMoment}
+        editingMoment={editingMoment}
+        initialCategory={initialMealCategory}
+        initialText={initialMealText}
+        initialItems={initialMealItems}
+        initialNotes={initialMealNotes}
+        initialVoiceTranscript={initialVoiceTranscript}
+        clarificationQuestion={mealClarificationQuestion}
+        voiceUnderstandingFailed={voiceUnderstandingFailed}
+        completedMealCategories={
+          new Set(
+            Array.from(completedToday).map((p) =>
+              p === "morning"
+                ? "breakfast"
+                : p === "midday"
+                  ? "lunch"
+                  : "dinner",
+            ),
+          )
+        }
+      />
+      <CatchUpMiddayCheckInModal
+        isOpen={isMiddayCatchUpOpen}
+        onClose={cancelCheckin}
+        onSaveCheckIn={handleSaveCheckIn}
+      />
+      <DailyCheckInModal
+        isOpen={isCheckInModalOpen}
+        onClose={cancelCheckin}
+        onSaveCheckIn={handleSaveCheckIn}
+        existingCheckInsCount={checkIns.length}
+        existingCheckIn={editingCheckIn}
+        phase={requestedPhase}
+        targetDate={requestedCheckInDate}
+      />
+      <MomentDetailModal
+        moment={selectedMomentDetail}
+        onClose={() => setSelectedMomentDetail(null)}
+        onEdit={(m) => {
+          invalidateVoiceSubmission();
+          setSelectedMomentDetail(null);
+          setEditingMoment(moments.find((moment) => moment.id === m.id) ?? m);
+          mealStartedAt.current = Date.now();
+          trackUx({
+            eventName: "flow_started",
+            surface: "meal_editor",
+            language,
+            metadata: { source: "edit" },
+          });
+          setIsAddModalOpen(true);
+        }}
+        onDelete={handleDeleteMoment}
+        onToggleFavorite={handleToggleFavorite}
+      />
+    </div>
+  );
 }

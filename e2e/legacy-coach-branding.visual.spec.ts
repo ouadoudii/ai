@@ -22,11 +22,11 @@ for (const viewport of [
 
     const nav = page.getByTestId(viewport.nav);
     await expect(nav).toBeVisible();
-    await expect(nav).toHaveText('Coach');
+    await expect(nav).toHaveText('المرشد');
     await nav.click();
 
-    await expect(page.getByRole('heading', { name: 'Coach fragen' })).toBeVisible();
-    await expect(page.getByText('Moment • Fürsorgliche Begleitung für Körper & Geist')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'اسأل المرشد' })).toBeVisible();
+    await expect(page.getByText('اسأل عن وجباتك وعاداتك الغذائية واحصل على إرشاد يناسبك')).toBeVisible();
     await expect(page.locator('body')).not.toContainText(/Cary|كاري/u);
     await page.screenshot({ path: testInfo.outputPath(`moment-coach-${viewport.name}.png`), fullPage: true });
   });

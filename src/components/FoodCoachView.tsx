@@ -21,8 +21,7 @@ import {
 import { FoodMoment, CoachingGoal, CoachChatMessage, DailyCheckIn } from '../types';
 import { 
   calculateCoachingMetrics, 
-  INITIAL_COACHING_GOALS, 
-  getCoachChatResponse 
+  INITIAL_COACHING_GOALS 
 } from '../utils/coachEngine';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
 import { evaluateNutritionAlarms, GuardianStatus } from '../utils/interventionEngine';
@@ -31,6 +30,8 @@ import { SmartInterventionGuardian } from './SmartInterventionGuardian';
 import { askGeminiCoach } from '../apiClient';
 import { buildCoachFollowUps } from '../utils/coachFollowUps';
 import { useLanguage } from '../i18n';
+import { getGuardianCopy } from '../utils/guardianLocalization';
+import { ARABIC_COACH_SUGGESTIONS, ARABIC_COACH_UNAVAILABLE, getArabicCoachWelcome, getArabicCoachSummary, getArabicCoachFocus, getArabicGoalCopy } from '../utils/coachArabicPresentation';
 
 interface FoodCoachViewProps {
   moments: FoodMoment[];
@@ -56,6 +57,8 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   const { language } = useLanguage();
   const metrics = React.useMemo(() => calculateCoachingMetrics(moments), [moments]);
   const nutritionProfile = React.useMemo(() => analyzeNutritionType(moments, checkIns), [moments, checkIns]);
+  const arabicArchetype = getGuardianCopy('ar').archetypes[nutritionProfile.archetype];
+  const arabicFocus = getArabicCoachFocus(moments.length > 0);
   const [goals, setGoals] = React.useState<CoachingGoal[]>(INITIAL_COACHING_GOALS);
   const [simulatedScenario, setSimulatedScenario] = React.useState<'sleep' | 'rushed_meal' | 'afternoon_crash' | null>(null);
 
@@ -150,12 +153,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   };
 
   const currentHour = new Date().getHours();
-  const timeGreeting =
-    currentHour >= 5 && currentHour < 11
-      ? 'Guten Morgen'
-      : currentHour >= 11 && currentHour < 16
-      ? 'Guten Mittag'
-      : 'Guten Abend';
+  const welcomeMessage = getArabicCoachWelcome(currentHour);
   
   // Interactive Coach Chat State
   const [chatMessages, setChatMessages] = React.useState<CoachChatMessage[]>(() =>
@@ -163,14 +161,9 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       {
         id: 'msg-1',
         sender: 'coach',
-        text: `Hallo! ${timeGreeting}! Ich bin dein Moment-Coach. Ich begleite dein Zusammenspiel aus Schlaf, Mahlzeiten und Wohlbefinden. Wie kann ich dir jetzt guttun?`,
-        timestamp: 'Heute',
-        suggestions: [
-          '📊 Welcher Ernährungstyp bin ich?',
-          '🛡️ Welche Frühwarnzeichen überwacht mein Coach?',
-          '🎙️ Sprach-Check-in starten',
-          '⚡ Wie vermeide ich das Nachmittagstief?',
-        ],
+        text: welcomeMessage,
+        timestamp: 'اليوم',
+        suggestions: [...ARABIC_COACH_SUGGESTIONS],
       },
     ])
   );
@@ -204,12 +197,12 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
     const query = textToSend || inputQuery.trim();
     if (!query) return;
 
-    if (query.includes('Sprach-Check-in') && onOpenCheckInModal) {
+    if ((query === ARABIC_COACH_SUGGESTIONS[2] || query.includes('Sprach-Check-in')) && onOpenCheckInModal) {
       onOpenCheckInModal();
       return;
     }
 
-    if (query.includes('Ernährungstyp') && onNavigateToTypeAnalysis) {
+    if ((query === ARABIC_COACH_SUGGESTIONS[0] || query.includes('Ernährungstyp')) && onNavigateToTypeAnalysis) {
       onNavigateToTypeAnalysis();
       return;
     }
@@ -238,7 +231,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       })
       .catch((err) => {
         console.error('Coach reply error:', err);
-        const fallbackReply = getCoachChatResponse(query, moments);
+        const fallbackReply = ARABIC_COACH_UNAVAILABLE;
         const coachMsg: CoachChatMessage = {
           id: `coach-${Date.now()}`,
           sender: 'coach',
@@ -270,17 +263,17 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#25D366] text-white flex items-center gap-1 shadow-xs">
               <Mic className="w-3 h-3 stroke-[2.5]" />
-              <span>Voice Check-in</span>
+              <span>تسجيل صوتي</span>
             </span>
             <span className="text-xs font-semibold text-stone-500">
-              {currentHour < 11 ? 'Morgen-Rhythmus' : currentHour < 16 ? 'Mittags-Fokus' : 'Abend-Reflexion'}
+              {currentHour < 11 ? 'بداية اليوم' : currentHour < 16 ? 'منتصف اليوم' : 'مراجعة المساء'}
             </span>
           </div>
           <h2 className="text-base sm:text-lg font-display font-bold text-stone-900 leading-tight">
-            Wie war dein Tag bisher? Dokumentiere Schlaf, Essen & Wohlbefinden
+            كيف كان يومك حتى الآن؟ سجّل نومك وطعامك وشعورك
           </h2>
           <p className="text-xs text-stone-600">
-            Beantworte die kurze Tagesbefragung oder sprich einfach frei ins Mikrofon.
+            أجب عن أسئلة اليوم القصيرة أو تحدّث بحرية عبر الميكروفون.
           </p>
         </div>
 
@@ -290,7 +283,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
             className="flex-1 sm:flex-none px-5 py-3 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all ring-3 ring-emerald-500/20"
           >
             <Mic className="w-4 h-4 stroke-[2.5]" />
-            <span>Check-in starten</span>
+            <span>ابدأ تسجيل يومك</span>
           </button>
         </div>
       </section>
@@ -310,15 +303,15 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/60">
               <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              <span>Moment • Fürsorgliche Begleitung für Körper & Geist</span>
+              <span>إيقاع • إرشاد لطيف للجسم والعقل</span>
             </div>
             
             <h1 className="text-2xl sm:text-3xl font-display font-bold text-stone-900 leading-tight">
-              Achtsamkeit. Schlaf. Wohlbefinden.
+              وعي. نوم. عافية.
             </h1>
             
             <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
-              {metrics.coachSummary}
+              {getArabicCoachSummary(metrics, moments.length > 0)}
             </p>
           </div>
 
@@ -332,13 +325,13 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
             </div>
             <div className="text-left">
               <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">
-                Dein Ernährungstyp
+                نمط تغذيتك
               </span>
               <span className="text-sm sm:text-base font-bold text-stone-900 block leading-tight">
-                {nutritionProfile.typeName}
+                {arabicArchetype}
               </span>
               <span className="text-[11px] text-stone-500 flex items-center gap-1 mt-0.5 group-hover:text-amber-800 font-medium">
-                <span>Profil & Dos/Don'ts ansehen</span>
+                <span>اعرف المزيد عن نمطك الغذائي</span>
                 <ArrowRight className="w-3 h-3" />
               </span>
             </div>
@@ -353,8 +346,8 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
               <Eye className="w-4 h-4" />
             </div>
             <div>
-              <span className="font-semibold text-stone-800 block">Screen-Free Rate: {metrics.screenFreeRatio}%</span>
-              <span className="text-stone-500 text-[11px]">Achtsam ohne Ablenkung</span>
+              <span className="font-semibold text-stone-800 block">وجبات دون شاشات: {metrics.screenFreeRatio}%</span>
+              <span className="text-stone-500 text-[11px]">تناول الطعام بوعي</span>
             </div>
           </div>
 
@@ -363,8 +356,8 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
               <Zap className="w-4 h-4" />
             </div>
             <div>
-              <span className="font-semibold text-stone-800 block">Stabiles Energie-Level</span>
-              <span className="text-stone-500 text-[11px]">Kein schweres Food-Koma</span>
+              <span className="font-semibold text-stone-800 block">طاقة أكثر استقرارًا</span>
+              <span className="text-stone-500 text-[11px]">راقب طاقتك بعد الوجبات</span>
             </div>
           </div>
 
@@ -373,8 +366,8 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <span className="font-semibold text-stone-800 block">{moments.length + checkIns.length} Datenpunkte</span>
-              <span className="text-stone-500 text-[11px]">Kontinuierlicher Lerneffekt</span>
+              <span className="font-semibold text-stone-800 block">{moments.length + checkIns.length} ملاحظات</span>
+              <span className="text-stone-500 text-[11px]">نتعلم من يومك تدريجيًا</span>
             </div>
           </div>
         </div>
@@ -389,25 +382,25 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-amber-600 flex items-center gap-1.5">
                 <Brain className="w-4 h-4" />
-                <span>Heutiger Coaching-Impuls</span>
+                <span>نصيحة اليوم</span>
               </span>
-              <span className="text-[11px] font-medium text-stone-400">Tag 5 von 14</span>
+              <span className="text-[11px] font-medium text-stone-400">خطوة صغيرة كل يوم</span>
             </div>
 
             <h3 className="font-display font-bold text-lg text-stone-900">
-              {metrics.dailyFocusTitle}
+              {arabicFocus.title}
             </h3>
 
             <p className="text-xs sm:text-sm text-stone-600 leading-relaxed bg-amber-50/50 p-3.5 rounded-2xl border border-amber-200/60">
-              💡 <strong className="text-stone-900">Coach-Praxistipp:</strong> {metrics.dailyFocusTip}
+              💡 <strong className="text-stone-900">نصيحة عملية:</strong> {arabicFocus.tip}
             </p>
 
             <div className="space-y-2 text-xs text-stone-600">
-              <span className="font-semibold text-stone-800 block">Die 3 goldenen Achtsamkeits-Regeln:</span>
+              <span className="font-semibold text-stone-800 block">ثلاث عادات بسيطة للأكل بوعي:</span>
               <ul className="space-y-1.5 list-disc pl-4 text-stone-600">
-                <li><strong className="text-stone-800">Vor dem Bissen:</strong> Hunger spüren (1-5 Skala).</li>
-                <li><strong className="text-stone-800">Beim Essen:</strong> 20-30x kauen, Texturen und Aromen wahrnehmen.</li>
-                <li><strong className="text-stone-800">Am Ende:</strong> Bei Stufe 4 aufhören, bevor Völlegefühl eintritt.</li>
+                <li><strong className="text-stone-800">قبل أول لقمة:</strong> لاحظ مستوى جوعك من ١ إلى ٥.</li>
+                <li><strong className="text-stone-800">أثناء الأكل:</strong> تمهّل واستمتع بالطعم والقوام.</li>
+                <li><strong className="text-stone-800">عند الشبع:</strong> توقّف عندما تشعر بالراحة.</li>
               </ul>
             </div>
           </div>
@@ -416,7 +409,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
             onClick={onOpenAddModal}
             className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2"
           >
-            <span>Nächste Mahlzeit achtsam erfassen</span>
+            <span>سجّل وجبتك التالية</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </section>
@@ -425,13 +418,13 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
         <section className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-stone-100 pb-3">
             <div>
-              <span className="text-xs font-semibold text-amber-600 block">Tägliche Gewohnheiten</span>
+              <span className="text-xs font-semibold text-amber-600 block">عاداتك اليومية</span>
               <h3 className="font-display font-bold text-base sm:text-lg text-stone-900">
-                Coaching-Ziele für heute
+                أهداف اليوم
               </h3>
             </div>
             <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
-              {goals.filter((g) => g.completed).length} / {goals.length} Erreicht
+              {goals.filter((g) => g.completed).length} / {goals.length} مكتملة
             </span>
           </div>
 
@@ -448,7 +441,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
               >
                 <button
                   type="button"
-                  aria-label="Ziel abhaken"
+                  aria-label="تغيير حالة الهدف"
                   className={`mt-0.5 p-1 rounded-lg transition-colors ${
                     goal.completed
                       ? 'bg-emerald-500 text-white'
@@ -461,14 +454,14 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <span className={`text-xs font-semibold ${goal.completed ? 'line-through text-stone-500' : 'text-stone-900'}`}>
-                      {goal.title}
+                      {getArabicGoalCopy(goal).title}
                     </span>
                     <span className="text-[11px] font-medium text-stone-500 shrink-0">
-                      {goal.current}/{goal.target} {goal.unit}
+                      {goal.current}/{goal.target} {getArabicGoalCopy(goal).unit}
                     </span>
                   </div>
                   <p className="text-[11px] text-stone-500 mt-0.5 line-clamp-1">
-                    {goal.description}
+                    {getArabicGoalCopy(goal).description}
                   </p>
                 </div>
               </div>
@@ -476,7 +469,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           </div>
 
           <p className="text-[11px] text-stone-400 text-center italic">
-            Tippe auf ein Ziel, um deinen täglichen Fortschritt festzuhalten.
+            اضغط على أي هدف لتحديث تقدمك اليوم.
           </p>
         </section>
 
@@ -488,23 +481,23 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-              C
+              إ
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-display font-bold text-base text-stone-900">
-                  Coach fragen
+                  اسأل المرشد
                 </h3>
-                <span className="w-2 h-2 rounded-full bg-emerald-500" title="Online & Fürsorglich" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500" title="متاح للمساعدة" />
               </div>
               <p className="text-[11px] text-stone-500">
-                Erhalte persönliches, warmherziges Feedback zu deinen Mahlzeiten & Ernährungsfragen
+                اسأل عن وجباتك وعاداتك الغذائية واحصل على إرشاد يناسبك
               </p>
             </div>
           </div>
 
           <span className="hidden sm:inline-block text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60">
-            Fürsorge-KI
+            مساعد ذكي
           </span>
         </div>
 
@@ -524,7 +517,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
                       : 'bg-amber-500 text-white shadow-xs'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{msg.text}</p>
+                  <p className="whitespace-pre-line">{msg.id === 'msg-1' && isCoach ? welcomeMessage : msg.text}</p>
                 </div>
 
                 <span className="text-[10px] text-stone-400 px-1">
@@ -532,9 +525,9 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
                 </span>
 
                 {/* Suggestions Pills if provided */}
-                {isCoach && msg.suggestions && msg.suggestions.length > 0 && (
+                {isCoach && (msg.id === 'msg-1' ? ARABIC_COACH_SUGGESTIONS : msg.suggestions ?? []).length > 0 && (
                   <div data-testid={msg.id === 'msg-1' ? undefined : 'cary-contextual-followups'} className="flex flex-wrap gap-1.5 pt-1 max-w-full">
-                    {msg.suggestions.map((sug, i) => (
+                    {(msg.id === 'msg-1' ? ARABIC_COACH_SUGGESTIONS : msg.suggestions ?? []).map((sug, i) => (
                       <button
                         key={i}
                         type="button"
@@ -555,7 +548,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" />
               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]" />
               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.4s]" />
-              <span className="ml-1 text-[11px]">Dein Coach überlegt...</span>
+              <span className="ml-1 text-[11px]">المرشد يكتب...</span>
             </div>
           )}
           <div ref={chatEndRef} />
@@ -575,16 +568,17 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
                 handleSendMessage();
               }
             }}
-            placeholder="Frage stellen, z.B. 'Wie vermeide ich Heißhunger?' oder 'Analysiere mein Mittagessen'..."
+            placeholder="اسأل عن وجباتك أو طاقتك أو عاداتك الغذائية..."
             className="flex-1 px-4 py-2.5 text-xs sm:text-sm bg-stone-50 border border-stone-200 text-stone-900 rounded-xl focus:border-amber-500 focus:bg-white focus:outline-hidden"
           />
           <button
             type="button"
+            aria-label="إرسال السؤال"
             onClick={() => handleSendMessage()}
             className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl font-semibold text-xs flex items-center gap-1.5 shadow-xs transition-all"
           >
             <Send className="w-4 h-4" />
-            <span className="hidden sm:inline">Senden</span>
+            <span className="hidden sm:inline">إرسال</span>
           </button>
         </div>
 
@@ -594,16 +588,16 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       <section className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-stone-100 pb-3">
           <div>
-            <span className="text-xs font-semibold text-amber-600 block">Mahlzeiten-Feedback</span>
+            <span className="text-xs font-semibold text-amber-600 block">ملاحظات الوجبات</span>
             <h3 className="font-display font-bold text-base sm:text-lg text-stone-900">
-              Letzte Coaching-Bewertungen
+              آخر الملاحظات
             </h3>
           </div>
           <button
             onClick={onNavigateToTimeline}
             className="text-xs font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1"
           >
-            <span>Alle anzeigen</span>
+            <span>عرض الكل</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -642,7 +636,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
                     </p>
                   ) : (
                     <p className="text-[11px] text-stone-500">
-                      Hunger {moment.hungerLevel || 3}/5 • Sättigung {moment.fullnessLevel || 4}/5
+                      الجوع {moment.hungerLevel || 3}/5 • الشبع {moment.fullnessLevel || 4}/5
                     </p>
                   )}
                 </div>

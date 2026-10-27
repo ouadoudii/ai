@@ -25,7 +25,7 @@ for (const viewport of [
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
-    const opener = page.getByRole('button', { name: 'Check-in starten', exact: true });
+    const opener = page.getByRole('button', { name: 'ابدأ تسجيل يومك', exact: true });
     await expect(opener).toBeVisible();
     await opener.click();
 
