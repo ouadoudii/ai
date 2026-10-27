@@ -27,9 +27,12 @@ for (const viewport of [
     await expect(nav).toHaveText('المرشد');
     await nav.click();
 
-    await expect(page.getByRole('heading', { name: 'Coach fragen' })).toBeVisible();
-    await expect(page.getByText('Moment • Fürsorgliche Begleitung für Körper & Geist')).toBeVisible();
-    await expect(page.locator('body')).not.toContainText(/Cary|كاري/u);
+    await expect(page.getByRole('heading', { name: 'اسأل المرشد' })).toBeVisible();
+    await expect(page.getByText('إيقاع • إرشاد لطيف للجسم والعقل')).toBeVisible();
+    await expect(page.getByPlaceholder('اسأل عن وجباتك أو طاقتك أو عاداتك الغذائية...')).toBeVisible();
+    await expect(page.getByText('تسجيل صوتي')).toBeVisible();
+    await expect(page.getByText('ما نمط تغذيتي؟', { exact: false })).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(/Coach fragen|Fürsorgliche Begleitung|Frage stellen|Guten Morgen|Dein Coach überlegt|Cary|كاري/u);
     await page.screenshot({ path: testInfo.outputPath(`moment-coach-${viewport.name}.png`), fullPage: true });
   });
 }
