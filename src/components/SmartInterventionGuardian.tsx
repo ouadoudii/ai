@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, ShieldCheck, CheckCircle2, ArrowRight, Clock, Zap, Moon, Utensils, Coffee, Dna, RefreshCw } from 'lucide-react';
+import { Heart, ShieldCheck, CheckCircle2, ArrowRight, Clock, Zap, Moon, Utensils, Coffee, Dna, RefreshCw } from 'lucide-react';
 import { GuardianStatus } from '../utils/interventionEngine';
 import { NutritionArchetype } from '../types';
 import { useLanguage } from '../i18n';
@@ -34,11 +34,11 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
   const archetypeName = (type: NutritionArchetype) => copy.archetypes[type];
 
   return (
-    <section data-testid="guardian" className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200 shadow-xs relative overflow-hidden transition-all">
+    <section dir="rtl" data-testid="guardian" className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200 shadow-xs relative overflow-hidden transition-all">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
         <div className="flex items-center gap-2.5">
-          <div className={`p-2 rounded-xl flex items-center justify-center ${activeUnresolvedAlarms.length > 0 ? 'bg-rose-500 text-white shadow-xs animate-pulse' : 'bg-emerald-500 text-white shadow-xs'}`}>
-            {activeUnresolvedAlarms.length > 0 ? <AlertTriangle className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
+          <div className={`p-2 rounded-xl flex items-center justify-center ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-100 text-amber-800 shadow-xs' : 'bg-emerald-500 text-white shadow-xs'}`}>
+            {activeUnresolvedAlarms.length > 0 ? <Heart className="w-5 h-5" aria-hidden="true" /> : <ShieldCheck className="w-5 h-5" />}
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -49,8 +49,8 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 border ${activeUnresolvedAlarms.length > 0 ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>
-            <span className={`w-2 h-2 rounded-full ${activeUnresolvedAlarms.length > 0 ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
+          <div className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 border ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-50 text-amber-900 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>
+            <span className={`w-2 h-2 rounded-full ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
             <span>{activeUnresolvedAlarms.length > 0 ? copy.activeAlarm(activeUnresolvedAlarms.length) : copy.allClear}</span>
           </div>
           {onSimulateAlarm && <button onClick={() => setShowSimulator(!showSimulator)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors flex items-center gap-1"><RefreshCw className="w-3 h-3" /><span>{copy.testAlarm}</span></button>}
@@ -62,7 +62,7 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
           <div className="flex items-center justify-between"><span className="text-[11px] font-bold text-stone-700 uppercase tracking-wider">{copy.simulator}</span><span className="text-[10px] text-stone-400">{copy.reacts}</span></div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <button onClick={() => onSimulateAlarm('sleep')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Moon className="w-3 h-3 text-indigo-500" /> {copy.sleep}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.sleepDetail}</span></button>
-            <button onClick={() => onSimulateAlarm('rushed_meal')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Utensils className="w-3 h-3 text-rose-500" /> {copy.stressMeal}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.stressDetail}</span></button>
+            <button onClick={() => onSimulateAlarm('rushed_meal')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Utensils className="w-3 h-3 text-amber-600" /> {copy.stressMeal}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.stressDetail}</span></button>
             <button onClick={() => onSimulateAlarm('afternoon_crash')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Coffee className="w-3 h-3 text-amber-500" /> {copy.crash}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.crashDetail}</span></button>
             <button onClick={() => { onSimulateAlarm('clear'); setResolvedAlarmIds([]); }} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-emerald-200 hover:bg-emerald-50 text-xs"><span className="font-bold text-emerald-800 flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> {copy.reset}</span><span className="text-[10px] text-emerald-600 block mt-0.5">{copy.noWarnings}</span></button>
           </div>
@@ -78,16 +78,16 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
         ) : (
           <div className="space-y-3">
             {activeUnresolvedAlarms.map((alarm) => (
-              <div key={alarm.id} className={`rounded-2xl p-4 sm:p-5 border transition-all ${alarm.severity === 'high' ? 'bg-rose-50/80 border-rose-200 shadow-xs' : 'bg-amber-50/80 border-amber-200 shadow-xs'}`}>
+              <div key={alarm.id} className={`rounded-2xl p-4 sm:p-5 border transition-all ${alarm.severity === 'high' ? 'bg-amber-50/60 border-amber-200 shadow-xs' : 'bg-amber-50/80 border-amber-200 shadow-xs'}`}>
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-                  <div className="space-y-1 max-w-xl"><div className="flex items-center gap-2"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${alarm.severity === 'high' ? 'bg-rose-600 text-white' : 'bg-amber-600 text-white'}`}>{alarm.severity === 'high' ? copy.acute : copy.recommendation}</span><span className="text-[11px] text-stone-500 font-medium flex items-center gap-1"><Clock className="w-3 h-3" />{alarm.timestamp}</span></div><h3 className="text-sm sm:text-base font-bold text-stone-900">{alarm.title}</h3><p className="text-xs text-stone-600 font-medium">{alarm.subtitle}</p></div>
+                  <div className="space-y-1 max-w-xl"><div className="flex items-center gap-2"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${alarm.severity === 'high' ? 'bg-amber-100 text-amber-900' : 'bg-amber-100 text-amber-900'}`}>{alarm.severity === 'high' ? copy.acute : copy.recommendation}</span><span className="text-[11px] text-stone-500 font-medium flex items-center gap-1"><Clock className="w-3 h-3" />{alarm.timestamp}</span></div><h3 className="text-sm sm:text-base font-bold text-stone-900">{alarm.title}</h3><p className="text-xs text-stone-600 font-medium">{alarm.subtitle}</p></div>
                   <button onClick={() => handleResolve(alarm.id)} className="px-4 py-2 bg-white hover:bg-stone-50 active:scale-95 text-stone-800 text-xs font-bold rounded-xl border border-stone-200 shadow-xs flex items-center gap-1.5 transition-all shrink-0 self-end md:self-center"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /><span>{copy.done}</span></button>
                 </div>
                 <div className="mt-3.5 pt-3 border-t border-stone-200/60 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <div className="bg-white/80 rounded-xl p-3 border border-stone-200/60"><span className="font-bold text-stone-700 flex items-center gap-1 mb-1"><Zap className="w-3.5 h-3.5 text-amber-600" /> {copy.why}</span><p className="text-stone-600 leading-relaxed">{alarm.reason}</p></div>
                   <div className="bg-emerald-500/10 rounded-xl p-3 border border-emerald-500/20"><span className="font-bold text-emerald-950 flex items-center gap-1 mb-1"><Dna className="w-3.5 h-3.5 text-emerald-700" /> {copy.countermeasure} ({archetypeName(alarm.archetype)})</span><p className="text-emerald-900 leading-relaxed font-medium">{alarm.recommendation}</p></div>
                 </div>
-                <div className="mt-2.5 flex items-center justify-between px-3 py-2 bg-stone-900 text-white rounded-xl text-xs"><div className="flex items-center gap-2"><span className="text-amber-400 font-bold">{copy.immediate}</span><span className="text-stone-200">{alarm.actionableStep}</span></div><ArrowRight className="w-3.5 h-3.5 text-stone-400 shrink-0 rtl:rotate-180" /></div>
+                <div className="mt-2.5 flex items-center justify-between px-3 py-2 bg-stone-100 text-stone-800 rounded-xl text-xs"><div className="flex items-center gap-2"><span className="text-amber-800 font-bold">{copy.immediate}</span><span className="text-stone-700">{alarm.actionableStep}</span></div><ArrowRight className="w-3.5 h-3.5 text-stone-500 shrink-0 rtl:rotate-180" /></div>
               </div>
             ))}
           </div>
