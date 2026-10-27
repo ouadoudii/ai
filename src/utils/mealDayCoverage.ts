@@ -1,6 +1,6 @@
 type MealLike={id:string;date?:string};
 
-export type MealDayCoverage={days:number;windowDays:7};
+export type MealDayCoverage={days:number;windowDays:7;dates:{date:string;logged:boolean}[]};
 
 const demoId=/^moment-\d{1,2}$/;
 
@@ -27,5 +27,11 @@ export const deriveMealDayCoverage=(moments:MealLike[],referenceDate:string):Mea
     represented.add(day);
   }
   if(represented.size<2)return null;
-  return {days:represented.size,windowDays:7};
+  // Preserve the actual dates, not just the count. Rendering the first N days as
+  // logged falsely implies a consecutive streak and can shame people for gaps.
+  const dates=Array.from({length:7},(_,index)=>{
+    const day=referenceDay-6+index;
+    return {date:new Date(day*86400000).toISOString().slice(0,10),logged:represented.has(day)};
+  });
+  return {days:represented.size,windowDays:7,dates};
 };
