@@ -49,26 +49,26 @@ export function evaluateNutritionAlarms(
     if (durationHours < 6 || wakeFeeling === 'exhausted' || quality <= 2) {
       let archetypeAdvice = '';
       if (archetype === 'protein_performer') {
-        archetypeAdvice = 'Erhöhe das Protein im Vormittags-Snack auf mind. 20g (z.B. Skyr oder Mandeln), um das erhöhte Ghrelin-Signal (Hungerhormon) zu neutralisieren.';
+        archetypeAdvice = 'إذا شعرت بالجوع، جرّب وجبة خفيفة مشبعة تناسبك، مثل الزبادي أو المكسرات.';
       } else if (archetype === 'circadian_rhythm') {
-        archetypeAdvice = 'Vermeide heute zuckerhaltige Snacks zum Wachwerden. Geh 10 Minuten ans Tageslicht, um den Cortisol-Rhythmus natürlich zu resetten.';
+        archetypeAdvice = 'إذا أمكن، خذ استراحة قصيرة في ضوء النهار، واختر ما يساعدك على الراحة.';
       } else if (archetype === 'intermittent_balancer') {
-        archetypeAdvice = 'Wenn der Hunger vor dem Essensfenster (11:30 Uhr) zu stark wird, trinke ungesüßten Grüntee oder Ingwerwasser statt sofort zu brechen.';
+        archetypeAdvice = 'استمع إلى جوعك؛ يمكنك تعديل مواعيد وجباتك بما يلائم احتياجاتك اليوم.';
       } else {
-        archetypeAdvice = 'Trinke direkt ein großes Glas lauwarmes Wasser mit Zitrone und plane ein ausgewogenes Frühstück mit komplexen Kohlenhydraten und Eiweiß ein.';
+        archetypeAdvice = 'ابدأ يومك بلطف، واشرب ماءً إن رغبت، واختر فطورًا مشبعًا يناسبك.';
       }
 
       alarms.push({
         id: `alarm-sleep-${latestCheckIn.id}`,
         triggerKey: 'sleep_deficit',
         severity: 'high',
-        title: '⚠️ Erhöhtes Heißhunger-Risiko durch Schlafmangel',
-        subtitle: `Nur ${durationHours}h Schlaf & Gefühl "${wakeFeeling === 'exhausted' ? 'Erschöpft' : 'Müde'}" registriert`,
+        title: 'قد تحتاج إلى بعض الراحة اليوم',
+        subtitle: `سجّلت ${durationHours} ساعات نوم، وشعورك عند الاستيقاظ: ${wakeFeeling === 'exhausted' ? 'إرهاق' : 'تعب'}`,
         archetype,
-        reason: 'Schlafmangel erhöht das Hungerhormon Ghrelin um bis zu 28% und senkt Leptin. Dein Körper verlangt heute instinktiv nach schnellen Kalorien.',
+        reason: 'قد يؤثر النوم القصير في شعورك بالطاقة والجوع. لا تحتاج إلى تعويض أي شيء؛ انتبه لما يحتاجه جسمك.',
         recommendation: archetypeAdvice,
-        actionableStep: 'Kaffee erst 90 Min nach dem Aufwachen + proteinreicher Vormittags-Snack.',
-        timestamp: 'Heute Morgen',
+        actionableStep: 'امنح نفسك استراحة لطيفة، وتناول شيئًا مشبعًا إذا شعرت بالجوع.',
+        timestamp: 'هذا الصباح',
       });
     }
   }
@@ -77,22 +77,22 @@ export function evaluateNutritionAlarms(
   if (latestMoment && (latestMoment.eatingPace === 'rushed' || latestMoment.distraction === 'screen')) {
     let archetypeAdvice = '';
     if (archetype === 'intuitive_mindful') {
-      archetypeAdvice = 'Als intuitiver Typ ist Essen in Ruhe deine Kernstärke. Mache jetzt eine 5-minütige Bildschirmpause und trinke einen beruhigenden Kräutertee.';
+      archetypeAdvice = 'إذا أحببت، خصّص دقائق هادئة بعد وجبتك بعيدًا عن الشاشة.';
     } else {
-      archetypeAdvice = 'Der Magen registriert Sättigung erst nach 20 Minuten. Schließe die Mahlzeit jetzt bewusst ab, um ein Überessen zu stoppen.';
+      archetypeAdvice = 'لا توجد طريقة واحدة صحيحة لتناول الطعام. يمكنك تجربة لحظة هدوء وملاحظة شعورك بالشبع دون حكم.';
     }
 
     alarms.push({
       id: `alarm-mindless-${latestMoment.id}`,
       triggerKey: 'distracted_meal',
       severity: 'medium',
-      title: '⚠️ Achtsamkeits-Warnung: Gehetzte Mahlzeit am Bildschirm',
-      subtitle: `Mahlzeit "${latestMoment.title}" wurde unter Ablenkung eingenommen`,
+      title: 'لحظة هدوء بعد وجبتك',
+      subtitle: `تناولت «${latestMoment.title}» بينما كان انتباهك مشغولًا`,
       archetype,
-      reason: 'Ablenkung durch Smartphones blockiert die Signale des Nervus Vagus. Die Gefahr für ein Völlegefühl und Heißhunger nach 2 Stunden steigt.',
+      reason: 'من الطبيعي أن نأكل أحيانًا ونحن منشغلون. إن رغبت، لاحظ كيف تشعر الآن دون لوم.',
       recommendation: archetypeAdvice,
-      actionableStep: '5 Minuten aufstehen, tief durchatmen und mindestens 250ml Wasser trinken.',
-      timestamp: latestMoment.time || 'Vor kurzem',
+      actionableStep: 'خذ نفسًا هادئًا، واسترح قليلًا إذا كان ذلك يناسبك.',
+      timestamp: latestMoment.time || 'منذ قليل',
     });
   }
 
@@ -103,24 +103,24 @@ export function evaluateNutritionAlarms(
   if (isAfternoon && (lowEnergyCheckIn || lowEnergyMoment)) {
     let archetypeAdvice = '';
     if (archetype === 'protein_performer') {
-      archetypeAdvice = 'Kein Zucker-Push! Greif zu einer Handvoll Nüsse oder Edamame für konstante Aminosäuren ohne Insulin-Achterbahn.';
+      archetypeAdvice = 'إذا كنت جائعًا، اختر وجبة خفيفة تستمتع بها وتمنحك شعورًا بالشبع.';
     } else if (archetype === 'circadian_rhythm') {
-      archetypeAdvice = 'Mach einen 10-minütigen Schritt-Spaziergang. Die Muskelkontraktion schleust Glukose insulinunabhängig in die Zellen.';
+      archetypeAdvice = 'قد يساعدك المشي الخفيف أو الجلوس في ضوء النهار إذا كان ذلك مناسبًا لك.';
     } else {
-      archetypeAdvice = 'Trinke 0,5L kühles Wasser und strecke den Rücken. Oft wird Dehydration fälschlicherweise als Energieloch interpretiert.';
+      archetypeAdvice = 'جرّب شرب الماء أو أخذ استراحة قصيرة، واستمع لما يحتاجه جسمك.';
     }
     const sourceOccurrenceId = lowEnergyCheckIn ? `checkin-${lowEnergyCheckIn.id}` : `moment-${lowEnergyMoment!.id}`;
     alarms.push({
       id: `alarm-afternoon-crash-${sourceOccurrenceId}`,
       triggerKey: 'afternoon_crash',
       severity: 'high',
-      title: '⚠️ Akutes Nachmittagstief erkannt',
-      subtitle: 'Energielevel ist auf Stufe 1-2/5 gefallen',
+      title: 'مساحة صغيرة لاستعادة نشاطك',
+      subtitle: 'سجّلت مستوى طاقة منخفضًا اليوم',
       archetype,
-      reason: 'Das Mittagessen hat einen starken Blutzuckerabfall provoziert oder deine Adenosin-Rezeptoren blockieren die Konzentration.',
+      reason: 'قد تتغير طاقتنا خلال اليوم لأسباب كثيرة. لا يعني ذلك أنك فعلت شيئًا خاطئًا.',
       recommendation: archetypeAdvice,
-      actionableStep: 'Kein süßer Riegel – 10 Min Tageslicht-Spaziergang & 2 große Gläser Wasser.',
-      timestamp: 'Aktuell',
+      actionableStep: 'إن أحببت، خذ استراحة لطيفة أو تمشَّ قليلًا.',
+      timestamp: 'الآن',
     });
   }
 
@@ -135,13 +135,13 @@ export function evaluateNutritionAlarms(
       id: `alarm-late-dinner-${sourceDinner.id}`,
       triggerKey: 'circadian_late_food',
       severity: 'medium',
-      title: '⚠️ Schlaf-Regenerations-Bremse: Späte üppige Mahlzeit',
-      subtitle: 'Mahlzeit nach 20:00 Uhr mit hoher Sättigungsstufe',
+      title: 'وجبة مسائية تستحق لحظة راحة',
+      subtitle: `تناولت «${sourceDinner.title}» في المساء`,
       archetype,
-      reason: 'Ein voller Magen nach 20:30 Uhr verhindert das Absinken der Kerntemperatur, was den erholsamen Tiefschlaf und das Wachstumshormon HGH blockiert.',
-      recommendation: 'Trinke Kamillen- oder Fencheltee, verzichte auf späte Snacks und plane heute Nacht 30 Minuten länger für die Einschlafphase ein.',
-      actionableStep: 'Ab jetzt Küchenschluss & 15 Min aufrechter Spaziergang / Dehnen vor dem Zubettgehen.',
-      timestamp: 'Abends',
+      reason: 'مواعيد الطعام تختلف من شخص لآخر. يمكنك ملاحظة ما يجعلك مرتاحًا في المساء دون قواعد صارمة.',
+      recommendation: 'إذا رغبت، استمتع بلحظة هادئة قبل النوم. تناول الطعام مجددًا إذا شعرت بالجوع.',
+      actionableStep: 'استرح بالطريقة التي تناسبك، دون الحاجة إلى تعويض الوجبة.',
+      timestamp: 'هذا المساء',
     });
   }
 
@@ -149,7 +149,7 @@ export function evaluateNutritionAlarms(
     return {
       hasAlarms: false,
       activeAlarms: [],
-      statusText: '🟢 Alles im grünen Bereich: Keine Alarmzeichen erkannt. Dein Rhythmus ist optimal synchronisiert.',
+      statusText: 'كل يوم له إيقاعه الخاص. نحن هنا لنرافقك بلطف.',
       statusBadge: 'green',
       lastEvaluated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
@@ -160,9 +160,9 @@ export function evaluateNutritionAlarms(
     hasAlarms: true,
     activeAlarms: alarms,
     statusText: hasHighSeverity
-      ? `🔴 ${alarms.length} aktives Alarmzeichen erfordert gezielte Intervention`
-      : `🟡 ${alarms.length} Optimierungsimpuls für deinen Tag erkannt`,
-    statusBadge: hasHighSeverity ? 'red' : 'amber',
+      ? `${alarms.length} اقتراحات لطيفة للاهتمام بنفسك`
+      : `${alarms.length} أفكار بسيطة ليومك`,
+    statusBadge: 'amber',
     lastEvaluated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
   };
 }
