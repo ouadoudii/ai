@@ -21,8 +21,10 @@ for (const viewport of [
     await page.goto('/');
 
     const nav = page.getByTestId(viewport.nav);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(nav).toBeVisible();
-    await expect(nav).toHaveText('Coach');
+    await expect(nav).toHaveText('المرشد');
     await nav.click();
 
     await expect(page.getByRole('heading', { name: 'Coach fragen' })).toBeVisible();
