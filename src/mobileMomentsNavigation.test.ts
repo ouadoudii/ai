@@ -7,8 +7,9 @@ const appSource = readFileSync(fileURLToPath(new URL('./App.tsx', import.meta.ur
 
 describe('mobile moments navigation', () => {
   it('routes the My moments item to the timeline tab and marks that tab active', () => {
-    expect(navSource).toContain("nav('timeline','moments')");
-    expect(navSource).toContain("activeTab==='timeline'");
+    const compact = navSource.replace(/\s+/g, '');
+    expect(compact).toContain('nav("timeline","moments")');
+    expect(compact).toContain('activeTab==="timeline"');
     expect(navSource).toContain('data-testid="mobile-moments-nav"');
   });
 
