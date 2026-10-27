@@ -41,12 +41,12 @@ test("Coach keeps a conversation after Arabic navigation and reload", async ({
   await expect(page.getByTestId("desktop-coach-nav")).toHaveText("المرشد");
   await page.getByTestId("desktop-coach-nav").click();
   await expect(
-    page.getByRole("heading", { name: "Coach fragen" }),
+    page.getByRole("heading", { name: "اسأل المرشد" }),
   ).toBeVisible();
 
   const question = "Merke dir bitte meinen heutigen Spaziergang.";
-  await page.getByPlaceholder(/Frage stellen/).fill(question);
-  await page.getByRole("button", { name: /Senden/ }).click();
+  await page.getByPlaceholder(/اسأل عن وجباتك/).fill(question);
+  await page.getByRole("button", { name: /إرسال/ }).click();
   await expect(page.getByText(question, { exact: true })).toBeVisible();
   await expect
     .poll(async () =>
@@ -92,7 +92,7 @@ test("Coach is reachable from the Arabic mobile app shell", async ({
   await expect(coach).toHaveText("المرشد");
   await coach.click();
   await expect(
-    page.getByRole("heading", { name: "Coach fragen" }),
+    page.getByRole("heading", { name: "اسأل المرشد" }),
   ).toBeVisible();
   await page.screenshot({
     path: testInfo.outputPath("coach-mobile-entry.png"),
