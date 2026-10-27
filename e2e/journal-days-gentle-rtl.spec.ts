@@ -35,7 +35,7 @@ test('Arabic journal celebrates real days without streak pressure on desktop and
   expect(await page.evaluate(() => document.documentElement.dir)).toBe('rtl');
 
   const contrast = await card.locator('p').last().evaluate(element => {
-    const rgb = (value: string) => (value.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+    const rgb = (value: string) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
     const luminance = (channels: number[]) => {
       const values = channels.map(value => {
         const c = value / 255;
