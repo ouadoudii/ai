@@ -53,7 +53,7 @@ test('Arabic seven-day journal shows real dates, not a fake streak, on desktop a
   await expect(card).not.toContainText(/فشل|عقوبة|سلسلة متواصلة|ممنوع/);
   expect(await page.evaluate(() => document.documentElement.dir)).toBe('rtl');
   const contrast = await card.locator('p').last().evaluate(element => {
-    const parse = (value: string) => (value.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+    const parse = (value: string) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
     const luminance = (rgb: number[]) => {
       const channels = rgb.map(value => {
         const channel = value / 255;
