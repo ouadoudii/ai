@@ -42,6 +42,9 @@ jobs:
         run: npm run security
 
       - name: Typecheck
+        run: npm run typecheck
+
+      - name: Static lint
         run: npm run lint
 
       - name: Unit and integration tests
