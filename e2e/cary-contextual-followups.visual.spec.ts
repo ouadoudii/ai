@@ -40,7 +40,7 @@ for (const viewport of [
     await page.getByTestId(viewport.nav).click();
 
     const question = 'Warum bin ich nach بيض مسلوق + pain complet müde?';
-    const composer = page.getByPlaceholder(/Frage stellen/);
+    const composer = page.getByPlaceholder('اسأل عن وجباتك أو طاقتك أو عاداتك الغذائية...');
     await composer.fill(question);
     await composer.press('Enter');
     await expect(page.getByText(question, { exact: true })).toBeVisible();
