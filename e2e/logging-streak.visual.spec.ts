@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const profile = {
   summary: 'I want to understand my rhythm.',
@@ -15,7 +15,7 @@ const profile = {
   },
 };
 
-async function seed(page: Parameters<Parameters<typeof test>[1]>[0]['page']) {
+async function seed(page: Page) {
   await page.addInitScript((introProfile) => {
     const dateKey = (daysAgo: number) => {
       const d = new Date();
