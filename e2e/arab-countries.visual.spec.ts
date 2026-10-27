@@ -225,6 +225,10 @@ test('photo meal flow stores two selected dishes in one meal',async({page})=>{
   await page.getByRole('dialog').getByRole('button',{name:/صورة/}).click();
   await expect(page.getByRole('heading',{name:/ماذا أكلت؟/})).toBeVisible();
   await page.getByTestId('food-visual-pasta').click();
+  await expect(page.getByTestId('food-visual-pasta')).toHaveAttribute('aria-pressed','true');
+  await page.getByTestId('food-visual-pasta').click();
+  await expect(page.getByTestId('food-visual-pasta')).toHaveAttribute('aria-pressed','false');
+  await page.getByTestId('food-visual-pasta').click();
   await page.getByTestId('food-visual-salad').click();
   await expect(page.getByTestId('food-visual-pasta')).toHaveAttribute('aria-pressed','true');
   await expect(page.getByTestId('food-visual-salad')).toHaveAttribute('aria-pressed','true');
