@@ -51,4 +51,19 @@ test('Arabic seven-day journal shows real dates, not a fake streak, on desktop a
   expect(labels.filter(label => label.includes('لا يوجد تسجيل، وهذا طبيعي'))).toHaveLength(5);
   expect(labels.filter(label => label.includes('سجّلت لحظة'))).toHaveLength(2);
   await expect(card).not.toContainText(/فشل|عقوبة|سلسلة متواصلة|ممنوع/);
+  expect(await page.evaluate(() => document.documentElement.dir)).toBe('rtl');
+  const contrast = await card.locator('p').last().evaluate(element => {
+    const parse = (value: string) => (value.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+    const luminance = (rgb: number[]) => {
+      const channels = rgb.map(value => {
+        const channel = value / 255;
+        return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+      });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+    const fg = luminance(parse(getComputedStyle(element).color));
+    const bg = luminance(parse(getComputedStyle(element.closest('section')!).backgroundColor));
+    return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
+  });
+  expect(contrast).toBeGreaterThanOrEqual(4.5);
 });
