@@ -5,11 +5,11 @@ import { fileURLToPath } from 'node:url';
 const css = readFileSync(fileURLToPath(new URL('./index.css', import.meta.url)), 'utf8');
 const companionSvg = readFileSync(fileURLToPath(new URL('../public/moment-animal-companions.svg', import.meta.url)), 'utf8');
 
-describe('Moment animal companions', () => {
-  it('keeps the companion art integrated into the Today hero without intercepting input', () => {
-    expect(css).toContain("background:url('/moment-animal-companions.svg') center/contain no-repeat;");
-    expect(css).toContain('pointer-events:none;');
-    expect(css).toContain('[class*="max-w-[860px]"] > section:first-child::after');
+describe('Legacy animal artwork is not injected into the Arabic-first home', () => {
+  it('keeps unrelated animal artwork out of the Today hero and interactive layers', () => {
+    expect(css).not.toContain("background:url('/moment-animal-companions.svg')");
+    expect(css).not.toContain('[class*="max-w-[860px]"] > section:first-child::after');
+    expect(css).toContain(':focus-visible{outline:3px solid var(--moment-focus)');
   });
 
   it('ships lion, fox, bear and wolf artwork with accessible Moment metadata', () => {
