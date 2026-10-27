@@ -36,7 +36,7 @@ describe('MealDayCoverageCard', () => {
     expect(html).toContain('لا يوجد تسجيل، وهذا طبيعي');
     expect(html).toContain('الأيام التي لم تسجّل فيها طبيعية أيضاً');
     expect(html).not.toMatch(/فشل|عقوبة|سلسلة متواصلة|ممنوع/);
-    expect(html).toContain('dateTime="2026-09-29"');
+    expect(html).toMatch(/date[Tt]ime="2026-09-29"/);
   });
   it('does not pressure sparse-history users with a coverage card', () => {
     expect(render(['2026-10-02'])).not.toContain('data-testid="meal-day-coverage"');
