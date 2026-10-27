@@ -3,6 +3,7 @@ import React from 'react';
 export type AppLanguage = 'en' | 'ar' | 'de' | 'fr';
 type Dictionary = Record<string, { en: string; ar: string }>;
 const dictionary: Dictionary = {
+  navCoach:{en:'Coach',ar:'المرشد'},
   today:{en:'Today',ar:'اليوم'}, add:{en:'Add a moment',ar:'سجّل لحظة'}, patterns:{en:'Discoveries',ar:'اكتشافاتك'}, sleepFoodEnergy:{en:'Sleep · Food · Energy',ar:'النوم · الطعام · الطاقة'}, mainNav:{en:'Main navigation',ar:'التنقل الرئيسي'},
   nothingLogged:{en:'A fresh day',ar:'يوم جديد'}, entry:{en:'moment',ar:'لحظة'}, entries:{en:'moments',ar:'لحظات'}, todaySuffix:{en:'today',ar:'اليوم'},
   captureOnly:{en:'Start with one small moment.',ar:'ابدأ بلحظة صغيرة من يومك.'}, dayBuilds:{en:'Your picture is getting clearer.',ar:'صورتك تصبح أوضح مع كل لحظة.'},
