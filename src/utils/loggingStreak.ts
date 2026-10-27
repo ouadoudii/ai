@@ -1,3 +1,4 @@
+import { getLocalDateKey } from './dateKey';
 import type { FoodMoment } from '../types';
 
 const DEMO_IDS = new Set(['moment-1', 'moment-2', 'moment-3']);
@@ -56,4 +57,16 @@ export function getBestMealLoggingStreak(moments: FoodMoment[]): number {
     }
   }
   return best;
+}
+
+
+/**
+ * Counts distinct, valid local calendar days with real meal entries.
+ * Unlike a streak, gaps never reset this factual journal history.
+ * Future-dated entries are excluded until their local date arrives.
+ */
+export function getLoggedDayCount(moments: FoodMoment[], referenceDate?: string): number {
+  const today = referenceDate ?? getLocalDateKey();
+  if (previousDateKey(today) === null) return 0;
+  return realLoggingDates(moments).filter(date => date <= today).length;
 }
