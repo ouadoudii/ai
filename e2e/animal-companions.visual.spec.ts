@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('mobile Today home shows Moment animal companions without blocking the main flow', async ({ page }, testInfo) => {
+test('mobile Today home avoids unrelated animal overlays without blocking the main flow', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => {
     localStorage.setItem('rhythm_language_v1', 'ar');
@@ -14,20 +14,18 @@ test('mobile Today home shows Moment animal companions without blocking the main
   await expect(page.getByRole('heading', { name: /مرحباً بك/ })).toBeVisible();
   await expect(page.getByTestId('primary-capture-button')).toBeVisible();
 
-  const hero = page.locator('[class*="max-w-[860px]"] > section').first();
-  const art = await hero.evaluate((element) => {
-    const styles = getComputedStyle(element, '::after');
-    return {
-      image: styles.backgroundImage,
-      pointerEvents: styles.pointerEvents,
-      width: parseFloat(styles.width),
-    };
-  });
+  const hero = page.getByTestId('today-organic-hero');
+  await expect(hero).toBeVisible();
+  const art = await hero.evaluate((element) => ({
+    overlayImage: getComputedStyle(element, '::after').backgroundImage,
+    heroImage: getComputedStyle(element).backgroundImage,
+  }));
+  expect(art.overlayImage).toBe('none');
+  expect(art.heroImage).toContain('linear-gradient');
+  expect(art.heroImage).not.toContain('url(');
+  const voice = page.getByTestId('voice-home-mic');
+  await voice.focus();
+  await expect(voice).toBeFocused();
 
-  expect(art.image).toContain('moment-animal-companions.svg');
-  expect(art.image).not.toContain('cary-animal-companions.svg');
-  expect(art.pointerEvents).toBe('none');
-  expect(art.width).toBeGreaterThan(100);
-
-  await page.screenshot({ path: testInfo.outputPath('animal-companions-mobile.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('organic-hero-mobile.png'), fullPage: true });
 });
