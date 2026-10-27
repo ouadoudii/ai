@@ -1,13 +1,10 @@
 import { expect,test } from '@playwright/test';
 
-const today=new Date();
-const key=(offset:number)=>{const d=new Date(today.getFullYear(),today.getMonth(),today.getDate());d.setDate(d.getDate()-offset);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
-const moments=[
+const prepare=async(page:any)=>page.addInitScript(()=>{const today=new Date();const key=(offset:number)=>{const d=new Date(today.getFullYear(),today.getMonth(),today.getDate());d.setDate(d.getDate()-offset);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};const items=[
  {id:'today-range',title:'Today meal',label:'Meal',category:'lunch',date:key(0),time:'12:00',location:'Home',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt:1,isFavorite:false},
  {id:'seven-edge-range',title:'Seven day meal',label:'Meal',category:'lunch',date:key(6),time:'12:00',location:'Home',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt:2,isFavorite:true},
  {id:'old-range',title:'Older meal',label:'Meal',category:'lunch',date:key(31),time:'12:00',location:'Home',imageUrl:'',rating:5,mood:'satisfied',tags:[],createdAt:3,isFavorite:true}
-];
-const prepare=async(page:any)=>page.addInitScript((items)=>{localStorage.setItem('rhythm_language_v1','de');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');localStorage.setItem('rhythm_voice_entry_seen_v1','true');localStorage.setItem('nimmapp_moments_v1',JSON.stringify(items));localStorage.setItem('nimmapp_checkins_v1','[]');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');},moments);
+];localStorage.setItem('rhythm_language_v1','de');localStorage.setItem('cary_access_mode_v1','guest');localStorage.setItem('cary_onboarding_v2_complete','true');localStorage.setItem('rhythm_voice_entry_seen_v1','true');localStorage.setItem('nimmapp_moments_v1',JSON.stringify(items));localStorage.setItem('nimmapp_checkins_v1','[]');sessionStorage.setItem('nimmapp_checkin_auto_opened','true');});
 const openTimeline=async(page:any,mobile:boolean)=>mobile?page.getByTestId('mobile-moments-nav').click():page.getByRole('button',{name:'لحظات',exact:true}).click();
 
 for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',width:390,height:844}])test(`journal date range filters history on ${viewport.name}`,async({page},testInfo)=>{
