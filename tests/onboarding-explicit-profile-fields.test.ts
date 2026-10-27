@@ -3,14 +3,14 @@ import fs from 'node:fs';
 
 describe('onboarding explicit profile fields regression', () => {
   it('serializes optional hunger, energy and rhythm only after explicit interaction', () => {
-    const source = fs.readFileSync('src/components/VoiceFirstEntryOverlay.tsx', 'utf8');
+    const source = fs.readFileSync('src/components/VoiceFirstEntryOverlay.tsx', 'utf8').replace(/\s+/g, '');
 
     expect(source).toContain('if(touched.hunger)parts.push');
     expect(source).toContain('if(touched.energy)parts.push');
     expect(source).toContain('if(touched.rhythm)');
-    expect(source).toContain('setTouched({...touched,hunger:true})');
-    expect(source).toContain('setTouched({...touched,energy:true})');
-    expect(source).toContain('setTouched({...touched,rhythm:true})');
+    expect(source).toContain('setTouched((current)=>({...current,hunger:true}))');
+    expect(source).toContain('setTouched((current)=>({...current,energy:true}))');
+    expect(source).toContain('setTouched((current)=>({...current,rhythm:true}))');
     expect(source).not.toContain("const parts=[form.goal.trim(),`${copy.hunger}: ${form.hunger}/5`");
   });
 });

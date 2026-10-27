@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getModalFocusTargetIndex, PROFILE_INTRO_KEY, parseOnboardingWeight, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from './components/VoiceFirstEntryOverlay';
+import { getModalFocusTargetIndex, PROFILE_INTRO_KEY, parseOnboardingWeight, shouldShowVoiceFirstEntry, updateOnboardingForm, voiceFirstEntryCopy } from './components/VoiceFirstEntryOverlay';
 
 describe('required first onboarding',()=>{
   it('only unlocks once an intro profile exists',()=>{
@@ -35,6 +35,13 @@ describe('required first onboarding',()=>{
 
   it('keeps optional empty weight valid',()=>{
     expect(parseOnboardingWeight('')).toBeUndefined();
+  });
+
+  it('preserves sibling answers across rapid form field updates',()=>{
+    const initial={goal:'',weight:'',hunger:3,energy:3,rhythm:'mixed' as const};
+    const withGoal=updateOnboardingForm(initial,'goal','أفهم طاقتي');
+    const withWeight=updateOnboardingForm(withGoal,'weight','72,5');
+    expect(withWeight).toEqual({...initial,goal:'أفهم طاقتي',weight:'72,5'});
   });
 
   it('wraps focus at both modal boundaries and recovers focus that escaped',()=>{
