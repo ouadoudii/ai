@@ -525,7 +525,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
                 </span>
 
                 {/* Suggestions Pills if provided */}
-                {isCoach && (msg.id === 'msg-1' ? ARABIC_COACH_SUGGESTIONS : msg.suggestions)?.length > 0 && (
+                {isCoach && (msg.id === 'msg-1' ? ARABIC_COACH_SUGGESTIONS : msg.suggestions ?? []).length > 0 && (
                   <div data-testid={msg.id === 'msg-1' ? undefined : 'cary-contextual-followups'} className="flex flex-wrap gap-1.5 pt-1 max-w-full">
                     {(msg.id === 'msg-1' ? ARABIC_COACH_SUGGESTIONS : msg.suggestions ?? []).map((sug, i) => (
                       <button
