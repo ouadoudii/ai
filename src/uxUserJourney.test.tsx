@@ -18,9 +18,11 @@ const check=(phase:'morning'|'midday'|'evening'):DailyCheckIn=>({id:'user-'+phas
 describe('Arabic mobile UX day simulation',()=>{
   beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(new Date(2026,8,8,21,30,0));});
   afterEach(()=>{vi.useRealTimers();});
-  it('uses the zellige wall and Arabic-only visible home copy',()=>{
+  it('uses an organic untiled hero and Arabic-only visible home copy',()=>{
     const html=renderToString(<LanguageProvider><TodayHomeView moments={[moment]} checkIns={[]} onOpenAddModal={noop} onOpenSnack={noop} onOpenCheckInModal={noop as any} onSelectMoment={noop as any} onNavigateToCoach={noop} onNavigateToTypeAnalysis={noop} onNavigateToTimeline={noop}/></LanguageProvider>);
-    expect(html).toContain('/zellige-wall.svg');
+    expect(html).toContain('data-testid="today-organic-hero"');
+    expect(html).toContain('linear-gradient(145deg, #72563e');
+    expect(html).not.toContain('/zellige-wall.svg');
     expect(html).toContain('مرحباً بك');
     expect(html).toContain('بيتزا نابولية');
     expect(html).not.toContain('Neapolitanische Pizza');
