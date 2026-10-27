@@ -40,16 +40,16 @@ describe("legacy coach branding", () => {
       fileURLToPath(new URL("./components/Header.tsx", import.meta.url)),
       "utf8",
     );
+    const i18n = readFileSync(
+      fileURLToPath(new URL("./i18n.tsx", import.meta.url)),
+      "utf8",
+    );
     expect(app).toContain('data-testid="mobile-coach-nav"');
     expect(app).toContain('{t("navCoach")}');
     expect(app).not.toMatch(/>Coach<\/button>/);
     expect(header).toContain('data-testid="desktop-coach-nav"');
     expect(header).toContain('{t("navCoach")}');
     expect(header).not.toMatch(/<MessageSquare[^>]*\/>\s*Coach/);
-    const translations = readFileSync(
-      fileURLToPath(new URL("./i18n.tsx", import.meta.url)),
-      "utf8",
-    );
-    expect(translations).toMatch(/navCoach:\s*\{en:\s*["\u0027]Coach["\u0027],\s*ar:\s*["\u0027]المرشد["\u0027]\}/u);
+    expect(i18n).toContain("navCoach:{en:'Coach',ar:'المرشد'}");
   });
 });
