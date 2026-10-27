@@ -136,7 +136,7 @@ export function evaluateNutritionAlarms(
       triggerKey: 'circadian_late_food',
       severity: 'medium',
       title: 'وجبة مسائية تستحق لحظة راحة',
-      subtitle: 'تناولت وجبة مشبعة في المساء',
+      subtitle: `تناولت «${sourceDinner.title}» في المساء`,
       archetype,
       reason: 'مواعيد الطعام تختلف من شخص لآخر. يمكنك ملاحظة ما يجعلك مرتاحًا في المساء دون قواعد صارمة.',
       recommendation: 'إذا رغبت، استمتع بلحظة هادئة قبل النوم. تناول الطعام مجددًا إذا شعرت بالجوع.',
