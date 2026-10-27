@@ -18,7 +18,12 @@ export function DailyHeartNote({ dateKey }: DailyHeartNoteProps) {
   const [seed, setSeed] = React.useState(HEART_NOTE_OFFLINE_SEED);
 
   React.useEffect(() => {
-    setSeed(getOrCreateHeartNoteSeed(window.localStorage));
+    try {
+      setSeed(getOrCreateHeartNoteSeed(window.localStorage));
+    } catch {
+      // Some privacy modes throw when even accessing window.localStorage.
+      setSeed(HEART_NOTE_OFFLINE_SEED);
+    }
   }, []);
 
   return (
