@@ -28,8 +28,14 @@ test('confirmed profile makes the personal plan the primary mobile home action',
   await page.goto('/');
   const plan=page.getByTestId('personal-plan-home-card');
   await expect(plan).toBeVisible();
-  await expect(plan).toContainText('Mittag und Energie beobachten');
-  await expect(page.getByTestId('personal-plan-first-step')).toContainText('Mittag-Check-in');
+  await expect(plan).toContainText('خطوتك الأولى');
+  await expect(page.getByTestId('personal-plan-first-step')).toContainText('في تسجيلك القادم');
+  await expect(plan).not.toContainText('Mittag und Energie beobachten');
+  await expect(plan).not.toContainText('Du möchtest verstehen');
+  await expect(plan).not.toContainText('Mittagessen');
+  // Presentation-only migration: the user's original plan remains intact.
+  const savedTitle=await page.evaluate(()=>JSON.parse(localStorage.getItem('rhythm_intro_profile_v1')||'{}').firstPlan?.title);
+  expect(savedTitle).toBe('Mittag und Energie beobachten');
   await expect(page.locator('html')).toHaveAttribute('lang','ar');
   await expect(page.locator('html')).toHaveAttribute('dir','rtl');
   await expect(page.getByTestId('personal-plan-start')).toHaveText('ابدأ تسجيل منتصف اليوم');
@@ -125,5 +131,8 @@ test('legacy French profile shows Arabic-only generic plan fallback',async({page
   await expect(page.getByTestId('personal-plan-first-step')).toContainText('في تسجيلك القادم');
   await expect(plan).not.toContainText('Your first step');
   await expect(plan).not.toContainText('At your next check-in');
+  await expect(plan).not.toContainText('Je veux mieux comprendre mon énergie.');
+  const savedRationale=await page.evaluate(()=>JSON.parse(localStorage.getItem('rhythm_intro_profile_v1')||'{}').firstPlan?.rationale);
+  expect(savedRationale).toBe('Je veux mieux comprendre mon énergie.');
   await page.screenshot({path:testInfo.outputPath('personal-plan-home-legacy-french-arabic-desktop.png'),fullPage:true});
 });

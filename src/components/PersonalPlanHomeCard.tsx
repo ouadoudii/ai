@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, CheckCircle2, Compass, Sparkles, Activity, Clock3 } from 'lucide-react';
 import { useLanguage } from '../i18n';
-import { loadIntroProfile, localizeIntroPlanFallback, PlanPhase } from '../utils/introProfile';
+import { loadIntroProfile, localizeIntroPlanForDisplay, PlanPhase } from '../utils/introProfile';
 import { buildTodayPriorities, TodayPriorityLanguage } from '../utils/todayPriorities';
 import { isPhaseAvailable, PHASE_START_HOUR } from '../utils/phaseAvailability';
 import { DailyCheckIn, FoodMoment } from '../types';
@@ -28,7 +28,7 @@ export const PersonalPlanHomeCard:React.FC<Props>=({onStart,moments,checkIns})=>
         ?{eyebrow:'المهم اليوم',why:'ما الذي تظهره بياناتك الآن',next:'خطوة صغيرة لليوم',later:(time:string)=>`متاح ابتداءً من ${time}`,phase:{morning:'ابدأ تسجيل الصباح',midday:'ابدأ تسجيل منتصف اليوم',evening:'ابدأ تسجيل المساء'}}
         :{eyebrow:'What matters today',why:'What your data is showing',next:'One small thing for today',later:(time:string)=>`Available from ${time}`,phase:{morning:'Start morning check-in',midday:'Start midday check-in',evening:'Start evening check-in'}};
 
-  const firstPlan=localizeIntroPlanFallback(profile.firstPlan,language);
+  const firstPlan=localizeIntroPlanForDisplay(profile.firstPlan,language);
   const available=isPhaseAvailable(firstPlan.phase,new Date().getHours());
   const availableAt=`${String(PHASE_START_HOUR[firstPlan.phase]).padStart(2,'0')}:00`;
   return <section data-testid="personal-plan-home-card" className="mb-5 rounded-[30px] border border-white/70 bg-[#FFFDF8]/97 p-5 text-[#2E302B] shadow-[0_16px_42px_rgba(45,35,25,.18)] backdrop-blur-xl sm:p-6" dir={language==='ar'?'rtl':'ltr'}>

@@ -46,6 +46,28 @@ const fallbackPlanCopy:Record<AppLanguage,{title:string;step:string}>={
   ar:{title:'خطوتك الأولى',step:'في تسجيلك القادم، لاحظ ببساطة ما يبرز في إيقاع يومك.'},
 };
 
+/**
+ * Arabic-only is a presentation policy, not a migration of a person's saved
+ * introduction. Older AI-generated plans can contain French/German/English
+ * even after the app switches to Arabic. Never show those strings as UI copy,
+ * and never pretend to translate or infer their meaning.
+ */
+const ARABIC_LETTERS=/[\u0621-\u064A\u066E-\u06D3\u06FA-\u06FC]/u;
+const LATIN_LETTERS=/[A-Za-zÀ-ÖØ-öø-ÿ]/u;
+const isArabicPresentation=(value:string)=>ARABIC_LETTERS.test(value)&&!LATIN_LETTERS.test(value);
+
+export function localizeIntroPlanForDisplay(plan:PersonalFirstPlan,language:AppLanguage):PersonalFirstPlan{
+  const localized=localizeIntroPlanFallback(plan,language);
+  if(language!=='ar')return localized;
+  return{
+    ...localized,
+    title:isArabicPresentation(localized.title)?localized.title:fallbackPlanCopy.ar.title,
+    rationale:isArabicPresentation(localized.rationale)?localized.rationale:'',
+    focusAreas:localized.focusAreas.filter(isArabicPresentation),
+    firstStep:isArabicPresentation(localized.firstStep)?localized.firstStep:fallbackPlanCopy.ar.step,
+  };
+}
+
 const fallbackTitles=new Set(Object.values(fallbackPlanCopy).map(copy=>copy.title));
 const fallbackSteps=new Set(Object.values(fallbackPlanCopy).map(copy=>copy.step));
 
