@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getModalFocusTargetIndex, PROFILE_INTRO_KEY, parseOnboardingWeight, shouldShowVoiceFirstEntry, updateOnboardingForm, voiceFirstEntryCopy } from './components/VoiceFirstEntryOverlay';
+import { getModalFocusTargetIndex, getOnboardingWeightSelection, PROFILE_INTRO_KEY, parseOnboardingWeight, sanitizeOnboardingWeightInput, shouldShowVoiceFirstEntry, updateOnboardingForm, voiceFirstEntryCopy } from './components/VoiceFirstEntryOverlay';
 
 describe('required first onboarding',()=>{
   it('only unlocks once an intro profile exists',()=>{
@@ -35,6 +35,18 @@ describe('required first onboarding',()=>{
 
   it('keeps optional empty weight valid',()=>{
     expect(parseOnboardingWeight('')).toBeUndefined();
+  });
+
+  it('keeps ASCII, Arabic-Indic, and Persian digits in logical input order',()=>{
+    expect(sanitizeOnboardingWeightInput('82')).toBe('82');
+    expect(sanitizeOnboardingWeightInput('٨٢٫٥')).toBe('٨٢٫٥');
+    expect(sanitizeOnboardingWeightInput('۸۲٫۵')).toBe('۸۲٫۵');
+  });
+
+  it('restores the controlled-input caret after sanitization',()=>{
+    expect(getOnboardingWeightSelection('82',2)).toBe(2);
+    expect(getOnboardingWeightSelection('8a2',3)).toBe(2);
+    expect(getOnboardingWeightSelection('٨٢٫٥',4)).toBe(4);
   });
 
   it('preserves sibling answers across rapid form field updates',()=>{
