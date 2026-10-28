@@ -5,6 +5,8 @@ describe('quick onboarding form guards', () => {
   it('normalizes supported decimal weights and rejects malformed values', () => {
     expect(parseOnboardingWeight('72,5')).toBe(72.5);
     expect(parseOnboardingWeight('72.5')).toBe(72.5);
+    expect(parseOnboardingWeight('٨٢٫٥')).toBe(82.5);
+    expect(parseOnboardingWeight('۸۲٫۵')).toBe(82.5);
     expect(parseOnboardingWeight('72,,5')).toBeNull();
     expect(parseOnboardingWeight('72,5.3')).toBeNull();
   });
