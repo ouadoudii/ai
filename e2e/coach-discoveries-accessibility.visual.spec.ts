@@ -19,6 +19,30 @@ for (const savedLocale of ['ar', 'de'] as const) {
     const nav = page.getByTestId(testInfo.project.name === 'android-arabic' ? 'mobile-coach-nav' : 'desktop-coach-nav');
     await nav.click();
 
+    // Verify actual browser-computed contrast in both desktop and Android layouts,
+    // including the small voice badge and the primary check-in action.
+    const checkInAction = page.getByTestId('coach-checkin-cta');
+    const voiceBadge = page.getByTestId('coach-voice-badge');
+    for (const control of [voiceBadge, checkInAction]) {
+      await expect(control).toBeVisible();
+      const ratio = await control.evaluate((element) => {
+        const style = window.getComputedStyle(element);
+        const luminance = (cssColor: string) => {
+          const channels = cssColor.match(/\\d+/g)?.slice(0, 3).map((part) => {
+            const value = Number(part) / 255;
+            return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+          });
+          if (!channels || channels.length !== 3) throw new Error('Expected an opaque RGB color');
+          return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+        };
+        const foreground = luminance(style.color);
+        const background = luminance(style.backgroundColor);
+        return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+      });
+      expect(ratio).toBeGreaterThanOrEqual(4.5);
+    }
+    await expect(checkInAction).toHaveCSS('min-height', '48px');
+
     const discovery = page.getByTestId('coach-discoveries-link');
     await expect(discovery).toBeVisible();
     await expect(discovery).toHaveAttribute('type', 'button');
