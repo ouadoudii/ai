@@ -13,7 +13,7 @@ interface SmartInterventionGuardianProps {
   isSimulated?: boolean;
 }
 
-export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps> = ({ guardianStatus, userArchetype, onSimulateAlarm }) => {
+export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps> = ({ guardianStatus, onSimulateAlarm }) => {
   const { language } = useLanguage();
   const copy = getGuardianCopy(language);
   const [resolvedAlarmIds, setResolvedAlarmIds] = React.useState<string[]>(() => typeof window === 'undefined' ? [] : readGuardianAcknowledgements(window.localStorage));
@@ -31,8 +31,6 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
     });
   };
 
-  const archetypeName = (type: NutritionArchetype) => copy.archetypes[type];
-
   return (
     <section dir="rtl" data-testid="guardian" className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200 shadow-xs relative overflow-hidden transition-all">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
@@ -43,13 +41,13 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm sm:text-base font-display font-bold text-stone-900 leading-tight">{copy.title}</h2>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">{copy.type}: {archetypeName(userArchetype)}</span>
+              
             </div>
             <p className="text-xs text-stone-500 mt-0.5">{copy.description}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 border ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-50 text-amber-900 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>
+          <div role="status" aria-live="polite" className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 border ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-50 text-amber-900 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>
             <span className={`w-2 h-2 rounded-full ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
             <span>{activeUnresolvedAlarms.length > 0 ? copy.activeAlarm(activeUnresolvedAlarms.length) : copy.allClear}</span>
           </div>
@@ -78,14 +76,14 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
         ) : (
           <div className="space-y-3">
             {activeUnresolvedAlarms.map((alarm) => (
-              <div key={alarm.id} className={`rounded-2xl p-4 sm:p-5 border transition-all ${alarm.severity === 'high' ? 'bg-amber-50/60 border-amber-200 shadow-xs' : 'bg-amber-50/80 border-amber-200 shadow-xs'}`}>
+              <div key={alarm.id} className="rounded-2xl p-4 sm:p-5 border border-amber-200 bg-amber-50/60 shadow-xs transition-all">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-                  <div className="space-y-1 max-w-xl"><div className="flex items-center gap-2"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${alarm.severity === 'high' ? 'bg-amber-100 text-amber-900' : 'bg-amber-100 text-amber-900'}`}>{alarm.severity === 'high' ? copy.acute : copy.recommendation}</span><span className="text-[11px] text-stone-500 font-medium flex items-center gap-1"><Clock className="w-3 h-3" />{alarm.timestamp}</span></div><h3 className="text-sm sm:text-base font-bold text-stone-900">{alarm.title}</h3><p className="text-xs text-stone-600 font-medium">{alarm.subtitle}</p></div>
-                  <button onClick={() => handleResolve(alarm.id)} className="px-4 py-2 bg-white hover:bg-stone-50 active:scale-95 text-stone-800 text-xs font-bold rounded-xl border border-stone-200 shadow-xs flex items-center gap-1.5 transition-all shrink-0 self-end md:self-center"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /><span>{copy.done}</span></button>
+                  <div className="space-y-1 max-w-xl"><div className="flex items-center gap-2"><span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">{copy.recommendation}</span><span className="text-[11px] text-stone-500 font-medium flex items-center gap-1"><Clock className="w-3 h-3" />{alarm.timestamp}</span></div><h3 className="text-sm sm:text-base font-bold text-stone-900">{alarm.title}</h3><p className="text-xs text-stone-600 font-medium">{alarm.subtitle}</p></div>
+                  <button type="button" aria-label={`${copy.done}: ${alarm.title}`} onClick={() => handleResolve(alarm.id)} className="px-4 py-2 bg-white hover:bg-stone-50 active:scale-95 text-stone-800 text-xs font-bold rounded-xl border border-stone-200 shadow-xs flex items-center gap-1.5 transition-all shrink-0 self-end md:self-center"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /><span>{copy.done}</span></button>
                 </div>
                 <div className="mt-3.5 pt-3 border-t border-stone-200/60 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <div className="bg-white/80 rounded-xl p-3 border border-stone-200/60"><span className="font-bold text-stone-700 flex items-center gap-1 mb-1"><Zap className="w-3.5 h-3.5 text-amber-600" /> {copy.why}</span><p className="text-stone-600 leading-relaxed">{alarm.reason}</p></div>
-                  <div className="bg-emerald-500/10 rounded-xl p-3 border border-emerald-500/20"><span className="font-bold text-emerald-950 flex items-center gap-1 mb-1"><Dna className="w-3.5 h-3.5 text-emerald-700" /> {copy.countermeasure} ({archetypeName(alarm.archetype)})</span><p className="text-emerald-900 leading-relaxed font-medium">{alarm.recommendation}</p></div>
+                  <div className="bg-emerald-500/10 rounded-xl p-3 border border-emerald-500/20"><span className="font-bold text-emerald-950 flex items-center gap-1 mb-1"><Dna className="w-3.5 h-3.5 text-emerald-700" /> {copy.countermeasure}</span><p className="text-emerald-900 leading-relaxed font-medium">{alarm.recommendation}</p></div>
                 </div>
                 <div className="mt-2.5 flex items-center justify-between px-3 py-2 bg-stone-100 text-stone-800 rounded-xl text-xs"><div className="flex items-center gap-2"><span className="text-amber-800 font-bold">{copy.immediate}</span><span className="text-stone-700">{alarm.actionableStep}</span></div><ArrowRight className="w-3.5 h-3.5 text-stone-500 shrink-0 rtl:rotate-180" /></div>
               </div>

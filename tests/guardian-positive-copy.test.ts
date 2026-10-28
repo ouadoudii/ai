@@ -61,7 +61,9 @@ describe('guardian positive Arabic-first experience', () => {
   it('uses supportive Arabic chrome even for high-severity internal signals', () => {
     const copy = getGuardianCopy('ar');
     expect(copy.title).toContain('للاهتمام بنفسك');
-    expect(copy.activeAlarm(2)).toContain('أفكار لطيفة');
+    expect(copy.activeAlarm(2)).toBe('أفكار يمكنك تجاهلها');
+    expect(copy.done).toBe('إخفاء الفكرة');
+    expect(copy.noIntervention).toBe('هنا متى احتجت');
     expect(copy.acute).not.toMatch(/إنذار|عقاب|فشل/);
   });
 });
