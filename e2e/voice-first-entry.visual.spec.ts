@@ -166,7 +166,8 @@ for (const [script, enteredWeight] of [
     await page.getByTestId('voice-first-entry-form').click();
     await page.getByTestId('onboarding-goal').fill('أريد متابعة صحتي.');
     const weight = page.getByTestId('onboarding-weight');
-    await weight.fill(enteredWeight);
+    await weight.focus();
+    await weight.pressSequentially(enteredWeight);
     await expect(weight).toHaveValue(enteredWeight);
     await expect(weight).not.toHaveAttribute('aria-invalid', 'true');
     await page.getByTestId('onboarding-form-save').click();
