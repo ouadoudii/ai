@@ -1,39 +1,36 @@
 import { describe, expect, it } from 'vitest';
-import { buildEarlyOrientationCopy, getAnimalTypeNames } from './utils/earlyOrientation';
+import { buildEarlyOrientationCopy } from './utils/earlyOrientation';
 
-describe('early personal orientation localization', () => {
+describe('supportive early personal observations', () => {
   it.each([
-    ['de', 'Vorläufige Orientierung', 'Löwe', 'Niedrige Sicherheit'],
-    ['en', 'Preliminary orientation', 'Lion', 'Low confidence'],
-    ['fr', 'Orientation provisoire', 'Lion', 'Faible certitude'],
-    ['ar', 'توجّه أولي', 'الأسد', 'ثقة منخفضة'],
-  ] as const)('shows a clearly preliminary localized result in %s after few entries', (language, label, animal, confidence) => {
+    ['de', 'Deine bisherigen Beobachtungen', 'Dein Rhythmus, kein Etikett'],
+    ['en', 'Your observations so far', 'Your rhythm, not a label'],
+    ['fr', 'Tes observations jusqu’ici', 'Ton rythme, sans étiquette'],
+    ['ar', 'ملاحظاتك حتى الآن', 'إيقاعك، بلا تصنيفات'],
+  ] as const)('keeps %s observation-based, without animal types or quotas', (language, label, title) => {
     const copy = buildEarlyOrientationCopy(language, 'protein_performer', 2);
     expect(copy.label).toBe(label);
-    expect(copy.title).toContain(animal);
+    expect(copy.title).toBe(title);
     expect(copy.description).toContain('2');
-    expect(copy.progress).toContain('2/12');
-    expect(copy.confidence).toBe(confidence);
     expect(copy.dataBasis).toContain('2');
+    expect(copy.progress).not.toContain('/12');
+    expect(JSON.stringify(copy)).not.toMatch(/الأسد|الثعلب|الدب|الذئب|Lion|Fox|Bear|Wolf|Löwe|Fuchs|Renard|Ours/);
   });
 
-  it('raises confidence only as the evidence base grows', () => {
-    expect(buildEarlyOrientationCopy('de', 'circadian_rhythm', 1).confidence).toBe('Niedrige Sicherheit');
-    expect(buildEarlyOrientationCopy('de', 'circadian_rhythm', 5).confidence).toBe('Mittlere Sicherheit');
-    expect(buildEarlyOrientationCopy('de', 'circadian_rhythm', 9).confidence).toBe('Höhere Sicherheit');
+  it('never infers a personal identity from an archetype, even with many entries', () => {
+    const types = ['protein_performer', 'circadian_rhythm', 'intuitive_mindful', 'intermittent_balancer'] as const;
+    const examples = types.map(type => buildEarlyOrientationCopy('ar', type, 20));
+    expect(examples.every(copy => JSON.stringify(copy) === JSON.stringify(examples[0]))).toBe(true);
+    expect(examples[0].description).toContain('من غير تصنيف لك أو تقييم لطعامك');
+    expect(examples[0].progress).toContain('التسجيل اختياري');
   });
 
-  it('does not claim a personal pattern or confidence without real data', () => {
-    const copy = buildEarlyOrientationCopy('fr', 'intuitive_mindful', 0);
-    expect(copy.label).toBe('Pas encore d’estimation');
-    expect(copy.title).not.toContain('Renard');
-    expect(copy.confidence).toBe('Pas encore de certitude');
-    expect(copy.dataBasis).toBe('Pas encore de vraie entrée');
-  });
-
-  it('provides all four animal profiles in every supported language', () => {
-    for (const language of ['de', 'en', 'fr', 'ar'] as const) {
-      expect(getAnimalTypeNames(language)).toHaveLength(4);
+  it('normalizes empty or invalid counts and never asks for a daily streak', () => {
+    for (const count of [0, -1, Number.NaN]) {
+      const copy = buildEarlyOrientationCopy('ar', 'intuitive_mindful', count);
+      expect(copy.title).toBe('ابدأ بلحظة على راحتك');
+      expect(copy.description).toContain('لا حاجة إلى تسجيل كل يوم');
+      expect(copy.dataBasis).toBe('لا توجد لحظات مسجّلة بعد');
     }
   });
 });

@@ -4,6 +4,7 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
   for(const sparse of [false,true]){
     test(`usual time ${sparse?'requires real history':'is not auto-applied'} on ${viewport.name}`,async({page},info)=>{
       await page.setViewportSize({width:viewport.width,height:viewport.height});
+      await page.clock.setFixedTime(new Date('2026-10-28T12:55:00'));
       await page.addInitScript(sparse=>{
         const meal=(id:string,time:string)=>({
           id,title:'Eggs',label:'Snack',category:'snack',date:'2026-10-11',
