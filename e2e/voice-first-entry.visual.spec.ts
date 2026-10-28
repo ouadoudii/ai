@@ -98,7 +98,10 @@ test('quick form persists context and unlocks the app',async({page})=>{
   await page.goto('/');
   await page.getByTestId('voice-first-entry-form').click();
   await page.getByTestId('onboarding-goal').fill('أريد أن أفهم جوعي بشكل أفضل.');
-  await page.getByTestId('onboarding-weight').fill('82');
+  const weight = page.getByTestId('onboarding-weight');
+  await weight.focus();
+  await weight.pressSequentially('82');
+  await expect(weight).toHaveValue('82');
   await page.getByTestId('onboarding-hunger').fill('4');
   await page.getByTestId('onboarding-energy').fill('2');
   await page.getByTestId('onboarding-rhythm').selectOption('irregular');
