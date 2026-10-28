@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 
 describe('onboarding explicit profile fields regression', () => {
+  it('keeps the optional numeric weight field LTR inside the Arabic RTL form', () => {
+    const source = fs.readFileSync('src/components/VoiceFirstEntryOverlay.tsx', 'utf8');
+    expect(source).toMatch(/data-testid="onboarding-weight"\s+inputMode="decimal"\s+dir="ltr"/);
+  });
+
   it('serializes optional hunger, energy and rhythm only after explicit interaction', () => {
     const source = fs.readFileSync('src/components/VoiceFirstEntryOverlay.tsx', 'utf8').replace(/\s+/g, '');
 

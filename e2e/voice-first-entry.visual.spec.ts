@@ -171,6 +171,9 @@ for (const [script, enteredWeight] of [
     await page.getByTestId('voice-first-entry-form').click();
     await page.getByTestId('onboarding-goal').fill('أريد متابعة صحتي.');
     const weight = page.getByTestId('onboarding-weight');
+    // The surrounding form is RTL; numeric typing must keep a logical LTR caret
+    // so Arabic-Indic and Persian digits are not inserted in reverse order.
+    await expect(weight).toHaveAttribute('dir', 'ltr');
     await weight.focus();
     // Wait for React's controlled input to commit each character before the next key.
     // A burst can lose a character when validation re-renders between key events.
