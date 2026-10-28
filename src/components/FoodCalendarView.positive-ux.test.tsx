@@ -2,7 +2,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import type { FoodMoment } from '../types';
-import { FoodCalendarView } from './FoodCalendarView';
+import { FoodCalendarView, shouldOfferFullJournal } from './FoodCalendarView';
 
 vi.mock('../i18n', () => ({ useLanguage: () => ({ language: 'ar' }) }));
 
@@ -37,5 +37,27 @@ describe('calm Arabic meal journal', () => {
     expect(html).toContain('سجّل وجبة حين يناسبك');
     expect(html).toContain('إضافة تدوينة');
     expect(html).not.toMatch(/فشل|عقوبة|خسرت|أيام متتالية|kcal/);
+  });
+});
+
+describe('Arabic journal date-range empty state', () => {
+  it('distinguishes older saved entries from a genuinely empty journal', () => {
+    expect(shouldOfferFullJournal(1, 0, '7d', 'all', '', 'all')).toBe(true);
+    expect(shouldOfferFullJournal(1, 0, '30d', 'all', '', 'all')).toBe(true);
+    expect(shouldOfferFullJournal(0, 0, '7d', 'all', '', 'all')).toBe(false);
+    expect(shouldOfferFullJournal(1, 1, '7d', 'all', '', 'all')).toBe(false);
+    expect(shouldOfferFullJournal(1, 0, 'all', 'all', '', 'all')).toBe(false);
+  });
+
+  it('keeps search, favorites and category empty states distinct', () => {
+    expect(shouldOfferFullJournal(1, 0, '7d', 'all', 'harira', 'all')).toBe(false);
+    expect(shouldOfferFullJournal(1, 0, '7d', 'favorites', '', 'all')).toBe(false);
+    expect(shouldOfferFullJournal(1, 0, '7d', 'all', '', 'dinner')).toBe(false);
+  });
+
+  it('keeps an unfiltered journal neutral without suggesting lost or failed progress', () => {
+    const html = render([meal]);
+    expect(html).not.toContain('data-testid="timeline-range-empty"');
+    expect(html).not.toMatch(/فشل|عقوبة|خسرت|أيام متتالية/);
   });
 });
