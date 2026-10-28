@@ -122,7 +122,7 @@ for (const viewport of [
 
     const contrast = await feedback.evaluate(element => {
       const style = getComputedStyle(element);
-      const channels = (value: string) => (value.match(/\\d+/g) || []).slice(0, 3).map(Number);
+      const channels = (value: string) => (value.match(/\d+/g) || []).slice(0, 3).map(Number);
       const luminance = (rgb: number[]) => rgb.map(value => {
         const s = value / 255;
         return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
