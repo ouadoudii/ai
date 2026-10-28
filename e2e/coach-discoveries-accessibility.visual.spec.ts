@@ -28,7 +28,7 @@ for (const savedLocale of ['ar', 'de'] as const) {
       const ratio = await control.evaluate((element) => {
         const style = window.getComputedStyle(element);
         const luminance = (cssColor: string) => {
-          const channels = cssColor.match(/\\d+/g)?.slice(0, 3).map((part) => {
+          const channels = cssColor.match(/\d+/g)?.slice(0, 3).map((part) => {
             const value = Number(part) / 255;
             return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
           });
