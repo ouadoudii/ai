@@ -5,7 +5,7 @@ const labels={
   de:{title:'Moment Fürsorge- & Frühwarn-System',clear:'Keine Intervention erforderlich',test:'Alarm testen',sleep:'Schlafmangel',done:'Als erledigt abhaken'},
   en:{title:'Moment Care & Early Warning System',clear:'No intervention needed',test:'Test alarm',sleep:'Sleep deficit',done:'Mark as handled'},
   fr:{title:'Système de vigilance et d’accompagnement Moment',clear:'Aucune intervention nécessaire',test:'Tester une alerte',sleep:'Manque de sommeil',done:'Marquer comme traité'},
-  ar:{title:'مساحة لطيفة للاهتمام بنفسك',clear:'لا حاجة إلى تدخل',test:'اختبار تنبيه',sleep:'نقص النوم',done:'تم التعامل معه'},
+  ar:{title:'مساحة لطيفة للاهتمام بنفسك',clear:'هنا متى احتجت',test:'اختبار تنبيه',sleep:'نقص النوم',done:'إخفاء الفكرة'},
 } as const;
 
 for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',width:390,height:844}]){
@@ -31,9 +31,11 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
       await expect(page.locator('html')).toHaveAttribute('dir','rtl');
       await guardian.getByRole('button',{name:labels.ar.test}).click();
       await guardian.getByRole('button',{name:new RegExp(labels.ar.sleep)}).click();
-      await expect(guardian.getByRole('button',{name:labels.ar.done}).first()).toBeVisible();
+      await expect(guardian.getByRole('button',{name:new RegExp(labels.ar.done)}).first()).toBeVisible();
       await expect(guardian.getByText('قد تحتاج إلى بعض الراحة اليوم')).toBeVisible();
       await expect(guardian.locator('.animate-pulse, .animate-ping')).toHaveCount(0);
+      await expect(guardian.getByText('نمط الأكل الحدسي')).toHaveCount(0);
+      await expect(guardian.getByRole('status')).toContainText('أفكار يمكنك تجاهلها');
       await expect(guardian.locator('[class*="bg-rose"], [class*="text-rose"]')).toHaveCount(0);
       await expect(guardian).not.toContainText(/Ghrelin|Ghrelin-Hoch|Küchenschluss|Überessen|28%|Akute Intervention|Heißhunger/);
     });
