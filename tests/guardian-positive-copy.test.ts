@@ -46,6 +46,31 @@ describe('guardian positive Arabic-first experience', () => {
     expect(allVisibleText(status.activeAlarms[0])).not.toMatch(/Ghrelin|Leptin|28%|⚠️|Kaffee|Heißhunger/);
   });
 
+  it('uses the recorded wake feeling rather than inventing fatigue after short sleep', () => {
+    const refreshed = {
+      ...sleepCheckIn,
+      id: 'sleep-refreshed',
+      sleep: { durationHours: 5, wakeFeeling: 'refreshed' },
+    } as unknown as DailyCheckIn;
+    const status = evaluateNutritionAlarms([], [refreshed]);
+    expect(status.activeAlarms).toHaveLength(1);
+    expect(status.activeAlarms[0].subtitle).toContain('شعورك عند الاستيقاظ: منتعش');
+    expect(status.activeAlarms[0].subtitle).toContain('سجّلت 5 ساعات نوم');
+    expect(status.activeAlarms[0].subtitle).not.toMatch(/شعورك عند الاستيقاظ: تعب|undefined|NaN|تقييم جودة النوم/);
+  });
+
+  it('never fabricates sleep duration or wake feeling for a quality-only check-in', () => {
+    const qualityOnly = {
+      ...sleepCheckIn,
+      id: 'sleep-quality-only',
+      sleep: { quality: 1 },
+    } as unknown as DailyCheckIn;
+    const status = evaluateNutritionAlarms([], [qualityOnly]);
+    expect(status.activeAlarms).toHaveLength(1);
+    expect(status.activeAlarms[0].subtitle).toBe('تقييم جودة النوم: 1 من 5');
+    expect(allVisibleText(status.activeAlarms[0])).not.toMatch(/undefined|NaN|سجّلت undefined|شعورك عند الاستيقاظ: تعب/);
+  });
+
   it('respects a distracted meal without judging or restricting eating', () => {
     const status = evaluateNutritionAlarms([rushedMeal], []);
     expect(status.activeAlarms).toHaveLength(1);
