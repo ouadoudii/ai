@@ -39,7 +39,7 @@ async function installReturningState(page: any, language: 'de' | 'fr') {
   }, { lang: language, meals: proteinMeals });
 }
 
-test('mobile legacy German profile shows Arabic preliminary orientation after two entries', async ({ page }, testInfo) => {
+test('mobile legacy German profile shows nonjudgmental Arabic observations after two entries', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installReturningState(page, 'de');
   await page.goto('/');
@@ -50,17 +50,19 @@ test('mobile legacy German profile shows Arabic preliminary orientation after tw
 
   const card = page.getByTestId('early-personal-orientation');
   await expect(card).toBeVisible();
-  await expect(page.getByTestId('orientation-status')).toHaveText('توجّه أولي');
-  await expect(card).toContainText('الأسد · الجوع الكبير');
-  await expect(card).toContainText('2/12 إدخال للوصول إلى تقدير أكثر ثباتاً');
-  await expect(card).toContainText('قد يتغير مع كل إدخال جديد');
+  await expect(page.getByTestId('orientation-status')).toHaveText('ملاحظاتك حتى الآن');
+  await expect(card).toContainText('إيقاعك، بلا تصنيفات');
+  await expect(card.getByTestId('orientation-data-basis')).toContainText('سجّلت 2 من اللحظات');
+  await expect(card.getByTestId('orientation-gentle-progress')).toContainText('التسجيل اختياري');
+  await expect(card).not.toContainText(/الأسد|الثعلب|الدب|الذئب|2\/12/);
+  await expect(page.getByTestId('insights-without-labels')).toContainText('لا نختصر شخصيتك في نوع غذائي');
   await page.screenshot({
     path: testInfo.outputPath('early-orientation-mobile-legacy-de-ar.png'),
     fullPage: true,
   });
 });
 
-test('desktop legacy French profile shows Arabic preliminary orientation without crashing', async ({ page }, testInfo) => {
+test('desktop legacy French profile shows Arabic observations without animal typing', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await installReturningState(page, 'fr');
   await page.goto('/');
@@ -71,10 +73,13 @@ test('desktop legacy French profile shows Arabic preliminary orientation without
 
   const card = page.getByTestId('early-personal-orientation');
   await expect(card).toBeVisible();
-  await expect(page.getByTestId('orientation-status')).toHaveText('توجّه أولي');
-  await expect(card).toContainText('الأسد · الجوع الكبير');
-  await expect(card).toContainText('2/12 إدخال للوصول إلى تقدير أكثر ثباتاً');
-  await expect(page.getByText('الثعلب · المشاعر والطعام')).toBeVisible();
+  await expect(page.getByTestId('orientation-status')).toHaveText('ملاحظاتك حتى الآن');
+  await expect(card).toContainText('إيقاعك، بلا تصنيفات');
+  await expect(card.getByTestId('orientation-data-basis')).toContainText('سجّلت 2 من اللحظات');
+  await expect(page.getByText('الثعلب · المشاعر والطعام')).toHaveCount(0);
+  await expect(card).not.toContainText(/الأسد|الثعلب|الدب|الذئب|2\/12/);
+  await expect(page.getByTestId('insights-without-labels')).toContainText('لا نختصر شخصيتك في نوع غذائي');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]'))).toEqual(proteinMeals);
   await page.screenshot({
     path: testInfo.outputPath('early-orientation-desktop-legacy-fr-ar.png'),
     fullPage: true,
