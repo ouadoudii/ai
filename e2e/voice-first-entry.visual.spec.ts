@@ -172,7 +172,14 @@ for (const [script, enteredWeight] of [
     await page.getByTestId('onboarding-goal').fill('أريد متابعة صحتي.');
     const weight = page.getByTestId('onboarding-weight');
     await weight.focus();
-    await weight.pressSequentially(enteredWeight);
+    // Wait for React's controlled input to commit each character before the next key.
+    // A burst can lose a character when validation re-renders between key events.
+    let typedWeight = '';
+    for (const character of enteredWeight) {
+      await weight.pressSequentially(character);
+      typedWeight += character;
+      await expect(weight).toHaveValue(typedWeight);
+    }
     await expect(weight).toHaveValue(enteredWeight);
     await expect(weight).not.toHaveAttribute('aria-invalid', 'true');
     await page.getByTestId('onboarding-form-save').click();
