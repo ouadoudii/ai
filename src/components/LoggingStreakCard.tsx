@@ -1,33 +1,62 @@
 import React from 'react';
-import { Flame } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import type { FoodMoment } from '../types';
 import { useLanguage } from '../i18n';
-import { getBestMealLoggingStreak, getMealLoggingStreak } from '../utils/loggingStreak';
+import { getLoggedDayCount } from '../utils/loggingStreak';
 
 interface Props { moments: FoodMoment[] }
 
 const copy = {
-  en: { title: 'Your logging rhythm', unit: 'days in a row', best: 'Personal best', bestUnit: 'days', body: 'You have captured at least one meal on each of these consecutive days.' },
-  de: { title: 'Dein Erfassungsrhythmus', unit: 'Tage in Folge', best: 'Persönlicher Bestwert', bestUnit: 'Tage', body: 'An jedem dieser aufeinanderfolgenden Tage hast du mindestens eine Mahlzeit festgehalten.' },
-  fr: { title: 'Ton rythme de suivi', unit: 'jours de suite', best: 'Meilleure série', bestUnit: 'jours', body: 'Tu as noté au moins un repas pendant chacun de ces jours consécutifs.' },
-  ar: { title: 'إيقاع تسجيلك', unit: 'أيام متتالية', best: 'أفضل سلسلة شخصية', bestUnit: 'أيام', body: 'سجّلت وجبة واحدة على الأقل في كل يوم من هذه الأيام المتتالية.' },
+  en: {
+    title: 'Your journal, at your pace',
+    unit: 'days with moments recorded',
+    body: 'Each day you choose to record adds context. Days without entries are a normal part of life, too.',
+  },
+  de: {
+    title: 'Dein Journal, in deinem Tempo',
+    unit: 'Tage mit Einträgen',
+    body: 'Jeder festgehaltene Tag ergänzt dein Bild. Tage ohne Eintrag gehören genauso zum Alltag.',
+  },
+  fr: {
+    title: 'Ton journal, à ton rythme',
+    unit: 'jours avec des moments notés',
+    body: 'Chaque journée notée ajoute du contexte. Les jours sans entrée font aussi partie de la vie.',
+  },
+  ar: {
+    title: 'سجلك على راحتك',
+    unit: 'أيام فيها لحظات مسجّلة',
+    body: 'كل يوم سجّلت فيه لحظة يضيف جزءاً من قصتك. والأيام بلا تسجيل عادية أيضاً.',
+  },
 } as const;
 
+/**
+ * Historical component name retained for import compatibility.
+ * Visible UI intentionally contains no streaks, bests, reset threats or flame icon.
+ */
 export const LoggingStreakCard: React.FC<Props> = ({ moments }) => {
   const { language } = useLanguage();
-  const streak = React.useMemo(() => getMealLoggingStreak(moments), [moments]);
-  const bestStreak = React.useMemo(() => getBestMealLoggingStreak(moments), [moments]);
-  if (streak < 2 && bestStreak < 2) return null;
-  const text = copy[language as keyof typeof copy] || copy.en;
-  return <section data-testid="logging-streak-card" className="rounded-[28px] border border-[#E8DFD3] bg-[#FFFDF9] p-5 shadow-[0_12px_30px_rgba(68,52,36,.08)]" aria-label={text.title}>
-    <div className="flex items-center gap-4">
-      <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#FFF1CE] text-[#B87914]"><Flame className="h-7 w-7" aria-hidden="true"/></span>
-      <div className="min-w-0">
-        <p className="text-xs font-black uppercase tracking-wide text-[#718565]">{text.title}</p>
-        {streak >= 2 && <p className="mt-1 text-2xl font-display font-black text-[#292C27]"><span data-testid="logging-streak-count">{streak}</span> {text.unit}</p>}
-        {bestStreak >= 2 && <p data-testid="logging-best-streak" className="mt-1 text-sm font-bold text-[#77736B]">{text.best}: <span data-testid="logging-best-streak-count">{bestStreak}</span> {text.bestUnit}</p>}
+  const days = React.useMemo(() => getLoggedDayCount(moments), [moments]);
+  if (days < 2) return null;
+  const text = copy[language as keyof typeof copy] || copy.ar;
+  return (
+    <section
+      data-testid="journal-days-card"
+      dir={language === 'ar' ? 'rtl' : 'ltr'}
+      className="rounded-[28px] border border-[#E8DFD3] bg-[#FFFDF9] p-5 shadow-[0_12px_30px_rgba(68,52,36,.08)]"
+      aria-label={text.title}
+    >
+      <div className="flex items-center gap-4">
+        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#E9F0E3] text-[#526B48]">
+          <BookOpen className="h-7 w-7" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-xs font-black text-[#526B48]">{text.title}</h2>
+          <p className="mt-1 text-xl font-display font-bold text-[#292C27]">
+            <span data-testid="journal-days-count">{days}</span> {text.unit}
+          </p>
+        </div>
       </div>
-    </div>
-    {streak >= 2 && <p className="mt-3 text-sm leading-relaxed text-[#77736B]">{text.body}</p>}
-  </section>;
+      <p className="mt-3 text-sm leading-relaxed text-[#55564D]">{text.body}</p>
+    </section>
+  );
 };
