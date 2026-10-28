@@ -1,6 +1,20 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator } from '@playwright/test';
 
 const profileKey = 'rhythm_intro_profile_v1';
+
+// React validates this controlled field on each keystroke. Synchronize with
+// the committed DOM value before sending the next character: a single fill()
+// can race a re-render and leave an empty or partial weight on Android.
+async function typeControlledWeight(weight: Locator, value: string) {
+  await weight.fill('');
+  await expect(weight).toHaveValue('');
+  let typed = '';
+  for (const character of value) {
+    await weight.pressSequentially(character);
+    typed += character;
+    await expect(weight).toHaveValue(typed);
+  }
+}
 
 async function seedNewUser(page: any, language = 'en') {
   await page.addInitScript((lang: string) => {
@@ -49,12 +63,12 @@ test('desktop blocks ambiguous onboarding weight and accepts locale decimal', as
   await page.getByTestId('voice-first-entry-form').click();
   await page.getByTestId('onboarding-goal').fill('Meine Energie verstehen');
   const weight = page.getByTestId('onboarding-weight');
-  await weight.fill('72,5.3');
+  await typeControlledWeight(weight, '72,5.3');
   await expect(weight).toHaveAttribute('aria-invalid', 'true');
   await expect(page.getByTestId('onboarding-weight-error')).toBeVisible();
   await expect(page.getByTestId('onboarding-form-save')).toBeDisabled();
   await page.screenshot({ path: 'visual-artifacts/onboarding-invalid-weight-desktop.png', fullPage: true });
-  await weight.fill('72,5');
+  await typeControlledWeight(weight, '72,5');
   await expect(page.getByTestId('onboarding-weight-error')).toBeHidden();
   await expect(page.getByTestId('onboarding-form-save')).toBeEnabled();
 });
@@ -65,7 +79,7 @@ test('mobile rejects malformed onboarding weight without saving profile', async 
   await page.goto('/');
   await page.getByTestId('voice-first-entry-form').click();
   await page.getByTestId('onboarding-goal').fill('Comprendre mon énergie');
-  await page.getByTestId('onboarding-weight').fill('72,,5');
+  await typeControlledWeight(page.getByTestId('onboarding-weight'), '72,,5');
   await expect(page.getByTestId('onboarding-form-save')).toBeDisabled();
   expect(await page.evaluate(key => localStorage.getItem(key), profileKey)).toBeNull();
   await page.screenshot({ path: 'visual-artifacts/onboarding-invalid-weight-mobile.png', fullPage: true });
