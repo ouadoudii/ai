@@ -65,11 +65,13 @@ for (const viewport of [
     await expect(guardian.getByText('قد تحتاج إلى بعض الراحة اليوم')).toBeVisible();
     await expect(guardian.getByText('لحظة هدوء بعد وجبتك')).toBeVisible();
     await expect(guardian.getByRole('status')).toContainText('أفكار يمكنك تجاهلها');
-    const dismiss = guardian.getByRole('button', { name: /إخفاء الفكرة/ }).first();
-    await dismiss.focus();
-    await expect(dismiss).toBeFocused();
+    const dismissButtons = guardian.getByRole('button', { name: /إخفاء الفكرة/ });
+    const before = await dismissButtons.count();
+    expect(before).toBeGreaterThanOrEqual(2);
+    await dismissButtons.first().focus();
+    await expect(dismissButtons.first()).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ })).toHaveCount(1);
+    await expect(dismissButtons).toHaveCount(before - 1);
     await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-rose"]')).toHaveCount(0);
   });
 }
