@@ -3,7 +3,7 @@ import type { DailyCoachingMetrics } from './coachEngine';
 
 /** Arabic-only presentation copy. Stored historical entries and messages are never rewritten. */
 export const ARABIC_COACH_SUGGESTIONS = [
-  '📊 ما نمط تغذيتي؟',
+  '📊 ماذا تخبرني ملاحظاتي؟',
   '🛡️ ما العلامات التي يراقبها المرشد؟',
   '🎙️ ابدأ تسجيلًا صوتيًا',
   '⚡ كيف أتجنب هبوط الطاقة بعد الظهر؟',
