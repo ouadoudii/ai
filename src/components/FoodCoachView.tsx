@@ -13,7 +13,6 @@ import {
   Brain,
   Star,
   Mic,
-  Dna,
   Moon,
   Sun,
   Utensils
@@ -30,7 +29,6 @@ import { SmartInterventionGuardian } from './SmartInterventionGuardian';
 import { askGeminiCoach } from '../apiClient';
 import { buildCoachFollowUps } from '../utils/coachFollowUps';
 import { useLanguage } from '../i18n';
-import { getGuardianCopy } from '../utils/guardianLocalization';
 import { ARABIC_COACH_SUGGESTIONS, ARABIC_COACH_UNAVAILABLE, getArabicCoachWelcome, getArabicCoachSummary, getArabicCoachFocus, getArabicGoalCopy } from '../utils/coachArabicPresentation';
 
 interface FoodCoachViewProps {
@@ -57,7 +55,6 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   const { language } = useLanguage();
   const metrics = React.useMemo(() => calculateCoachingMetrics(moments), [moments]);
   const nutritionProfile = React.useMemo(() => analyzeNutritionType(moments, checkIns), [moments, checkIns]);
-  const arabicArchetype = getGuardianCopy('ar').archetypes[nutritionProfile.archetype];
   const arabicFocus = getArabicCoachFocus(moments.length > 0);
   const [goals, setGoals] = React.useState<CoachingGoal[]>(INITIAL_COACHING_GOALS);
   const [simulatedScenario, setSimulatedScenario] = React.useState<'sleep' | 'rushed_meal' | 'afternoon_crash' | null>(null);
@@ -315,27 +312,28 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
             </p>
           </div>
 
-          {/* Ernährungstyp Quick Status Card */}
-          <div 
-            onClick={onNavigateToTypeAnalysis}
-            className="w-full md:w-auto bg-stone-50 hover:bg-amber-50/60 transition-colors cursor-pointer rounded-2xl p-4 border border-stone-200/80 flex items-center justify-between md:justify-center gap-4 shrink-0 group"
-          >
-            <div className="p-3 bg-amber-500 text-white rounded-xl shadow-xs group-hover:scale-105 transition-transform">
-              <Dna className="w-6 h-6" />
-            </div>
-            <div className="text-left">
-              <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">
-                نمط تغذيتك
+          {/* A discovery invitation, never a label inferred from a person's meals. */}
+          {onNavigateToTypeAnalysis && (
+            <button
+              type="button"
+              data-testid="coach-discoveries-link"
+              onClick={onNavigateToTypeAnalysis}
+              className="w-full md:w-auto min-h-12 rounded-2xl border border-stone-200/80 bg-stone-50 p-4 text-right transition-colors hover:bg-amber-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48] flex items-center justify-between md:justify-center gap-4 shrink-0 group"
+            >
+              <span className="rounded-xl bg-[#526B48] p-3 text-white" aria-hidden="true">
+                <Sparkles className="w-6 h-6" />
               </span>
-              <span className="text-sm sm:text-base font-bold text-stone-900 block leading-tight">
-                {arabicArchetype}
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm sm:text-base font-bold text-stone-900 leading-tight">
+                  اكتشف ما يتكرر في يومك
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-stone-600">
+                  ملاحظات من يومك، لا أحكام على طعامك
+                </span>
               </span>
-              <span className="text-[11px] text-stone-500 flex items-center gap-1 mt-0.5 group-hover:text-amber-800 font-medium">
-                <span>اعرف المزيد عن نمطك الغذائي</span>
-                <ArrowRight className="w-3 h-3" />
-              </span>
-            </div>
-          </div>
+              <ArrowRight className="h-4 w-4 shrink-0 text-[#526B48] rtl:rotate-180" aria-hidden="true" />
+            </button>
+          )}
 
         </div>
 
