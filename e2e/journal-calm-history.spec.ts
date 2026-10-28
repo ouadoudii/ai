@@ -6,9 +6,10 @@ const layouts: Layout[] = [
   { name: 'mobile', width: 390, height: 844 },
 ];
 
-async function prepare(page: Page, withMeal: boolean) {
-  await page.addInitScript(({ withMeal }) => {
+async function prepare(page: Page, withMeal: boolean, olderMeal = false) {
+  await page.addInitScript(({ withMeal, olderMeal }) => {
     const now = new Date();
+    if (olderMeal) now.setDate(now.getDate() - 45);
     const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     localStorage.setItem('rhythm_language_v1', 'fr');
     localStorage.setItem('cary_access_mode_v1', 'guest');
@@ -27,7 +28,7 @@ async function prepare(page: Page, withMeal: boolean) {
       tags: ['Darija', 'avec pain'], createdAt: Date.now(),
     }] : []));
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
-  }, { withMeal });
+  }, { withMeal, olderMeal });
 }
 
 async function openJournal(page: Page, layout: Layout) {
@@ -78,5 +79,33 @@ for (const layout of layouts) {
     await expect(page.locator('[data-capture-method="text"]')).toBeVisible();
     await page.locator('[data-capture-method="text"]').click();
     await expect(page.getByRole('dialog', { name: 'ماذا أكلت؟' })).toBeVisible();
+  });
+  test(`P0 older Arabic journal entries stay discoverable after a quiet 7/30-day period on ${layout.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: layout.width, height: layout.height });
+    await prepare(page, true, true);
+    await openJournal(page, layout);
+    const range = page.getByTestId('timeline-date-range');
+    const row = page.getByTestId('timeline-moment-calm-harira');
+    await expect(row).toBeVisible();
+    await range.selectOption('30d');
+    const empty = page.getByTestId('timeline-range-empty');
+    await expect(empty).toHaveAttribute('role', 'status');
+    await expect(empty).toContainText('تدويناتك السابقة محفوظة');
+    await expect(empty).toContainText('وهذا طبيعي');
+    await expect(row).toHaveCount(0);
+    await range.selectOption('7d');
+    await expect(empty).toBeVisible();
+    const showAll = page.getByTestId('timeline-range-reset');
+    await expect(showAll).toHaveAccessibleName('عرض كل الأيام');
+    await showAll.focus();
+    await expect(showAll).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(range).toHaveValue('all');
+    await expect(empty).toHaveCount(0);
+    await expect(row).toContainText('حريرة Harira');
+    await expect.poll(async () => page.evaluate(() => {
+      const meals = JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]');
+      return { count: meals.length, id: meals[0]?.id, rating: meals[0]?.rating, calories: meals[0]?.nutrition?.calories };
+    })).toEqual({ count: 1, id: 'calm-harira', rating: 5, calories: 860 });
   });
 }
