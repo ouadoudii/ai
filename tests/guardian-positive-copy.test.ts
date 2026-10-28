@@ -2,15 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { evaluateNutritionAlarms } from '../src/utils/interventionEngine';
 import type { DailyCheckIn, FoodMoment } from '../src/types';
 import { getGuardianCopy } from '../src/utils/guardianLocalization';
+import { getLocalDateKey } from '../src/utils/dateKey';
 
 const sleepCheckIn = {
   id: 'sleep-2026-10-27',
+  date: getLocalDateKey(),
   sleep: { durationHours: 5, wakeFeeling: 'exhausted', quality: 1 },
   wellbeing: { energyLevel: 4 },
 } as unknown as DailyCheckIn;
 
 const rushedMeal = {
   id: 'meal-1',
+  date: getLocalDateKey(),
   title: 'كسكس',
   eatingPace: 'rushed',
   distraction: 'screen',
@@ -21,6 +24,7 @@ const rushedMeal = {
 
 const lateMeal = {
   id: 'meal-2',
+  date: getLocalDateKey(),
   title: 'طاجين',
   eatingPace: 'slow',
   distraction: 'none',
