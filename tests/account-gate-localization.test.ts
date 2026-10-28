@@ -32,4 +32,24 @@ describe('Arabic-only account gate',()=>{
     expect(component).toContain('rotate-180');
     for(const key of ['c.title','c.intro','c.signin','c.create','c.back','c.email','c.password']) expect(component).toContain(key);
   });
+  it('offers calm, screen-reader-readable recovery instead of red alarm feedback',()=>{
+    expect(copy).toContain("recovery:'راجع بياناتك أو حاول مرة أخرى بعد قليل.");
+    expect(component).toContain('id="account-form-feedback" role="status" aria-live="polite"');
+    expect(component).toContain('{c.recovery}');
+    expect(component).not.toContain('text-red-700');
+    expect(component).toContain('bg-[#FFF8EB]');
+    expect(component).toContain('text-[#544A3E]');
+  });
+
+  it('labels both fields, announces errors and clears stale feedback when changing screens',()=>{
+    expect(component).toContain('aria-label={c.email}');
+    expect(component).toContain('aria-label={c.password}');
+    expect(component).toContain('aria-describedby={error ? "account-form-feedback" : undefined}');
+    expect(component).toContain('autoComplete="email"');
+    expect(component).toContain("autoComplete={screen==='login'?'current-password':'new-password'}");
+    expect(component).toContain("const showScreen=(next:'choice'|'login'|'signup')=>{setError('');setMessage('');setScreen(next)}");
+    expect(component).toContain('aria-busy={busy}');
+    expect(component).toContain('focus-visible:outline');
+  });
+
 });
