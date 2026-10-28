@@ -75,6 +75,8 @@ for (const layout of layouts) {
     await add.focus();
     await expect(add).toBeFocused();
     await page.keyboard.press('Enter');
+    await expect(page.locator('[data-capture-method="text"]')).toBeVisible();
+    await page.locator('[data-capture-method="text"]').click();
     await expect(page.getByRole('dialog', { name: 'ماذا أكلت؟' })).toBeVisible();
   });
 }
