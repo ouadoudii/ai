@@ -39,14 +39,15 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
     await guardian.getByRole('button',{name:'اختبار تنبيه'}).click();
     await guardian.getByRole('button',{name:/الأكل تحت الضغط/}).click();
-    await expect(guardian.getByText('لا حاجة إلى تدخل')).toBeVisible();
+    await expect(guardian.getByText('هنا متى احتجت')).toBeVisible();
+    await expect(guardian.getByRole('button',{name:/إخفاء الفكرة/})).toHaveCount(0);
 
     // A different source occurrence must remain independently actionable.
     // Sleep can create more than one alarm during the afternoon, which is fine
     // here because this assertion only requires the new occurrence to remain actionable.
     await guardian.getByRole('button',{name:/إعادة ضبط/}).click();
     await guardian.getByRole('button',{name:/نقص النوم/}).click();
-    await expect(guardian.getByRole('button',{name:'تم التعامل معه'}).first()).toBeVisible();
+    await expect(guardian.getByRole('button',{name:/إخفاء الفكرة: قد تحتاج إلى بعض الراحة اليوم/}).first()).toBeVisible();
     await page.screenshot({path:testInfo.outputPath(`guardian-acknowledgement-${viewport.name}.png`),fullPage:true});
   });
 }
