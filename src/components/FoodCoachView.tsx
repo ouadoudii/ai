@@ -258,7 +258,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       <section className="bg-gradient-to-r from-emerald-500/10 via-amber-500/10 to-stone-50 rounded-3xl p-5 sm:p-6 border border-emerald-500/30 shadow-xs relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1.5 max-w-lg">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#25D366] text-white flex items-center gap-1 shadow-xs">
+            <span data-testid="coach-voice-badge" className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#216646] text-white flex items-center gap-1 shadow-xs">
               <Mic className="w-3 h-3 stroke-[2.5]" />
               <span>تسجيل صوتي</span>
             </span>
@@ -277,7 +277,8 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
         <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-end">
           <button
             onClick={onOpenCheckInModal}
-            className="flex-1 sm:flex-none px-5 py-3 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all ring-3 ring-emerald-500/20"
+            data-testid="coach-checkin-cta"
+            className="flex-1 sm:flex-none min-h-12 px-5 py-3 bg-[#216646] hover:bg-[#174b34] active:scale-95 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all ring-3 ring-emerald-500/20"
           >
             <Mic className="w-4 h-4 stroke-[2.5]" />
             <span>ابدأ تسجيل يومك</span>
