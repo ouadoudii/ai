@@ -3,6 +3,7 @@ import type { FoodMoment, DailyCheckIn } from '../types';
 import { analyzeNutritionType } from './nutritionTypeEngine';
 import { calculateCoachingMetrics, generateMomentCoachFeedback } from './coachEngine';
 import { evaluateNutritionAlarms } from './interventionEngine';
+import { getLocalDateKey } from './dateKey';
 
 const baseMoment = (overrides: Partial<FoodMoment> = {}): FoodMoment => ({
   id: 'm1', title: 'Test meal', label: 'Lunch', category: 'lunch', date: '2026-08-28', time: '12:30',
@@ -35,7 +36,7 @@ describe('coach engine', () => {
 describe('guardian intervention engine', () => {
   it('raises a sleep-deficit alarm', () => {
     const checkIn: DailyCheckIn = {
-      id: 'c1', date: '2026-08-28', time: '08:00', timeOfDay: 'morning',
+      id: 'c1', date: getLocalDateKey(), time: '08:00', timeOfDay: 'morning',
       sleep: { durationHours: 5, quality: 2, wakeFeeling: 'tired' },
       wellbeing: { energyLevel: 2, mood: 'comfort', stressLevel: 3 }, createdAt: 1,
     };
