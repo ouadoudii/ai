@@ -437,6 +437,7 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                 <input
                   data-testid="onboarding-weight"
                   inputMode="decimal"
+                  dir="ltr"
                   value={form.weight}
                   aria-invalid={weightInvalid || undefined}
                   aria-describedby={
