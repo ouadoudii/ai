@@ -56,6 +56,22 @@ export function evaluateNutritionAlarms(
   if (latestCheckIn?.sleep) {
     const { durationHours, wakeFeeling, quality } = latestCheckIn.sleep;
     if (durationHours < 6 || wakeFeeling === 'exhausted' || quality <= 2) {
+      // Reflect the person's actual check-in, not an inferred feeling of fatigue.
+      // Sleep fields are optional; never display "undefined hours" for a
+      // quality-only or wake-feeling-only entry.
+      const wakeDescriptions = {
+        refreshed: 'منتعش',
+        normal: 'كالمعتاد',
+        tired: 'متعب',
+        exhausted: 'مرهق',
+      } as const;
+      const sleepSummary = [
+        typeof durationHours === 'number' && Number.isFinite(durationHours)
+          ? `سجّلت ${durationHours} ساعات نوم` : null,
+        wakeFeeling ? `شعورك عند الاستيقاظ: ${wakeDescriptions[wakeFeeling]}` : null,
+        typeof quality === 'number' && Number.isFinite(quality)
+          ? `تقييم جودة النوم: ${quality} من 5` : null,
+      ].filter(Boolean).join('، ');
       let archetypeAdvice = '';
       if (archetype === 'protein_performer') {
         archetypeAdvice = 'إذا شعرت بالجوع، جرّب وجبة خفيفة مشبعة تناسبك، مثل الزبادي أو المكسرات.';
@@ -72,7 +88,7 @@ export function evaluateNutritionAlarms(
         triggerKey: 'sleep_deficit',
         severity: 'high',
         title: 'قد تحتاج إلى بعض الراحة اليوم',
-        subtitle: `سجّلت ${durationHours} ساعات نوم، وشعورك عند الاستيقاظ: ${wakeFeeling === 'exhausted' ? 'إرهاق' : 'تعب'}`,
+        subtitle: sleepSummary || 'لحظة للتأمل في نومك اليوم',
         archetype,
         reason: 'قد يؤثر النوم القصير في شعورك بالطاقة والجوع. لا تحتاج إلى تعويض أي شيء؛ انتبه لما يحتاجه جسمك.',
         recommendation: archetypeAdvice,
