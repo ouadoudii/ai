@@ -1,4 +1,5 @@
 import { FoodMoment, DailyCheckIn, NutritionArchetype } from '../types';
+import { getLocalDateKey } from './dateKey';
 
 export type AlarmSeverity = 'high' | 'medium' | 'info';
 
@@ -39,9 +40,17 @@ export function evaluateNutritionAlarms(
   archetype: NutritionArchetype = 'intuitive_mindful'
 ): GuardianStatus {
   const alarms: NutritionAlarm[] = [];
-  const latestCheckIn = checkIns[0];
-  const recentMoments = moments.slice(0, 3);
   const now = new Date();
+  const today = getLocalDateKey(now);
+  // Only today's entries can prompt "today" suggestions. Historical and future
+  // journal records remain untouched and discoverable in their own views.
+  // The explicit simulator uses a legacy "Heute" marker; never interpret
+  // that marker as a real user's date.
+  const isCurrent = (entry: { id: string; date: string }) =>
+    entry.date === today || (entry.id.startsWith('sim-') && entry.date === 'Heute');
+  const todayCheckIns = checkIns.filter(isCurrent);
+  const latestCheckIn = todayCheckIns[0];
+  const recentMoments = moments.filter(isCurrent).slice(0, 3);
   const currentHour = now.getHours();
 
   if (latestCheckIn?.sleep) {
@@ -97,7 +106,7 @@ export function evaluateNutritionAlarms(
   }
 
   const isAfternoon = currentHour >= 13 && currentHour <= 17;
-  const lowEnergyCheckIn = checkIns.find(c => c.wellbeing.energyLevel <= 2);
+  const lowEnergyCheckIn = todayCheckIns.find(c => c.wellbeing.energyLevel !== undefined && c.wellbeing.energyLevel <= 2);
   const lowEnergyMoment = recentMoments.find(m => m.energyAfter === 'sluggish');
 
   if (isAfternoon && (lowEnergyCheckIn || lowEnergyMoment)) {
