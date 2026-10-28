@@ -21,7 +21,9 @@ describe('Arabic-only account gate',()=>{
     expect(copy).not.toContain("de:{");
     expect(copy).not.toContain("fr:{");
     expect(component).toContain('setMessage(c.created)');
-    expect(component).toContain('catch{setError(c.failed)}');
+    expect(component).toContain("catch{setError(screen==='signup'?c.signupFailed:c.failed)}");
+    expect(copy).toContain("signupFailed:'تعذر إنشاء الحساب'");
+    expect(copy).toContain("signupRecovery:'راجع البريد الإلكتروني وكلمة المرور أو حاول بعد قليل.");
     expect(component).not.toContain('x instanceof Error?x.message:c.failed');
   });
 
@@ -35,7 +37,8 @@ describe('Arabic-only account gate',()=>{
   it('offers calm, screen-reader-readable recovery instead of red alarm feedback',()=>{
     expect(copy).toContain("recovery:'راجع بياناتك أو حاول مرة أخرى بعد قليل.");
     expect(component).toContain('id="account-form-feedback" role="status" aria-live="polite"');
-    expect(component).toContain('{c.recovery}');
+    expect(component).toContain("{screen==='signup'?c.signupRecovery:c.recovery}");
+    expect(copy).not.toMatch(/(?:\bfailed:'Signup failed'|\bsignupRecovery:'Failed)/);
     expect(component).not.toContain('text-red-700');
     expect(component).toContain('bg-[#FFF8EB]');
     expect(component).toContain('text-[#544A3E]');
