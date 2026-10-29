@@ -151,12 +151,15 @@ describe('guardian positive Arabic-first experience', () => {
     expect(allVisibleText(status.activeAlarms[0])).not.toMatch(/Überessen|stoppen|Nervus Vagus|⚠️/);
   });
 
-  it('does not impose kitchen closing times after a late dinner', () => {
-    const status = evaluateNutritionAlarms([lateMeal], []);
-    const late = status.activeAlarms.find(alarm => alarm.triggerKey === 'circadian_late_food');
-    expect(late).toBeDefined();
-    expect(allVisibleText(late!)).toContain('طاجين');
-    expect(allVisibleText(late!)).not.toMatch(/Küchenschluss|HGH|20:30|⚠️/);
+  it('does not impose kitchen closing times or fullness judgments after a late family dinner', () => {
+    const history = [lateMeal];
+    const status = evaluateNutritionAlarms(history, []);
+    expect(status.activeAlarms).toEqual([]);
+    expect(status.hasAlarms).toBe(false);
+    expect(status.statusBadge).toBe('green');
+    expect(status.statusText).toContain('كل يوم له إيقاعه الخاص');
+    expect(status.statusText).not.toMatch(/Küchenschluss|HGH|20:30|⚠️|فشل|عقاب|إنذار/);
+    expect(history).toEqual([lateMeal]);
   });
 
   it('uses supportive Arabic chrome even for high-severity internal signals', () => {
