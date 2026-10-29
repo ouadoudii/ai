@@ -196,10 +196,6 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
   const micRef = React.useRef<HTMLButtonElement | null>(null);
   const formRef = React.useRef<HTMLButtonElement | null>(null);
   const goalRef = React.useRef<HTMLTextAreaElement | null>(null);
-  const weightRef = React.useRef<HTMLInputElement | null>(null);
-  const weightSelectionRef = React.useRef<{ start: number; end: number } | null>(
-    null,
-  );
   const returnToFormTriggerRef = React.useRef(false);
   const submitInFlightRef = React.useRef(false);
   const [isOpen, setIsOpen] = React.useState(() => {
@@ -226,13 +222,6 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
   });
   const parsedWeight = parseOnboardingWeight(form.weight);
   const weightInvalid = parsedWeight === null;
-  React.useLayoutEffect(() => {
-    const input = weightRef.current;
-    const selection = weightSelectionRef.current;
-    if (!input || !selection || document.activeElement !== input) return;
-    input.setSelectionRange(selection.start, selection.end);
-    weightSelectionRef.current = null;
-  }, [form.weight]);
   React.useEffect(() => setPortalReady(true), []);
   React.useEffect(() => {
     if (typeof document === "undefined") return;
@@ -468,35 +457,39 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
               {copy.weight}
               <div className="mt-2 flex items-center gap-2">
                 <input
-                  ref={weightRef}
                   data-testid="onboarding-weight"
                   inputMode="decimal"
                   dir="ltr"
-                  value={form.weight}
+                  defaultValue={form.weight}
                   aria-invalid={weightInvalid || undefined}
                   aria-describedby={
                     weightInvalid ? "onboarding-weight-error" : undefined
                   }
                   onChange={(e) => {
-                    const value = e.currentTarget.value;
-                    weightSelectionRef.current = {
-                      start: getOnboardingWeightSelection(
-                        value,
-                        e.currentTarget.selectionStart,
+                    // Keep the native input uncontrolled while typing. React's
+                    // controlled-value reconciliation can restore a stale zero
+                    // caret and reverse sequential digits (72 becomes 27).
+                    // The form state still receives the sanitized value for
+                    // validation and persistence on every input event.
+                    const input = e.currentTarget;
+                    const rawValue = input.value;
+                    const value = sanitizeOnboardingWeightInput(rawValue);
+                    if (rawValue !== value) {
+                      const start = getOnboardingWeightSelection(
+                        rawValue,
+                        input.selectionStart,
                         form.weight,
-                      ),
-                      end: getOnboardingWeightSelection(
-                        value,
-                        e.currentTarget.selectionEnd,
+                      );
+                      const end = getOnboardingWeightSelection(
+                        rawValue,
+                        input.selectionEnd,
                         form.weight,
-                      ),
-                    };
+                      );
+                      input.value = value;
+                      input.setSelectionRange(start, end);
+                    }
                     setForm((current) =>
-                      updateOnboardingForm(
-                        current,
-                        "weight",
-                        sanitizeOnboardingWeightInput(value),
-                      ),
+                      updateOnboardingForm(current, "weight", value),
                     );
                   }}
                   className="min-h-12 w-full rounded-2xl border border-[#DDD5C9] bg-white px-4 font-medium outline-none focus:border-[#293D34]"
