@@ -113,8 +113,10 @@ export interface DailyCoachingMetrics {
   coachSummary: string;
 }
 
-export function calculateCoachingMetrics(moments: FoodMoment[]): DailyCoachingMetrics {
-  if (moments.length === 0) {
+export function calculateCoachingMetrics(moments: FoodMoment[], dateKey: string = getLocalDateKey()): DailyCoachingMetrics {
+  // A prior day's meals are not evidence of progress today.
+  const todayMoments = moments.filter((moment) => moment.date === dateKey);
+  if (todayMoments.length === 0) {
     return {
       todayMomentsCount: 0,
       mindfulScore: 0,
@@ -129,9 +131,7 @@ export function calculateCoachingMetrics(moments: FoodMoment[]): DailyCoachingMe
     };
   }
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayMoments = moments.filter((m) => m.date === todayStr);
-  const relevantMoments = todayMoments.length > 0 ? todayMoments : moments.slice(0, 5);
+  const relevantMoments = todayMoments;
 
   let mindfulPoints = 0;
   let satietyPoints = 0;
