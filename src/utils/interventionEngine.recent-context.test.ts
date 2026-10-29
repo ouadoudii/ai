@@ -100,6 +100,43 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(sleep[0].title).not.toMatch(/فشل|عقاب|إنذار/);
   });
 
+  it('uses the latest actual meal, not the first stored meal, for gentle distraction guidance', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    const rushed = { ...moment(today, 'earlier-rushed'), time: '12:00', createdAt: 300 };
+    const calm = {
+      ...moment(today, 'later-calm'), time: '14:00', createdAt: 100,
+      eatingPace: 'slow' as const, distraction: 'mindful' as const,
+      energyAfter: 'neutral' as const,
+    };
+    const original = [rushed, calm];
+    for (const history of [original, [...original].reverse()]) {
+      const result = evaluateNutritionAlarms(history, []);
+      expect(result.activeAlarms.some(a => a.triggerKey === 'distracted_meal')).toBe(false);
+      expect(result.statusText).toContain('بلطف');
+      expect(result.statusText).not.toMatch(/فشل|عقاب|إنذار|Überessen/);
+    }
+    expect(original.map(entry => entry.id)).toEqual(['earlier-rushed', 'later-calm']);
+  });
+
+  it('still offers optional guidance when the latest meal was distracted, even if history is unsorted', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    const earlier = {
+      ...moment(today, 'earlier-calm'), time: '12:00', createdAt: 300,
+      eatingPace: 'slow' as const, distraction: 'mindful' as const,
+    };
+    const later = { ...moment(today, 'later-rushed'), time: '14:00', createdAt: 100 };
+    const result = evaluateNutritionAlarms([earlier, later], []);
+    const suggestions = result.activeAlarms.filter(a => a.triggerKey === 'distracted_meal');
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0].id).toBe('alarm-mindless-later-rushed');
+    expect(suggestions[0].title).toBe('لحظة هدوء بعد وجبتك');
+    expect(suggestions[0].reason).not.toMatch(/فشل|عقاب|إنذار/);
+  });
+
   it('does not mistake a low-energy entry from another day for an afternoon prompt', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-28T15:00:00'));
