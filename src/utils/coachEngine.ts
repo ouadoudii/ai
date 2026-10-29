@@ -1,4 +1,5 @@
 import { FoodMoment, CoachFeedback, CoachingGoal, EatingPace, DistractionLevel, EnergyLevelAfter } from '../types';
+import { getLocalDateKey } from './dateKey';
 
 /**
  * Intelligent Coaching Engine for Mindful Nutrition & Eating Habits
@@ -103,7 +104,8 @@ export interface DailyCoachingMetrics {
   todayMomentsCount: number;
   mindfulScore: number; // 0-100
   satietyBalanceScore: number; // 0-100
-  screenFreeRatio: number; // 0-100 %
+  screenFreeRatio: number; // 0-100 % of meals with an explicit distraction report
+  screenFreeObservations: number; // Never infer screen-free eating from missing data
   slowEatingRatio: number; // 0-100 %
   dailyFocusTitle: string;
   dailyFocusTip: string;
@@ -111,28 +113,30 @@ export interface DailyCoachingMetrics {
   coachSummary: string;
 }
 
-export function calculateCoachingMetrics(moments: FoodMoment[]): DailyCoachingMetrics {
-  if (moments.length === 0) {
+export function calculateCoachingMetrics(moments: FoodMoment[], dateKey: string = getLocalDateKey()): DailyCoachingMetrics {
+  // A prior day's meals are not evidence of progress today.
+  const todayMoments = moments.filter((moment) => moment.date === dateKey);
+  if (todayMoments.length === 0) {
     return {
       todayMomentsCount: 0,
-      mindfulScore: 80,
-      satietyBalanceScore: 85,
-      screenFreeRatio: 100,
-      slowEatingRatio: 100,
+      mindfulScore: 0,
+      satietyBalanceScore: 0,
+      screenFreeRatio: 0,
+      screenFreeObservations: 0,
+      slowEatingRatio: 0,
       dailyFocusTitle: 'Erste Mahlzeit achtsam erfassen',
       dailyFocusTip: 'Nimm dir vor dem ersten Bissen 3 bewusste Atemzüge und beurteile deinen Hunger auf einer Skala von 1 bis 5.',
-      streaksDays: 1,
+      streaksDays: 0,
       coachSummary: 'Erfasse deine nächste Mahlzeit, um dein persönliches Coaching-Feedback zu aktivieren.',
     };
   }
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayMoments = moments.filter((m) => m.date === todayStr);
-  const relevantMoments = todayMoments.length > 0 ? todayMoments : moments.slice(0, 5);
+  const relevantMoments = todayMoments;
 
   let mindfulPoints = 0;
   let satietyPoints = 0;
   let screenFreeCount = 0;
+  let screenFreeObservations = 0;
   let slowPaceCount = 0;
 
   relevantMoments.forEach((m) => {
@@ -142,9 +146,10 @@ export function calculateCoachingMetrics(moments: FoodMoment[]): DailyCoachingMe
     else if (fullness === 2) satietyPoints += 70;
     else satietyPoints += 50;
 
-    // Distraction assessment
+    // Missing distraction is unknown, never evidence of a screen-free meal.
+    if (m.distraction) screenFreeObservations++;
     if (!m.distraction || m.distraction === 'mindful') {
-      screenFreeCount++;
+      if (m.distraction === 'mindful') screenFreeCount++;
       mindfulPoints += 35;
     } else {
       mindfulPoints += 10;
@@ -168,7 +173,7 @@ export function calculateCoachingMetrics(moments: FoodMoment[]): DailyCoachingMe
   const count = relevantMoments.length;
   const mindfulScore = Math.min(100, Math.round(mindfulPoints / count));
   const satietyBalanceScore = Math.min(100, Math.round(satietyPoints / count));
-  const screenFreeRatio = Math.round((screenFreeCount / count) * 100);
+  const screenFreeRatio = screenFreeObservations > 0 ? Math.round((screenFreeCount / screenFreeObservations) * 100) : 0;
   const slowEatingRatio = Math.round((slowPaceCount / count) * 100);
 
   // Determine coaching summary
@@ -184,10 +189,11 @@ export function calculateCoachingMetrics(moments: FoodMoment[]): DailyCoachingMe
     mindfulScore,
     satietyBalanceScore,
     screenFreeRatio,
+    screenFreeObservations,
     slowEatingRatio,
     dailyFocusTitle: 'Heutiger Coaching-Fokus: Das 20-Minuten-Signal',
     dailyFocusTip: 'Dein Magen braucht etwa 20 Minuten, um dem Gehirn zu signalisieren: Ich bin satt! Lege nach der halben Portion die Gabel für 60 Sekunden kurz ab.',
-    streaksDays: 5,
+    streaksDays: 0, // Do not invent a multi-day streak from today's observations.
     coachSummary,
   };
 }
@@ -197,29 +203,29 @@ export const INITIAL_COACHING_GOALS: CoachingGoal[] = [
     id: 'goal-1',
     title: 'Hunger-Check vor jeder Mahlzeit',
     description: 'Bewerte deinen Hunger auf der 1-5 Skala, bevor der erste Bissen genommen wird.',
-    current: 3,
+    current: 0,
     target: 3,
     unit: 'Mahlzeiten',
     category: 'mindful',
-    completed: true,
+    completed: false,
     icon: 'Eye',
   },
   {
     id: 'goal-2',
     title: 'Screen-Free Dining',
     description: 'Mindestens 2 Hauptmahlzeiten ohne Smartphone, TV oder Laptop genießen.',
-    current: 2,
+    current: 0,
     target: 2,
     unit: 'Mahlzeiten',
     category: 'habits',
-    completed: true,
+    completed: false,
     icon: 'SmartphoneOff',
   },
   {
     id: 'goal-3',
     title: 'Sättigungs-Stopp bei Stufe 4',
     description: 'Aufhören, wenn man angenehm satt ist (nicht überfüllt bei Stufe 5).',
-    current: 2,
+    current: 0,
     target: 3,
     unit: 'Mahlzeiten',
     category: 'mindful',
@@ -230,7 +236,7 @@ export const INITIAL_COACHING_GOALS: CoachingGoal[] = [
     id: 'goal-4',
     title: 'Protein-Power in Hauptgerichten',
     description: 'Mindestens 20g Protein pro Hauptmahlzeit für langanhaltende Sättigung.',
-    current: 2,
+    current: 0,
     target: 3,
     unit: 'Portionen',
     category: 'nutrition',
@@ -238,6 +244,31 @@ export const INITIAL_COACHING_GOALS: CoachingGoal[] = [
     icon: 'Flame',
   },
 ];
+
+
+/** Goal progress is computed from explicit, locally dated meal observations.
+ * A guest with no entries never starts with completed achievements.
+ * This function does not modify or persist the journal.
+ */
+export function deriveDailyCoachingGoals(
+  moments: FoodMoment[],
+  dateKey: string = getLocalDateKey(),
+): CoachingGoal[] {
+  const today = moments.filter((moment) => moment.date === dateKey);
+  const mainMeals = today.filter((moment) =>
+    moment.category === 'breakfast' || moment.category === 'lunch' || moment.category === 'dinner'
+  );
+  const observed = [
+    today.filter((moment) => moment.hungerLevel !== undefined).length,
+    mainMeals.filter((moment) => moment.distraction === 'mindful').length,
+    today.filter((moment) => moment.fullnessLevel !== undefined && moment.fullnessLevel >= 3 && moment.fullnessLevel <= 4).length,
+    mainMeals.filter((moment) => (moment.nutrition?.protein ?? 0) >= 20).length,
+  ];
+  return INITIAL_COACHING_GOALS.map((goal, index) => {
+    const current = Math.min(goal.target, observed[index]);
+    return { ...goal, current, completed: current >= goal.target };
+  });
+}
 
 export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]): string {
   const q = userQuestion.toLowerCase();
