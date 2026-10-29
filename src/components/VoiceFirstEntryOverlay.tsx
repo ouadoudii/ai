@@ -155,6 +155,38 @@ export function getOnboardingWeightSelection(
     value.slice(0, selection ?? value.length),
   ).length;
 }
+export function reconcileOnboardingWeightInput(
+  previousValue: string,
+  rawValue: string,
+  inputType: string,
+  data: string | null,
+  selectionStartBefore: number | null,
+  selectionEndBefore: number | null,
+): { value: string; selection: number } {
+  if (
+    inputType === "insertText" &&
+    data &&
+    selectionStartBefore !== null &&
+    selectionEndBefore !== null
+  ) {
+    const inserted = sanitizeOnboardingWeightInput(data);
+    const start = Math.max(0, Math.min(previousValue.length, selectionStartBefore));
+    const end = Math.max(start, Math.min(previousValue.length, selectionEndBefore));
+    const value = sanitizeOnboardingWeightInput(
+      previousValue.slice(0, start) + inserted + previousValue.slice(end),
+    );
+    return { value, selection: start + inserted.length };
+  }
+  const value = sanitizeOnboardingWeightInput(rawValue);
+  return {
+    value,
+    selection: getOnboardingWeightSelection(
+      rawValue,
+      selectionEndBefore,
+      previousValue,
+    ),
+  };
+}
 export function shouldShowVoiceFirstEntry(storage: Pick<Storage, "getItem">) {
   return !storage.getItem(PROFILE_INTRO_KEY);
 }
@@ -196,6 +228,11 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
   const micRef = React.useRef<HTMLButtonElement | null>(null);
   const formRef = React.useRef<HTMLButtonElement | null>(null);
   const goalRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const weightBeforeInputRef = React.useRef<{
+    value: string;
+    start: number | null;
+    end: number | null;
+  } | null>(null);
   const returnToFormTriggerRef = React.useRef(false);
   const submitInFlightRef = React.useRef(false);
   const [isOpen, setIsOpen] = React.useState(() => {
@@ -465,31 +502,42 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                   aria-describedby={
                     weightInvalid ? "onboarding-weight-error" : undefined
                   }
-                  onChange={(e) => {
-                    // Keep the native input uncontrolled while typing. React's
-                    // controlled-value reconciliation can restore a stale zero
-                    // caret and reverse sequential digits (72 becomes 27).
-                    // The form state still receives the sanitized value for
-                    // validation and persistence on every input event.
+                  onBeforeInput={(e) => {
                     const input = e.currentTarget;
-                    const rawValue = input.value;
-                    const value = sanitizeOnboardingWeightInput(rawValue);
-                    if (rawValue !== value) {
-                      const start = getOnboardingWeightSelection(
-                        rawValue,
-                        input.selectionStart,
-                        form.weight,
-                      );
-                      const end = getOnboardingWeightSelection(
-                        rawValue,
-                        input.selectionEnd,
-                        form.weight,
-                      );
-                      input.value = value;
-                      input.setSelectionRange(start, end);
-                    }
+                    weightBeforeInputRef.current = {
+                      value: input.value,
+                      start: input.selectionStart,
+                      end: input.selectionEnd,
+                    };
+                  }}
+                  onChange={(e) => {
+                    // Reconstruct insertText from the selection captured before
+                    // Chromium mutates the RTL numeral. This preserves logical
+                    // order (٨ then ٢ stays ٨٢) while still allowing deliberate
+                    // Home/start edits because their pre-input caret is zero.
+                    const input = e.currentTarget;
+                    const native = e.nativeEvent as InputEvent;
+                    const before = weightBeforeInputRef.current;
+                    const reconciled = reconcileOnboardingWeightInput(
+                      before?.value ?? form.weight,
+                      input.value,
+                      native.inputType,
+                      native.data,
+                      before?.start ?? input.selectionStart,
+                      before?.end ?? input.selectionEnd,
+                    );
+                    weightBeforeInputRef.current = null;
+                    input.value = reconciled.value;
+                    input.setSelectionRange(
+                      reconciled.selection,
+                      reconciled.selection,
+                    );
                     setForm((current) =>
-                      updateOnboardingForm(current, "weight", value),
+                      updateOnboardingForm(
+                        current,
+                        "weight",
+                        reconciled.value,
+                      ),
                     );
                   }}
                   className="min-h-12 w-full rounded-2xl border border-[#DDD5C9] bg-white px-4 font-medium outline-none focus:border-[#293D34]"
