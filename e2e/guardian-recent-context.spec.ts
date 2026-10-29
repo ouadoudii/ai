@@ -6,8 +6,8 @@ const profile = {
   firstPlan: { title: 'Observe', rationale: 'Notice', focusAreas: [], firstStep: 'Capture', phase: 'midday' },
 };
 
-async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'refreshed' = 'exhausted', partial = false, recoveredEnergy = false, correctedSleep = false, correctedMeal = false) {
-  await page.addInitScript(({ profile, recent, wakeFeeling, partial, recoveredEnergy, correctedSleep, correctedMeal }) => {
+async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'refreshed' = 'exhausted', partial = false, recoveredEnergy = false, correctedSleep = false, correctedMeal = false, eveningDinner = false) {
+  await page.addInitScript(({ profile, recent, wakeFeeling, partial, recoveredEnergy, correctedSleep, correctedMeal, eveningDinner }) => {
     const now = new Date();
     if (!recent) now.setDate(now.getDate() - 45);
     const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -16,7 +16,13 @@ async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'ref
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
     localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
-    localStorage.setItem('nimmapp_moments_v1', JSON.stringify(correctedMeal ? [
+    localStorage.setItem('nimmapp_moments_v1', JSON.stringify(eveningDinner ? [{
+      id: 'family-evening-meal', title: 'كسكس مع العائلة', label: 'عشاء',
+      category: 'dinner', date, time: '21:30', location: 'الرباط',
+      locationCategory: 'home', imageUrl: '', mood: 'comfort',
+      tags: ['Darija'], eatingPace: 'slow', distraction: 'mindful',
+      fullnessLevel: 5, energyAfter: 'neutral', createdAt: Date.now(),
+    }] : correctedMeal ? [
       {
         id: 'older-rushed', title: 'حريرة', label: 'غداء',
         category: 'lunch', date, time: '12:00', location: 'الرباط',
@@ -38,7 +44,11 @@ async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'ref
       tags: ['Darija'], eatingPace: 'rushed', distraction: 'screen',
       fullnessLevel: 2, energyAfter: recoveredEnergy ? 'sluggish' : undefined, createdAt: Date.now(),
     }]));
-    localStorage.setItem('nimmapp_checkins_v1', JSON.stringify(correctedSleep ? [
+    localStorage.setItem('nimmapp_checkins_v1', JSON.stringify(eveningDinner ? [{
+      id: 'rested-evening', date, time: '08:00', timeOfDay: 'morning',
+      sleep: { durationHours: 8, quality: 4, wakeFeeling: 'refreshed' },
+      wellbeing: { energyLevel: 4 }, createdAt: Date.now(),
+    }] : correctedSleep ? [
       { id: 'sleep-old', date, time: '08:00', timeOfDay: 'morning', sleep: { durationHours: 5, quality: 2, wakeFeeling: 'exhausted' }, createdAt: Date.now() - 60_000 },
       { id: 'sleep-corrected', date, time: '09:00', timeOfDay: 'morning', sleep: { durationHours: 8, quality: 4, wakeFeeling: 'refreshed' }, createdAt: Date.now() },
       { id: 'midday-no-sleep', date, time: '13:00', timeOfDay: 'midday', wellbeing: { energyLevel: 4 }, createdAt: Date.now() + 60_000 },
@@ -55,7 +65,7 @@ async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'ref
     }]));
     localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
-  }, { profile, recent, wakeFeeling, partial, recoveredEnergy, correctedSleep, correctedMeal });
+  }, { profile, recent, wakeFeeling, partial, recoveredEnergy, correctedSleep, correctedMeal, eveningDinner });
 }
 
 for (const viewport of [
@@ -169,6 +179,27 @@ for (const viewport of [
     await expect.poll(() => page.evaluate(() =>
       JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').map((entry: { id: string }) => entry.id)
     )).toEqual(['older-rushed', 'newer-mindful']);
+  });
+
+  test(`P0 Guardian respects an evening family dinner without timing or fullness alarms on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const evening = new Date();
+    evening.setHours(22, 15, 0, 0);
+    await page.clock.setFixedTime(evening);
+    await seed(page, true, 'refreshed', false, false, false, false, true);
+    await page.goto('/');
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian.getByText('هنا متى احتجت')).toBeVisible();
+    await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ })).toHaveCount(0);
+    await expect(guardian).not.toContainText(/وجبة مسائية تستحق لحظة راحة|Küchenschluss|Überessen|فشل|عقاب|إنذار|Ghrelin|28%/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => {
+      const dinner = JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]')[0];
+      return [dinner?.id, dinner?.fullnessLevel, dinner?.time];
+    })).toEqual(['family-evening-meal', 5, '21:30']);
   });
 
   test(`P0 Guardian still offers optional Arabic care for today's entries on ${viewport.name}`, async ({ page }) => {
