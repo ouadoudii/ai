@@ -124,7 +124,14 @@ export function evaluateNutritionAlarms(
   }
 
   const isAfternoon = currentHour >= 13 && currentHour <= 17;
-  const lowEnergyCheckIn = todayCheckIns.find(c => typeof c.wellbeing?.energyLevel === 'number' && c.wellbeing.energyLevel <= 2);
+  // The latest explicit energy check-in is the person's current report. An
+  // earlier low-energy entry must not keep prompting after they feel better.
+  // Sort a copy because imported/persisted history is not guaranteed newest-first.
+  const latestEnergyCheckIn = todayCheckIns
+    .filter(c => typeof c.wellbeing?.energyLevel === 'number' && Number.isFinite(c.wellbeing.energyLevel))
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || b.time.localeCompare(a.time))[0];
+  const lowEnergyCheckIn = latestEnergyCheckIn && latestEnergyCheckIn.wellbeing.energyLevel! <= 2
+    ? latestEnergyCheckIn : undefined;
   const lowEnergyMoment = recentMoments.find(m => m.energyAfter === 'sluggish');
 
   if (isAfternoon && (lowEnergyCheckIn || lowEnergyMoment)) {
