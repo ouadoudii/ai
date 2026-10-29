@@ -192,6 +192,11 @@ for (const [script, enteredWeight] of [
       await weight.pressSequentially(character);
       typedWeight += character;
       await expect(weight).toHaveValue(typedWeight);
+      await expect
+        .poll(() =>
+          weight.evaluate((input: HTMLInputElement) => input.selectionStart),
+        )
+        .toBe(typedWeight.length);
     }
     await expect(weight).toHaveValue(enteredWeight);
     await expect(weight).not.toHaveAttribute('aria-invalid', 'true');

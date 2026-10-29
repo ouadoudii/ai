@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getOnboardingWeightSelection, sanitizeOnboardingWeightInput, parseOnboardingWeight, PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from '../src/components/VoiceFirstEntryOverlay';
+import { getOnboardingWeightSelection, reconcileOnboardingWeightInput, sanitizeOnboardingWeightInput, parseOnboardingWeight, PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from '../src/components/VoiceFirstEntryOverlay';
 
 describe('quick onboarding form guards', () => {
   it('restores the caret after the first digit without breaking deliberate edits', () => {
@@ -9,6 +9,21 @@ describe('quick onboarding form guards', () => {
     expect(getOnboardingWeightSelection('82', 0, '')).toBe(2);
     expect(getOnboardingWeightSelection('782', 1, '82')).toBe(1);
     expect(getOnboardingWeightSelection('82', 1, '782')).toBe(1);
+  });
+
+  it('reconstructs RTL digit insertion from the pre-input caret and preserves Home edits', () => {
+    expect(reconcileOnboardingWeightInput('٨', '٢٨', 'insertText', '٢', 1, 1)).toEqual({
+      value: '٨٢',
+      selection: 2,
+    });
+    expect(reconcileOnboardingWeightInput('۸', '۲۸', 'insertText', '۲', 1, 1)).toEqual({
+      value: '۸۲',
+      selection: 2,
+    });
+    expect(reconcileOnboardingWeightInput('82', '782', 'insertText', '7', 0, 0)).toEqual({
+      value: '782',
+      selection: 1,
+    });
   });
 
   it('sanitizes unsupported characters without reordering Arabic or Persian numerals', () => {

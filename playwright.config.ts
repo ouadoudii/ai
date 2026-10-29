@@ -38,6 +38,9 @@ export default defineConfig({
   testDir:'./e2e',
   timeout:45_000,
   retries:1,
+  // A retry may diagnose intermittent failures, but must never turn a flaky
+  // Desktop/Android user journey into a green release gate.
+  failOnFlakyTests:true,
   use:{
     baseURL:'http://127.0.0.1:4173',
     trace:'retain-on-failure',
