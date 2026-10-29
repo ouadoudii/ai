@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { parseOnboardingWeight, PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from '../src/components/VoiceFirstEntryOverlay';
+import { getOnboardingWeightSelection, parseOnboardingWeight, PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from '../src/components/VoiceFirstEntryOverlay';
 
 describe('quick onboarding form guards', () => {
+  it('restores the caret after the first digit without breaking deliberate edits', () => {
+    // Some Chromium input events report 0 before the native caret advances.
+    expect(getOnboardingWeightSelection('8', 0, '')).toBe(1);
+    expect(getOnboardingWeightSelection('٨', 0, '')).toBe(1);
+    expect(getOnboardingWeightSelection('82', 0, '')).toBe(2);
+    expect(getOnboardingWeightSelection('782', 1, '82')).toBe(1);
+    expect(getOnboardingWeightSelection('82', 1, '782')).toBe(1);
+  });
+
   it('normalizes supported decimal weights and rejects malformed values', () => {
     expect(parseOnboardingWeight('72,5')).toBe(72.5);
     expect(parseOnboardingWeight('72.5')).toBe(72.5);
