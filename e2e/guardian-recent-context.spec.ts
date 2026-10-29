@@ -6,8 +6,8 @@ const profile = {
   firstPlan: { title: 'Observe', rationale: 'Notice', focusAreas: [], firstStep: 'Capture', phase: 'midday' },
 };
 
-async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'refreshed' = 'exhausted', partial = false, recoveredEnergy = false, correctedSleep = false) {
-  await page.addInitScript(({ profile, recent, wakeFeeling, partial, recoveredEnergy, correctedSleep }) => {
+async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'refreshed' = 'exhausted', partial = false, recoveredEnergy = false, correctedSleep = false, correctedMeal = false) {
+  await page.addInitScript(({ profile, recent, wakeFeeling, partial, recoveredEnergy, correctedSleep, correctedMeal }) => {
     const now = new Date();
     if (!recent) now.setDate(now.getDate() - 45);
     const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -16,7 +16,22 @@ async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'ref
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
     localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
-    localStorage.setItem('nimmapp_moments_v1', JSON.stringify([{
+    localStorage.setItem('nimmapp_moments_v1', JSON.stringify(correctedMeal ? [
+      {
+        id: 'older-rushed', title: 'حريرة', label: 'غداء',
+        category: 'lunch', date, time: '12:00', location: 'الرباط',
+        locationCategory: 'home', imageUrl: '', mood: 'comfort',
+        tags: ['Darija'], eatingPace: 'rushed', distraction: 'screen',
+        fullnessLevel: 2, createdAt: Date.now(),
+      },
+      {
+        id: 'newer-mindful', title: 'كسكس', label: 'غداء',
+        category: 'lunch', date, time: '14:00', location: 'الرباط',
+        locationCategory: 'home', imageUrl: '', mood: 'comfort',
+        tags: ['Darija'], eatingPace: 'slow', distraction: 'mindful',
+        fullnessLevel: 2, createdAt: Date.now() - 60_000,
+      },
+    ] : [{
       id: 'context-harira', title: 'حريرة Harira', label: 'غداء',
       category: 'lunch', date, time: '12:30', location: 'الرباط',
       locationCategory: 'home', imageUrl: '', mood: 'comfort',
@@ -40,7 +55,7 @@ async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'ref
     }]));
     localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
-  }, { profile, recent, wakeFeeling, partial, recoveredEnergy, correctedSleep });
+  }, { profile, recent, wakeFeeling, partial, recoveredEnergy, correctedSleep, correctedMeal });
 }
 
 for (const viewport of [
@@ -137,6 +152,23 @@ for (const viewport of [
     await expect.poll(() => page.evaluate(() =>
       JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]')[0]?.energyAfter
     )).toBe('sluggish');
+  });
+
+  test(`P0 Guardian does not revive an older rushed-meal suggestion after a calmer meal on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await seed(page, true, 'refreshed', false, false, false, true);
+    await page.goto('/');
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian.getByText('لحظة هدوء بعد وجبتك')).toHaveCount(0);
+    await expect(guardian.getByText('قد تحتاج إلى بعض الراحة اليوم')).toBeVisible();
+    await expect(guardian).not.toContainText(/فشل|عقاب|إنذار|Ghrelin|28%|Überessen/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() =>
+      JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').map((entry: { id: string }) => entry.id)
+    )).toEqual(['older-rushed', 'newer-mindful']);
   });
 
   test(`P0 Guardian still offers optional Arabic care for today's entries on ${viewport.name}`, async ({ page }) => {
