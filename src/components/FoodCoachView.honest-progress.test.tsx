@@ -18,7 +18,7 @@ describe('Arabic Coach empty journal', () => {
     expect(html).toContain('لا توجد ملاحظات عن الشاشات بعد');
     expect(html).toContain('data-testid="coach-goals-summary"');
     expect(html).toContain('0 / 4 مكتملة');
-    expect(html).toContain('لا توجد وجبات مسجلة بعد');
+    expect(html).toContain('لا توجد وجبات مسجلة اليوم بعد');
     expect(html).toContain('دون أي ضغط');
     expect(html).not.toContain('وجبات دون شاشات: 100%');
     expect(html).not.toContain('3/3 وجبات');
