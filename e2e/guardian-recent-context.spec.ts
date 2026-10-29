@@ -6,8 +6,8 @@ const profile = {
   firstPlan: { title: 'Observe', rationale: 'Notice', focusAreas: [], firstStep: 'Capture', phase: 'midday' },
 };
 
-async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'refreshed' = 'exhausted', partial = false) {
-  await page.addInitScript(({ profile, recent, wakeFeeling, partial }) => {
+async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'refreshed' = 'exhausted', partial = false, recoveredEnergy = false) {
+  await page.addInitScript(({ profile, recent, wakeFeeling, partial, recoveredEnergy }) => {
     const now = new Date();
     if (!recent) now.setDate(now.getDate() - 45);
     const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -23,7 +23,10 @@ async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'ref
       tags: ['Darija'], eatingPace: 'rushed', distraction: 'screen',
       fullnessLevel: 2, createdAt: Date.now(),
     }]));
-    localStorage.setItem('nimmapp_checkins_v1', JSON.stringify(partial ? [
+    localStorage.setItem('nimmapp_checkins_v1', JSON.stringify(recoveredEnergy ? [
+      { id: 'energy-earlier', date, time: '12:00', timeOfDay: 'midday', wellbeing: { energyLevel: 1 }, createdAt: Date.now() - 60_000 },
+      { id: 'energy-recovered', date, time: '14:30', timeOfDay: 'midday', wellbeing: { energyLevel: 4 }, createdAt: Date.now() },
+    ] : partial ? [
       { id: 'context-midday', date, time: '13:00', timeOfDay: 'midday', wellbeing: { energyLevel: 4 }, createdAt: Date.now() },
       { id: 'context-sleep', date, time: '08:00', timeOfDay: 'morning', sleep: { durationHours: 5, wakeFeeling: 'refreshed' }, createdAt: Date.now() - 60_000 },
     ] : [{
@@ -33,7 +36,7 @@ async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'ref
     }]));
     localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
-  }, { profile, recent, wakeFeeling, partial });
+  }, { profile, recent, wakeFeeling, partial, recoveredEnergy });
 }
 
 for (const viewport of [
@@ -90,6 +93,26 @@ for (const viewport of [
     await expect.poll(() => page.evaluate(() =>
       JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]').map((entry: { id: string }) => entry.id)
     )).toEqual(['context-midday', 'context-sleep']);
+  });
+
+  test(`P0 Guardian does not repeat stale low-energy advice after recovery on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
+    await seed(page, true, 'refreshed', false, true);
+    await page.goto('/');
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian.getByText('لحظة هدوء بعد وجبتك')).toBeVisible();
+    await expect(guardian.getByText('مساحة صغيرة لاستعادة نشاطك')).toHaveCount(0);
+    await expect(guardian).not.toContainText(/فشل|عقاب|إنذار|Ghrelin|28%/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() =>
+      JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]').map((entry: { id: string }) => entry.id)
+    )).toEqual(['energy-earlier', 'energy-recovered']);
   });
 
   test(`P0 Guardian still offers optional Arabic care for today's entries on ${viewport.name}`, async ({ page }) => {
