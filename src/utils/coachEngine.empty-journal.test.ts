@@ -39,10 +39,10 @@ describe('honest Arabic Coach progress', () => {
   });
 
   it('counts only explicit screen-free observations, not missing fields', () => {
-    const metrics = calculateCoachingMetrics([moment(), moment({ id: 'meal-2', distraction: 'screen' })]);
+    const metrics = calculateCoachingMetrics([moment(), moment({ id: 'meal-2', distraction: 'screen' })], '2026-10-29');
     expect(metrics.screenFreeObservations).toBe(1);
     expect(metrics.screenFreeRatio).toBe(0);
-    const unknown = calculateCoachingMetrics([moment()]);
+    const unknown = calculateCoachingMetrics([moment()], '2026-10-29');
     expect(unknown.screenFreeObservations).toBe(0);
     expect(unknown.screenFreeRatio).toBe(0);
   });
