@@ -133,6 +133,19 @@ export function parseOnboardingWeight(
     ? parsed
     : null;
 }
+export function sanitizeOnboardingWeightInput(value: string): string {
+  return value
+    .replace(/[^0-9\u0660-\u0669\u06F0-\u06F9.,\u066B]/g, "")
+    .slice(0, 6);
+}
+export function getOnboardingWeightSelection(
+  value: string,
+  selection: number | null,
+): number {
+  return sanitizeOnboardingWeightInput(
+    value.slice(0, selection ?? value.length),
+  ).length;
+}
 export function shouldShowVoiceFirstEntry(storage: Pick<Storage, "getItem">) {
   return !storage.getItem(PROFILE_INTRO_KEY);
 }
@@ -174,6 +187,10 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
   const micRef = React.useRef<HTMLButtonElement | null>(null);
   const formRef = React.useRef<HTMLButtonElement | null>(null);
   const goalRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const weightRef = React.useRef<HTMLInputElement | null>(null);
+  const weightSelectionRef = React.useRef<{ start: number; end: number } | null>(
+    null,
+  );
   const returnToFormTriggerRef = React.useRef(false);
   const submitInFlightRef = React.useRef(false);
   const [isOpen, setIsOpen] = React.useState(() => {
@@ -200,6 +217,13 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
   });
   const parsedWeight = parseOnboardingWeight(form.weight);
   const weightInvalid = parsedWeight === null;
+  React.useLayoutEffect(() => {
+    const input = weightRef.current;
+    const selection = weightSelectionRef.current;
+    if (!input || !selection || document.activeElement !== input) return;
+    input.setSelectionRange(selection.start, selection.end);
+    weightSelectionRef.current = null;
+  }, [form.weight]);
   React.useEffect(() => setPortalReady(true), []);
   React.useEffect(() => {
     if (typeof document === "undefined") return;
@@ -435,6 +459,7 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
               {copy.weight}
               <div className="mt-2 flex items-center gap-2">
                 <input
+                  ref={weightRef}
                   data-testid="onboarding-weight"
                   inputMode="decimal"
                   dir="ltr"
@@ -443,20 +468,26 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                   aria-describedby={
                     weightInvalid ? "onboarding-weight-error" : undefined
                   }
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const value = e.currentTarget.value;
+                    weightSelectionRef.current = {
+                      start: getOnboardingWeightSelection(
+                        value,
+                        e.currentTarget.selectionStart,
+                      ),
+                      end: getOnboardingWeightSelection(
+                        value,
+                        e.currentTarget.selectionEnd,
+                      ),
+                    };
                     setForm((current) =>
                       updateOnboardingForm(
                         current,
                         "weight",
-                        e.target.value
-                          .replace(
-                            /[^0-9\u0660-\u0669\u06F0-\u06F9.,\u066B]/g,
-                            "",
-                          )
-                          .slice(0, 6),
+                        sanitizeOnboardingWeightInput(value),
                       ),
-                    )
-                  }
+                    );
+                  }}
                   className="min-h-12 w-full rounded-2xl border border-[#DDD5C9] bg-white px-4 font-medium outline-none focus:border-[#293D34]"
                 />
                 <span className="font-bold text-[#747067]">{copy.kg}</span>
