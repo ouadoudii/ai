@@ -184,26 +184,9 @@ export function evaluateNutritionAlarms(
     });
   }
 
-  const lateDinner = recentMoments.find(m => {
-    const hour = parseInt(m.time?.split(':')[0] || '0', 10);
-    return hour >= 20 && m.fullnessLevel >= 4;
-  });
-
-  if (lateDinner || (currentHour >= 21 && latestMoment?.category === 'dinner' && latestMoment.fullnessLevel >= 4)) {
-    const sourceDinner = lateDinner || latestMoment!;
-    alarms.push({
-      id: `alarm-late-dinner-${sourceDinner.id}`,
-      triggerKey: 'circadian_late_food',
-      severity: 'medium',
-      title: 'وجبة مسائية تستحق لحظة راحة',
-      subtitle: `تناولت «${sourceDinner.title}» في المساء`,
-      archetype,
-      reason: 'مواعيد الطعام تختلف من شخص لآخر. يمكنك ملاحظة ما يجعلك مرتاحًا في المساء دون قواعد صارمة.',
-      recommendation: 'إذا رغبت، استمتع بلحظة هادئة قبل النوم. تناول الطعام مجددًا إذا شعرت بالجوع.',
-      actionableStep: 'استرح بالطريقة التي تناسبك، دون الحاجة إلى تعويض الوجبة.',
-      timestamp: 'هذا المساء',
-    });
-  }
+  // Meal timing and fullness alone are not health alarms. Late family dinners,
+  // Ramadan schedules, and other regional routines can be entirely normal.
+  // Never turn an evening meal into unsolicited corrective guidance.
 
   if (alarms.length === 0) {
     return {
