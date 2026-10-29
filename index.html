@@ -18,24 +18,11 @@
         <section style="max-width:520px;width:100%;background:#fff;border:1px solid #e7e5e4;border-radius:24px;padding:28px;box-shadow:0 14px 40px rgba(57,45,35,.08)">
           <div style="font-size:30px;margin-bottom:8px">◌</div>
           <h1 style="font-size:22px;margin:0 0 8px">يتم تحميل ريثم…</h1>
-          <p id="rhythm-boot-status" style="margin:0;color:#78716c;line-height:1.5">جارٍ تشغيل التطبيق.</p>
+          <p id="rhythm-boot-status" role="status" aria-live="polite" style="margin:0;color:#78716c;line-height:1.5">جارٍ تشغيل التطبيق.</p>
         </section>
       </main>
     </div>
-    <script>
-      window.addEventListener('error', function () {
-        var status = document.getElementById('rhythm-boot-status');
-        if (status) status.textContent = 'تعذر بدء التطبيق. يُرجى تحديث الصفحة والمحاولة مرة أخرى.';
-      });
-      window.addEventListener('unhandledrejection', function () {
-        var status = document.getElementById('rhythm-boot-status');
-        if (status) status.textContent = 'تعذر بدء التطبيق. يُرجى تحديث الصفحة والمحاولة مرة أخرى.';
-      });
-      setTimeout(function () {
-        var status = document.getElementById('rhythm-boot-status');
-        if (status) status.textContent = 'لم يبدأ التطبيق بعد 8 ثوانٍ. يُرجى تحديث الصفحة والمحاولة مرة أخرى.';
-      }, 8000);
-    </script>
+    <script src="/boot-recovery.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
