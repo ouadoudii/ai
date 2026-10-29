@@ -71,6 +71,32 @@ describe('guardian positive Arabic-first experience', () => {
     expect(allVisibleText(status.activeAlarms[0])).not.toMatch(/undefined|NaN|سجّلت undefined|شعورك عند الاستيقاظ: تعب/);
   });
 
+
+  it('keeps an earlier sleep entry when a newer midday check-in omits sleep', () => {
+    const midday = {
+      id: 'midday-no-sleep', date: getLocalDateKey(), timeOfDay: 'midday',
+      wellbeing: { energyLevel: 4 },
+    } as unknown as DailyCheckIn;
+    const sleepOnly = {
+      ...sleepCheckIn, id: 'sleep-only', wellbeing: undefined,
+      sleep: { durationHours: 5, wakeFeeling: 'refreshed' },
+    } as unknown as DailyCheckIn;
+    const status = evaluateNutritionAlarms([], [midday, sleepOnly]);
+    expect(status.activeAlarms.map(alarm => alarm.id)).toContain('alarm-sleep-sleep-only');
+    expect(status.activeAlarms[0].subtitle).toContain('شعورك عند الاستيقاظ: منتعش');
+    expect(allVisibleText(status.activeAlarms[0])).not.toMatch(/undefined|NaN|Ghrelin|28%|فشل|عقاب/);
+  });
+
+  it('accepts a partial sleep check-in without wellbeing or an invented warning', () => {
+    const partial = {
+      id: 'partial-sleep', date: getLocalDateKey(), timeOfDay: 'morning',
+      sleep: { durationHours: 7 }, wellbeing: undefined,
+    } as unknown as DailyCheckIn;
+    const status = evaluateNutritionAlarms([], [partial]);
+    expect(status.activeAlarms).toHaveLength(0);
+    expect(status.statusText).toContain('كل يوم له إيقاعه الخاص');
+  });
+
   it('respects a distracted meal without judging or restricting eating', () => {
     const status = evaluateNutritionAlarms([rushedMeal], []);
     expect(status.activeAlarms).toHaveLength(1);
