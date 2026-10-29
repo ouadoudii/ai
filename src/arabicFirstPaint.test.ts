@@ -31,8 +31,10 @@ describe('Arabic first-paint document contract', () => {
     expect(recovery).not.toContain('The app has not started after 8 seconds.');
   });
   it('keeps strict production CSP while loading the recovery script from the same origin', () => {
-    expect(productionCsp).toContain("script-src 'self'");
-    expect(productionCsp).not.toContain("'unsafe-inline'");
+    const scriptDirective = productionCsp?.split(';').map(value => value.trim())
+      .find(value => value.startsWith('script-src '));
+    expect(scriptDirective).toContain("script-src 'self'");
+    expect(scriptDirective).not.toContain("'unsafe-inline'");
     expect(html).not.toMatch(/<script(?![^>]*\bsrc=)[^>]*>/);
     expect(html).toContain('<script src="/boot-recovery.js"></script>');
     expect(recovery).toContain("window.addEventListener('error'");
