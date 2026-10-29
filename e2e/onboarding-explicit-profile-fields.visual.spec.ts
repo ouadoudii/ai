@@ -2,9 +2,8 @@ import { test, expect, type Locator } from '@playwright/test';
 
 const profileKey = 'rhythm_intro_profile_v1';
 
-// React validates this controlled field on each keystroke. Synchronize with
-// the committed DOM value before sending the next character: a single fill()
-// can race a re-render and leave an empty or partial weight on Android.
+// The native caret must advance with each keystroke even while React updates
+// validation state. Assert both value and selection on Desktop and Android.
 async function typeControlledWeight(weight: Locator, value: string) {
   await weight.fill('');
   await expect(weight).toHaveValue('');
@@ -13,6 +12,7 @@ async function typeControlledWeight(weight: Locator, value: string) {
     await weight.pressSequentially(character);
     typed += character;
     await expect(weight).toHaveValue(typed);
+    await expect.poll(() => weight.evaluate((input: HTMLInputElement) => input.selectionStart)).toBe(typed.length);
   }
 }
 
@@ -69,6 +69,13 @@ test('desktop blocks ambiguous onboarding weight and accepts locale decimal', as
   await expect(page.getByTestId('onboarding-form-save')).toBeDisabled();
   await page.screenshot({ path: 'visual-artifacts/onboarding-invalid-weight-desktop.png', fullPage: true });
   await typeControlledWeight(weight, '72,5');
+  // Deliberate editing at the beginning must remain possible after React
+  // validation updates; fixing the reversed caret must not force append-only.
+  await weight.press('Home');
+  await weight.pressSequentially('8');
+  await expect(weight).toHaveValue('872,5');
+  await weight.press('Backspace');
+  await expect(weight).toHaveValue('72,5');
   await expect(page.getByTestId('onboarding-weight-error')).toBeHidden();
   await expect(page.getByTestId('onboarding-form-save')).toBeEnabled();
 });
