@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getOnboardingWeightSelection, parseOnboardingWeight, PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from '../src/components/VoiceFirstEntryOverlay';
+import { getOnboardingWeightSelection, sanitizeOnboardingWeightInput, parseOnboardingWeight, PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from '../src/components/VoiceFirstEntryOverlay';
 
 describe('quick onboarding form guards', () => {
   it('restores the caret after the first digit without breaking deliberate edits', () => {
@@ -9,6 +9,13 @@ describe('quick onboarding form guards', () => {
     expect(getOnboardingWeightSelection('82', 0, '')).toBe(2);
     expect(getOnboardingWeightSelection('782', 1, '82')).toBe(1);
     expect(getOnboardingWeightSelection('82', 1, '782')).toBe(1);
+  });
+
+  it('sanitizes unsupported characters without reordering Arabic or Persian numerals', () => {
+    expect(sanitizeOnboardingWeightInput('٧٢٫٥')).toBe('٧٢٫٥');
+    expect(sanitizeOnboardingWeightInput('۷۲٫۵')).toBe('۷۲٫۵');
+    expect(sanitizeOnboardingWeightInput(' 72x,5 ')).toBe('72,5');
+    expect(getOnboardingWeightSelection('7x2', 3, '7')).toBe(2);
   });
 
   it('normalizes supported decimal weights and rejects malformed values', () => {
