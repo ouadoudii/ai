@@ -29,6 +29,7 @@ import { SmartInterventionGuardian } from './SmartInterventionGuardian';
 import { askGeminiCoach } from '../apiClient';
 import { buildCoachFollowUps } from '../utils/coachFollowUps';
 import { useLanguage } from '../i18n';
+import { getLocalDateKey } from '../utils/dateKey';
 import { ARABIC_COACH_SUGGESTIONS, ARABIC_COACH_UNAVAILABLE, getArabicCoachWelcome, getArabicCoachSummary, getArabicCoachFocus, getArabicGoalCopy } from '../utils/coachArabicPresentation';
 
 interface FoodCoachViewProps {
@@ -53,10 +54,26 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   prefillQuestion,
 }) => {
   const { language } = useLanguage();
-  const metrics = React.useMemo(() => calculateCoachingMetrics(moments), [moments]);
+  const [localDay, setLocalDay] = React.useState(() => getLocalDateKey());
+  React.useEffect(() => {
+    const refreshLocalDay = () => setLocalDay((previous) => {
+      const current = getLocalDateKey();
+      return previous === current ? previous : current;
+    });
+    // Keep the Coach truthful when a tab stays open across local midnight.
+    const interval = window.setInterval(refreshLocalDay, 60_000);
+    window.addEventListener('focus', refreshLocalDay);
+    document.addEventListener('visibilitychange', refreshLocalDay);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshLocalDay);
+      document.removeEventListener('visibilitychange', refreshLocalDay);
+    };
+  }, []);
+  const metrics = React.useMemo(() => calculateCoachingMetrics(moments, localDay), [moments, localDay]);
   const nutritionProfile = React.useMemo(() => analyzeNutritionType(moments, checkIns), [moments, checkIns]);
-  const arabicFocus = getArabicCoachFocus(moments.length > 0);
-  const goals = React.useMemo(() => deriveDailyCoachingGoals(moments), [moments]);
+  const arabicFocus = getArabicCoachFocus(metrics.todayMomentsCount > 0);
+  const goals = React.useMemo(() => deriveDailyCoachingGoals(moments, localDay), [moments, localDay]);
   const [simulatedScenario, setSimulatedScenario] = React.useState<'sleep' | 'rushed_meal' | 'afternoon_crash' | null>(null);
 
   // Dynamic Guardian evaluation based on real logs + active simulation
@@ -293,7 +310,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
             </h1>
             
             <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
-              {getArabicCoachSummary(metrics, moments.length > 0)}
+              {getArabicCoachSummary(metrics, metrics.todayMomentsCount > 0)}
             </p>
           </div>
 
@@ -451,8 +468,8 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           </div>
 
           <p data-testid="coach-goals-note" className="text-xs text-stone-600 text-center leading-relaxed">
-            {moments.length === 0
-              ? 'لا توجد وجبات مسجلة بعد. ابدأ عندما يناسبك، دون أي ضغط.'
+            {metrics.todayMomentsCount === 0
+              ? 'لا توجد وجبات مسجلة اليوم بعد. ابدأ عندما يناسبك، دون أي ضغط.'
               : 'يُحتسب التقدّم من وجباتك المسجّلة اليوم فقط، ولا حاجة لإكمال كل هدف.'}
           </p>
         </section>
