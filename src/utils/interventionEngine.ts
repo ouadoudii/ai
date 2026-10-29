@@ -51,7 +51,12 @@ export function evaluateNutritionAlarms(
   const todayCheckIns = checkIns.filter(isCurrent);
   // A later midday/evening check-in may omit sleep; use the most recent
   // actual sleep entry rather than treating an omitted field as no sleep data.
-  const latestSleepCheckIn = todayCheckIns.find(checkIn => checkIn.sleep);
+  // Sleep can be corrected later in the day. Use the latest explicit sleep
+  // report, regardless of persisted array order; an unrelated midday check-in
+  // without sleep must not erase the last actual sleep observation.
+  const latestSleepCheckIn = todayCheckIns
+    .filter(checkIn => checkIn.sleep)
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || b.time.localeCompare(a.time))[0];
   const recentMoments = moments.filter(isCurrent).slice(0, 3);
   const currentHour = now.getHours();
 

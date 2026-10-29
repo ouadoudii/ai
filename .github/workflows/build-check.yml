@@ -5,10 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
 
 jobs:
   coverage-guard:
+    if: ${{ github.event_name != 'pull_request' || github.event.action != 'closed' || github.event.pull_request.merged == true }}
     name: Regression coverage guard
     runs-on: ubuntu-latest
     steps:
@@ -25,6 +27,7 @@ jobs:
         run: echo "Coverage guard is enforced before merge on pull requests."
 
   tests:
+    if: ${{ github.event_name != 'pull_request' || github.event.action != 'closed' || github.event.pull_request.merged == true }}
     name: Tests
     runs-on: ubuntu-latest
     steps:
@@ -51,6 +54,7 @@ jobs:
         run: npm test
 
   e2e:
+    if: ${{ github.event_name != 'pull_request' || github.event.action != 'closed' || github.event.pull_request.merged == true }}
     name: E2E
     needs: [coverage-guard, tests]
     runs-on: ubuntu-latest
@@ -88,6 +92,7 @@ jobs:
           retention-days: 14
 
   build:
+    if: ${{ github.event_name != 'pull_request' || github.event.action != 'closed' || github.event.pull_request.merged == true }}
     name: Production build
     needs: [coverage-guard, tests, e2e]
     runs-on: ubuntu-latest
