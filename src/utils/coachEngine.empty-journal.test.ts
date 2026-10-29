@@ -23,6 +23,21 @@ describe('honest Arabic Coach progress', () => {
     expect(INITIAL_COACHING_GOALS.every((goal) => goal.current === 0 && !goal.completed)).toBe(true);
   });
 
+  it('does not carry yesterday’s Coach progress into a new local day', () => {
+    const meals = [moment({ hungerLevel: 3, distraction: 'mindful', fullnessLevel: 4 })];
+    const yesterday = calculateCoachingMetrics(meals, '2026-10-29');
+    expect(yesterday.todayMomentsCount).toBe(1);
+    expect(yesterday.screenFreeRatio).toBe(100);
+    const nextDay = calculateCoachingMetrics(meals, '2026-10-30');
+    expect(nextDay.todayMomentsCount).toBe(0);
+    expect(nextDay.screenFreeRatio).toBe(0);
+    expect(nextDay.screenFreeObservations).toBe(0);
+    expect(nextDay.mindfulScore).toBe(0);
+    expect(nextDay.satietyBalanceScore).toBe(0);
+    expect(deriveDailyCoachingGoals(meals, '2026-10-30').every((goal) => goal.current === 0)).toBe(true);
+    expect(meals).toHaveLength(1);
+  });
+
   it('counts only explicit screen-free observations, not missing fields', () => {
     const metrics = calculateCoachingMetrics([moment(), moment({ id: 'meal-2', distraction: 'screen' })]);
     expect(metrics.screenFreeObservations).toBe(1);
