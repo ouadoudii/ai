@@ -57,7 +57,15 @@ export function evaluateNutritionAlarms(
   const latestSleepCheckIn = todayCheckIns
     .filter(checkIn => checkIn.sleep)
     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || b.time.localeCompare(a.time))[0];
-  const recentMoments = moments.filter(isCurrent).slice(0, 3);
+  // Imported and edited meal histories are not guaranteed newest-first.
+  // Use the meal's actual local time when both entries have one, rather than
+  // storage order or a later backfill timestamp. Keep legacy records safe by
+  // falling back to creation time, and never mutate the journal array.
+  const recentMoments = moments.filter(isCurrent).sort((a, b) => {
+    const recordedOrder = /^\d{2}:\d{2}$/.test(a.time || '') && /^\d{2}:\d{2}$/.test(b.time || '')
+      ? b.time.localeCompare(a.time) : 0;
+    return recordedOrder || (b.createdAt || 0) - (a.createdAt || 0);
+  }).slice(0, 3);
   const currentHour = now.getHours();
 
   if (latestSleepCheckIn?.sleep) {
