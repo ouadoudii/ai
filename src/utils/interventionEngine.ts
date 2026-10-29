@@ -49,12 +49,14 @@ export function evaluateNutritionAlarms(
   const isCurrent = (entry: { id: string; date: string }) =>
     entry.date === today || (entry.id.startsWith('sim-') && entry.date === 'Heute');
   const todayCheckIns = checkIns.filter(isCurrent);
-  const latestCheckIn = todayCheckIns[0];
+  // A later midday/evening check-in may omit sleep; use the most recent
+  // actual sleep entry rather than treating an omitted field as no sleep data.
+  const latestSleepCheckIn = todayCheckIns.find(checkIn => checkIn.sleep);
   const recentMoments = moments.filter(isCurrent).slice(0, 3);
   const currentHour = now.getHours();
 
-  if (latestCheckIn?.sleep) {
-    const { durationHours, wakeFeeling, quality } = latestCheckIn.sleep;
+  if (latestSleepCheckIn?.sleep) {
+    const { durationHours, wakeFeeling, quality } = latestSleepCheckIn.sleep;
     if (durationHours < 6 || wakeFeeling === 'exhausted' || quality <= 2) {
       // Reflect the person's actual check-in, not an inferred feeling of fatigue.
       // Sleep fields are optional; never display "undefined hours" for a
@@ -84,7 +86,7 @@ export function evaluateNutritionAlarms(
       }
 
       alarms.push({
-        id: `alarm-sleep-${latestCheckIn.id}`,
+        id: `alarm-sleep-${latestSleepCheckIn.id}`,
         triggerKey: 'sleep_deficit',
         severity: 'high',
         title: 'قد تحتاج إلى بعض الراحة اليوم',
@@ -122,7 +124,7 @@ export function evaluateNutritionAlarms(
   }
 
   const isAfternoon = currentHour >= 13 && currentHour <= 17;
-  const lowEnergyCheckIn = todayCheckIns.find(c => c.wellbeing.energyLevel !== undefined && c.wellbeing.energyLevel <= 2);
+  const lowEnergyCheckIn = todayCheckIns.find(c => typeof c.wellbeing?.energyLevel === 'number' && c.wellbeing.energyLevel <= 2);
   const lowEnergyMoment = recentMoments.find(m => m.energyAfter === 'sluggish');
 
   if (isAfternoon && (lowEnergyCheckIn || lowEnergyMoment)) {

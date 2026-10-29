@@ -6,8 +6,8 @@ const profile = {
   firstPlan: { title: 'Observe', rationale: 'Notice', focusAreas: [], firstStep: 'Capture', phase: 'midday' },
 };
 
-async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'refreshed' = 'exhausted') {
-  await page.addInitScript(({ profile, recent, wakeFeeling }) => {
+async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'refreshed' = 'exhausted', partial = false) {
+  await page.addInitScript(({ profile, recent, wakeFeeling, partial }) => {
     const now = new Date();
     if (!recent) now.setDate(now.getDate() - 45);
     const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -23,14 +23,17 @@ async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'ref
       tags: ['Darija'], eatingPace: 'rushed', distraction: 'screen',
       fullnessLevel: 2, createdAt: Date.now(),
     }]));
-    localStorage.setItem('nimmapp_checkins_v1', JSON.stringify([{
+    localStorage.setItem('nimmapp_checkins_v1', JSON.stringify(partial ? [
+      { id: 'context-midday', date, time: '13:00', timeOfDay: 'midday', wellbeing: { energyLevel: 4 }, createdAt: Date.now() },
+      { id: 'context-sleep', date, time: '08:00', timeOfDay: 'morning', sleep: { durationHours: 5, wakeFeeling: 'refreshed' }, createdAt: Date.now() - 60_000 },
+    ] : [{
       id: 'context-sleep', date, time: '08:00', timeOfDay: 'morning',
       sleep: { durationHours: 5, ...(wakeFeeling === 'exhausted' ? { quality: 2 } : {}), wakeFeeling },
       wellbeing: { energyLevel: 1 }, createdAt: Date.now(),
     }]));
     localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
-  }, { profile, recent, wakeFeeling });
+  }, { profile, recent, wakeFeeling, partial });
 }
 
 for (const viewport of [
@@ -68,6 +71,25 @@ for (const viewport of [
     await expect(guardian.getByRole('status')).toContainText('أفكار يمكنك تجاهلها');
     await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
     await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ }).first()).toBeVisible();
+  });
+
+
+  test(`P0 Guardian keeps a partial morning sleep check-in after a newer midday entry on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await seed(page, true, 'refreshed', true);
+    await page.goto('/');
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian.getByText('قد تحتاج إلى بعض الراحة اليوم')).toBeVisible();
+    await expect(guardian.getByText(/شعورك عند الاستيقاظ: منتعش/)).toBeVisible();
+    await expect(guardian.getByRole('status')).toContainText('أفكار يمكنك تجاهلها');
+    await expect(guardian).not.toContainText(/undefined|NaN|Ghrelin|28%|فشل|عقاب/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() =>
+      JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]').map((entry: { id: string }) => entry.id)
+    )).toEqual(['context-midday', 'context-sleep']);
   });
 
   test(`P0 Guardian still offers optional Arabic care for today's entries on ${viewport.name}`, async ({ page }) => {
