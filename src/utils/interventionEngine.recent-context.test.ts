@@ -137,6 +137,38 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(suggestions[0].reason).not.toMatch(/فشل|عقاب|إنذار/);
   });
 
+  it('does not judge an evening family meal by its time or fullness', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T22:15:00'));
+    const today = getLocalDateKey();
+    const dinner = {
+      ...moment(today, 'family-couscous'), title: 'كسكس مع العائلة',
+      category: 'dinner' as const, time: '21:30', fullnessLevel: 5,
+      eatingPace: 'slow' as const, distraction: 'mindful' as const,
+      energyAfter: 'neutral' as const,
+    };
+    const history = [dinner];
+    const result = evaluateNutritionAlarms(history, []);
+    expect(result.activeAlarms).toEqual([]);
+    expect(result.hasAlarms).toBe(false);
+    expect(result.statusBadge).toBe('green');
+    expect(result.statusText).toContain('بلطف');
+    expect(result.statusText).not.toMatch(/فشل|عقاب|إنذار|كُفّ|Überessen|Küchenschluss/);
+    expect(history).toEqual([dinner]);
+  });
+
+  it('keeps optional, non-shaming care for a rushed evening meal without timing judgments', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T22:15:00'));
+    const today = getLocalDateKey();
+    const dinner = { ...moment(today, 'rushed-dinner'), time: '21:30', fullnessLevel: 5 };
+    const result = evaluateNutritionAlarms([dinner], []);
+    expect(result.activeAlarms.map(a => a.triggerKey)).toEqual(['distracted_meal']);
+    expect(result.activeAlarms[0].title).toBe('لحظة هدوء بعد وجبتك');
+    expect(result.activeAlarms[0].reason).not.toMatch(/فشل|عقاب|إنذار|Überessen|Küchenschluss/);
+    expect(result.statusBadge).toBe('amber');
+  });
+
   it('does not mistake a low-energy entry from another day for an afternoon prompt', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-28T15:00:00'));
