@@ -119,6 +119,21 @@ describe('guardian positive Arabic-first experience', () => {
         expect(status.statusText).toContain('كل يوم له إيقاعه الخاص');
       }
 
+      // A meal logged as sluggish before recovery is older context, not a
+      // reason to repeat the same energy prompt after the person's update.
+      const earlierSluggishMeal = {
+        ...rushedMeal, id: 'sluggish-before-recovery', time: '12:30', createdAt: 1,
+        eatingPace: 'slow', distraction: 'mindful', energyAfter: 'sluggish',
+      } as FoodMoment;
+      const recoveredWithMeal = evaluateNutritionAlarms([earlierSluggishMeal], [recovered, low]);
+      expect(recoveredWithMeal.activeAlarms.some(alarm => alarm.triggerKey === 'afternoon_crash')).toBe(false);
+
+      // A genuinely newer sluggish meal still deserves an optional suggestion.
+      const newerSluggishMeal = { ...earlierSluggishMeal, id: 'sluggish-after-recovery', time: '15:15', createdAt: 3 };
+      const newMoment = evaluateNutritionAlarms([newerSluggishMeal], [recovered, low]);
+      expect(newMoment.activeAlarms.some(alarm => alarm.id === 'alarm-afternoon-crash-moment-sluggish-after-recovery')).toBe(true);
+      expect(allVisibleText(newMoment.activeAlarms[0])).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
+
       const latestLow = { ...recovered, id: 'energy-new-low', createdAt: 3, wellbeing: { energyLevel: 2 } };
       const active = evaluateNutritionAlarms([], [low, recovered, latestLow]);
       expect(active.activeAlarms.some(alarm => alarm.id === 'alarm-afternoon-crash-checkin-energy-new-low')).toBe(true);
