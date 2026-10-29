@@ -20,9 +20,10 @@ function validCheckIn(value: unknown): value is DailyCheckIn {
   if (!isObject(value)) return false;
   if (typeof value.id !== 'string' || typeof value.date !== 'string' || typeof value.time !== 'string') return false;
   if (!['morning', 'midday', 'evening'].includes(String(value.timeOfDay))) return false;
-  // DailyCheckIn wellbeing fields are intentionally optional: voice-only and other
-  // partial check-ins are legitimate persisted history and must survive startup.
-  return isObject(value.wellbeing);
+  // A check-in can contain sleep, food or wellbeing independently. Reject empty
+  // or malformed records, but never erase a legitimate sleep-only morning entry
+  // just because its wellbeing section was intentionally left unanswered.
+  return isObject(value.wellbeing) || isObject(value.sleep) || isObject(value.food);
 }
 
 function readValidatedArray<T>(keys: string[], validator: (value: unknown) => value is T): T[] {
