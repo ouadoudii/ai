@@ -155,6 +155,16 @@ export function getOnboardingWeightSelection(
     value.slice(0, selection ?? value.length),
   ).length;
 }
+export function resolveOnboardingWeightSelectionBeforeInput(
+  tracked: { start: number | null; end: number | null } | null,
+  reportedStart: number | null,
+  reportedEnd: number | null,
+): { start: number | null; end: number | null } {
+  return {
+    start: tracked?.start ?? reportedStart,
+    end: tracked?.end ?? reportedEnd,
+  };
+}
 export function reconcileOnboardingWeightInput(
   previousValue: string,
   rawValue: string,
@@ -230,6 +240,10 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
   const goalRef = React.useRef<HTMLTextAreaElement | null>(null);
   const weightBeforeInputRef = React.useRef<{
     value: string;
+    start: number | null;
+    end: number | null;
+  } | null>(null);
+  const weightSelectionRef = React.useRef<{
     start: number | null;
     end: number | null;
   } | null>(null);
@@ -502,12 +516,32 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                   aria-describedby={
                     weightInvalid ? "onboarding-weight-error" : undefined
                   }
-                  onBeforeInput={(e) => {
+                  onFocus={(e) => {
                     const input = e.currentTarget;
-                    weightBeforeInputRef.current = {
-                      value: input.value,
+                    weightSelectionRef.current = {
                       start: input.selectionStart,
                       end: input.selectionEnd,
+                    };
+                  }}
+                  onSelect={(e) => {
+                    const input = e.currentTarget;
+                    weightSelectionRef.current = {
+                      start: input.selectionStart,
+                      end: input.selectionEnd,
+                    };
+                  }}
+                  onBeforeInput={(e) => {
+                    const input = e.currentTarget;
+                    const selection =
+                      resolveOnboardingWeightSelectionBeforeInput(
+                        weightSelectionRef.current,
+                        input.selectionStart,
+                        input.selectionEnd,
+                      );
+                    weightBeforeInputRef.current = {
+                      value: input.value,
+                      start: selection.start,
+                      end: selection.end,
                     };
                   }}
                   onChange={(e) => {
@@ -532,6 +566,10 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                       reconciled.selection,
                       reconciled.selection,
                     );
+                    weightSelectionRef.current = {
+                      start: reconciled.selection,
+                      end: reconciled.selection,
+                    };
                     setForm((current) =>
                       updateOnboardingForm(
                         current,
