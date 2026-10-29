@@ -80,6 +80,40 @@ describe('persisted storage validation', () => {
     ]);
   });
 
+  it('keeps a sleep-only morning entry alongside a newer wellbeing-only midday entry', () => {
+    const midday = {
+      id: 'context-midday', date: '2026-10-29', time: '13:00', timeOfDay: 'midday',
+      wellbeing: { energyLevel: 4 }, createdAt: 2,
+    };
+    const morning = {
+      id: 'context-sleep', date: '2026-10-29', time: '08:00', timeOfDay: 'morning',
+      sleep: { durationHours: 5, wakeFeeling: 'refreshed' }, createdAt: 1,
+    };
+    localStorage.setItem(MIGRATION_KEY, 'done');
+    localStorage.setItem(CHECKINS_KEY, JSON.stringify([midday, morning]));
+
+    migrateLegacyStorage();
+
+    expect(loadPersistedCheckIns()).toEqual([midday, morning]);
+    expect(JSON.parse(localStorage.getItem(CHECKINS_KEY) || '[]')).toEqual([midday, morning]);
+    // A second startup must not silently delete either valid partial entry.
+    migrateLegacyStorage();
+    expect(loadPersistedCheckIns()).toEqual([midday, morning]);
+  });
+
+  it('accepts food-only check-ins but rejects records without any check-in section', () => {
+    const foodOnly = {
+      id: 'food-only', date: '2026-10-29', time: '12:00', timeOfDay: 'midday',
+      food: { mealTitle: 'حريرة', category: 'lunch' },
+    };
+    const empty = { id: 'empty', date: '2026-10-29', time: '12:00', timeOfDay: 'midday' };
+    localStorage.setItem(CHECKINS_KEY, JSON.stringify([foodOnly, empty]));
+
+    expect(loadPersistedCheckIns()).toEqual([foodOnly]);
+    migrateLegacyStorage();
+    expect(loadPersistedCheckIns()).toEqual([foodOnly]);
+  });
+
   it('preserves legitimate sparse voice-only check-ins', () => {
     const voiceOnly = {
       id: 'voice-midday',
