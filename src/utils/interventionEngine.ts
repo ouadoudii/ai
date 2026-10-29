@@ -124,8 +124,28 @@ export function evaluateNutritionAlarms(
   }
 
   const isAfternoon = currentHour >= 13 && currentHour <= 17;
-  const lowEnergyCheckIn = todayCheckIns.find(c => typeof c.wellbeing?.energyLevel === 'number' && c.wellbeing.energyLevel <= 2);
-  const lowEnergyMoment = recentMoments.find(m => m.energyAfter === 'sluggish');
+  // The latest explicit energy check-in is the person's current report. An
+  // earlier low-energy entry must not keep prompting after they feel better.
+  // Sort a copy because imported/persisted history is not guaranteed newest-first.
+  const latestEnergyCheckIn = todayCheckIns
+    .filter(c => typeof c.wellbeing?.energyLevel === 'number' && Number.isFinite(c.wellbeing.energyLevel))
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || b.time.localeCompare(a.time))[0];
+  const lowEnergyCheckIn = latestEnergyCheckIn && latestEnergyCheckIn.wellbeing.energyLevel! <= 2
+    ? latestEnergyCheckIn : undefined;
+  // A meal's earlier sluggish feeling should not override a later, explicit
+  // report that energy has recovered. Preserve guidance when the sluggish
+  // meal happened after the check-in instead. Use recorded local times when
+  // available, falling back to creation timestamps for legacy entries.
+  const recoveredAfterMoment = (moment: FoodMoment) => {
+    if (!latestEnergyCheckIn || latestEnergyCheckIn.wellbeing.energyLevel! <= 2) return false;
+    const checkInTime = latestEnergyCheckIn.time;
+    if (/^\d{2}:\d{2}$/.test(checkInTime || '') && /^\d{2}:\d{2}$/.test(moment.time || '')) {
+      return checkInTime > moment.time;
+    }
+    return Number.isFinite(latestEnergyCheckIn.createdAt) && Number.isFinite(moment.createdAt)
+      && latestEnergyCheckIn.createdAt >= moment.createdAt;
+  };
+  const lowEnergyMoment = recentMoments.find(m => m.energyAfter === 'sluggish' && !recoveredAfterMoment(m));
 
   if (isAfternoon && (lowEnergyCheckIn || lowEnergyMoment)) {
     let archetypeAdvice = '';

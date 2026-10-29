@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getOnboardingWeightSelection, reconcileOnboardingWeightInput, sanitizeOnboardingWeightInput, parseOnboardingWeight, PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from '../src/components/VoiceFirstEntryOverlay';
+import { getOnboardingWeightSelection, reconcileOnboardingWeightInput, resolveOnboardingWeightSelectionBeforeInput, sanitizeOnboardingWeightInput, parseOnboardingWeight, PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from '../src/components/VoiceFirstEntryOverlay';
 
 describe('quick onboarding form guards', () => {
   it('restores the caret after the first digit without breaking deliberate edits', () => {
@@ -9,6 +9,26 @@ describe('quick onboarding form guards', () => {
     expect(getOnboardingWeightSelection('82', 0, '')).toBe(2);
     expect(getOnboardingWeightSelection('782', 1, '82')).toBe(1);
     expect(getOnboardingWeightSelection('82', 1, '782')).toBe(1);
+  });
+
+  it('prefers the last real caret selection over a stale beforeinput report', () => {
+    expect(
+      resolveOnboardingWeightSelectionBeforeInput(
+        { start: 1, end: 1 },
+        0,
+        0,
+      ),
+    ).toEqual({ start: 1, end: 1 });
+    expect(
+      resolveOnboardingWeightSelectionBeforeInput(
+        { start: 0, end: 0 },
+        0,
+        0,
+      ),
+    ).toEqual({ start: 0, end: 0 });
+    expect(
+      reconcileOnboardingWeightInput('8', '28', 'insertText', '2', 1, 1),
+    ).toEqual({ value: '82', selection: 2 });
   });
 
   it('reconstructs RTL digit insertion from the pre-input caret and preserves Home edits', () => {
