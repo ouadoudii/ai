@@ -17,10 +17,10 @@ import {
   Sun,
   Utensils
 } from 'lucide-react';
-import { FoodMoment, CoachingGoal, CoachChatMessage, DailyCheckIn } from '../types';
+import { FoodMoment, CoachChatMessage, DailyCheckIn } from '../types';
 import { 
   calculateCoachingMetrics, 
-  INITIAL_COACHING_GOALS 
+  deriveDailyCoachingGoals 
 } from '../utils/coachEngine';
 import { analyzeNutritionType } from '../utils/nutritionTypeEngine';
 import { evaluateNutritionAlarms, GuardianStatus } from '../utils/interventionEngine';
@@ -56,7 +56,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   const metrics = React.useMemo(() => calculateCoachingMetrics(moments), [moments]);
   const nutritionProfile = React.useMemo(() => analyzeNutritionType(moments, checkIns), [moments, checkIns]);
   const arabicFocus = getArabicCoachFocus(moments.length > 0);
-  const [goals, setGoals] = React.useState<CoachingGoal[]>(INITIAL_COACHING_GOALS);
+  const goals = React.useMemo(() => deriveDailyCoachingGoals(moments), [moments]);
   const [simulatedScenario, setSimulatedScenario] = React.useState<'sleep' | 'rushed_meal' | 'afternoon_crash' | null>(null);
 
   // Dynamic Guardian evaluation based on real logs + active simulation
@@ -173,22 +173,6 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
     const frame = requestAnimationFrame(() => composerRef.current?.scrollIntoView({ block: 'center' }));
     return () => cancelAnimationFrame(frame);
   }, [prefillQuestion]);
-
-  const toggleGoal = (goalId: string) => {
-    setGoals((prev) =>
-      prev.map((g) => {
-        if (g.id === goalId) {
-          const nextCompleted = !g.completed;
-          return {
-            ...g,
-            completed: nextCompleted,
-            current: nextCompleted ? g.target : Math.max(0, g.target - 1),
-          };
-        }
-        return g;
-      })
-    );
-  };
 
   const handleSendMessage = (textToSend?: string) => {
     const query = textToSend || inputQuery.trim();
@@ -345,7 +329,11 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
               <Eye className="w-4 h-4" />
             </div>
             <div>
-              <span className="font-semibold text-stone-800 block">وجبات دون شاشات: {metrics.screenFreeRatio}%</span>
+              <span data-testid="coach-screen-free-metric" className="font-semibold text-stone-800 block">
+                {metrics.screenFreeObservations > 0
+                  ? `وجبات دون شاشات: ${metrics.screenFreeRatio}%`
+                  : 'لا توجد ملاحظات عن الشاشات بعد'}
+              </span>
               <span className="text-stone-500 text-[11px]">تناول الطعام بوعي</span>
             </div>
           </div>
@@ -414,7 +402,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
         </section>
 
         {/* Card 2: Interactive Coaching Goals (Habits) */}
-        <section className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-xs space-y-4">
+        <section data-testid="coach-goals-section" className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-stone-100 pb-3">
             <div>
               <span className="text-xs font-semibold text-amber-600 block">عاداتك اليومية</span>
@@ -422,7 +410,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
                 أهداف اليوم
               </h3>
             </div>
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+            <span data-testid="coach-goals-summary" aria-live="polite" className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
               {goals.filter((g) => g.completed).length} / {goals.length} مكتملة
             </span>
           </div>
@@ -431,24 +419,19 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
             {goals.map((goal) => (
               <div
                 key={goal.id}
-                onClick={() => toggleGoal(goal.id)}
-                className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                data-testid={`coach-goal-${goal.id}`}
+                className={`p-3 rounded-2xl border flex items-start gap-3 ${
                   goal.completed
                     ? 'bg-emerald-50/50 border-emerald-200/70 text-stone-900'
                     : 'bg-stone-50 border-stone-200/80 hover:bg-stone-100/80 text-stone-800'
                 }`}
               >
-                <button
-                  type="button"
-                  aria-label="تغيير حالة الهدف"
-                  className={`mt-0.5 p-1 rounded-lg transition-colors ${
-                    goal.completed
-                      ? 'bg-emerald-500 text-white'
-                      : 'border border-stone-300 text-transparent hover:border-amber-500'
-                  }`}
+                <span
+                  aria-hidden="true"
+                  className={`mt-0.5 p-1 rounded-lg ${goal.completed ? 'bg-emerald-500 text-white' : 'border border-stone-300 text-stone-500'}`}
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                </button>
+                </span>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
@@ -467,8 +450,10 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
             ))}
           </div>
 
-          <p className="text-[11px] text-stone-400 text-center italic">
-            اضغط على أي هدف لتحديث تقدمك اليوم.
+          <p data-testid="coach-goals-note" className="text-xs text-stone-600 text-center leading-relaxed">
+            {moments.length === 0
+              ? 'لا توجد وجبات مسجلة بعد. ابدأ عندما يناسبك، دون أي ضغط.'
+              : 'يُحتسب التقدّم من وجباتك المسجّلة اليوم فقط، ولا حاجة لإكمال كل هدف.'}
           </p>
         </section>
 
