@@ -21,7 +21,7 @@ async function seed(page: Page, recent: boolean, wakeFeeling: 'exhausted' | 'ref
       category: 'lunch', date, time: '12:30', location: 'الرباط',
       locationCategory: 'home', imageUrl: '', mood: 'comfort',
       tags: ['Darija'], eatingPace: 'rushed', distraction: 'screen',
-      fullnessLevel: 2, createdAt: Date.now(),
+      fullnessLevel: 2, energyAfter: recoveredEnergy ? 'sluggish' : undefined, createdAt: Date.now(),
     }]));
     localStorage.setItem('nimmapp_checkins_v1', JSON.stringify(recoveredEnergy ? [
       { id: 'energy-earlier', date, time: '12:00', timeOfDay: 'midday', wellbeing: { energyLevel: 1 }, createdAt: Date.now() - 60_000 },
@@ -113,6 +113,9 @@ for (const viewport of [
     await expect.poll(() => page.evaluate(() =>
       JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]').map((entry: { id: string }) => entry.id)
     )).toEqual(['energy-earlier', 'energy-recovered']);
+    await expect.poll(() => page.evaluate(() =>
+      JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]')[0]?.energyAfter
+    )).toBe('sluggish');
   });
 
   test(`P0 Guardian still offers optional Arabic care for today's entries on ${viewport.name}`, async ({ page }) => {
