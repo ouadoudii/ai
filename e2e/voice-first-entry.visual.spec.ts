@@ -102,7 +102,17 @@ test('quick form persists context and unlocks the app',async({page})=>{
   await weight.focus();
   await weight.pressSequentially('8');
   await expect(weight).toHaveValue('8');
+  // A stale zero caret on the first controlled-input render reverses 82 to 28.
+  // Assert the real cursor position on both desktop and Android before typing 2.
+  await expect.poll(() => weight.evaluate((input: HTMLInputElement) => input.selectionStart)).toBe(1);
   await weight.pressSequentially('2');
+  await expect(weight).toHaveValue('82');
+  await expect.poll(() => weight.evaluate((input: HTMLInputElement) => input.selectionStart)).toBe(2);
+  // Editing at the start must remain possible: the guard is only for an empty field.
+  await weight.press('Home');
+  await weight.pressSequentially('7');
+  await expect(weight).toHaveValue('782');
+  await weight.press('Backspace');
   await expect(weight).toHaveValue('82');
   await page.getByTestId('onboarding-hunger').fill('4');
   await page.getByTestId('onboarding-energy').fill('2');

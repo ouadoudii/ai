@@ -141,7 +141,16 @@ export function sanitizeOnboardingWeightInput(value: string): string {
 export function getOnboardingWeightSelection(
   value: string,
   selection: number | null,
+  previousValue = "",
 ): number {
+  const sanitized = sanitizeOnboardingWeightInput(value);
+  // Chromium can report selectionStart=0 for the first input event in a
+  // freshly focused controlled field. Restoring that stale position would
+  // put the next digit before the first (82 becomes 28), even with dir=ltr.
+  // Only correct this initial insertion; preserve deliberate edits later.
+  if (!previousValue && sanitized && selection === 0) {
+    return sanitized.length;
+  }
   return sanitizeOnboardingWeightInput(
     value.slice(0, selection ?? value.length),
   ).length;
@@ -474,10 +483,12 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                       start: getOnboardingWeightSelection(
                         value,
                         e.currentTarget.selectionStart,
+                        form.weight,
                       ),
                       end: getOnboardingWeightSelection(
                         value,
                         e.currentTarget.selectionEnd,
+                        form.weight,
                       ),
                     };
                     setForm((current) =>
