@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { evaluateNutritionAlarms } from '../src/utils/interventionEngine';
 import type { DailyCheckIn, FoodMoment } from '../src/types';
 import { getGuardianCopy } from '../src/utils/guardianLocalization';
@@ -95,6 +95,37 @@ describe('guardian positive Arabic-first experience', () => {
     const status = evaluateNutritionAlarms([], [partial]);
     expect(status.activeAlarms).toHaveLength(0);
     expect(status.statusText).toContain('كل يوم له إيقاعه الخاص');
+  });
+
+  it('respects a later recovered-energy check-in even when history is unsorted', () => {
+    vi.useFakeTimers();
+    try {
+      const afternoon = new Date();
+      afternoon.setHours(15, 0, 0, 0);
+      vi.setSystemTime(afternoon);
+      const date = getLocalDateKey();
+      const low = {
+        id: 'energy-earlier', date, time: '12:00', timeOfDay: 'midday', createdAt: 1,
+        wellbeing: { energyLevel: 1 },
+      } as DailyCheckIn;
+      const recovered = {
+        id: 'energy-recovered', date, time: '14:30', timeOfDay: 'midday', createdAt: 2,
+        wellbeing: { energyLevel: 4 },
+      } as DailyCheckIn;
+
+      for (const history of [[low, recovered], [recovered, low]]) {
+        const status = evaluateNutritionAlarms([], history);
+        expect(status.activeAlarms.some(alarm => alarm.triggerKey === 'afternoon_crash')).toBe(false);
+        expect(status.statusText).toContain('كل يوم له إيقاعه الخاص');
+      }
+
+      const latestLow = { ...recovered, id: 'energy-new-low', createdAt: 3, wellbeing: { energyLevel: 2 } };
+      const active = evaluateNutritionAlarms([], [low, recovered, latestLow]);
+      expect(active.activeAlarms.some(alarm => alarm.id === 'alarm-afternoon-crash-checkin-energy-new-low')).toBe(true);
+      expect(allVisibleText(active.activeAlarms[0])).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('respects a distracted meal without judging or restricting eating', () => {
