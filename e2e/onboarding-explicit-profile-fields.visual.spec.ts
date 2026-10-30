@@ -91,3 +91,25 @@ test('mobile rejects malformed onboarding weight without saving profile', async 
   expect(await page.evaluate(key => localStorage.getItem(key), profileKey)).toBeNull();
   await page.screenshot({ path: 'visual-artifacts/onboarding-invalid-weight-mobile.png', fullPage: true });
 });
+
+test('Arabic RTL quick form keeps logical weight digits on desktop and mobile', async ({ page }) => {
+  await seedNewUser(page, 'ar');
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await page.getByTestId('voice-first-entry-form').click();
+  await page.getByTestId('onboarding-goal').fill('أريد فهم عاداتي بهدوء');
+  const weight = page.getByTestId('onboarding-weight');
+  await weight.focus();
+  await weight.pressSequentially('8');
+  await expect(weight).toHaveValue('8');
+  await expect.poll(() => weight.evaluate((input: HTMLInputElement) => input.selectionStart)).toBe(1);
+  await weight.pressSequentially('2');
+  await expect(weight).toHaveValue('82');
+  await expect.poll(() => weight.evaluate((input: HTMLInputElement) => input.selectionStart)).toBe(2);
+  await weight.press('Home');
+  await weight.pressSequentially('7');
+  await expect(weight).toHaveValue('782');
+  await weight.press('Backspace');
+  await expect(weight).toHaveValue('82');
+  await expect(page.getByTestId('onboarding-form-save')).toBeEnabled();
+});
