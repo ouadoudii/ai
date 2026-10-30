@@ -29,6 +29,22 @@ describe('quick onboarding form guards', () => {
     expect(
       reconcileOnboardingWeightInput('8', '28', 'insertText', '2', 1, 1),
     ).toEqual({ value: '82', selection: 2 });
+    // Reproduces the CI race: stale onSelect=0 while the actual native
+    // selection has already advanced to 1 after the first digit.
+    const caret = resolveOnboardingWeightSelectionBeforeInput(
+      { start: 0, end: 0 },
+      1,
+      1,
+    );
+    expect(caret).toEqual({ start: 1, end: 1 });
+    expect(
+      reconcileOnboardingWeightInput('8', '28', 'insertText', '2', caret.start, caret.end),
+    ).toEqual({ value: '82', selection: 2 });
+    // Intentional Home navigation remains a start-of-string insertion.
+    expect(resolveOnboardingWeightSelectionBeforeInput({ start: 0, end: 0 }, 0, 0))
+      .toEqual({ start: 0, end: 0 });
+    expect(reconcileOnboardingWeightInput('82', '782', 'insertText', '7', 0, 0))
+      .toEqual({ value: '782', selection: 1 });
   });
 
   it('reconstructs RTL digit insertion from the pre-input caret and preserves Home edits', () => {
