@@ -558,7 +558,7 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                       e.ctrlKey ||
                       e.altKey ||
                       e.metaKey ||
-                      e.isComposing
+                      e.nativeEvent.isComposing
                     ) return;
                     const input = e.currentTarget;
                     weightBeforeInputRef.current = {
