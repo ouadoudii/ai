@@ -6,6 +6,7 @@ import {
   getArabicCoachSummary,
   getArabicCoachWelcome,
   getArabicGoalCopy,
+  formatObservedMealSignals,
 } from './coachArabicPresentation';
 import { INITIAL_COACHING_GOALS } from './coachEngine';
 
@@ -18,9 +19,9 @@ describe('Arabic-only coach presentation', () => {
   });
 
   it('keeps evidence-based summaries Arabic in every metric branch', () => {
-    const good = { satietyBalanceScore: 90, screenFreeRatio: 90 };
-    const lowSatiety = { satietyBalanceScore: 60, screenFreeRatio: 90 };
-    const highScreen = { satietyBalanceScore: 90, screenFreeRatio: 30 };
+    const good = { satietyBalanceScore: 90, satietyObservations: 2, screenFreeRatio: 90, screenFreeObservations: 2 };
+    const lowSatiety = { satietyBalanceScore: 60, satietyObservations: 2, screenFreeRatio: 90, screenFreeObservations: 2 };
+    const highScreen = { satietyBalanceScore: 90, satietyObservations: 2, screenFreeRatio: 30, screenFreeObservations: 2 };
     for (const message of [
       getArabicCoachSummary(good, false),
       getArabicCoachSummary(good, true),
@@ -35,6 +36,13 @@ describe('Arabic-only coach presentation', () => {
       expect(message).not.toMatch(/[A-Za-zÄÖÜäöüß]/);
     }
     expect(getArabicCoachSummary(lowSatiety, true)).not.toBe(getArabicCoachSummary(highScreen, true));
+  });
+
+  it('renders unknown body signals honestly, preserving explicitly reported zero', () => {
+    expect(formatObservedMealSignals({})).toBe('الجوع: لم يُسجّل • الشبع: لم يُسجّل');
+    expect(formatObservedMealSignals({ hungerLevel: 0, fullnessLevel: 5 })).toBe('الجوع: 0/5 • الشبع: 5/5');
+    expect(getArabicCoachSummary({ satietyBalanceScore: 0, satietyObservations: 0, screenFreeRatio: 0, screenFreeObservations: 0 }, true))
+      .toContain('دون أي ضغط');
   });
 
   it('localizes all existing goals without mutating their stored model', () => {
