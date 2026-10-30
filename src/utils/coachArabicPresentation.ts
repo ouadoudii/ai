@@ -1,4 +1,4 @@
-import type { CoachingGoal } from '../types';
+import type { CoachingGoal, FoodMoment } from '../types';
 import type { DailyCoachingMetrics } from './coachEngine';
 
 /** Arabic-only presentation copy. Stored historical entries and messages are never rewritten. */
@@ -14,14 +14,25 @@ export const getArabicCoachWelcome = (hour: number): string => {
   return `مرحبًا، ${greeting}! أنا مرشد إيقاع. أساعدك على فهم العلاقة بين نومك وطعامك وطاقتك. ما الذي تود معرفته اليوم؟`;
 };
 
+/** Never display an unreported body signal as a measurement. Zero remains explicit. */
+export const formatObservedMealSignals = (moment: Pick<FoodMoment, 'hungerLevel' | 'fullnessLevel'>): string => {
+  const format = (label: string, value: number | undefined) =>
+    `${label}: ${typeof value === 'number' && Number.isFinite(value) ? `${value}/5` : 'لم يُسجّل'}`;
+  return `${format('الجوع', moment.hungerLevel)} • ${format('الشبع', moment.fullnessLevel)}`;
+};
+
 export const getArabicCoachSummary = (
-  metrics: Pick<DailyCoachingMetrics, 'satietyBalanceScore' | 'screenFreeRatio'>,
+  metrics: Pick<DailyCoachingMetrics, 'satietyBalanceScore' | 'satietyObservations' | 'screenFreeRatio' | 'screenFreeObservations'>,
   hasMoments: boolean,
 ): string => {
   if (!hasMoments) return 'سجّل وجبتك التالية لتحصل على ملاحظات تساعدك على فهم عاداتك.';
-  if (metrics.satietyBalanceScore < 75) return 'جرّب التوقف عن الأكل عندما تشعر بالشبع المريح، دون انتظار الامتلاء الزائد.';
-  if (metrics.screenFreeRatio < 60) return 'تناول بعض وجباتك بعيدًا عن الشاشات لتلاحظ الطعم وإشارات الشبع بوضوح.';
-  return 'تُظهر وجباتك توازنًا جيدًا. واصل ملاحظة شعورك بالجوع والشبع دون ضغط.';
+  if (metrics.satietyObservations > 0 && metrics.satietyBalanceScore < 75)
+    return 'إذا أحببت، لاحظ إشارات الشبع في وجباتك المقبلة دون ضغط أو أحكام.';
+  if (metrics.screenFreeObservations > 0 && metrics.screenFreeRatio < 60)
+    return 'إذا كان ذلك مناسبًا لك، جرّب لحظة هادئة بعيدًا عن الشاشات أثناء إحدى وجباتك.';
+  if (metrics.satietyObservations === 0 && metrics.screenFreeObservations === 0)
+    return 'سجّلت وجبتك. يمكنك إضافة شعورك بالجوع أو الشبع متى أحببت، دون أي ضغط.';
+  return 'شكرًا لمشاركة ملاحظاتك. تابع استكشاف ما يناسبك في يومك بهدوء.';
 };
 
 export const getArabicCoachFocus = (hasMoments: boolean): { title: string; tip: string } =>
