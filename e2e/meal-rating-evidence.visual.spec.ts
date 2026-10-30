@@ -137,13 +137,18 @@ test('#155 check-in-generated meal has no invented stars, mood or post-meal ener
     localStorage.setItem('cary_access_mode_v1', 'guest');
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
-    localStorage.setItem('nimmapp_moments_v1', '[]');
-    localStorage.setItem('nimmapp_checkins_v1', '[]');
-    localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify({
-      summary: 'خطة بسيطة', priorities: ['meal'], preferences: ['simple'],
-      rawIntro: 'Daily meal', confirmedAt: Date.now(),
-      firstPlan: { title: 'خطوة صغيرة', rationale: 'على مهلك', focusAreas: ['meal'], firstStep: 'سجل وجبة', phase: 'midday' },
-    }));
+    // addInitScript runs again on reload. Seed only once so the persistence
+    // assertion exercises the actual saved meal instead of wiping localStorage.
+    if (!sessionStorage.getItem('meal_rating_truth_checkin_seeded')) {
+      localStorage.setItem('nimmapp_moments_v1', '[]');
+      localStorage.setItem('nimmapp_checkins_v1', '[]');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify({
+        summary: 'خطة بسيطة', priorities: ['meal'], preferences: ['simple'],
+        rawIntro: 'Daily meal', confirmedAt: Date.now(),
+        firstPlan: { title: 'خطوة صغيرة', rationale: 'على مهلك', focusAreas: ['meal'], firstStep: 'سجل وجبة', phase: 'midday' },
+      }));
+      sessionStorage.setItem('meal_rating_truth_checkin_seeded', 'true');
+    }
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
   });
   await page.goto('/');
