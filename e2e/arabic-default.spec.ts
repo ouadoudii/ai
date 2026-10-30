@@ -25,7 +25,7 @@ for (const viewport of [
   test(`Arabic-only UI remains RTL after a legacy preference changes during ${viewport.name} use`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await page.addInitScript(() => {
-      localStorage.setItem('rhythm_language_v1', 'en');
+      if (!localStorage.getItem('rhythm_language_v1')) localStorage.setItem('rhythm_language_v1', 'en');
       localStorage.setItem('cary_access_mode_v1', 'guest');
       localStorage.setItem('cary_onboarding_v2_complete', 'true');
       localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
@@ -51,5 +51,6 @@ for (const viewport of [
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.getByText('سجّل يومك', { exact: true })).toBeVisible();
     await expect(page.locator('[data-language-option]')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('rhythm_language_v1'))).toBe('de');
   });
 }
