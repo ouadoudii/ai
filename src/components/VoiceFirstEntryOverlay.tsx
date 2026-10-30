@@ -585,10 +585,7 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                     const keyboardSnapshot = weightBeforeInputRef.current;
                     // Keep the earlier keydown snapshot when React fires a
                     // synthetic beforeinput with an already mutated caret.
-                    if (
-                      keyboardSnapshot?.inputType === "insertText" &&
-                      keyboardSnapshot.value === input.value
-                    ) return;
+                    if (keyboardSnapshot?.inputType === "insertText") return;
                     const selection =
                       resolveOnboardingWeightSelectionBeforeInput(
                         weightSelectionRef.current,
