@@ -160,6 +160,22 @@ export function resolveOnboardingWeightSelectionBeforeInput(
   reportedStart: number | null,
   reportedEnd: number | null,
 ): { start: number | null; end: number | null } {
+  // React's last onSelect snapshot can lag behind the browser caret after
+  // the first digit. A collapsed native caret that has advanced must not be
+  // replaced by that stale zero (typing 8 then 2 would otherwise become 28).
+  // Keep deliberate Home/Arrow edits: onKeyUp refreshes the tracked position.
+  if (
+    tracked &&
+    tracked.start !== null &&
+    tracked.end !== null &&
+    reportedStart !== null &&
+    reportedEnd !== null &&
+    tracked.start === tracked.end &&
+    reportedStart === reportedEnd
+  ) {
+    const caret = Math.max(tracked.start, reportedStart);
+    return { start: caret, end: caret };
+  }
   return {
     start: tracked?.start ?? reportedStart,
     end: tracked?.end ?? reportedEnd,
@@ -524,6 +540,16 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                     };
                   }}
                   onSelect={(e) => {
+                    const input = e.currentTarget;
+                    weightSelectionRef.current = {
+                      start: input.selectionStart,
+                      end: input.selectionEnd,
+                    };
+                  }}
+                  onKeyUp={(e) => {
+                    // Capture the settled caret after typing or keyboard
+                    // navigation (including Home) instead of trusting a
+                    // possibly stale onSelect snapshot on the next input.
                     const input = e.currentTarget;
                     weightSelectionRef.current = {
                       start: input.selectionStart,
