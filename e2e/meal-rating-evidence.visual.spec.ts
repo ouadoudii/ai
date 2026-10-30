@@ -127,6 +127,10 @@ test('#157 actual photo upload and confirmed recognition preserve unknown opinio
 });
 
 test('#155 check-in-generated meal has no invented stars, mood or post-meal energy', async ({ page }, info) => {
+  // The personal midday check-in is intentionally unavailable before 11:00 local time.
+  // Keep that production gate intact and run this journey at a deterministic available hour
+  // on both desktop and Android, regardless of the CI runner's wall clock.
+  await page.clock.setFixedTime(new Date('2026-10-30T13:00:00Z'));
   const mobile = info.project.name === 'android-arabic';
   await page.addInitScript(() => {
     localStorage.setItem('rhythm_language_v1', 'ar');
@@ -144,6 +148,7 @@ test('#155 check-in-generated meal has no invented stars, mood or post-meal ener
   });
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.getByTestId('personal-plan-start')).toBeEnabled();
   await page.getByTestId('personal-plan-start').click();
   const dialog = page.getByRole('dialog');
   const mealInput = dialog.getByPlaceholder('ماذا أكلت؟ ابحث أو اكتب…');
