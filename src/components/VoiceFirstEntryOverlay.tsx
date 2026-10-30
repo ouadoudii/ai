@@ -561,10 +561,19 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                       e.nativeEvent.isComposing
                     ) return;
                     const input = e.currentTarget;
+                    // A delayed React onSelect may report the initial zero
+                    // even after the preceding keyup settled at the end.
+                    // Prefer the last confirmed forward caret for collapsed
+                    // insertions; Home/Arrow and pointer edits refresh it.
+                    const selection = resolveOnboardingWeightSelectionBeforeInput(
+                      weightSelectionRef.current,
+                      input.selectionStart,
+                      input.selectionEnd,
+                    );
                     weightBeforeInputRef.current = {
                       value: input.value,
-                      start: input.selectionStart,
-                      end: input.selectionEnd,
+                      start: selection.start,
+                      end: selection.end,
                       inputType: "insertText",
                       data: e.key,
                     };
