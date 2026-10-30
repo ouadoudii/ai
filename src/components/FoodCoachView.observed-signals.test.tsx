@@ -29,6 +29,20 @@ describe('Arabic Coach recent observations', () => {
     expect(html).toContain('دون أي ضغط');
     expect(html).not.toMatch(/Überessen|Küchenschluss|فشل|عقاب/);
   });
+  it('keeps unknown signals visible alongside automatically generated meal feedback', () => {
+    const html = render([meal({
+      coachFeedback: {
+        title: 'لحظة من يومك',
+        message: 'تم تسجيل الوجبة. يمكنك إضافة ملاحظات لاحقًا دون أي ضغط.',
+        type: 'insight',
+        badge: 'ملاحظة محفوظة',
+      },
+    })]);
+    expect(html).toContain('data-testid="coach-recent-signals-body-unknown"');
+    expect(html).toContain('الجوع: لم يُسجّل • الشبع: لم يُسجّل');
+    expect(html).toContain('يمكنك إضافة ملاحظات لاحقًا دون أي ضغط');
+  });
+
   it('shows both explicitly recorded values, including zero', () => {
     const html = render([meal({ id: 'observed', hungerLevel: 0, fullnessLevel: 4 })]);
     expect(html).toContain('data-testid="coach-recent-signals-observed"');
