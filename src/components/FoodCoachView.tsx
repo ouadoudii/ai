@@ -631,13 +631,12 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
                   <h4 className="font-semibold text-xs sm:text-sm text-stone-900 truncate group-hover:text-amber-600 transition-colors">
                     {moment.title}
                   </h4>
-                  {feedback ? (
-                    <p className="text-[11px] text-stone-600 line-clamp-2 leading-relaxed">
+                  <p data-testid={`coach-recent-signals-${moment.id}`} className="text-[11px] text-stone-600" dir="rtl">
+                    {formatObservedMealSignals(moment)}
+                  </p>
+                  {feedback?.message && (
+                    <p className="text-[11px] text-stone-600 line-clamp-2 leading-relaxed" dir="rtl">
                       💬 {feedback.message}
-                    </p>
-                  ) : (
-                    <p data-testid={`coach-recent-signals-${moment.id}`} className="text-[11px] text-stone-600" dir="rtl">
-                      {formatObservedMealSignals(moment)}
                     </p>
                   )}
                 </div>
