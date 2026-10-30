@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bookmark, Calendar, Check, Clock, Edit3, MapPin, Pin, Repeat2, Share2, Trash2, X } from 'lucide-react';
 import { FoodMoment } from '../types';
+import { hasExplicitMealRating } from '../utils/mealRating';
 import { useLanguage } from '../i18n';
 import { isPinnableMeal, readPinnedMealIds, togglePinnedMealId, writePinnedMealIds } from '../pinnedMeals';
 import { repeatMeal } from '../utils/repeatMeal';
@@ -157,7 +158,7 @@ export const MomentDetailModal: React.FC<Props> = ({ moment, onClose, onEdit, on
       <div className="p-5 overflow-y-auto space-y-4">
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-[18px] bg-white border p-3"><span className="text-[10px] font-bold text-[#99958C]">{copy.location}</span><p className="mt-1 flex gap-1 text-xs font-bold"><MapPin className="w-3.5 h-3.5" />{moment.location || copy.unspecified}</p></div>
-          <div className="rounded-[18px] bg-white border p-3"><span className="text-[10px] font-bold text-[#99958C]">{copy.rating}</span><p className="mt-1 text-xs font-bold">{moment.rating}/5</p></div>
+          <div className="rounded-[18px] bg-white border p-3"><span className="text-[10px] font-bold text-[#99958C]">{copy.rating}</span><p data-testid="moment-detail-rating" className="mt-1 text-xs font-bold">{hasExplicitMealRating(moment.rating) ? `${moment.rating}/5` : copy.unspecified}</p></div>
         </div>
         {(moment.hungerLevel || moment.fullnessLevel || moment.energyAfter) && <div className="rounded-[22px] bg-white border p-4"><h2 className="text-sm font-black">{copy.body}</h2><div className="mt-3 grid grid-cols-2 gap-3 text-xs">
           {moment.hungerLevel && <div><span className="text-[#8C8880]">{copy.hunger}</span><strong className="block mt-1">{moment.hungerLevel}/5</strong></div>}
