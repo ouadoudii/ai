@@ -30,7 +30,7 @@ import { askGeminiCoach } from '../apiClient';
 import { buildCoachFollowUps } from '../utils/coachFollowUps';
 import { useLanguage } from '../i18n';
 import { getLocalDateKey } from '../utils/dateKey';
-import { ARABIC_COACH_SUGGESTIONS, ARABIC_COACH_UNAVAILABLE, getArabicCoachWelcome, getArabicCoachSummary, getArabicCoachFocus, getArabicGoalCopy } from '../utils/coachArabicPresentation';
+import { ARABIC_COACH_SUGGESTIONS, ARABIC_COACH_UNAVAILABLE, getArabicCoachWelcome, getArabicCoachSummary, getArabicCoachFocus, getArabicGoalCopy, formatObservedMealSignals } from '../utils/coachArabicPresentation';
 
 interface FoodCoachViewProps {
   moments: FoodMoment[];
@@ -636,8 +636,8 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
                       💬 {feedback.message}
                     </p>
                   ) : (
-                    <p className="text-[11px] text-stone-500">
-                      الجوع {moment.hungerLevel || 3}/5 • الشبع {moment.fullnessLevel || 4}/5
+                    <p data-testid={`coach-recent-signals-${moment.id}`} className="text-[11px] text-stone-600" dir="rtl">
+                      {formatObservedMealSignals(moment)}
                     </p>
                   )}
                 </div>
