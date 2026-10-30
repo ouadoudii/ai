@@ -10,7 +10,7 @@ vi.mock('../i18n', () => ({ useLanguage: () => ({ language: 'ar' }) }));
 const meal: FoodMoment = {
   id: 'meal-1', title: 'حريرة مع الخبز', label: 'الغداء', category: 'lunch',
   date: '2026-10-30', time: '12:00', location: 'البيت',
-  locationCategory: 'home', imageUrl: '', mood: 'satisfied', tags: [],
+  locationCategory: 'home', imageUrl: '', tags: [],
   createdAt: 1,
 };
 const noop = () => undefined;
@@ -24,6 +24,7 @@ const detail = (moment: FoodMoment) => renderToStaticMarkup(
 describe('unrated meals remain truthful in Arabic timeline and detail', () => {
   it('does not show decorative stars or undefined/5 for a meal without a rating', () => {
     expect(card(meal)).not.toContain('تقييم الوجبة:');
+    expect(card(meal)).not.toContain('الشعور:');
     const html = detail(meal);
     expect(html).toContain('data-testid="moment-detail-rating"');
     expect(html).toContain('غير محدد');
@@ -31,8 +32,9 @@ describe('unrated meals remain truthful in Arabic timeline and detail', () => {
   });
 
   it('shows only a genuine existing rating and keeps its value', () => {
-    const rated = { ...meal, rating: 4 };
+    const rated = { ...meal, rating: 4, mood: 'satisfied' as const };
     expect(card(rated)).toContain('تقييم الوجبة: 4 من 5');
+    expect(card(rated)).toContain('الشعور:');
     expect(detail(rated)).toContain('4/5');
   });
 });

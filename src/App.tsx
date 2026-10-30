@@ -358,15 +358,11 @@ export default function App() {
         location: copy.location,
         locationCategory: "home",
         imageUrl: matchedPhoto?.url || "",
-        mood: checkInData.wellbeing.mood || "satisfied",
+        mood: checkInData.wellbeing.mood,
         hungerLevel: checkInData.food.hungerBefore,
         fullnessLevel: checkInData.food.fullnessAfter,
         eatingPace: checkInData.food.eatingPace,
         distraction: checkInData.food.distraction,
-        energyAfter:
-          (checkInData.wellbeing.energyLevel || 3) >= 4
-            ? "energized"
-            : "neutral",
         coachFeedback: {
           title: copy.captured,
           message: checkInData.coachSummary || copy.fallbackSummary,

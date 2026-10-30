@@ -52,7 +52,8 @@ export interface FoodMoment {
   locationCategory: 'home' | 'restaurant' | 'cafe' | 'travel' | 'takeaway';
   imageUrl: string;
   rating?: number;
-  mood: FoodMood;
+  /** Only an explicitly reported feeling; an unreported mood stays absent. */
+  mood?: FoodMood;
   hungerLevel?: number;
   fullnessLevel?: number;
   eatingPace?: EatingPace;

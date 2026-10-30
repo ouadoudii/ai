@@ -38,7 +38,8 @@ export const MomentCard: React.FC<MomentCardProps> = ({
   const menuRef = React.useRef<HTMLDivElement>(null);
 
   const categoryDef = MOMENT_LABELS[moment.category] || MOMENT_LABELS.lunch;
-  const moodDef = MOODS[moment.mood] || MOODS.satisfied;
+  const moodDef = moment.mood ? MOODS[moment.mood] : undefined;
+  const moodLabel = moment.mood ? momentMoodLabels[language][moment.mood] || moodDef?.label : undefined;
 
   // Close menu when clicking outside
   React.useEffect(() => {
@@ -112,13 +113,13 @@ export const MomentCard: React.FC<MomentCardProps> = ({
             </div>
 
             {/* Mood Emoji Badge */}
-            <div 
+            {moodDef && moodLabel && <div
               className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/90 text-stone-800 text-xs font-medium shrink-0 shadow-xs"
-              title={`${copy.feeling}: ${momentMoodLabels[language][moment.mood] || moodDef.label}`}
+              title={`${copy.feeling}: ${moodLabel}`}
             >
               <span>{moodDef.emoji}</span>
-              <span className="hidden xs:inline">{momentMoodLabels[language][moment.mood] || moodDef.label}</span>
-            </div>
+              <span className="hidden xs:inline">{moodLabel}</span>
+            </div>}
           </div>
         </div>
 
