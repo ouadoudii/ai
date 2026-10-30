@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../i18n';
+import { hasExplicitMealRating } from '../utils/mealRating';
 import { momentCardCopy, momentCardDate, momentCategoryLabels, momentMoodLabels } from '../utils/momentCardCopy';
 import { 
   FoodMoment 
@@ -126,16 +127,16 @@ export const MomentCard: React.FC<MomentCardProps> = ({
           
           {/* Star Rating & Calories/Price */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-0.5 text-amber-400">
+            {hasExplicitMealRating(moment.rating) && <div role="img" aria-label={`تقييم الوجبة: ${moment.rating} من 5`} className="flex items-center gap-0.5 text-amber-400">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
                   className={`w-3.5 h-3.5 ${
-                    i < moment.rating ? 'fill-amber-400 text-amber-400' : 'text-stone-200'
+                    i < (moment.rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-stone-200'
                   }`}
                 />
               ))}
-            </div>
+            </div>}
 
             {moment.nutrition?.calories ? (
               <span className="text-xs text-stone-500 flex items-center gap-1">
