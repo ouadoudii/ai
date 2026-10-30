@@ -6,104 +6,31 @@ import { getLocalDateKey } from './dateKey';
  */
 
 export function generateMomentCoachFeedback(moment: Partial<FoodMoment>): CoachFeedback {
-  const hunger = moment.hungerLevel ?? 3;
-  const fullness = moment.fullnessLevel ?? 4;
-  const pace = moment.eatingPace ?? 'moderate';
-  const distraction = moment.distraction ?? 'mindful';
-  const energy = moment.energyAfter ?? 'energized';
+  // No invented hunger, fullness, pace, distraction, energy or habit score.
+  const { hungerLevel: hunger, fullnessLevel: fullness, eatingPace: pace, distraction, energyAfter: energy } = moment;
   const protein = moment.nutrition?.protein;
-  const cat = moment.category ?? 'lunch';
-
-  // Case 1: Overeating / Heavy Food Coma
-  if (fullness >= 5 || energy === 'heavy') {
-    return {
-      title: 'Sättigungs-Signal überschritten',
-      message: 'Du hast dich bis Stufe 5/5 gesättigt. Tipp: Versuche beim nächsten Mal bei Stufe 4 (angenehm satt) eine 5-Minuten-Pause einzulegen, um dem Gehirn Zeit für das Sättigungssignal zu geben.',
-      type: 'tip',
-      badge: 'Sättigungs-Tipp',
-      habitScore: 65,
-    };
-  }
-
-  // Case 2: Rushed & Distracted Eating
-  if (pace === 'rushed' || distraction === 'screen' || distraction === 'work') {
-    return {
-      title: 'Achtsamkeit im Fokus',
-      message: 'Diese Mahlzeit wurde hastig oder mit Bildschirm-Ablenkung gegessen. Wenn du ohne Screen isst und 20-mal kaust, registriert dein Körper die Sättigung deutlich schneller und besser.',
-      type: 'insight',
-      badge: 'Mindful Reminder',
-      habitScore: 70,
-    };
-  }
-
-  // Case 3: High Hunger Pre-Meal (Ravenous risk)
-  if (hunger >= 5) {
-    return {
-      title: 'Großer Vor-Hunger erkannt',
-      message: 'Dein Hunger war vor dem Essen bei Stufe 5 (sehr stark). Um Heißhunger und Überessen zu vermeiden, plane bei langen Pausen einen kleinen Nuss- oder Protein-Snack ein.',
-      type: 'tip',
-      badge: 'Rhythmus-Tipp',
-      habitScore: 75,
-    };
-  }
-
-  // Case 4: High Protein & Energized (Gold Standard)
-  if (protein && protein >= 25 && energy === 'energized') {
-    return {
-      title: 'Hervorragende Nährstoff-Balance',
-      message: `Mit satten ${protein}g Protein und hohem Energielevel hast du deinem Körper langanhaltende Sättigung und stabile Blutzuckerspiegel geschenkt. Perfekt gelöst!`,
-      type: 'praise',
-      badge: 'Top Nährwert-Balance',
-      habitScore: 98,
-    };
-  }
-
-  // Case 5: Mindful & Slow Eating
-  if (pace === 'slow' && distraction === 'mindful') {
-    return {
-      title: 'Vorbildliches Mindful Eating',
-      message: 'In Ruhe und ohne Ablenkung genossen! Dein Verdauungssystem und dein Wohlbefinden profitieren maximal von dieser achtsamen Pause.',
-      type: 'praise',
-      badge: 'Achtsamkeits-Champion',
-      habitScore: 95,
-    };
-  }
-
-  // Case 6: Category-specific insights
-  if (cat === 'breakfast' && energy === 'energized') {
-    return {
-      title: 'Starker Tagesstart',
-      message: 'Ein nährstoffreiches Frühstück stabilisiert deine Leistungsfähigkeit für den gesamten Vormittag.',
-      type: 'praise',
-      badge: 'Power-Start',
-      habitScore: 90,
-    };
-  }
-
-  if (cat === 'snack' && hunger <= 2) {
-    return {
-      title: 'Emotionaler / Gewohnheits-Snack',
-      message: 'Dein Hungerlevel war gering (1-2). Frage dich kurz: War es echter physischer Hunger oder eher Appetit, Stressabbau oder Gewohnheit? Ein Glas Wasser oder kurzer Spaziergang wirkt oft Wunder.',
-      type: 'insight',
-      badge: 'Achtsamkeits-Impuls',
-      habitScore: 75,
-    };
-  }
-
-  // Default balanced feedback
-  return {
-    title: 'Ausgewogener Genussmoment',
-    message: 'Gute Balance zwischen Hunger und Sättigung. Weiter so mit dem bewussten Hineinspüren in deinen Körper!',
-    type: 'praise',
-    badge: 'Ausgewogen',
-    habitScore: 88,
-  };
+  if ((fullness !== undefined && fullness >= 5) || energy === 'heavy')
+    return { title: 'ملاحظة لطيفة بعد الوجبة', message: 'إذا شعرت بالامتلاء أو الثقل، يمكنك أن تمنح نفسك وقتًا للراحة، دون أحكام على طعامك.', type: 'tip', badge: 'راحة بعد الطعام' };
+  if (pace === 'rushed' || distraction === 'screen' || distraction === 'work')
+    return { title: 'مساحة هادئة للطعام', message: 'إن أحببت، جرّب لحظة هادئة أثناء إحدى وجباتك المقبلة. لا بأس إن كان يومك مزدحمًا.', type: 'insight', badge: 'لحظة هدوء' };
+  if (hunger !== undefined && hunger >= 5)
+    return { title: 'الانتباه للجوع', message: 'سجّلت شعورًا قويًا بالجوع. يمكنك ملاحظة ما يساعدك في الأيام المزدحمة.', type: 'tip', badge: 'الإنصات للجسم' };
+  if (protein !== undefined && protein >= 25 && energy === 'energized')
+    return { title: 'ملاحظة من يومك', message: 'سجّلت مصدرًا للبروتين وشعورًا جيدًا بالطاقة. احتفظ بما يناسبك من هذه التجربة.', type: 'praise', badge: 'ملاحظة مفيدة' };
+  if (pace === 'slow' && distraction === 'mindful')
+    return { title: 'لحظة طعام هادئة', message: 'سجّلت أنك تناولت الطعام بهدوء وانتباه. جميل أن تلاحظ ما يناسبك.', type: 'praise', badge: 'لحظة هادئة' };
+  if (moment.category === 'breakfast' && energy === 'energized')
+    return { title: 'بداية يومك', message: 'ذكرت أنك شعرت بالطاقة بعد الفطور. يمكنك العودة إلى هذه الملاحظة عندما تشاء.', type: 'insight', badge: 'من ملاحظاتك' };
+  if (moment.category === 'snack' && hunger !== undefined && hunger <= 2)
+    return { title: 'ملاحظة عن الشهية', message: 'سجّلت جوعًا خفيفًا. يمكنك استكشاف ما كنت تحتاجه في تلك اللحظة، دون أحكام.', type: 'insight', badge: 'فضول لطيف' };
+  return { title: 'لحظة من يومك', message: 'تم تسجيل الوجبة. يمكنك إضافة شعورك بالجوع أو الشبع لاحقًا إذا أحببت، دون أي ضغط.', type: 'insight', badge: 'ملاحظة محفوظة' };
 }
 
 export interface DailyCoachingMetrics {
   todayMomentsCount: number;
   mindfulScore: number; // 0-100
-  satietyBalanceScore: number; // 0-100
+  satietyBalanceScore: number; // 0-100 from observed fullness only
+  satietyObservations: number; // Missing fullness remains unknown
   screenFreeRatio: number; // 0-100 % of meals with an explicit distraction report
   screenFreeObservations: number; // Never infer screen-free eating from missing data
   slowEatingRatio: number; // 0-100 %
@@ -121,6 +48,7 @@ export function calculateCoachingMetrics(moments: FoodMoment[], dateKey: string 
       todayMomentsCount: 0,
       mindfulScore: 0,
       satietyBalanceScore: 0,
+      satietyObservations: 0,
       screenFreeRatio: 0,
       screenFreeObservations: 0,
       slowEatingRatio: 0,
@@ -134,60 +62,56 @@ export function calculateCoachingMetrics(moments: FoodMoment[], dateKey: string 
   const relevantMoments = todayMoments;
 
   let mindfulPoints = 0;
+  let mindfulObservations = 0;
   let satietyPoints = 0;
+  let satietyObservations = 0;
   let screenFreeCount = 0;
   let screenFreeObservations = 0;
   let slowPaceCount = 0;
+  let paceObservations = 0;
 
-  relevantMoments.forEach((m) => {
-    // Satiety assessment (ideal fullness is 3 or 4)
-    const fullness = m.fullnessLevel ?? 4;
-    if (fullness === 3 || fullness === 4) satietyPoints += 100;
-    else if (fullness === 2) satietyPoints += 70;
-    else satietyPoints += 50;
-
-    // Missing distraction is unknown, never evidence of a screen-free meal.
-    if (m.distraction) screenFreeObservations++;
-    if (!m.distraction || m.distraction === 'mindful') {
-      if (m.distraction === 'mindful') screenFreeCount++;
-      mindfulPoints += 35;
-    } else {
-      mindfulPoints += 10;
+  relevantMoments.forEach((moment) => {
+    if (typeof moment.fullnessLevel === 'number' && Number.isFinite(moment.fullnessLevel)) {
+      satietyObservations++;
+      if (moment.fullnessLevel === 3 || moment.fullnessLevel === 4) satietyPoints += 100;
+      else if (moment.fullnessLevel === 2) satietyPoints += 70;
+      else satietyPoints += 50;
     }
-
-    // Pace assessment
-    if (m.eatingPace === 'slow') {
-      slowPaceCount++;
-      mindfulPoints += 35;
-    } else if (m.eatingPace === 'moderate' || !m.eatingPace) {
-      mindfulPoints += 25;
-    } else {
-      mindfulPoints += 10;
+    if (moment.distraction !== undefined) {
+      screenFreeObservations++;
+      mindfulObservations++;
+      if (moment.distraction === 'mindful') screenFreeCount++;
+      mindfulPoints += moment.distraction === 'mindful' ? 100 : 30;
     }
-
-    // Rating and mood
-    if (m.rating >= 4) mindfulPoints += 30;
-    else mindfulPoints += 15;
+    if (moment.eatingPace !== undefined) {
+      paceObservations++;
+      mindfulObservations++;
+      if (moment.eatingPace === 'slow') slowPaceCount++;
+      mindfulPoints += moment.eatingPace === 'slow' ? 100 : moment.eatingPace === 'moderate' ? 70 : 30;
+    }
+    if (typeof moment.rating === 'number' && Number.isFinite(moment.rating)) {
+      mindfulObservations++;
+      mindfulPoints += moment.rating >= 4 ? 100 : 50;
+    }
   });
 
-  const count = relevantMoments.length;
-  const mindfulScore = Math.min(100, Math.round(mindfulPoints / count));
-  const satietyBalanceScore = Math.min(100, Math.round(satietyPoints / count));
+  const mindfulScore = mindfulObservations > 0 ? Math.round(mindfulPoints / mindfulObservations) : 0;
+  const satietyBalanceScore = satietyObservations > 0 ? Math.round(satietyPoints / satietyObservations) : 0;
   const screenFreeRatio = screenFreeObservations > 0 ? Math.round((screenFreeCount / screenFreeObservations) * 100) : 0;
-  const slowEatingRatio = Math.round((slowPaceCount / count) * 100);
+  const slowEatingRatio = paceObservations > 0 ? Math.round((slowPaceCount / paceObservations) * 100) : 0;
 
-  // Determine coaching summary
-  let coachSummary = 'Du bist auf einem hervorragenden Weg! Deine Mahlzeiten zeigen ein ausgeprägtes Gespür für Genuss und ausgewogene Portionsgrößen.';
-  if (satietyBalanceScore < 75) {
-    coachSummary = 'Fokus auf Sättigung: Versuche heute ganz gezielt bei Stufe 4 aufzuhören und den letzten Bissen zu genießen, ohne dich übervoll zu fühlen.';
-  } else if (screenFreeRatio < 60) {
-    coachSummary = 'Achtsamkeits-Booster: Wenn du während des Essens Smartphone & Bildschirme weglegst, nimmst du Geschmack und Sättigung intensiver wahr.';
-  }
+  // A meal title is not evidence of the person's feelings or habits.
+  let coachSummary = 'تم تسجيل وجبتك. يمكنك إضافة ملاحظات عن شعورك لاحقًا إذا أحببت.';
+  if (satietyObservations > 0 && satietyBalanceScore < 75)
+    coachSummary = 'يمكنك ملاحظة إشارات الشبع في الوجبات المقبلة، دون ضغط أو أحكام.';
+  else if (screenFreeObservations > 0 && screenFreeRatio < 60)
+    coachSummary = 'إن أحببت، جرّب لحظة هادئة أثناء إحدى وجباتك المقبلة.';
 
   return {
     todayMomentsCount: todayMoments.length,
     mindfulScore,
     satietyBalanceScore,
+    satietyObservations,
     screenFreeRatio,
     screenFreeObservations,
     slowEatingRatio,
