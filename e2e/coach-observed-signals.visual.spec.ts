@@ -9,8 +9,12 @@ test('Arabic title-only capture keeps hunger and fullness unknown on Desktop and
     localStorage.setItem('cary_access_mode_v1', 'guest');
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
-    localStorage.setItem('nimmapp_checkins_v1', '[]');
-    localStorage.setItem('nimmapp_moments_v1', '[]');
+    // Init scripts also run on reload: seed only once so persistence is actually tested.
+    if (!sessionStorage.getItem('coach_observed_signals_seeded')) {
+      localStorage.setItem('nimmapp_checkins_v1', '[]');
+      localStorage.setItem('nimmapp_moments_v1', '[]');
+      sessionStorage.setItem('coach_observed_signals_seeded', 'true');
+    }
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
   });
   await page.goto('/');
