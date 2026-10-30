@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getModalFocusTargetIndex, getOnboardingWeightSelection, reconcileOnboardingWeightInput, PROFILE_INTRO_KEY, parseOnboardingWeight, sanitizeOnboardingWeightInput, shouldShowVoiceFirstEntry, updateOnboardingForm, voiceFirstEntryCopy } from './components/VoiceFirstEntryOverlay';
+import { getModalFocusTargetIndex, getOnboardingWeightSelection, resolveOnboardingWeightSelectionBeforeInput, reconcileOnboardingWeightInput, PROFILE_INTRO_KEY, parseOnboardingWeight, sanitizeOnboardingWeightInput, shouldShowVoiceFirstEntry, updateOnboardingForm, voiceFirstEntryCopy } from './components/VoiceFirstEntryOverlay';
 
 describe('required first onboarding',()=>{
   it('only unlocks once an intro profile exists',()=>{
@@ -47,6 +47,14 @@ describe('required first onboarding',()=>{
     expect(getOnboardingWeightSelection('82',2)).toBe(2);
     expect(getOnboardingWeightSelection('8a2',3)).toBe(2);
     expect(getOnboardingWeightSelection('٨٢٫٥',4)).toBe(4);
+  });
+
+  it('recovers a settled RTL caret from a stale zero before the next keydown',()=>{
+    expect(resolveOnboardingWeightSelectionBeforeInput({start:1,end:1},0,0)).toEqual({start:1,end:1});
+    expect(reconcileOnboardingWeightInput('8','28','insertText','2',1,1)).toEqual({value:'82',selection:2});
+    // Home is a deliberate navigation event: the tracked caret is refreshed to zero.
+    expect(resolveOnboardingWeightSelectionBeforeInput({start:0,end:0},0,0)).toEqual({start:0,end:0});
+    expect(reconcileOnboardingWeightInput('82','782','insertText','7',0,0)).toEqual({value:'782',selection:1});
   });
 
   it('reconstructs the intended RTL numeric order from a pre-mutation keystroke',()=>{
