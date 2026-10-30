@@ -1,4 +1,4 @@
-import { FoodMoment, CoachFeedback, CoachingGoal, EatingPace, DistractionLevel, EnergyLevelAfter } from '../types';
+import { FoodMoment, CoachFeedback, CoachingGoal } from '../types';
 import { getLocalDateKey } from './dateKey';
 
 /**
