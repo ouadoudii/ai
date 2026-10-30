@@ -358,7 +358,6 @@ export default function App() {
         location: copy.location,
         locationCategory: "home",
         imageUrl: matchedPhoto?.url || "",
-        rating: 5,
         mood: checkInData.wellbeing.mood || "satisfied",
         hungerLevel: checkInData.food.hungerBefore,
         fullnessLevel: checkInData.food.fullnessAfter,
