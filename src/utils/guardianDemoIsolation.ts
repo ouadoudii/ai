@@ -18,3 +18,12 @@ export function scopeGuardianEvaluationInputs(
   }
   return { moments: demoMoments, checkIns: demoCheckIns };
 }
+
+/** Demo dismissals are session-only; real acknowledgements remain authoritative outside demos. */
+export function selectGuardianAcknowledgements(
+  isSimulated: boolean,
+  personalAcknowledgements: readonly string[],
+  demoAcknowledgements: readonly string[],
+): readonly string[] {
+  return isSimulated ? demoAcknowledgements : personalAcknowledgements;
+}
