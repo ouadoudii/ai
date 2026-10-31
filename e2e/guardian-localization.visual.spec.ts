@@ -30,6 +30,12 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
       await expect(guardian.getByText(labels.ar.clear)).toBeVisible();
       await expect(page.locator('html')).toHaveAttribute('dir','rtl');
       await guardian.getByRole('button',{name:labels.ar.test}).click();
+      await expect(guardian.getByTestId('guardian-demo-notice')).toHaveCount(0);
+      await guardian.getByRole('button',{name:/الأكل تحت الضغط/}).click();
+      await expect(guardian.getByRole('note')).toContainText('هذه أمثلة وليست تسجيلاتك');
+      await expect(guardian).toContainText('حريرة تناولتها على عجل أمام الشاشة');
+      await expect(guardian).not.toContainText(/Schnelles Pastagericht|Mittagessen|Schreibtisch|Simuliert/);
+      await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').length)).toBe(0);
       await guardian.getByRole('button',{name:new RegExp(labels.ar.sleep)}).click();
       await expect(guardian.getByRole('button',{name:new RegExp(labels.ar.done)}).first()).toBeVisible();
       await expect(guardian.getByText('قد تحتاج إلى بعض الراحة اليوم')).toBeVisible();
