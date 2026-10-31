@@ -45,7 +45,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(guardian).toContainText('5 ساعات نوم');
     await guardian.getByRole('button', { name: /إخفاء الفكرة/ }).first().click();
     await expect(guardian).not.toContainText('5 ساعات نوم');
-    await expect(guardian.getByRole('status')).toContainText('هنا متى احتجت');
+    await expect(guardian.getByRole('status')).toContainText('خذ يومك على مهل');
     expect(await page.evaluate((key) => localStorage.getItem(key), key)).toBe(personalAcknowledgements);
 
     await guardian.getByRole('button', { name: /الأكل تحت الضغط/ }).click();
