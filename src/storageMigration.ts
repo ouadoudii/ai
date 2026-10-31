@@ -18,7 +18,9 @@ function validMoment(value: unknown): value is FoodMoment {
 
 function validCheckIn(value: unknown): value is DailyCheckIn {
   if (!isObject(value)) return false;
-  if (typeof value.id !== 'string' || typeof value.date !== 'string' || typeof value.time !== 'string') return false;
+  // Legacy check-ins may lack a clock time or contain a malformed one.
+  // Keep otherwise valid journal entries: downstream views treat unknown time as unknown.
+  if (typeof value.id !== 'string' || typeof value.date !== 'string') return false;
   if (!['morning', 'midday', 'evening'].includes(String(value.timeOfDay))) return false;
   // A check-in can contain sleep, food or wellbeing independently. Reject empty
   // or malformed records, but never erase a legitimate sleep-only morning entry
