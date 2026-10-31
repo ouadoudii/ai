@@ -9,6 +9,8 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
   test(`Guardian demo dismissals never overwrite real acknowledgements on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await page.addInitScript(({ profile }) => {
+      if (sessionStorage.getItem('guardian_demo_ack_seeded') === 'true') return;
+      sessionStorage.setItem('guardian_demo_ack_seeded', 'true');
       const now = new Date();
       const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
       localStorage.setItem('rhythm_language_v1', 'ar');
