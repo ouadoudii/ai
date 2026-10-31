@@ -42,7 +42,7 @@ const compareRecentCheckIns = (a: DailyCheckIn, b: DailyCheckIn): number => {
   const createdAt = (entry: DailyCheckIn) =>
     typeof entry.createdAt === 'number' && Number.isFinite(entry.createdAt) ? entry.createdAt : 0;
   const clockTime = (entry: DailyCheckIn) =>
-    typeof entry.time === 'string' && /^\\d{2}:\\d{2}$/.test(entry.time) ? entry.time : '';
+    typeof entry.time === 'string' && /^\d{2}:\d{2}$/.test(entry.time) ? entry.time : '';
   return createdAt(b) - createdAt(a) || clockTime(b).localeCompare(clockTime(a));
 };
 
