@@ -2,18 +2,50 @@ import { AppLanguage } from '../i18n';
 import { NutritionArchetype } from '../types';
 
 type GuardianCopy = {
-  title:string; type:string; description:string; activeAlarm:(count:number)=>string; allClear:string;
-  testAlarm:string; simulator:string; reacts:string; sleep:string; sleepDetail:string; stressMeal:string;
-  stressDetail:string; crash:string; crashDetail:string; reset:string; noWarnings:string; noIntervention:string;
-  balanced:string; guardianActive:string; acute:string; recommendation:string; done:string; why:string;
-  countermeasure:string; immediate:string; archetypes:Record<NutritionArchetype,string>;
+  title: string; type: string; description: string; activeAlarm: (count: number) => string; allClear: string;
+  testAlarm: string; simulator: string; reacts: string; sleep: string; sleepDetail: string; stressMeal: string;
+  stressDetail: string; crash: string; crashDetail: string; reset: string; noWarnings: string; noIntervention: string;
+  balanced: string; guardianActive: string; acute: string; recommendation: string; done: string; why: string;
+  countermeasure: string; immediate: string; archetypes: Record<NutritionArchetype, string>;
 };
 
-const copies:Record<AppLanguage,GuardianCopy>={
-  de:{title:'Moment Fürsorge- & Frühwarn-System',type:'Typ',description:'Passt auf dich auf und gibt sanfte Impulse bei messbaren physiologischen Warnsignalen.',activeAlarm:n=>`${n} Alarm aktiv`,allClear:'Alles im grünen Bereich',testAlarm:'Alarm testen',simulator:'🧪 Alarm-Szenarien simulieren (Test-Modus)',reacts:'Reagiert nach Ernährungstyp',sleep:'Schlafmangel',sleepDetail:'5.0h & Ghrelin-Hoch',stressMeal:'Stress-Essen',stressDetail:'Gehetzt am Handy',crash:'14-Uhr Tief',crashDetail:'Energie Stufe 1/5',reset:'Reset (Grün)',noWarnings:'Keine Warnsignale',noIntervention:'Keine Intervention erforderlich',balanced:'Schlaf, Mahlzeiten-Rhythmus und Energie befinden sich im optimalen Gleichgewicht. Moment hält sich dezent im Hintergrund und beobachtet weiter.',guardianActive:'Guardian Aktiv',acute:'Akute Intervention',recommendation:'Empfehlung',done:'Als erledigt abhaken',why:'Warum greift Moment ein?',countermeasure:'Typ-Gegenmaßnahme',immediate:'Sofort-Schritt:',archetypes:{protein_performer:'Protein-Performer',circadian_rhythm:'Circadianer Rhythmus-Typ',intermittent_balancer:'Intervall-Stratege',intuitive_mindful:'Intuitiver Genießer',stress_craver:'Stress-Esser',carb_sensitive:'Kohlenhydrat-sensitiver Typ'}},
-  en:{title:'Moment Care & Early Warning System',type:'Type',description:'Looks out for you and offers gentle prompts when measurable physiological warning signs appear.',activeAlarm:n=>`${n} active alarm${n===1?'':'s'}`,allClear:'Everything looks good',testAlarm:'Test alarm',simulator:'🧪 Simulate alarm scenarios (test mode)',reacts:'Adapts to nutrition type',sleep:'Sleep deficit',sleepDetail:'5.0h & high ghrelin',stressMeal:'Stress eating',stressDetail:'Rushed while on phone',crash:'2 PM crash',crashDetail:'Energy level 1/5',reset:'Reset (clear)',noWarnings:'No warning signs',noIntervention:'No intervention needed',balanced:'Sleep, meal rhythm and energy are in a healthy balance. Moment stays quietly in the background and keeps watch.',guardianActive:'Guardian active',acute:'Immediate intervention',recommendation:'Recommendation',done:'Mark as handled',why:'Why is Moment stepping in?',countermeasure:'Type-specific response',immediate:'Do now:',archetypes:{protein_performer:'Protein Performer',circadian_rhythm:'Circadian Rhythm Type',intermittent_balancer:'Intermittent Balancer',intuitive_mindful:'Intuitive Eater',stress_craver:'Stress Craver',carb_sensitive:'Carb-Sensitive Type'}},
-  fr:{title:"Système de vigilance et d’accompagnement Moment",type:'Type',description:'Veille sur toi et propose des impulsions douces lorsque des signaux physiologiques mesurables apparaissent.',activeAlarm:n=>`${n} alerte${n===1?'':'s'} active${n===1?'':'s'}`,allClear:'Tout va bien',testAlarm:'Tester une alerte',simulator:'🧪 Simuler des scénarios d’alerte (mode test)',reacts:'Adapté au type nutritionnel',sleep:'Manque de sommeil',sleepDetail:'5,0 h & ghréline élevée',stressMeal:'Repas sous stress',stressDetail:'Pressé avec le téléphone',crash:'Coup de barre de 14 h',crashDetail:'Énergie niveau 1/5',reset:'Réinitialiser (vert)',noWarnings:'Aucun signal d’alerte',noIntervention:'Aucune intervention nécessaire',balanced:'Sommeil, rythme des repas et énergie sont bien équilibrés. Moment reste discrètement en arrière-plan et continue de veiller.',guardianActive:'Guardian actif',acute:'Intervention immédiate',recommendation:'Recommandation',done:'Marquer comme traité',why:'Pourquoi Moment intervient ?',countermeasure:'Réponse adaptée au type',immediate:'À faire maintenant :',archetypes:{protein_performer:'Profil protéiné performant',circadian_rhythm:'Profil rythme circadien',intermittent_balancer:'Profil jeûne équilibré',intuitive_mindful:'Mangeur intuitif',stress_craver:'Profil attiré par le stress',carb_sensitive:'Profil sensible aux glucides'}},
-  ar:{title:'مساحة لطيفة للاهتمام بنفسك',type:'نمطك',description:'أفكار بسيطة تدعم راحتك، دون أحكام أو ضغط.',activeAlarm:()=> 'أفكار يمكنك تجاهلها',allClear:'خذ يومك على مهل',testAlarm:'اختبار تنبيه',simulator:'تجربة اقتراحات الدعم (وضع الاختبار)',reacts:'اقتراحات تناسب احتياجاتك',sleep:'نقص النوم',sleepDetail:'ليلة نوم قصيرة',stressMeal:'الأكل تحت الضغط',stressDetail:'وجبة سريعة مع الهاتف',crash:'طاقة أقل بعد الظهر',crashDetail:'شعور بالتعب',reset:'إعادة ضبط',noWarnings:'لا توجد اقتراحات إضافية',noIntervention:'هنا متى احتجت',balanced:'لكل يوم إيقاعه الخاص. نحن هنا لنرافقك بلطف متى احتجت.',guardianActive:'معك بلطف',acute:'اقتراح لطيف',recommendation:'فكرة لك',done:'إخفاء الفكرة',why:'ما الذي لاحظناه؟',countermeasure:'ما قد يساعدك',immediate:'إن أحببت:',archetypes:{protein_performer:'نمط الأداء بالبروتين',circadian_rhythm:'نمط الإيقاع اليومي',intermittent_balancer:'نمط التوازن المتقطع',intuitive_mindful:'نمط الأكل الحدسي',stress_craver:'نمط الأكل تحت الضغط',carb_sensitive:'نمط حساس للكربوهيدرات'}}
+// Visible Guardian copy is Arabic-only, even for a caller passing a legacy
+// stored locale. Keep the API parameter for compatibility with existing
+// components; never expose stale English/German/French alarm language.
+const arabicCopy: GuardianCopy = {
+  title: 'مساحة لطيفة للاهتمام بنفسك',
+  type: 'نمطك',
+  description: 'أفكار بسيطة تدعم راحتك، دون أحكام أو ضغط.',
+  activeAlarm: () => 'أفكار يمكنك تجاهلها',
+  allClear: 'خذ يومك على مهل',
+  testAlarm: 'اختبار تنبيه',
+  simulator: 'تجربة اقتراحات الدعم (وضع الاختبار)',
+  reacts: 'اقتراحات تناسب احتياجاتك',
+  sleep: 'نقص النوم',
+  sleepDetail: 'ليلة نوم قصيرة',
+  stressMeal: 'الأكل تحت الضغط',
+  stressDetail: 'وجبة سريعة مع الهاتف',
+  crash: 'طاقة أقل بعد الظهر',
+  crashDetail: 'شعور بالتعب',
+  reset: 'إعادة ضبط',
+  noWarnings: 'لا توجد اقتراحات إضافية',
+  noIntervention: 'هنا متى احتجت',
+  balanced: 'لكل يوم إيقاعه الخاص. نحن هنا لنرافقك بلطف متى احتجت.',
+  guardianActive: 'معك بلطف',
+  acute: 'اقتراح لطيف',
+  recommendation: 'فكرة لك',
+  done: 'إخفاء الفكرة',
+  why: 'ما الذي لاحظناه؟',
+  countermeasure: 'ما قد يساعدك',
+  immediate: 'إن أحببت:',
+  archetypes: {
+    protein_performer: 'نمط الأداء بالبروتين',
+    circadian_rhythm: 'نمط الإيقاع اليومي',
+    intermittent_balancer: 'نمط التوازن المتقطع',
+    intuitive_mindful: 'نمط الأكل الحدسي',
+    stress_craver: 'نمط الأكل تحت الضغط',
+    carb_sensitive: 'نمط حساس للكربوهيدرات',
+  },
 };
 
-export const getGuardianCopy=(language:AppLanguage)=>copies[language];
+export const getGuardianCopy = (_language: AppLanguage): GuardianCopy => arabicCopy;
