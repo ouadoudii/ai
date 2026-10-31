@@ -121,7 +121,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           },
           wellbeing: {
             energyLevel: 2,
-              stressLevel: 4,
+            stressLevel: 4,
             waterGlasses: 1,
             note: 'نوم متقطع خلال الليل.',
           },
