@@ -36,9 +36,15 @@ export interface GuardianStatus {
  */
 // Imported or older check-ins can lack a clock time. Compare available
 // timestamps without crashing or inventing a time for missing observations.
-const compareRecentCheckIns = (a: DailyCheckIn, b: DailyCheckIn): number =>
-  (b.createdAt || 0) - (a.createdAt || 0) ||
-  (b.time || '').localeCompare(a.time || '');
+const compareRecentCheckIns = (a: DailyCheckIn, b: DailyCheckIn): number => {
+  // Older imports may contain malformed timestamps or non-string time values.
+  // Invalid values are unknown, not a reason to crash or outrank valid reports.
+  const createdAt = (entry: DailyCheckIn) =>
+    typeof entry.createdAt === 'number' && Number.isFinite(entry.createdAt) ? entry.createdAt : 0;
+  const clockTime = (entry: DailyCheckIn) =>
+    typeof entry.time === 'string' && /^\\d{2}:\\d{2}$/.test(entry.time) ? entry.time : '';
+  return createdAt(b) - createdAt(a) || clockTime(b).localeCompare(clockTime(a));
+};
 
 export function evaluateNutritionAlarms(
   moments: FoodMoment[],
