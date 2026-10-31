@@ -34,6 +34,12 @@ export interface GuardianStatus {
  * the same check-in/moment after a reload must produce the same ID, while a
  * later source occurrence must remain independently actionable.
  */
+// Imported or older check-ins can lack a clock time. Compare available
+// timestamps without crashing or inventing a time for missing observations.
+const compareRecentCheckIns = (a: DailyCheckIn, b: DailyCheckIn): number =>
+  (b.createdAt || 0) - (a.createdAt || 0) ||
+  (b.time || '').localeCompare(a.time || '');
+
 export function evaluateNutritionAlarms(
   moments: FoodMoment[],
   checkIns: DailyCheckIn[],
@@ -56,7 +62,7 @@ export function evaluateNutritionAlarms(
   // without sleep must not erase the last actual sleep observation.
   const latestSleepCheckIn = todayCheckIns
     .filter(checkIn => checkIn.sleep)
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || b.time.localeCompare(a.time))[0];
+    .sort(compareRecentCheckIns)[0];
   // Imported and edited meal histories are not guaranteed newest-first.
   // Use the meal's actual local time when both entries have one, rather than
   // storage order or a later backfill timestamp. Keep legacy records safe by
@@ -142,7 +148,7 @@ export function evaluateNutritionAlarms(
   // Sort a copy because imported/persisted history is not guaranteed newest-first.
   const latestEnergyCheckIn = todayCheckIns
     .filter(c => typeof c.wellbeing?.energyLevel === 'number' && Number.isFinite(c.wellbeing.energyLevel))
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || b.time.localeCompare(a.time))[0];
+    .sort(compareRecentCheckIns)[0];
   const lowEnergyCheckIn = latestEnergyCheckIn && latestEnergyCheckIn.wellbeing.energyLevel! <= 2
     ? latestEnergyCheckIn : undefined;
   // A meal's earlier sluggish feeling should not override a later, explicit
