@@ -17,10 +17,17 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
   const { language } = useLanguage();
   const copy = getGuardianCopy(language);
   const [resolvedAlarmIds, setResolvedAlarmIds] = React.useState<string[]>(() => typeof window === 'undefined' ? [] : readGuardianAcknowledgements(window.localStorage));
+  // Demo dismissals are ephemeral and must never read or write personal acknowledgements.
+  const [demoResolvedAlarmIds, setDemoResolvedAlarmIds] = React.useState<string[]>([]);
   const [showSimulator, setShowSimulator] = React.useState(false);
-  const activeUnresolvedAlarms = guardianStatus.activeAlarms.filter((a) => !resolvedAlarmIds.includes(a.id));
+  const activeAcknowledgements = isSimulated ? demoResolvedAlarmIds : resolvedAlarmIds;
+  const activeUnresolvedAlarms = guardianStatus.activeAlarms.filter((a) => !activeAcknowledgements.includes(a.id));
 
   const handleResolve = (alarmId: string) => {
+    if (isSimulated) {
+      setDemoResolvedAlarmIds((prev) => acknowledgeGuardianOccurrence(prev, alarmId));
+      return;
+    }
     setResolvedAlarmIds((prev) => {
       const next = acknowledgeGuardianOccurrence(prev, alarmId);
       if (typeof window !== 'undefined') {
@@ -29,6 +36,11 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
       }
       return next;
     });
+  };
+
+  const handleDemoScenario = (scenario: 'sleep' | 'rushed_meal' | 'afternoon_crash' | 'clear') => {
+    setDemoResolvedAlarmIds([]);
+    onSimulateAlarm?.(scenario);
   };
 
   return (
@@ -59,10 +71,10 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
         <div className="mt-4 p-3.5 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-2 animate-in fade-in duration-200">
           <div className="flex items-center justify-between"><span className="text-[11px] font-bold text-stone-700 uppercase tracking-wider">{copy.simulator}</span><span className="text-[10px] text-stone-400">{copy.reacts}</span></div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <button onClick={() => onSimulateAlarm('sleep')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Moon className="w-3 h-3 text-indigo-500" /> {copy.sleep}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.sleepDetail}</span></button>
-            <button onClick={() => onSimulateAlarm('rushed_meal')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Utensils className="w-3 h-3 text-amber-600" /> {copy.stressMeal}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.stressDetail}</span></button>
-            <button onClick={() => onSimulateAlarm('afternoon_crash')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Coffee className="w-3 h-3 text-amber-500" /> {copy.crash}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.crashDetail}</span></button>
-            <button onClick={() => { onSimulateAlarm('clear'); setResolvedAlarmIds([]); }} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-emerald-200 hover:bg-emerald-50 text-xs"><span className="font-bold text-emerald-800 flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> {copy.reset}</span><span className="text-[10px] text-emerald-600 block mt-0.5">{copy.noWarnings}</span></button>
+            <button onClick={() => handleDemoScenario('sleep')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Moon className="w-3 h-3 text-indigo-500" /> {copy.sleep}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.sleepDetail}</span></button>
+            <button onClick={() => handleDemoScenario('rushed_meal')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Utensils className="w-3 h-3 text-amber-600" /> {copy.stressMeal}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.stressDetail}</span></button>
+            <button onClick={() => handleDemoScenario('afternoon_crash')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Coffee className="w-3 h-3 text-amber-500" /> {copy.crash}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.crashDetail}</span></button>
+            <button onClick={() => handleDemoScenario('clear')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-emerald-200 hover:bg-emerald-50 text-xs"><span className="font-bold text-emerald-800 flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> {copy.reset}</span><span className="text-[10px] text-emerald-600 block mt-0.5">{copy.noWarnings}</span></button>
           </div>
         </div>
       )}
