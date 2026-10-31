@@ -5,6 +5,7 @@ import { NutritionArchetype } from '../types';
 import { useLanguage } from '../i18n';
 import { getGuardianCopy } from '../utils/guardianLocalization';
 import { acknowledgeGuardianOccurrence, readGuardianAcknowledgements, writeGuardianAcknowledgements } from '../utils/guardianAcknowledgements';
+import { selectGuardianAcknowledgements } from '../utils/guardianDemoIsolation';
 
 interface SmartInterventionGuardianProps {
   guardianStatus: GuardianStatus;
@@ -20,7 +21,7 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
   // Demo dismissals are ephemeral and must never read or write personal acknowledgements.
   const [demoResolvedAlarmIds, setDemoResolvedAlarmIds] = React.useState<string[]>([]);
   const [showSimulator, setShowSimulator] = React.useState(false);
-  const activeAcknowledgements = isSimulated ? demoResolvedAlarmIds : resolvedAlarmIds;
+  const activeAcknowledgements = selectGuardianAcknowledgements(isSimulated, resolvedAlarmIds, demoResolvedAlarmIds);
   const activeUnresolvedAlarms = guardianStatus.activeAlarms.filter((a) => !activeAcknowledgements.includes(a.id));
 
   const handleResolve = (alarmId: string) => {
