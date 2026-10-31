@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DailyCheckIn, FoodMoment } from '../types';
-import { scopeGuardianEvaluationInputs } from './guardianDemoIsolation';
+import { scopeGuardianEvaluationInputs, selectGuardianAcknowledgements } from './guardianDemoIsolation';
 
 const personalMeal = { id: 'private-meal', title: 'وجبة شخصية' } as FoodMoment;
 const demoMeal = { id: 'sim-rushed-1', title: 'حريرة تجريبية' } as FoodMoment;
@@ -32,4 +32,21 @@ describe('Guardian demonstration privacy and truthful examples', () => {
       expect(checkIns).toEqual([personalCheckIn]);
     },
   );
+});
+
+describe('Guardian acknowledgement separation', () => {
+  it('keeps personal dismissals active in normal mode and ignores demo dismissals', () => {
+    const personal = ['real-sleep'];
+    const demo = ['sim-sleep'];
+    expect(selectGuardianAcknowledgements(false, personal, demo)).toBe(personal);
+    expect(selectGuardianAcknowledgements(false, personal, demo)).not.toContain('sim-sleep');
+  });
+
+  it('uses only temporary demo dismissals during simulation without changing personal state', () => {
+    const personal = ['real-sleep'];
+    const demo = ['sim-sleep'];
+    expect(selectGuardianAcknowledgements(true, personal, demo)).toBe(demo);
+    expect(selectGuardianAcknowledgements(true, personal, demo)).not.toContain('real-sleep');
+    expect(personal).toEqual(['real-sleep']);
+  });
 });
