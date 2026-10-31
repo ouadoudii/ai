@@ -128,6 +128,24 @@ describe('guardian positive Arabic-first experience', () => {
     }
   });
 
+  it('ignores malformed imported clock and creation values without inventing a sleep warning', () => {
+    const malformed = {
+      ...sleepCheckIn, id: 'legacy-invalid-clock',
+      time: { hour: 8 }, createdAt: 'not-a-timestamp',
+      sleep: { durationHours: 5, wakeFeeling: 'tired' },
+    } as unknown as DailyCheckIn;
+    const recovered = {
+      ...sleepCheckIn, id: 'legacy-valid-clock',
+      time: '10:30', createdAt: undefined,
+      sleep: { durationHours: 8, wakeFeeling: 'refreshed' },
+    } as unknown as DailyCheckIn;
+    for (const history of [[malformed, recovered], [recovered, malformed]]) {
+      const status = evaluateNutritionAlarms([], history);
+      expect(status.activeAlarms).toHaveLength(0);
+      expect(status.statusText).toContain('كل يوم له إيقاعه الخاص');
+    }
+  });
+
   it('accepts a partial sleep check-in without wellbeing or an invented warning', () => {
     const partial = {
       id: 'partial-sleep', date: getLocalDateKey(), timeOfDay: 'morning',
