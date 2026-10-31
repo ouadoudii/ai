@@ -44,6 +44,9 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
       await expect(guardian.getByRole('status')).toContainText('أفكار يمكنك تجاهلها');
       await expect(guardian.locator('[class*="bg-rose"], [class*="text-rose"]')).toHaveCount(0);
       await expect(guardian).not.toContainText(/Ghrelin|Ghrelin-Hoch|Küchenschluss|Überessen|28%|Akute Intervention|Heißhunger/);
+      await guardian.getByRole('button',{name:/إعادة ضبط/}).click();
+      await expect(guardian.getByTestId('guardian-demo-notice')).toHaveCount(0);
+      await expect(guardian.getByText(labels.ar.clear)).toBeVisible();
     });
   }
 }
