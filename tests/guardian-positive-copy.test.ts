@@ -128,6 +128,33 @@ describe('guardian positive Arabic-first experience', () => {
     }
   });
 
+  it('does not treat impossible imported clock times as newer sleep or energy observations', () => {
+    vi.useFakeTimers();
+    try {
+      const afternoon = new Date();
+      afternoon.setHours(15, 0, 0, 0);
+      vi.setSystemTime(afternoon);
+      const date = getLocalDateKey();
+      const stale = {
+        id: 'invalid-clock-low', date, time: '99:99', timeOfDay: 'morning', createdAt: 1,
+        sleep: { durationHours: 5, wakeFeeling: 'tired' },
+        wellbeing: { energyLevel: 1 },
+      } as DailyCheckIn;
+      const recovered = {
+        id: 'valid-clock-recovered', date, time: '10:30', timeOfDay: 'morning', createdAt: 1,
+        sleep: { durationHours: 8, wakeFeeling: 'refreshed' },
+        wellbeing: { energyLevel: 4 },
+      } as DailyCheckIn;
+      for (const history of [[stale, recovered], [recovered, stale]]) {
+        const status = evaluateNutritionAlarms([], history);
+        expect(status.activeAlarms).toHaveLength(0);
+        expect(status.statusText).toContain('كل يوم له إيقاعه الخاص');
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('ignores malformed imported clock and creation values without inventing a sleep warning', () => {
     const malformed = {
       ...sleepCheckIn, id: 'legacy-invalid-clock',

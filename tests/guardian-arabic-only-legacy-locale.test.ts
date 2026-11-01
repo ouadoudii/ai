@@ -11,6 +11,9 @@ describe('Guardian Arabic-only legacy-locale safety', () => {
     expect(arabic.title).toBe('مساحة لطيفة للاهتمام بنفسك');
     expect(arabic.activeAlarm(3)).toBe('أفكار يمكنك تجاهلها');
     expect(arabic.done).toBe('إخفاء الفكرة');
+    expect(arabic.testAlarm).toBe('تجربة لطيفة');
+    expect(arabic.sleep).toBe('نوم أقل من المعتاد');
+    expect(arabic.testAlarm).not.toMatch(/تنبيه|إنذار|عقاب/);
   });
 
   it('has no non-Arabic, invented hormone, punitive or urgent alarm copy in any Guardian state', () => {
@@ -26,4 +29,15 @@ describe('Guardian Arabic-only legacy-locale safety', () => {
     expect(copy.noIntervention).toBe('هنا متى احتجت');
     expect(copy.acute).toBe('اقتراح لطيف');
   });
+
+  it('keeps unknown or malformed persisted locale values on the safe Arabic fallback', () => {
+    const arabic = getGuardianCopy('ar');
+    for (const persisted of ['en-US', 'de-DE', 'fr-CA', '', null, undefined]) {
+      const copy = getGuardianCopy(persisted as AppLanguage);
+      expect(copy).toEqual(arabic);
+      expect(copy.title).toBe('مساحة لطيفة للاهتمام بنفسك');
+      expect(copy.activeAlarm(99)).not.toMatch(/alarm|alert|warning|إنذار|فشل|عقاب/i);
+    }
+  });
+
 });
