@@ -93,8 +93,8 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
       checkIns: localStorage.getItem('nimmapp_checkins_v1'),
     }));
 
-    await guardian.getByRole('button', { name: 'اختبار تنبيه' }).click();
-    await guardian.getByRole('button', { name: /نقص النوم/ }).click();
+    await guardian.getByRole('button', { name: 'تجربة لطيفة' }).click();
+    await guardian.getByRole('button', { name: /نوم أقل من المعتاد/ }).click();
     await expect(guardian.getByTestId('guardian-demo-notice')).toContainText('هذه أمثلة وليست تسجيلاتك');
     await expect(guardian).not.toContainText('وجبتي الشخصية الخاصة');
     await expect(guardian).not.toContainText('4.5 ساعات نوم');
