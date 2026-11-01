@@ -168,6 +168,39 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     expect(await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'))).toBe(before);
   });
 
+  test(`Guardian respects a later valid rested feeling with corrupt sleep metrics on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.clock.install({ time: new Date('2026-11-01T10:00:00Z') });
+    await page.addInitScript((profile) => {
+      const now = new Date();
+      const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      localStorage.setItem('rhythm_language_v1', 'ar');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+      localStorage.setItem('nimmapp_moments_v1', '[]');
+      localStorage.setItem('nimmapp_checkins_v1', JSON.stringify([
+        { id: 'earlier-tired', date: today, time: '07:30', timeOfDay: 'morning',
+          createdAt: 100, sleep: { durationHours: 5, quality: 2, wakeFeeling: 'tired' } },
+        { id: 'later-rested', date: today, time: '08:30', timeOfDay: 'morning',
+          createdAt: 200, sleep: { durationHours: -3, quality: 99, wakeFeeling: 'refreshed' } },
+      ]));
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    }, profile);
+    await page.goto('/');
+    const before = await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'));
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(guardian).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian).toContainText('هنا متى احتجت');
+    await expect(guardian).not.toContainText(/قد تحتاج إلى بعض الراحة اليوم|-3 ساعات|99 من 5|undefined|NaN|Ghrelin|28%|فشل|عقاب|إنذار/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'))).toBe(before);
+  });
+
   for (const scenario of ['invalid-only', 'valid-low-before-invalid'] as const) {
     test(`Guardian ignores invalid energy scores (${scenario}) on ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
