@@ -54,7 +54,10 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     expect(await page.evaluate((key) => localStorage.getItem(key), key)).toBe(personalAcknowledgements);
 
     // Collapsing the scenario picker must not trap the user in a synthetic demo.
-    await guardian.getByRole('button', { name: 'تجربة لطيفة' }).click();
+    const demoPicker = guardian.getByRole('button', { name: 'تجربة لطيفة' });
+    await expect(demoPicker).toHaveAttribute('aria-expanded', 'true');
+    await demoPicker.click();
+    await expect(demoPicker).toHaveAttribute('aria-expanded', 'false');
     await expect(guardian.getByRole('button', { name: /إعادة ضبط/ })).toHaveCount(0);
     const exitDemo = guardian.getByTestId('guardian-demo-exit');
     await expect(exitDemo).toBeVisible();
