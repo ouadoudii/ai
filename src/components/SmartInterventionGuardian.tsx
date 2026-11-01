@@ -64,7 +64,7 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
             <span className={`w-2 h-2 rounded-full ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
             <span>{activeUnresolvedAlarms.length > 0 ? copy.activeAlarm(activeUnresolvedAlarms.length) : copy.allClear}</span>
           </div>
-          {onSimulateAlarm && <button onClick={() => setShowSimulator(!showSimulator)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors flex items-center gap-1"><RefreshCw className="w-3 h-3" /><span>{copy.testAlarm}</span></button>}
+          {onSimulateAlarm && <button type="button" aria-expanded={showSimulator} onClick={() => setShowSimulator(!showSimulator)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors flex items-center gap-1"><RefreshCw className="w-3 h-3" /><span>{copy.testAlarm}</span></button>}
         </div>
       </div>
 
