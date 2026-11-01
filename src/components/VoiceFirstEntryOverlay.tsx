@@ -258,6 +258,8 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
     value: string;
     start: number | null;
     end: number | null;
+    inputType?: string;
+    data?: string | null;
   } | null>(null);
   const weightSelectionRef = React.useRef<{
     start: number | null;
@@ -546,6 +548,36 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                       end: input.selectionEnd,
                     };
                   }}
+                  onKeyDown={(e) => {
+                    // React may deliver onChange without a usable native InputEvent,
+                    // and its synthetic beforeinput may be absent or late in Chromium.
+                    // Capture the pre-mutation caret and actual typed character.
+                    // Navigation keys are intentionally excluded so Home/Arrow edits work.
+                    if (
+                      e.key.length !== 1 ||
+                      e.ctrlKey ||
+                      e.altKey ||
+                      e.metaKey ||
+                      e.nativeEvent.isComposing
+                    ) return;
+                    const input = e.currentTarget;
+                    // A delayed React onSelect may report the initial zero
+                    // even after the preceding keyup settled at the end.
+                    // Prefer the last confirmed forward caret for collapsed
+                    // insertions; Home/Arrow and pointer edits refresh it.
+                    const selection = resolveOnboardingWeightSelectionBeforeInput(
+                      weightSelectionRef.current,
+                      input.selectionStart,
+                      input.selectionEnd,
+                    );
+                    weightBeforeInputRef.current = {
+                      value: input.value,
+                      start: selection.start,
+                      end: selection.end,
+                      inputType: "insertText",
+                      data: e.key,
+                    };
+                  }}
                   onKeyUp={(e) => {
                     // Capture the settled caret after typing or keyboard
                     // navigation (including Home) instead of trusting a
@@ -558,6 +590,11 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                   }}
                   onBeforeInput={(e) => {
                     const input = e.currentTarget;
+                    const native = e.nativeEvent as InputEvent;
+                    const keyboardSnapshot = weightBeforeInputRef.current;
+                    // Keep the earlier keydown snapshot when React fires a
+                    // synthetic beforeinput with an already mutated caret.
+                    if (keyboardSnapshot?.inputType === "insertText") return;
                     const selection =
                       resolveOnboardingWeightSelectionBeforeInput(
                         weightSelectionRef.current,
@@ -568,6 +605,8 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                       value: input.value,
                       start: selection.start,
                       end: selection.end,
+                      inputType: native.inputType || (native.data ? "insertText" : undefined),
+                      data: native.data ?? null,
                     };
                   }}
                   onChange={(e) => {
@@ -581,8 +620,8 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
                     const reconciled = reconcileOnboardingWeightInput(
                       before?.value ?? form.weight,
                       input.value,
-                      native.inputType,
-                      native.data,
+                      native.inputType || before?.inputType || "",
+                      native.data ?? before?.data ?? null,
                       before?.start ?? input.selectionStart,
                       before?.end ?? input.selectionEnd,
                     );
