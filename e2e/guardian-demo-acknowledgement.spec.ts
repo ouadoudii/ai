@@ -53,7 +53,15 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(guardian).toContainText('5 ساعات نوم');
     expect(await page.evaluate((key) => localStorage.getItem(key), key)).toBe(personalAcknowledgements);
 
-    await guardian.getByRole('button', { name: /إعادة ضبط/ }).click();
+    // Collapsing the scenario picker must not trap the user in a synthetic demo.
+    await guardian.getByRole('button', { name: 'تجربة لطيفة' }).click();
+    await expect(guardian.getByRole('button', { name: /إعادة ضبط/ })).toHaveCount(0);
+    const exitDemo = guardian.getByTestId('guardian-demo-exit');
+    await expect(exitDemo).toBeVisible();
+    await expect(guardian.getByRole('note')).toContainText('هذه أمثلة وليست تسجيلاتك');
+    await exitDemo.focus();
+    await expect(exitDemo).toBeFocused();
+    await exitDemo.press('Enter');
     await expect(guardian.getByTestId('guardian-demo-notice')).toHaveCount(0);
     await expect(guardian).not.toContainText('4.5 ساعات نوم');
     expect(await page.evaluate((key) => localStorage.getItem(key), key)).toBe(personalAcknowledgements);
