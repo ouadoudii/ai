@@ -150,6 +150,8 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
             createdAt: 200, wellbeing: { energyLevel: 99 } },
           { id: 'invalid-negative-energy', date: today, time: '14:40', timeOfDay: 'afternoon',
             createdAt: 300, wellbeing: { energyLevel: -3 } },
+          { id: 'invalid-fractional-energy', date: today, time: '14:45', timeOfDay: 'afternoon',
+            createdAt: 400, wellbeing: { energyLevel: 1.5 } },
         ]));
         sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
       }, { profile, scenario });
