@@ -234,4 +234,40 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(JSON.stringify(result)).not.toMatch(/99:99|فشل|عقاب|إنذار|Ghrelin|28%/);
   });
 
+
+  it('does not invent a sleep concern from impossible imported sleep metrics', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T10:00:00'));
+    const today = getLocalDateKey();
+    for (const [hours, quality] of [[-3, 99], [28, 0], [Number.POSITIVE_INFINITY, -1]]) {
+      const imported = {
+        ...checkIn(today, 'invalid-sleep'),
+        sleep: { durationHours: hours, quality, wakeFeeling: 'unknown' } as unknown as DailyCheckIn['sleep'],
+        wellbeing: undefined,
+      };
+      const before = JSON.stringify(imported);
+      const result = evaluateNutritionAlarms([], [imported]);
+      expect(result.activeAlarms.filter(alarm => alarm.triggerKey === 'sleep_deficit')).toEqual([]);
+      expect(result.statusText).toContain('بلطف');
+      expect(JSON.stringify(result)).not.toMatch(/-3|28 ساعات|99 من 5|undefined|NaN|فشل|عقاب|Ghrelin|28%/);
+      expect(JSON.stringify(imported)).toBe(before);
+    }
+  });
+
+  it('keeps gentle sleep guidance when a valid feeling accompanies corrupted metrics', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T10:00:00'));
+    const today = getLocalDateKey();
+    const imported = {
+      ...checkIn(today, 'mixed-sleep'),
+      sleep: { durationHours: -3, quality: 99, wakeFeeling: 'exhausted' as const },
+      wellbeing: undefined,
+    };
+    const result = evaluateNutritionAlarms([], [imported]);
+    const sleep = result.activeAlarms.filter(alarm => alarm.triggerKey === 'sleep_deficit');
+    expect(sleep).toHaveLength(1);
+    expect(sleep[0].subtitle).toContain('شعورك عند الاستيقاظ: مرهق');
+    expect(sleep[0].subtitle).not.toMatch(/-3|99|undefined|NaN/);
+    expect(sleep[0].reason).not.toMatch(/فشل|عقاب|إنذار/);
+  });
 });
