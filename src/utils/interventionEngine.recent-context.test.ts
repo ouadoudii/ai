@@ -175,4 +175,40 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     const result = evaluateNutritionAlarms([], [checkIn('2026-10-27', 'yesterday')]);
     expect(result.activeAlarms).toEqual([]);
   });
+  it('ignores an impossible imported meal clock after a later calm meal', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    const imported = { ...moment(today, 'invalid-rushed'), time: '99:99', createdAt: 300 };
+    const calm = {
+      ...moment(today, 'valid-calm'), time: '14:00', createdAt: 100,
+      eatingPace: 'slow' as const, distraction: 'mindful' as const,
+    };
+    for (const history of [[imported, calm], [calm, imported]]) {
+      const before = history.map(entry => entry.id);
+      const result = evaluateNutritionAlarms(history, []);
+      expect(result.activeAlarms.some(alarm => alarm.triggerKey === 'distracted_meal')).toBe(false);
+      expect(result.statusText).toContain('بلطف');
+      expect(history.map(entry => entry.id)).toEqual(before);
+    }
+  });
+
+  it('hides malformed meal timestamps and honors later energy recovery', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    const imported = {
+      ...moment(today, 'malformed-clock'), time: '99:99',
+      energyAfter: 'sluggish' as const, createdAt: 100,
+    };
+    const recovered = {
+      ...checkIn(today, 'energy-recovered'), time: '14:30', createdAt: 200,
+      sleep: undefined, wellbeing: { energyLevel: 4 },
+    };
+    const result = evaluateNutritionAlarms([imported], [recovered]);
+    expect(result.activeAlarms.some(alarm => alarm.triggerKey === 'afternoon_crash')).toBe(false);
+    expect(result.activeAlarms.find(alarm => alarm.triggerKey === 'distracted_meal')?.timestamp).toBe('منذ قليل');
+    expect(JSON.stringify(result)).not.toMatch(/99:99|فشل|عقاب|إنذار|Ghrelin|28%/);
+  });
+
 });
