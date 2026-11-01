@@ -22,8 +22,9 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
     await page.getByTestId(viewport.name==='desktop'?'desktop-coach-nav':'mobile-coach-nav').click();
     const guardian=page.getByTestId('guardian');
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+    await expect(guardian).not.toContainText('اختبار تنبيه');
 
-    await guardian.getByRole('button',{name:'اختبار تنبيه'}).click();
+    await guardian.getByRole('button',{name:'تجربة لطيفة'}).click();
     await guardian.getByRole('button',{name:/الأكل تحت الضغط/}).click();
     const resolve=guardian.getByRole('button',{name:/إخفاء الفكرة/});
     await expect(resolve.first()).toBeVisible();
@@ -37,7 +38,7 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
     await page.reload();
     await page.getByTestId(viewport.name==='desktop'?'desktop-coach-nav':'mobile-coach-nav').click();
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
-    await guardian.getByRole('button',{name:'اختبار تنبيه'}).click();
+    await guardian.getByRole('button',{name:'تجربة لطيفة'}).click();
     await guardian.getByRole('button',{name:/الأكل تحت الضغط/}).click();
     await expect(guardian.getByText('هنا متى احتجت')).toBeVisible();
     await expect(guardian.getByRole('button',{name:/إخفاء الفكرة/})).toHaveCount(0);
@@ -46,7 +47,7 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
     // Sleep can create more than one alarm during the afternoon, which is fine
     // here because this assertion only requires the new occurrence to remain actionable.
     await guardian.getByRole('button',{name:/إعادة ضبط/}).click();
-    await guardian.getByRole('button',{name:/نقص النوم/}).click();
+    await guardian.getByRole('button',{name:/نوم أقل من المعتاد/}).click();
     await expect(guardian.getByRole('button',{name:/إخفاء الفكرة: قد تحتاج إلى بعض الراحة اليوم/}).first()).toBeVisible();
     await page.screenshot({path:testInfo.outputPath(`guardian-acknowledgement-${viewport.name}.png`),fullPage:true});
   });
