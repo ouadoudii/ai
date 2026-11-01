@@ -81,7 +81,7 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
       )}
 
       {isSimulated && (
-        <p role="note" aria-live="polite" data-testid="guardian-demo-notice" className="mt-4 rounded-2xl border border-[#E8D6B5] bg-[#FFF8EB] px-4 py-3 text-xs leading-relaxed text-[#5B4632]">
+        <div role="note" aria-live="polite" data-testid="guardian-demo-notice" className="mt-4 rounded-2xl border border-[#E8D6B5] bg-[#FFF8EB] px-4 py-3 text-xs leading-relaxed text-[#5B4632]">
           <span>وضع تجريبي — هذه أمثلة وليست تسجيلاتك. يمكنك العودة إلى يومك في أي وقت.</span>
           {!showSimulator && (
             <button
@@ -93,7 +93,7 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
               العودة إلى يومك
             </button>
           )}
-        </p>
+        </div>
       )}
 
       <div className="mt-4">
