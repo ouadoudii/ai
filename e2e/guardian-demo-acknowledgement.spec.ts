@@ -39,8 +39,8 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     const personalAcknowledgements = await page.evaluate((key) => localStorage.getItem(key), key);
     expect(JSON.parse(personalAcknowledgements || '[]').length).toBeGreaterThan(0);
 
-    await guardian.getByRole('button', { name: 'اختبار تنبيه' }).click();
-    await guardian.getByRole('button', { name: /نقص النوم/ }).click();
+    await guardian.getByRole('button', { name: 'تجربة لطيفة' }).click();
+    await guardian.getByRole('button', { name: /نوم أقل من المعتاد/ }).click();
     await expect(guardian.getByTestId('guardian-demo-notice')).toBeVisible();
     await expect(guardian).toContainText('5 ساعات نوم');
     await guardian.getByRole('button', { name: /إخفاء الفكرة/ }).first().click();
@@ -49,7 +49,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     expect(await page.evaluate((key) => localStorage.getItem(key), key)).toBe(personalAcknowledgements);
 
     await guardian.getByRole('button', { name: /الأكل تحت الضغط/ }).click();
-    await guardian.getByRole('button', { name: /نقص النوم/ }).click();
+    await guardian.getByRole('button', { name: /نوم أقل من المعتاد/ }).click();
     await expect(guardian).toContainText('5 ساعات نوم');
     expect(await page.evaluate((key) => localStorage.getItem(key), key)).toBe(personalAcknowledgements);
 
