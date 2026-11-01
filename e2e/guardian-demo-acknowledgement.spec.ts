@@ -87,6 +87,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await guardian.getByRole('button', { name: /طاقة أقل بعد الظهر/ }).click();
     await expect(guardian.getByRole('note')).toContainText('هذه أمثلة وليست تسجيلاتك');
     await expect(guardian).toContainText('مساحة صغيرة لاستعادة نشاطك');
+    await expect(guardian.getByRole('status')).toContainText('أفكار يمكنك تجاهلها');
     await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ }).first()).toBeVisible();
     await expect(guardian).not.toContainText(/فشل|عقاب|Ghrelin|28%/);
     await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"]')).toHaveCount(0);
