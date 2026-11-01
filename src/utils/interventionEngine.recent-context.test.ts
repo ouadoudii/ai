@@ -169,6 +169,29 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(result.statusBadge).toBe('amber');
   });
 
+  it('keeps real evening guidance quiet while an explicit afternoon demo remains informative', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T21:15:00'));
+    const today = getLocalDateKey();
+    const observation = {
+      ...checkIn(today, 'energy-evening'),
+      sleep: undefined,
+      wellbeing: { energyLevel: 1, stressLevel: 2 },
+    };
+    const real = evaluateNutritionAlarms([], [observation]);
+    expect(real.activeAlarms.some(alarm => alarm.triggerKey === 'afternoon_crash')).toBe(false);
+
+    // A synthetic demonstration can explain the afternoon flow at night.
+    // The explicit clock is scoped to this evaluation and never moves Date.now().
+    const exampleTime = new Date('2026-10-28T15:00:00');
+    const demo = evaluateNutritionAlarms([], [observation], 'intuitive_mindful', exampleTime);
+    expect(demo.activeAlarms.map(alarm => alarm.triggerKey)).toContain('afternoon_crash');
+    expect(demo.activeAlarms[0].title).toBe('مساحة صغيرة لاستعادة نشاطك');
+    expect(demo.activeAlarms[0].reason).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
+    expect(new Date().getHours()).toBe(21);
+    expect(observation.date).toBe(today);
+  });
+
   it('does not mistake a low-energy entry from another day for an afternoon prompt', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-28T15:00:00'));
