@@ -270,4 +270,21 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(sleep[0].subtitle).not.toMatch(/-3|99|undefined|NaN/);
     expect(sleep[0].reason).not.toMatch(/فشل|عقاب|إنذار/);
   });
+
+  it('uses a valid sleep quality observation without echoing an impossible duration', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T10:00:00'));
+    const today = getLocalDateKey();
+    const imported = {
+      ...checkIn(today, 'quality-only'),
+      sleep: { durationHours: 28, quality: 2, wakeFeeling: 'unknown' } as unknown as DailyCheckIn['sleep'],
+      wellbeing: undefined,
+    };
+    const result = evaluateNutritionAlarms([], [imported]);
+    const sleep = result.activeAlarms.filter(alarm => alarm.triggerKey === 'sleep_deficit');
+    expect(sleep).toHaveLength(1);
+    expect(sleep[0].subtitle).toContain('تقييم جودة النوم: 2 من 5');
+    expect(sleep[0].subtitle).not.toMatch(/28|undefined|NaN|شعورك عند الاستيقاظ/);
+    expect(sleep[0].recommendation).not.toMatch(/فشل|عقاب|إنذار/);
+  });
 });
