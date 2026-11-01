@@ -26,4 +26,15 @@ describe('Guardian Arabic-only legacy-locale safety', () => {
     expect(copy.noIntervention).toBe('هنا متى احتجت');
     expect(copy.acute).toBe('اقتراح لطيف');
   });
+
+  it('keeps unknown or malformed persisted locale values on the safe Arabic fallback', () => {
+    const arabic = getGuardianCopy('ar');
+    for (const persisted of ['en-US', 'de-DE', 'fr-CA', '', null, undefined]) {
+      const copy = getGuardianCopy(persisted as AppLanguage);
+      expect(copy).toEqual(arabic);
+      expect(copy.title).toBe('مساحة لطيفة للاهتمام بنفسك');
+      expect(copy.activeAlarm(99)).not.toMatch(/alarm|alert|warning|إنذار|فشل|عقاب/i);
+    }
+  });
+
 });
