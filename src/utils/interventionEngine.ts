@@ -96,10 +96,18 @@ export function evaluateNutritionAlarms(
 
   if (latestSleepCheckIn?.sleep) {
     const { durationHours, wakeFeeling, quality } = latestSleepCheckIn.sleep;
-    if (durationHours < 6 || wakeFeeling === 'exhausted' || quality <= 2) {
-      // Reflect the person's actual check-in, not an inferred feeling of fatigue.
-      // Sleep fields are optional; never display "undefined hours" for a
-      // quality-only or wake-feeling-only entry.
+    // Imported/legacy sleep fields may contain impossible values. Do not
+    // turn corrupted data into a health prompt or repeat it back as a fact.
+    const sleepHours = typeof durationHours === 'number' && Number.isFinite(durationHours)
+      && durationHours >= 0 && durationHours <= 24 ? durationHours : null;
+    const sleepQuality = typeof quality === 'number' && Number.isInteger(quality)
+      && quality >= 1 && quality <= 5 ? quality : null;
+    const validWakeFeeling = wakeFeeling === 'refreshed' || wakeFeeling === 'normal'
+      || wakeFeeling === 'tired' || wakeFeeling === 'exhausted' ? wakeFeeling : null;
+    if ((sleepHours !== null && sleepHours < 6)
+      || validWakeFeeling === 'exhausted'
+      || (sleepQuality !== null && sleepQuality <= 2)) {
+      // Only reflect observations that are plausible and explicitly recorded.
       const wakeDescriptions = {
         refreshed: 'منتعش',
         normal: 'كالمعتاد',
@@ -107,11 +115,9 @@ export function evaluateNutritionAlarms(
         exhausted: 'مرهق',
       } as const;
       const sleepSummary = [
-        typeof durationHours === 'number' && Number.isFinite(durationHours)
-          ? `سجّلت ${durationHours} ساعات نوم` : null,
-        wakeFeeling ? `شعورك عند الاستيقاظ: ${wakeDescriptions[wakeFeeling]}` : null,
-        typeof quality === 'number' && Number.isFinite(quality)
-          ? `تقييم جودة النوم: ${quality} من 5` : null,
+        sleepHours !== null ? `سجّلت ${sleepHours} ساعات نوم` : null,
+        validWakeFeeling ? `شعورك عند الاستيقاظ: ${wakeDescriptions[validWakeFeeling]}` : null,
+        sleepQuality !== null ? `تقييم جودة النوم: ${sleepQuality} من 5` : null,
       ].filter(Boolean).join('، ');
       let archetypeAdvice = '';
       if (archetype === 'protein_performer') {
