@@ -54,3 +54,60 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
     });
   }
 }
+
+for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'mobile', width: 390, height: 844 }]) {
+  test(`Guardian demo never mixes real journal observations on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.addInitScript(({ profile }) => {
+      const now = new Date();
+      const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      const realMeal = {
+        id: 'private-rushed-meal', title: 'وجبتي الشخصية الخاصة', label: 'غداء',
+        category: 'lunch', date, time: '12:40', location: 'المنزل',
+        locationCategory: 'home', imageUrl: '', tags: [], createdAt: Date.now() - 1000,
+        eatingPace: 'rushed', distraction: 'screen',
+      };
+      const realCheckIn = {
+        id: 'private-sleep', date, time: '07:00', timeOfDay: 'morning',
+        sleep: { durationHours: 4.5, quality: 2, wakeFeeling: 'exhausted' },
+        wellbeing: { energyLevel: 4 }, createdAt: Date.now() - 1000,
+      };
+      localStorage.setItem('rhythm_language_v1', 'ar');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+      localStorage.setItem('nimmapp_moments_v1', JSON.stringify([realMeal]));
+      localStorage.setItem('nimmapp_checkins_v1', JSON.stringify([realCheckIn]));
+      localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    }, { profile });
+
+    await page.goto('/');
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(guardian).toContainText('وجبتي الشخصية الخاصة');
+    await expect(guardian).toContainText('4.5 ساعات نوم');
+    const originalStorage = await page.evaluate(() => ({
+      meals: localStorage.getItem('nimmapp_moments_v1'),
+      checkIns: localStorage.getItem('nimmapp_checkins_v1'),
+    }));
+
+    await guardian.getByRole('button', { name: 'اختبار تنبيه' }).click();
+    await guardian.getByRole('button', { name: /نقص النوم/ }).click();
+    await expect(guardian.getByTestId('guardian-demo-notice')).toContainText('هذه أمثلة وليست تسجيلاتك');
+    await expect(guardian).not.toContainText('وجبتي الشخصية الخاصة');
+    await expect(guardian).not.toContainText('4.5 ساعات نوم');
+    await expect(guardian).toContainText('5 ساعات نوم');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect.poll(() => page.evaluate(() => ({
+      meals: localStorage.getItem('nimmapp_moments_v1'),
+      checkIns: localStorage.getItem('nimmapp_checkins_v1'),
+    }))).toEqual(originalStorage);
+
+    await guardian.getByRole('button', { name: /إعادة ضبط/ }).click();
+    await expect(guardian.getByTestId('guardian-demo-notice')).toHaveCount(0);
+    await expect(guardian).toContainText('وجبتي الشخصية الخاصة');
+    await expect(guardian).toContainText('4.5 ساعات نوم');
+  });
+}

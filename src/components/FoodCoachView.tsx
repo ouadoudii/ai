@@ -30,6 +30,7 @@ import { askGeminiCoach } from '../apiClient';
 import { buildCoachFollowUps } from '../utils/coachFollowUps';
 import { useLanguage } from '../i18n';
 import { getLocalDateKey } from '../utils/dateKey';
+import { scopeGuardianEvaluationInputs } from '../utils/guardianDemoIsolation';
 import { ARABIC_COACH_SUGGESTIONS, ARABIC_COACH_UNAVAILABLE, getArabicCoachWelcome, getArabicCoachSummary, getArabicCoachFocus, getArabicGoalCopy, formatObservedMealSignals } from '../utils/coachArabicPresentation';
 
 interface FoodCoachViewProps {
@@ -76,8 +77,8 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   const goals = React.useMemo(() => deriveDailyCoachingGoals(moments, localDay), [moments, localDay]);
   const [simulatedScenario, setSimulatedScenario] = React.useState<'sleep' | 'rushed_meal' | 'afternoon_crash' | null>(null);
 
-  // Dynamic Guardian evaluation based on real logs + active simulation
-  const effectiveMoments = React.useMemo(() => {
+  // Keep simulated Guardian guidance separate from private observations.
+  const demoMoments = React.useMemo<FoodMoment[]>(() => {
     if (simulatedScenario === 'rushed_meal') {
       return [
         {
@@ -85,13 +86,12 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           title: 'حريرة تناولتها على عجل أمام الشاشة',
           label: 'غداء',
           category: 'lunch' as const,
-          date: 'Heute',
+          date: localDay,
           time: '12:45',
           location: 'على المكتب',
-          locationCategory: 'work' as const,
+          locationCategory: 'home' as const,
           imageUrl: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=800&auto=format&fit=crop&q=80',
           rating: 3,
-          mood: 'stressed' as const,
           hungerLevel: 4,
           fullnessLevel: 5,
           eatingPace: 'rushed' as const,
@@ -101,18 +101,17 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           tags: ['تجربة', 'تشتت'],
           createdAt: Date.now(),
         },
-        ...moments,
       ];
     }
-    return moments;
-  }, [moments, simulatedScenario]);
+    return [];
+  }, [simulatedScenario, localDay]);
 
-  const effectiveCheckIns = React.useMemo(() => {
+  const demoCheckIns = React.useMemo<DailyCheckIn[]>(() => {
     if (simulatedScenario === 'sleep') {
       return [
         {
           id: 'sim-sleep-1',
-          date: 'Heute',
+          date: localDay,
           time: '07:00',
           timeOfDay: 'morning' as const,
           sleep: {
@@ -122,41 +121,50 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           },
           wellbeing: {
             energyLevel: 2,
-            mood: 'stressed' as const,
             stressLevel: 4,
             waterGlasses: 1,
             note: 'نوم متقطع خلال الليل.',
           },
           createdAt: Date.now(),
         },
-        ...checkIns,
       ];
     }
     if (simulatedScenario === 'afternoon_crash') {
       return [
         {
           id: 'sim-crash-1',
-          date: 'Heute',
+          date: localDay,
           time: '14:30',
           timeOfDay: 'midday' as const,
           wellbeing: {
             energyLevel: 1,
-            mood: 'sluggish' as const,
             stressLevel: 3,
             waterGlasses: 2,
             note: 'شعرت بتراجع في الطاقة بعد الظهر.',
           },
           createdAt: Date.now(),
         },
-        ...checkIns,
       ];
     }
-    return checkIns;
-  }, [checkIns, simulatedScenario]);
+    return [];
+  }, [simulatedScenario, localDay]);
 
+  const guardianInputs = React.useMemo(
+    () => scopeGuardianEvaluationInputs(simulatedScenario, moments, checkIns, demoMoments, demoCheckIns),
+    [simulatedScenario, moments, checkIns, demoMoments, demoCheckIns],
+  );
   const guardianStatus: GuardianStatus = React.useMemo(() => {
-    return evaluateNutritionAlarms(effectiveMoments, effectiveCheckIns, nutritionProfile.archetype);
-  }, [effectiveMoments, effectiveCheckIns, nutritionProfile.archetype]);
+    // An afternoon demo should remain useful outside 13:00–17:00, without
+    // changing the real user's clock or their own time-sensitive suggestions.
+    const evaluationTime = new Date();
+    if (simulatedScenario === 'afternoon_crash') evaluationTime.setHours(15, 0, 0, 0);
+    return evaluateNutritionAlarms(
+      guardianInputs.moments,
+      guardianInputs.checkIns,
+      simulatedScenario === null ? nutritionProfile.archetype : 'intuitive_mindful',
+      evaluationTime,
+    );
+  }, [guardianInputs, nutritionProfile.archetype, simulatedScenario]);
 
   const handleSimulateAlarm = (scenario: 'sleep' | 'rushed_meal' | 'afternoon_crash' | 'clear') => {
     if (scenario === 'clear') {

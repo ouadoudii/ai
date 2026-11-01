@@ -15,7 +15,7 @@ const prepare=async(page:any)=>{await page.addInitScript((profile)=>{
 },profile);};
 
 for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',width:390,height:844}]){
-  test(`guardian acknowledgement survives reload and does not suppress a later occurrence on ${viewport.name}`,async({page},testInfo)=>{
+  test(`Guardian demo dismissals stay session-only and other scenarios remain actionable on ${viewport.name}`,async({page},testInfo)=>{
     await page.setViewportSize({width:viewport.width,height:viewport.height});
     await prepare(page);
     await page.goto('/');
@@ -32,7 +32,9 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
       await resolve.first().click();
       await expect(resolve).toHaveCount(remaining-1);
     }
-    await expect.poll(async()=>page.evaluate((key)=>JSON.parse(localStorage.getItem(key)||'[]').length,acknowledgementStorageKey)).toBeGreaterThan(0);
+    // Synthetic dismissals must never be written to the user's private acknowledgement store.
+    const personalStoreAfterDemo = await page.evaluate((key) => localStorage.getItem(key), acknowledgementStorageKey);
+    expect(personalStoreAfterDemo).toBeNull();
     await expect(guardian.getByText('هنا متى احتجت')).toBeVisible({timeout:10_000});
 
     await page.reload();
@@ -40,15 +42,15 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
     await guardian.getByRole('button',{name:'تجربة لطيفة'}).click();
     await guardian.getByRole('button',{name:/الأكل تحت الضغط/}).click();
-    await expect(guardian.getByText('هنا متى احتجت')).toBeVisible();
-    await expect(guardian.getByRole('button',{name:/إخفاء الفكرة/})).toHaveCount(0);
+    // The demo is intentionally session-only: the same example is available after reload.
+    await expect(guardian.getByRole('button',{name:/إخفاء الفكرة/}).first()).toBeVisible();
+    expect(await page.evaluate((key) => localStorage.getItem(key), acknowledgementStorageKey)).toBe(personalStoreAfterDemo);
 
-    // A different source occurrence must remain independently actionable.
-    // Sleep can create more than one alarm during the afternoon, which is fine
-    // here because this assertion only requires the new occurrence to remain actionable.
+    // Switching to a different synthetic occurrence must not inherit dismissed demo state.
     await guardian.getByRole('button',{name:/إعادة ضبط/}).click();
     await guardian.getByRole('button',{name:/نوم أقل من المعتاد/}).click();
     await expect(guardian.getByRole('button',{name:/إخفاء الفكرة: قد تحتاج إلى بعض الراحة اليوم/}).first()).toBeVisible();
+    expect(await page.evaluate((key) => localStorage.getItem(key), acknowledgementStorageKey)).toBe(personalStoreAfterDemo);
     await page.screenshot({path:testInfo.outputPath(`guardian-acknowledgement-${viewport.name}.png`),fullPage:true});
   });
 }
