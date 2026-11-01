@@ -56,7 +56,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     const guardian = page.getByTestId('guardian');
     await expect(guardian).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(guardian).toContainText('كل يوم له إيقاعه الخاص');
+    await expect(guardian).toContainText('لكل يوم إيقاعه الخاص. نحن هنا لنرافقك بلطف متى احتجت.');
     await expect(guardian).not.toContainText(/قد تحتاج إلى بعض الراحة اليوم|undefined|NaN|Ghrelin|28%|فشل|عقاب/);
     await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
   });
