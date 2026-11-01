@@ -172,8 +172,12 @@ export function evaluateNutritionAlarms(
   // The latest explicit energy check-in is the person's current report. An
   // earlier low-energy entry must not keep prompting after they feel better.
   // Sort a copy because imported/persisted history is not guaranteed newest-first.
+  // Legacy imports may contain out-of-range energy scores. Treat those as
+  // unknown rather than inventing low energy or masking a valid earlier report.
+  const isValidEnergyLevel = (value: unknown): value is number =>
+    typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 5;
   const latestEnergyCheckIn = todayCheckIns
-    .filter(c => typeof c.wellbeing?.energyLevel === 'number' && Number.isFinite(c.wellbeing.energyLevel))
+    .filter(c => isValidEnergyLevel(c.wellbeing?.energyLevel))
     .sort(compareRecentCheckIns)[0];
   const lowEnergyCheckIn = latestEnergyCheckIn && latestEnergyCheckIn.wellbeing.energyLevel! <= 2
     ? latestEnergyCheckIn : undefined;
