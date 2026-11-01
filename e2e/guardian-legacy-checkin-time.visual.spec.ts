@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 
+// These scenarios need a real 15:00 browser-local clock. The shared E2E
+// timezone intentionally shifts with CI start time and must not change it.
+test.use({ timezoneId: 'UTC' });
+
 const profile = {
   summary: 'أريد متابعة يومي بهدوء', priorities: [], preferences: [],
   rawIntro: 'أريد متابعة يومي بهدوء', confirmedAt: 1,
@@ -132,7 +136,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
   for (const scenario of ['invalid-only', 'valid-low-before-invalid'] as const) {
     test(`Guardian ignores invalid energy scores (${scenario}) on ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await page.clock.install({ time: new Date('2026-11-01T15:00:00') });
+      await page.clock.install({ time: new Date('2026-11-01T15:00:00Z') });
       await page.addInitScript(({ profile, scenario }) => {
         const now = new Date();
         const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
@@ -160,7 +164,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
       // This guards against browser clock drift and false negatives in cross-timezone CI.
       expect(await page.evaluate(() => new Date().getHours())).toBe(15);
       const seeded = await page.evaluate(() => ({
-        today: new Date().toLocaleDateString('en-CA'),
+        today: [new Date().getFullYear(), String(new Date().getMonth() + 1).padStart(2, '0'), String(new Date().getDate()).padStart(2, '0')].join('-'),
         checkIns: JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]'),
       }));
       expect(seeded.checkIns).toHaveLength(scenario === 'valid-low-before-invalid' ? 4 : 3);
