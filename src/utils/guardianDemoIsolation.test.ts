@@ -42,6 +42,22 @@ describe('Guardian acknowledgement separation', () => {
     expect(selectGuardianAcknowledgements(false, personal, demo)).not.toContain('sim-sleep');
   });
 
+  it('does not let a personal dismissal suppress a demo even when occurrence IDs collide', () => {
+    // Imported records can reuse IDs. Privacy must depend on mode, not ID uniqueness.
+    const personal = ['shared-occurrence'];
+    const demo: string[] = [];
+    expect(selectGuardianAcknowledgements(true, personal, demo)).not.toContain('shared-occurrence');
+
+    demo.push('shared-occurrence');
+    expect(selectGuardianAcknowledgements(true, personal, demo)).toContain('shared-occurrence');
+    expect(selectGuardianAcknowledgements(false, personal, demo)).toBe(personal);
+
+    demo.length = 0; // Reset only the synthetic session, not the personal dismissal.
+    expect(selectGuardianAcknowledgements(false, personal, demo)).toContain('shared-occurrence');
+    expect(selectGuardianAcknowledgements(true, personal, demo)).toEqual([]);
+    expect(personal).toEqual(['shared-occurrence']);
+  });
+
   it('uses only temporary demo dismissals during simulation without changing personal state', () => {
     const personal = ['real-sleep'];
     const demo = ['sim-sleep'];
