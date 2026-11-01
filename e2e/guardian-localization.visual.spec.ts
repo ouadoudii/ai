@@ -29,6 +29,7 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
       await expect(guardian.getByText(labels.ar.title)).toBeVisible();
       await expect(guardian.getByText(labels.ar.clear)).toBeVisible();
       await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+      await expect(page.locator('html')).toHaveAttribute('lang','ar');
       await guardian.getByRole('button',{name:labels.ar.test}).click();
       await expect(guardian).not.toContainText('اختبار تنبيه');
       await expect(guardian).not.toContainText('نقص النوم');
