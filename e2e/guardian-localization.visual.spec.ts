@@ -34,6 +34,7 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
       await expect(guardian.getByTestId('guardian-demo-notice')).toHaveCount(0);
       await guardian.getByRole('button',{name:/الأكل تحت الضغط/}).click();
       await expect(guardian.getByRole('note')).toContainText('هذه أمثلة وليست تسجيلاتك');
+      await expect(guardian.getByRole('note')).toHaveAttribute('aria-live','polite');
       await expect(guardian).toContainText('حريرة تناولتها على عجل أمام الشاشة');
       await expect(guardian).not.toContainText(/Schnelles Pastagericht|Mittagessen|Schreibtisch|Simuliert/);
       await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').length)).toBe(0);
