@@ -165,7 +165,8 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
       }));
       expect(seeded.checkIns).toHaveLength(scenario === 'valid-low-before-invalid' ? 4 : 3);
       expect(seeded.checkIns.every((entry: { date: string; timeOfDay: string }) =>
-        entry.date === seeded.checkIns[0].date && entry.timeOfDay === 'midday')).toBe(true);
+        entry.date === seeded.today && entry.timeOfDay === 'midday')).toBe(true);
+      expect(seeded.checkIns[0]?.wellbeing?.energyLevel).toBe(scenario === 'valid-low-before-invalid' ? 1 : 99);
       const before = await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'));
       await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
       const guardian = page.getByTestId('guardian');
