@@ -82,7 +82,17 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
 
       {isSimulated && (
         <p role="note" aria-live="polite" data-testid="guardian-demo-notice" className="mt-4 rounded-2xl border border-[#E8D6B5] bg-[#FFF8EB] px-4 py-3 text-xs leading-relaxed text-[#5B4632]">
-          وضع تجريبي — هذه أمثلة وليست تسجيلاتك. اختر «إعادة ضبط» للعودة إلى يومك.
+          <span>وضع تجريبي — هذه أمثلة وليست تسجيلاتك. يمكنك العودة إلى يومك في أي وقت.</span>
+          {!showSimulator && (
+            <button
+              type="button"
+              data-testid="guardian-demo-exit"
+              onClick={() => handleDemoScenario('clear')}
+              className="mt-3 block min-h-11 rounded-xl border border-[#D4B78A] bg-white px-4 py-2 text-sm font-semibold text-[#4B3B2B] hover:bg-[#F7EBD8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"
+            >
+              العودة إلى يومك
+            </button>
+          )}
         </p>
       )}
 
