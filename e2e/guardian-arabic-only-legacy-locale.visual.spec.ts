@@ -45,6 +45,9 @@ for (const viewport of [
     const guardian = page.getByTestId('guardian');
     await expect(guardian).toBeVisible();
     await expect(guardian).toContainText('مساحة لطيفة للاهتمام بنفسك');
+    await guardian.getByRole('button', { name: 'تجربة لطيفة' }).click();
+    await expect(guardian).toContainText('نوم أقل من المعتاد');
+    await expect(guardian).not.toContainText('اختبار تنبيه');
     await expect(guardian).toContainText('قد تحتاج إلى بعض الراحة اليوم');
     await expect(guardian).not.toContainText(/Alarm aktiv|Ghrelin|ghréline|28%|Immediate intervention|فشل|عقاب|إنذار/);
     await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
