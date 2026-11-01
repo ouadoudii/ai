@@ -52,7 +52,8 @@ describe('optional, non-diagnostic Arabic Guardian suggestions', () => {
     expect(demo).toContain('role="note"');
     expect(demo).toContain('data-testid="guardian-demo-notice"');
     expect(demo).toContain('هذه أمثلة وليست تسجيلاتك');
-    expect(demo).toContain('إعادة ضبط');
+    expect(demo).toContain('data-testid="guardian-demo-exit"');
+    expect(demo).toContain('العودة إلى يومك');
     expect(demo).not.toMatch(/Simuliert|Warnung|Alarm|Ghrelin|28%|animate-pulse|bg-red/);
   });
 
