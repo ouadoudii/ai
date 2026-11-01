@@ -47,6 +47,15 @@ const compareRecentCheckIns = (a: DailyCheckIn, b: DailyCheckIn): number => {
   return createdAt(b) - createdAt(a) || clockTime(b).localeCompare(clockTime(a));
 };
 
+// Imported sleep reports can contain corrupted fields. A wholly invalid later
+// record must not hide an earlier, usable observation or create a false prompt.
+const isValidSleepDuration = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 24;
+const isValidSleepQuality = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 5;
+const isValidWakeFeeling = (value: unknown): value is 'refreshed' | 'normal' | 'tired' | 'exhausted' =>
+  value === 'refreshed' || value === 'normal' || value === 'tired' || value === 'exhausted';
+
 export function evaluateNutritionAlarms(
   moments: FoodMoment[],
   checkIns: DailyCheckIn[],
@@ -71,7 +80,11 @@ export function evaluateNutritionAlarms(
   // report, regardless of persisted array order; an unrelated midday check-in
   // without sleep must not erase the last actual sleep observation.
   const latestSleepCheckIn = todayCheckIns
-    .filter(checkIn => checkIn.sleep)
+    .filter(checkIn => {
+      const sleep = checkIn.sleep;
+      return sleep && (isValidSleepDuration(sleep.durationHours)
+        || isValidSleepQuality(sleep.quality) || isValidWakeFeeling(sleep.wakeFeeling));
+    })
     .sort(compareRecentCheckIns)[0];
   // Imported and edited meal histories are not guaranteed newest-first.
   // Use the meal's actual local time when both entries have one, rather than
@@ -98,12 +111,9 @@ export function evaluateNutritionAlarms(
     const { durationHours, wakeFeeling, quality } = latestSleepCheckIn.sleep;
     // Imported/legacy sleep fields may contain impossible values. Do not
     // turn corrupted data into a health prompt or repeat it back as a fact.
-    const sleepHours = typeof durationHours === 'number' && Number.isFinite(durationHours)
-      && durationHours >= 0 && durationHours <= 24 ? durationHours : null;
-    const sleepQuality = typeof quality === 'number' && Number.isInteger(quality)
-      && quality >= 1 && quality <= 5 ? quality : null;
-    const validWakeFeeling = wakeFeeling === 'refreshed' || wakeFeeling === 'normal'
-      || wakeFeeling === 'tired' || wakeFeeling === 'exhausted' ? wakeFeeling : null;
+    const sleepHours = isValidSleepDuration(durationHours) ? durationHours : null;
+    const sleepQuality = isValidSleepQuality(quality) ? quality : null;
+    const validWakeFeeling = isValidWakeFeeling(wakeFeeling) ? wakeFeeling : null;
     if ((sleepHours !== null && sleepHours < 6)
       || validWakeFeeling === 'exhausted'
       || (sleepQuality !== null && sleepQuality <= 2)) {

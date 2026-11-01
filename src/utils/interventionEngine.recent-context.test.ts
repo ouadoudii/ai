@@ -235,6 +235,66 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
   });
 
 
+
+  it('keeps the latest valid sleep observation when a newer import is entirely corrupt', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T10:00:00'));
+    const today = getLocalDateKey();
+    const earlier = {
+      ...checkIn(today, 'usable-sleep'), time: '07:30', createdAt: 100,
+      wellbeing: undefined,
+    };
+    const corrupt = {
+      ...checkIn(today, 'corrupt-sleep'), time: '08:30', createdAt: 200,
+      sleep: { durationHours: -3, quality: 99, wakeFeeling: 'unknown' } as unknown as DailyCheckIn['sleep'],
+      wellbeing: undefined,
+    };
+    for (const history of [[earlier, corrupt], [corrupt, earlier]]) {
+      const before = JSON.stringify(history);
+      const result = evaluateNutritionAlarms([], history);
+      const sleep = result.activeAlarms.filter(a => a.triggerKey === 'sleep_deficit');
+      expect(sleep).toHaveLength(1);
+      expect(sleep[0].id).toBe('alarm-sleep-usable-sleep');
+      expect(sleep[0].subtitle).toContain('سجّلت 5 ساعات نوم');
+      expect(JSON.stringify(result)).not.toMatch(/-3 ساعات|99 من 5|undefined|NaN|فشل|عقاب|إنذار/);
+      expect(JSON.stringify(history)).toBe(before);
+    }
+  });
+
+  it('does not resurrect an old sleep concern when a newer import is corrupt', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T10:00:00'));
+    const today = getLocalDateKey();
+    const rested = {
+      ...checkIn(today, 'rested'), time: '07:30', createdAt: 100,
+      sleep: { durationHours: 8, quality: 4, wakeFeeling: 'refreshed' as const },
+      wellbeing: undefined,
+    };
+    const corrupt = {
+      ...checkIn(today, 'corrupt'), time: '08:30', createdAt: 200,
+      sleep: { durationHours: 28, quality: 99, wakeFeeling: 'unknown' } as unknown as DailyCheckIn['sleep'],
+      wellbeing: undefined,
+    };
+    expect(evaluateNutritionAlarms([], [corrupt, rested]).activeAlarms
+      .filter(a => a.triggerKey === 'sleep_deficit')).toEqual([]);
+  });
+
+  it('respects a later valid wake feeling even when its other sleep fields are corrupt', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T10:00:00'));
+    const today = getLocalDateKey();
+    const tired = {
+      ...checkIn(today, 'tired'), time: '07:30', createdAt: 100, wellbeing: undefined,
+    };
+    const refreshed = {
+      ...checkIn(today, 'refreshed'), time: '08:30', createdAt: 200,
+      sleep: { durationHours: -3, quality: 99, wakeFeeling: 'refreshed' as const },
+      wellbeing: undefined,
+    };
+    expect(evaluateNutritionAlarms([], [tired, refreshed]).activeAlarms
+      .filter(a => a.triggerKey === 'sleep_deficit')).toEqual([]);
+  });
+
   it('does not invent a sleep concern from impossible imported sleep metrics', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-28T10:00:00'));
