@@ -86,7 +86,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
           title: 'حريرة تناولتها على عجل أمام الشاشة',
           label: 'غداء',
           category: 'lunch' as const,
-          date: 'Heute',
+          date: localDay,
           time: '12:45',
           location: 'على المكتب',
           locationCategory: 'home' as const,
@@ -104,14 +104,14 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       ];
     }
     return [];
-  }, [simulatedScenario]);
+  }, [simulatedScenario, localDay]);
 
   const demoCheckIns = React.useMemo<DailyCheckIn[]>(() => {
     if (simulatedScenario === 'sleep') {
       return [
         {
           id: 'sim-sleep-1',
-          date: 'Heute',
+          date: localDay,
           time: '07:00',
           timeOfDay: 'morning' as const,
           sleep: {
@@ -133,7 +133,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       return [
         {
           id: 'sim-crash-1',
-          date: 'Heute',
+          date: localDay,
           time: '14:30',
           timeOfDay: 'midday' as const,
           wellbeing: {
@@ -147,18 +147,22 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       ];
     }
     return [];
-  }, [simulatedScenario]);
+  }, [simulatedScenario, localDay]);
 
   const guardianInputs = React.useMemo(
     () => scopeGuardianEvaluationInputs(simulatedScenario, moments, checkIns, demoMoments, demoCheckIns),
     [simulatedScenario, moments, checkIns, demoMoments, demoCheckIns],
   );
   const guardianStatus: GuardianStatus = React.useMemo(() => {
-    // Demo guidance must not be personalized from private history or inferred archetypes.
+    // An afternoon demo should remain useful outside 13:00–17:00, without
+    // changing the real user's clock or their own time-sensitive suggestions.
+    const evaluationTime = new Date();
+    if (simulatedScenario === 'afternoon_crash') evaluationTime.setHours(15, 0, 0, 0);
     return evaluateNutritionAlarms(
       guardianInputs.moments,
       guardianInputs.checkIns,
       simulatedScenario === null ? nutritionProfile.archetype : 'intuitive_mindful',
+      evaluationTime,
     );
   }, [guardianInputs, nutritionProfile.archetype, simulatedScenario]);
 
