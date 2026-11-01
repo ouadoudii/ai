@@ -49,10 +49,13 @@ const compareRecentCheckIns = (a: DailyCheckIn, b: DailyCheckIn): number => {
 export function evaluateNutritionAlarms(
   moments: FoodMoment[],
   checkIns: DailyCheckIn[],
-  archetype: NutritionArchetype = 'intuitive_mindful'
+  archetype: NutritionArchetype = 'intuitive_mindful',
+  evaluationTime: Date = new Date(),
 ): GuardianStatus {
   const alarms: NutritionAlarm[] = [];
-  const now = new Date();
+  // A demo may use a representative afternoon clock; real journal evaluation
+  // continues to use the actual local time by default.
+  const now = evaluationTime;
   const today = getLocalDateKey(now);
   // Only today's entries can prompt "today" suggestions. Historical and future
   // journal records remain untouched and discoverable in their own views.
