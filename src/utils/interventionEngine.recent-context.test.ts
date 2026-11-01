@@ -287,4 +287,49 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(sleep[0].subtitle).not.toMatch(/28|undefined|NaN|شعورك عند الاستيقاظ/);
     expect(sleep[0].recommendation).not.toMatch(/فشل|عقاب|إنذار/);
   });
+
+  it('ignores impossible imported energy scores instead of inventing afternoon concerns', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    for (const energyLevel of [-3, 0, 2.5, 99, Number.POSITIVE_INFINITY, Number.NaN]) {
+      const imported = {
+        ...checkIn(today, 'invalid-energy'),
+        sleep: undefined,
+        wellbeing: { energyLevel },
+      };
+      const result = evaluateNutritionAlarms([], [imported]);
+      expect(result.activeAlarms.filter(alarm => alarm.triggerKey === 'afternoon_crash')).toEqual([]);
+      expect(result.statusText).toContain('بلطف');
+      expect(result.statusBadge).toBe('green');
+      expect(imported.wellbeing.energyLevel).toBe(energyLevel);
+    }
+  });
+
+  it('uses the latest valid energy report, not a newer corrupted import', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    const low = {
+      ...checkIn(today, 'valid-low-energy'), time: '14:00', createdAt: 100,
+      sleep: undefined, wellbeing: { energyLevel: 1 },
+    };
+    const invalid = {
+      ...checkIn(today, 'invalid-later-energy'), time: '14:30', createdAt: 200,
+      sleep: undefined, wellbeing: { energyLevel: 99 },
+    };
+    const recovered = {
+      ...checkIn(today, 'valid-recovered-energy'), time: '14:45', createdAt: 300,
+      sleep: undefined, wellbeing: { energyLevel: 4 },
+    };
+    for (const history of [[low, invalid], [invalid, low]]) {
+      const result = evaluateNutritionAlarms([], history);
+      const energy = result.activeAlarms.filter(alarm => alarm.triggerKey === 'afternoon_crash');
+      expect(energy).toHaveLength(1);
+      expect(energy[0].id).toBe('alarm-afternoon-crash-checkin-valid-low-energy');
+      expect(energy[0].reason).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
+      expect(evaluateNutritionAlarms([], [...history, recovered]).activeAlarms
+        .filter(alarm => alarm.triggerKey === 'afternoon_crash')).toEqual([]);
+    }
+  });
 });
