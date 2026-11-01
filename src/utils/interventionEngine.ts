@@ -74,10 +74,20 @@ export function evaluateNutritionAlarms(
   // Use the meal's actual local time when both entries have one, rather than
   // storage order or a later backfill timestamp. Keep legacy records safe by
   // falling back to creation time, and never mutate the journal array.
+  // Reject impossible imported meal clocks so stale suggestions do not override recovery.
+  const validMealClock = (time: unknown): string =>
+    typeof time === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time) ? time : '';
+  const malformedMealClock = (time: unknown): boolean =>
+    typeof time === 'string' && time.length > 0 && !validMealClock(time);
   const recentMoments = moments.filter(isCurrent).sort((a, b) => {
-    const recordedOrder = /^\d{2}:\d{2}$/.test(a.time || '') && /^\d{2}:\d{2}$/.test(b.time || '')
-      ? b.time.localeCompare(a.time) : 0;
-    return recordedOrder || (b.createdAt || 0) - (a.createdAt || 0);
+    const aTime = validMealClock(a.time);
+    const bTime = validMealClock(b.time);
+    if (aTime && bTime) return bTime.localeCompare(aTime);
+    if (malformedMealClock(a.time) && bTime) return 1;
+    if (malformedMealClock(b.time) && aTime) return -1;
+    const aCreated = typeof a.createdAt === 'number' && Number.isFinite(a.createdAt) ? a.createdAt : 0;
+    const bCreated = typeof b.createdAt === 'number' && Number.isFinite(b.createdAt) ? b.createdAt : 0;
+    return bCreated - aCreated;
   }).slice(0, 3);
   const currentHour = now.getHours();
 
@@ -145,7 +155,7 @@ export function evaluateNutritionAlarms(
       reason: 'من الطبيعي أن نأكل أحيانًا ونحن منشغلون. إن رغبت، لاحظ كيف تشعر الآن دون لوم.',
       recommendation: archetypeAdvice,
       actionableStep: 'خذ نفسًا هادئًا، واسترح قليلًا إذا كان ذلك يناسبك.',
-      timestamp: latestMoment.time || 'منذ قليل',
+      timestamp: validMealClock(latestMoment.time) || 'منذ قليل',
     });
   }
 
@@ -164,9 +174,10 @@ export function evaluateNutritionAlarms(
   // available, falling back to creation timestamps for legacy entries.
   const recoveredAfterMoment = (moment: FoodMoment) => {
     if (!latestEnergyCheckIn || latestEnergyCheckIn.wellbeing.energyLevel! <= 2) return false;
-    const checkInTime = latestEnergyCheckIn.time;
-    if (/^\d{2}:\d{2}$/.test(checkInTime || '') && /^\d{2}:\d{2}$/.test(moment.time || '')) {
-      return checkInTime > moment.time;
+    const checkInTime = validMealClock(latestEnergyCheckIn.time);
+    const momentTime = validMealClock(moment.time);
+    if (checkInTime && momentTime) {
+      return checkInTime > momentTime;
     }
     return Number.isFinite(latestEnergyCheckIn.createdAt) && Number.isFinite(moment.createdAt)
       && latestEnergyCheckIn.createdAt >= moment.createdAt;
