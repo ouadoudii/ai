@@ -97,4 +97,35 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     )).toEqual(['invalid-clock-rushed', 'valid-clock-calm']);
   });
 
+
+  test(`Guardian calmly ignores impossible imported sleep metrics on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.addInitScript((profile) => {
+      const now = new Date();
+      const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      localStorage.setItem('rhythm_language_v1', 'ar');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+      localStorage.setItem('nimmapp_moments_v1', '[]');
+      localStorage.setItem('nimmapp_checkins_v1', JSON.stringify([
+        { id: 'impossible-sleep', date: today, time: '07:00', timeOfDay: 'morning',
+          createdAt: 100, sleep: { durationHours: -3, quality: 99, wakeFeeling: 'unknown' } },
+      ]));
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    }, profile);
+    await page.goto('/');
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(guardian).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian).toContainText('هنا متى احتجت');
+    await expect(guardian).not.toContainText(/قد تحتاج إلى بعض الراحة اليوم|-3 ساعات|99 من 5|undefined|NaN|فشل|عقاب|Ghrelin|28%/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]')[0]?.sleep)).toEqual({
+      durationHours: -3, quality: 99, wakeFeeling: 'unknown',
+    });
+  });
 }
