@@ -41,8 +41,9 @@ const compareRecentCheckIns = (a: DailyCheckIn, b: DailyCheckIn): number => {
   // Invalid values are unknown, not a reason to crash or outrank valid reports.
   const createdAt = (entry: DailyCheckIn) =>
     typeof entry.createdAt === 'number' && Number.isFinite(entry.createdAt) ? entry.createdAt : 0;
+  // Reject impossible imported times (e.g. 99:99) so stale entries cannot outrank recovery.
   const clockTime = (entry: DailyCheckIn) =>
-    typeof entry.time === 'string' && /^\d{2}:\d{2}$/.test(entry.time) ? entry.time : '';
+    typeof entry.time === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(entry.time) ? entry.time : '';
   return createdAt(b) - createdAt(a) || clockTime(b).localeCompare(clockTime(a));
 };
 
