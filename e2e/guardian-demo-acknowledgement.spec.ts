@@ -64,3 +64,35 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   });
 }
+
+for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'mobile', width: 390, height: 844 }]) {
+  test(`Guardian afternoon demo is helpful after hours without touching private history on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    // A fixed evening clock catches the prior silent demo outside 13:00–17:00.
+    await page.clock.setFixedTime(new Date('2026-11-01T21:15:00'));
+    await page.addInitScript(({ profile }) => {
+      localStorage.setItem('rhythm_language_v1', 'ar');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+      localStorage.setItem('nimmapp_moments_v1', '[]');
+      localStorage.setItem('nimmapp_checkins_v1', '[]');
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    }, { profile });
+    await page.goto('/');
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await guardian.getByRole('button', { name: /اختبار تنبيه|تجربة لطيفة/ }).click();
+    await guardian.getByRole('button', { name: /طاقة أقل بعد الظهر/ }).click();
+    await expect(guardian.getByRole('note')).toContainText('هذه أمثلة وليست تسجيلاتك');
+    await expect(guardian).toContainText('مساحة صغيرة لاستعادة نشاطك');
+    await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ }).first()).toBeVisible();
+    await expect(guardian).not.toContainText(/فشل|عقاب|Ghrelin|28%/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"]')).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'))).toBe('[]');
+    await guardian.getByRole('button', { name: /إعادة ضبط/ }).click();
+    await expect(guardian.getByTestId('guardian-demo-notice')).toHaveCount(0);
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  });
+}
