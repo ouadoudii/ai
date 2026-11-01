@@ -11,6 +11,9 @@ describe('Guardian Arabic-only legacy-locale safety', () => {
     expect(arabic.title).toBe('مساحة لطيفة للاهتمام بنفسك');
     expect(arabic.activeAlarm(3)).toBe('أفكار يمكنك تجاهلها');
     expect(arabic.done).toBe('إخفاء الفكرة');
+    expect(arabic.testAlarm).toBe('تجربة لطيفة');
+    expect(arabic.sleep).toBe('نوم أقل من المعتاد');
+    expect(arabic.testAlarm).not.toMatch(/تنبيه|إنذار|عقاب/);
   });
 
   it('has no non-Arabic, invented hormone, punitive or urgent alarm copy in any Guardian state', () => {
