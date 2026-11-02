@@ -215,7 +215,17 @@ export function evaluateNutritionAlarms(
     return Number.isFinite(latestEnergyCheckIn.createdAt) && Number.isFinite(moment.createdAt)
       && latestEnergyCheckIn.createdAt >= moment.createdAt;
   };
-  const lowEnergyMoment = recentMoments.find(m => m.energyAfter === 'sluggish' && !recoveredAfterMoment(m));
+  // Only the most recent explicitly reported post-meal energy reflects how
+  // the person feels now. An older sluggish meal must not prompt again after
+  // a later meal where they reported feeling steady, even if imports are unsorted.
+  // Missing or malformed energy fields are not invented as a recovery report.
+  const latestReportedMealEnergy = recentMoments.find(m =>
+    m.energyAfter === 'energized' || m.energyAfter === 'neutral'
+    || m.energyAfter === 'sluggish' || m.energyAfter === 'heavy',
+  );
+  const lowEnergyMoment = latestReportedMealEnergy?.energyAfter === 'sluggish'
+    && !recoveredAfterMoment(latestReportedMealEnergy)
+    ? latestReportedMealEnergy : undefined;
 
   if (isAfternoon && (lowEnergyCheckIn || lowEnergyMoment)) {
     let archetypeAdvice = '';
