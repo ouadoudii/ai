@@ -177,6 +177,7 @@ for (const viewport of [
     await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed', false, false, false, true);
     await page.goto('/');
+    expect(await page.evaluate(() => new Date().getHours())).toBe(15);
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
     const guardian = page.getByTestId('guardian');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
