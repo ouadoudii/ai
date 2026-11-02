@@ -44,7 +44,7 @@ for (const viewport of [
         ? 'تناولت «حريرة 7rira» بينما كان انتباهك مشغولًا'
         : 'تناولت وجبتك بينما كان انتباهك مشغولًا')).toBeVisible();
       await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ })).toHaveCount(1);
-      await expect(guardian).not.toContainText(/undefined|\\[object Object\\]|فشل|عقاب|إنذار|Ghrelin|28%/);
+      await expect(guardian).not.toContainText(/undefined|\[object Object\]|فشل|عقاب|إنذار|Ghrelin|28%/);
       await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
       expect(await page.evaluate(() => localStorage.getItem('nimmapp_moments_v1'))).toBe(before);
     });
