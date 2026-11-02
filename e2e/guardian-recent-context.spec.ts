@@ -307,6 +307,7 @@ for (const viewport of [
       sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
     }, { profile });
     await page.goto('/');
+    expect(await page.evaluate(() => new Date().getHours())).toBe(15);
     const before = await page.evaluate(() => [
       localStorage.getItem('nimmapp_moments_v1'),
       localStorage.getItem('nimmapp_checkins_v1'),
