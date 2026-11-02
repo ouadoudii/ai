@@ -464,4 +464,39 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(result.activeAlarms[0].reason).not.toMatch(/فشل|عقاب|إنذار/);
   });
 
+  it('respects a later steady meal report after a low-energy check-in without inventing recovery', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    const low = {
+      ...checkIn(today, 'energy-low-before-lunch'), time: '14:00', createdAt: 900,
+      sleep: undefined, wellbeing: { energyLevel: 1 },
+    };
+    const steady = {
+      ...moment(today, 'energy-steady-after-lunch'), time: '14:30', createdAt: 100,
+      eatingPace: 'slow' as const, distraction: 'mindful' as const,
+      energyAfter: 'neutral' as const,
+    };
+    const before = JSON.stringify([low, steady]);
+    for (const energyAfter of ['neutral', 'energized'] as const) {
+      const result = evaluateNutritionAlarms([{ ...steady, energyAfter }], [low]);
+      expect(result.activeAlarms.filter(a => a.triggerKey === 'afternoon_crash')).toEqual([]);
+      expect(result.statusText).toContain('بلطف');
+      expect(JSON.stringify(result)).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
+    }
+    // An earlier steady meal does not override a later low-energy check-in.
+    const earlierMeal = { ...steady, time: '13:30', createdAt: 1000 };
+    expect(evaluateNutritionAlarms([earlierMeal], [low]).activeAlarms
+      .map(a => a.id)).toContain('alarm-afternoon-crash-checkin-energy-low-before-lunch');
+    // Unknown and malformed meal reports cannot silently claim recovery.
+    for (const untrusted of [
+      { ...steady, energyAfter: undefined },
+      { ...steady, time: '99:99' },
+    ]) {
+      expect(evaluateNutritionAlarms([untrusted], [low]).activeAlarms
+        .map(a => a.id)).toContain('alarm-afternoon-crash-checkin-energy-low-before-lunch');
+    }
+    expect(JSON.stringify([low, steady])).toBe(before);
+  });
+
 });
