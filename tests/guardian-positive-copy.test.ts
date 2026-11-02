@@ -216,6 +216,11 @@ describe('guardian positive Arabic-first experience', () => {
 
       // A genuinely newer sluggish meal still deserves an optional suggestion.
       const newerSluggishMeal = { ...earlierSluggishMeal, id: 'sluggish-after-recovery', time: '15:15', createdAt: 3 };
+      const beforeMealHappens = evaluateNutritionAlarms([newerSluggishMeal], [recovered, low]);
+      expect(beforeMealHappens.activeAlarms.some(alarm => alarm.id === 'alarm-afternoon-crash-moment-sluggish-after-recovery')).toBe(false);
+      // Advance past the observed meal rather than accepting a future timestamp
+      // as evidence. This preserves the original post-meal behavior assertion.
+      vi.setSystemTime(new Date(afternoon.getTime() + 30 * 60_000));
       const newMoment = evaluateNutritionAlarms([newerSluggishMeal], [recovered, low]);
       expect(newMoment.activeAlarms.some(alarm => alarm.id === 'alarm-afternoon-crash-moment-sluggish-after-recovery')).toBe(true);
       expect(allVisibleText(newMoment.activeAlarms[0])).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
