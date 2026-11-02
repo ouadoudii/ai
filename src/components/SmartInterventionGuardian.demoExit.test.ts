@@ -33,6 +33,15 @@ describe('Guardian demo escape accessibility', () => {
     expect(html).not.toMatch(/animate-pulse|animate-ping|bg-red|Ghrelin|28%/);
   });
 
+  it('exposes a named, keyboard-discernible demo toggle with a 44px touch target', () => {
+    const html = renderGuardian(false);
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).toContain('aria-controls="guardian-demo-scenarios"');
+    expect(html).toMatch(/min-h-11[^"]*focus-visible:outline-2/);
+    expect(html).toContain('تجربة لطيفة');
+    expect(html).not.toMatch(/bg-red|animate-pulse|عقاب|فشل/);
+  });
+
   it('does not show the demo exit or synthetic disclaimer during normal personal guidance', () => {
     const html = renderGuardian(false);
     expect(html).not.toContain('guardian-demo-exit');
