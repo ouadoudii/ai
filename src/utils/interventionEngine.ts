@@ -71,6 +71,7 @@ export function evaluateNutritionAlarms(
   checkIns: DailyCheckIn[],
   archetype: NutritionArchetype = 'intuitive_mindful',
   evaluationTime: Date = new Date(),
+  allowSyntheticDemo = false,
 ): GuardianStatus {
   const alarms: NutritionAlarm[] = [];
   // A demo may use a representative afternoon clock; real journal evaluation
@@ -83,8 +84,10 @@ export function evaluateNutritionAlarms(
   // that marker as a real user's date.
   const currentLocalClock = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const isCurrent = (entry: { id: string; date: string; time?: unknown }) => {
-    // Demo records describe examples and must remain usable at any time of day.
-    if (entry.id.startsWith('sim-')) return entry.date === today || entry.date === 'Heute';
+    // A personal import may also have an ID starting with sim-. Only the
+    // explicitly activated demo may bypass the observed local clock or use
+    // the legacy "Heute" marker. Normal journal entries never get this pass.
+    if (allowSyntheticDemo && entry.id.startsWith('sim-')) return entry.date === today || entry.date === 'Heute';
     if (entry.date !== today) return false;
     // A future local clock on a same-day import is not an observation yet.
     // Preserve legacy records without a valid clock rather than guessing.
