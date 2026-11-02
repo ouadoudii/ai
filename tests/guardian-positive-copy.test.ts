@@ -256,4 +256,48 @@ describe('guardian positive Arabic-first experience', () => {
     expect(copy.noIntervention).toBe('هنا متى احتجت');
     expect(copy.acute).not.toMatch(/إنذار|عقاب|فشل/);
   });
+
+  it('uses the latest explicit meal-energy report instead of reviving an older slump', () => {
+    vi.useFakeTimers();
+    try {
+      const afternoon = new Date();
+      afternoon.setHours(15, 30, 0, 0);
+      vi.setSystemTime(afternoon);
+      const date = getLocalDateKey();
+      const earlier = {
+        ...rushedMeal, id: 'meal-earlier-sluggish', date, time: '12:30',
+        createdAt: 300, eatingPace: 'slow', distraction: 'mindful',
+        energyAfter: 'sluggish',
+      } as FoodMoment;
+      const later = {
+        ...earlier, id: 'meal-later-recovered', time: '14:30',
+        createdAt: 100, energyAfter: 'neutral',
+      } as FoodMoment;
+      for (const history of [[earlier, later], [later, earlier]]) {
+        const before = structuredClone(history);
+        const status = evaluateNutritionAlarms(history, [], 'intuitive_mindful', afternoon);
+        expect(status.activeAlarms).toHaveLength(0);
+        expect(status.statusText).toContain('كل يوم له إيقاعه الخاص');
+        expect(history).toEqual(before);
+      }
+
+      const newerSlump = {
+        ...later, id: 'meal-newer-sluggish', time: '15:15',
+        createdAt: 50, energyAfter: 'sluggish',
+      } as FoodMoment;
+      const laterLow = evaluateNutritionAlarms([earlier, later, newerSlump], [], 'intuitive_mindful', afternoon);
+      expect(laterLow.activeAlarms.map(alarm => alarm.id))
+        .toContain('alarm-afternoon-crash-moment-meal-newer-sluggish');
+      expect(laterLow.activeAlarms[0].title).toBe('مساحة صغيرة لاستعادة نشاطك');
+      expect(allVisibleText(laterLow.activeAlarms[0])).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
+
+      // An unreported energy value is not evidence of recovery.
+      const unreported = { ...later, id: 'meal-unreported', energyAfter: undefined };
+      const unknown = evaluateNutritionAlarms([earlier, unreported], [], 'intuitive_mindful', afternoon);
+      expect(unknown.activeAlarms.map(alarm => alarm.id))
+        .toContain('alarm-afternoon-crash-moment-meal-earlier-sluggish');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
