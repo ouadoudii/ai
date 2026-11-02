@@ -18,6 +18,24 @@ const checkIn = (date: string, id = 'checkin-1'): DailyCheckIn => ({
 describe('Guardian local-day context and gentle Arabic suggestions', () => {
   afterEach(() => vi.useRealTimers());
 
+  it('uses a calm Arabic meal label for untitled imports while preserving real mixed-script titles', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    for (const title of ['', '   ', undefined, null, { unexpected: true }, 'حريرة 7rira']) {
+      const imported = { ...moment(today, 'imported-meal'), title: title as string };
+      const original = JSON.stringify(imported);
+      const result = evaluateNutritionAlarms([imported], []);
+      const suggestion = result.activeAlarms.find(a => a.triggerKey === 'distracted_meal');
+      expect(suggestion).toBeDefined();
+      expect(suggestion?.subtitle).toBe(title === 'حريرة 7rira'
+        ? 'تناولت «حريرة 7rira» بينما كان انتباهك مشغولًا'
+        : 'تناولت وجبتك بينما كان انتباهك مشغولًا');
+      expect(suggestion?.subtitle).not.toMatch(/undefined|null|\\[object Object\\]|«\\s*»|فشل|عقاب|إنذار/);
+      expect(JSON.stringify(imported)).toBe(original);
+    }
+  });
+
   it('does not turn old or future entries into alarms about today', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-28T14:00:00'));
