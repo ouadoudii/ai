@@ -27,7 +27,9 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
   });
   // Demo dismissals are ephemeral and must never read or write personal acknowledgements.
   const [demoResolvedAlarmIds, setDemoResolvedAlarmIds] = React.useState<string[]>([]);
-  const [showSimulator, setShowSimulator] = React.useState(false);
+  // When a selected demo is restored on mount, expose its selected state immediately.
+  // Otherwise the collapsed controls hide which scenario is currently active.
+  const [showSimulator, setShowSimulator] = React.useState(activeDemoScenario !== null);
   // Another tab can dismiss a suggestion or clear its acknowledgements.
   // Keep this tab's calm guidance consistent without reloading or touching the journal.
   React.useEffect(() => {
