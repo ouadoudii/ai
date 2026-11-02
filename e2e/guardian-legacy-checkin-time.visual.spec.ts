@@ -66,6 +66,10 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
   });
   test(`Guardian ignores impossible imported meal clocks on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    // A 14:00 observation must be evaluated after 14:00, not at the CI runner's current hour.
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await page.addInitScript((profile) => {
       const now = new Date();
       const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
