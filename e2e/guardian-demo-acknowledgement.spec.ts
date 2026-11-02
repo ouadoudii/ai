@@ -153,6 +153,13 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"]')).toHaveCount(0);
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_checkins_v1') || '[]')[0].id)).toBe('private-mode-sleep');
 
+    // Demo remains clearly labeled and can be exited without private storage.
+    await guardian.getByRole('button', { name: 'تجربة لطيفة' }).click();
+    await guardian.getByRole('button', { name: /نوم أقل من المعتاد/ }).click();
+    await expect(guardian.getByRole('note')).toContainText('هذه أمثلة وليست تسجيلاتك');
+    await guardian.getByRole('button', { name: /إعادة ضبط/ }).click();
+    await expect(guardian.getByRole('note')).toHaveCount(0);
+
     // A storage-denied dismissal is intentionally session-only; it must not
     // corrupt personal journal entries or prevent a new session from loading.
     await page.reload();
