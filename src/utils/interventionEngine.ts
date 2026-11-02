@@ -44,7 +44,17 @@ const compareRecentCheckIns = (a: DailyCheckIn, b: DailyCheckIn): number => {
   // Reject impossible imported times (e.g. 99:99) so stale entries cannot outrank recovery.
   const clockTime = (entry: DailyCheckIn) =>
     typeof entry.time === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(entry.time) ? entry.time : '';
-  return createdAt(b) - createdAt(a) || clockTime(b).localeCompare(clockTime(a));
+  const aTime = clockTime(a);
+  const bTime = clockTime(b);
+  // A backfilled record may have a later import timestamp but an earlier
+  // observation clock. When both clocks are valid, honor the person's actual
+  // sequence so an older concern cannot hide a later recovery.
+  if (aTime && bTime) return bTime.localeCompare(aTime) || createdAt(b) - createdAt(a);
+  // An impossible imported clock must not outrank a valid observed time.
+  if (aTime && typeof b.time === 'string' && b.time.length > 0) return -1;
+  if (bTime && typeof a.time === 'string' && a.time.length > 0) return 1;
+  // Older records without a clock still retain their creation-time fallback.
+  return createdAt(b) - createdAt(a) || bTime.localeCompare(aTime);
 };
 
 // Imported sleep reports can contain corrupted fields. A wholly invalid later
