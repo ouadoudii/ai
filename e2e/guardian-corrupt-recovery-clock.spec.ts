@@ -13,8 +13,8 @@ for (const viewport of [
   { name: 'desktop', width: 1280, height: 900 },
   { name: 'mobile', width: 390, height: 844 },
 ]) {
-  for (const recoveryClock of ['99:99', '14:00'] as const) {
-    test(`P0 Guardian respects ${recoveryClock === '99:99' ? 'corrupt' : 'valid'} recovery time on ${viewport.name}`, async ({ page }) => {
+  for (const recoveryClock of ['99:99', '14:xx', '14:00'] as const) {
+    test(`P0 Guardian respects ${recoveryClock === '14:00' ? 'valid' : 'corrupt'} recovery time on ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.clock.setFixedTime(new Date('2026-11-02T15:00:00Z'));
       await page.addInitScript(({ profile, recoveryClock }) => {
@@ -47,7 +47,7 @@ for (const viewport of [
       const guardian = page.getByTestId('guardian');
       await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
       await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-      if (recoveryClock === '99:99') {
+      if (recoveryClock !== '14:00') {
         await expect(guardian.getByText('مساحة صغيرة لاستعادة نشاطك')).toBeVisible();
         await expect(guardian.getByText('ذكرت أنك شعرت بقلة النشاط بعد وجبتك')).toBeVisible();
         await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ })).toHaveCount(1);
@@ -55,7 +55,7 @@ for (const viewport of [
         await expect(guardian.getByText('مساحة صغيرة لاستعادة نشاطك')).toHaveCount(0);
         await expect(guardian.getByText('هنا متى احتجت')).toBeVisible();
       }
-      await expect(guardian).not.toContainText(/99:99|فشل|عقاب|إنذار|Ghrelin|28%|Überessen/);
+      await expect(guardian).not.toContainText(/99:99|14:xx|فشل|عقاب|إنذار|Ghrelin|28%|Überessen/);
       await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
       expect(await page.evaluate(() => [
         localStorage.getItem('nimmapp_moments_v1'),
