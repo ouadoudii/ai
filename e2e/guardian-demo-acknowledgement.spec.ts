@@ -194,6 +194,9 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await sleep.focus();
     await expect(sleep).toBeFocused();
     await sleep.press('Enter');
+    // The selected Arabic example remains exposed to screen readers on desktop and mobile.
+    await expect(guardian.getByRole('button', { name: 'تجربة لطيفة' })).toHaveAttribute('aria-expanded', 'true');
+    await expect(guardian.getByRole('group', { name: /تجربة اقتراحات الدعم/ })).toBeVisible();
     await expect(sleep).toHaveAttribute('aria-pressed', 'true');
     await expect(meal).toHaveAttribute('aria-pressed', 'false');
     await expect(guardian.getByRole('note')).toContainText('هذه أمثلة وليست تسجيلاتك');
