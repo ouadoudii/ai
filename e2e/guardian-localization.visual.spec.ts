@@ -212,6 +212,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(dismiss).toHaveCount(0);
     expect(await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'))).toBe(journalBeforeDismiss);
     await expect(guardian.getByRole('status')).toContainText('خذ يومك على مهل');
+    await expect(guardian.getByRole('status')).toHaveAttribute('aria-live', 'polite');
     await expect(guardian.getByRole('heading', { name: 'هنا متى احتجت' })).toBeVisible();
     await expect(guardian).not.toContainText(/فشل|عقاب|إنذار|Ghrelin|28%/);
     await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
@@ -222,6 +223,7 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
     await expect(guardian.getByRole('button', { name: 'إخفاء الفكرة: قد تحتاج إلى بعض الراحة اليوم' })).toHaveCount(0);
     await expect(guardian.getByRole('status')).toContainText('خذ يومك على مهل');
+    await expect(guardian.getByRole('status')).toHaveAttribute('aria-live', 'polite');
     await expect(guardian.getByRole('heading', { name: 'هنا متى احتجت' })).toBeVisible();
   });
 }
