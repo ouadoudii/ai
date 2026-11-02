@@ -42,6 +42,16 @@ describe('Guardian demo escape accessibility', () => {
     expect(html).not.toMatch(/bg-red|animate-pulse|عقاب|فشل/);
   });
 
+  it('does not expose an inoperative demo toggle without a simulation handler', () => {
+    const html = renderToStaticMarkup(createElement(SmartInterventionGuardian, {
+      guardianStatus: calmStatus,
+      userArchetype: 'intuitive_mindful',
+    }));
+    expect(html).not.toContain('guardian-demo-scenarios');
+    expect(html).not.toContain('aria-controls');
+    expect(html).not.toContain('تجربة لطيفة');
+  });
+
   it('does not show the demo exit or synthetic disclaimer during normal personal guidance', () => {
     const html = renderGuardian(false);
     expect(html).not.toContain('guardian-demo-exit');
