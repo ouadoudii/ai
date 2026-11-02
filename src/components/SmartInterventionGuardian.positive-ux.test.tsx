@@ -69,6 +69,21 @@ describe('optional, non-diagnostic Arabic Guardian suggestions', () => {
     expect(demo).not.toMatch(/Simuliert|Warnung|Alarm|Ghrelin|28%|animate-pulse|bg-red/);
   });
 
+  it('renders supportive Arabic guidance when a privacy mode denies the localStorage getter', () => {
+    vi.stubGlobal('window', {
+      get localStorage() { throw new Error('SecurityError: storage access denied'); },
+    });
+    try {
+      const html = render([alarm]);
+      expect(html).toContain('dir="rtl"');
+      expect(html).toContain('قد تحتاج إلى بعض الراحة اليوم');
+      expect(html).toContain('إخفاء الفكرة');
+      expect(html).not.toMatch(/bg-red|animate-pulse|عقاب|فشل/);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('does not imply a medical all-clear when no suggestions are present', () => {
     const html = render([]);
     expect(html).toContain('هنا متى احتجت');
