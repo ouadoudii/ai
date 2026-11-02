@@ -70,6 +70,11 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     // persistent, clearly labeled Arabic simulator toggle.
     await expect(demoPicker).toBeFocused();
     await expect(demoPicker).toHaveAttribute('aria-expanded', 'false');
+    // The keyboard user can continue directly with the same toggle.
+    await demoPicker.press('Enter');
+    await expect(demoPicker).toHaveAttribute('aria-expanded', 'true');
+    await demoPicker.press('Enter');
+    await expect(demoPicker).toHaveAttribute('aria-expanded', 'false');
     // Pointer/touch exit must not forcibly move focus to the toggle.
     await demoPicker.click();
     await guardian.getByRole('button', { name: /نوم أقل من المعتاد/ }).click();
