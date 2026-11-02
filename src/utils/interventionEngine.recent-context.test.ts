@@ -30,6 +30,45 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(result.statusBadge).toBe('green');
   });
 
+
+  it('does not prompt for future-clock entries from today, but preserves explicit demos', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    const pastMeal = {
+      ...moment(today, 'past-calm'), time: '14:00',
+      eatingPace: 'slow' as const, distraction: 'mindful' as const,
+      energyAfter: 'neutral' as const,
+    };
+    const futureMeal = {
+      ...moment(today, 'future-rushed'), time: '19:00',
+      energyAfter: 'sluggish' as const,
+    };
+    const pastCheckIn = {
+      ...checkIn(today, 'past-rested'), time: '08:00',
+      sleep: { durationHours: 8, quality: 4, wakeFeeling: 'refreshed' as const },
+      wellbeing: { energyLevel: 4 },
+    };
+    const futureCheckIn = {
+      ...checkIn(today, 'future-tired'), time: '19:30',
+      wellbeing: { energyLevel: 1 },
+    };
+    for (const meals of [[futureMeal, pastMeal], [pastMeal, futureMeal]]) {
+      for (const checkins of [[futureCheckIn, pastCheckIn], [pastCheckIn, futureCheckIn]]) {
+        const original = JSON.stringify({ meals, checkins });
+        const result = evaluateNutritionAlarms(meals, checkins);
+        expect(result.activeAlarms).toEqual([]);
+        expect(result.statusText).toContain('بلطف');
+        expect(JSON.stringify(result)).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
+        expect(JSON.stringify({ meals, checkins })).toBe(original);
+      }
+    }
+    const example = evaluateNutritionAlarms(
+      [{ ...moment(today, 'sim-rushed-future'), time: '19:00' }], [],
+    );
+    expect(example.activeAlarms.map(alarm => alarm.triggerKey)).toContain('distracted_meal');
+  });
+
   it('uses current entries even when an older entry is first in storage', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-28T14:00:00'));
