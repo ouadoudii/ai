@@ -63,8 +63,11 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
         expect(JSON.stringify({ meals, checkins })).toBe(original);
       }
     }
+    const futureDemoMeal = [{ ...moment(today, 'sim-rushed-future'), time: '19:00' }];
+    // A synthetic-looking ID alone is not permission to anticipate a future meal.
+    expect(evaluateNutritionAlarms(futureDemoMeal, []).activeAlarms).toEqual([]);
     const example = evaluateNutritionAlarms(
-      [{ ...moment(today, 'sim-rushed-future'), time: '19:00' }], [],
+      futureDemoMeal, [], 'intuitive_mindful', new Date(), true,
     );
     expect(example.activeAlarms.map(alarm => alarm.triggerKey)).toContain('distracted_meal');
   });
@@ -101,9 +104,11 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
   it('keeps source occurrence IDs stable and accepts only explicit simulator markers', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-28T10:00:00'));
+    const demoMoments = [moment('Heute', 'sim-rushed-1'), moment('Heute', 'real-old-legacy')];
+    const demoCheckIns = [checkIn('Heute', 'sim-sleep-1'), checkIn('Heute', 'real-old-checkin')];
+    expect(evaluateNutritionAlarms(demoMoments, demoCheckIns).activeAlarms).toEqual([]);
     const simulated = evaluateNutritionAlarms(
-      [moment('Heute', 'sim-rushed-1'), moment('Heute', 'real-old-legacy')],
-      [checkIn('Heute', 'sim-sleep-1'), checkIn('Heute', 'real-old-checkin')],
+      demoMoments, demoCheckIns, 'intuitive_mindful', new Date(), true,
     );
     expect(simulated.activeAlarms.map(alarm => alarm.id)).toEqual([
       'alarm-sleep-sim-sleep-1',
