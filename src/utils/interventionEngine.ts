@@ -276,7 +276,11 @@ export function evaluateNutritionAlarms(
       triggerKey: 'afternoon_crash',
       severity: 'high',
       title: 'مساحة صغيرة لاستعادة نشاطك',
-      subtitle: 'سجّلت مستوى طاقة منخفضًا اليوم',
+      // Describe the observation actually supplied: a post-meal feeling is not
+      // a numeric low-energy check-in. Keep suggestions factual and gentle.
+      subtitle: currentLowEnergyCheckIn
+        ? 'سجّلت مستوى طاقة منخفضًا اليوم'
+        : 'ذكرت أنك شعرت بقلة النشاط بعد وجبتك',
       archetype,
       reason: 'قد تتغير طاقتنا خلال اليوم لأسباب كثيرة. لا يعني ذلك أنك فعلت شيئًا خاطئًا.',
       recommendation: archetypeAdvice,

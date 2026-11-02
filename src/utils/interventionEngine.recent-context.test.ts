@@ -36,6 +36,38 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     }
   });
 
+  it('describes post-meal tiredness without inventing an energy-level check-in', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-11-02T15:00:00'));
+      const date = getLocalDateKey();
+      const sluggishMeal = {
+        ...moment(date, 'post-meal-tired'), time: '12:30',
+        eatingPace: 'slow' as const, distraction: 'mindful' as const,
+        energyAfter: 'sluggish' as const,
+      };
+      const original = JSON.stringify(sluggishMeal);
+      const mealOnly = evaluateNutritionAlarms([sluggishMeal], []);
+      const mealAdvice = mealOnly.activeAlarms.filter(a => a.triggerKey === 'afternoon_crash');
+      expect(mealAdvice).toHaveLength(1);
+      expect(mealAdvice[0].subtitle).toBe('ذكرت أنك شعرت بقلة النشاط بعد وجبتك');
+      expect(mealAdvice[0].subtitle).not.toMatch(/سجّلت مستوى طاقة منخفضًا|فشل|عقاب|إنذار/);
+      expect(JSON.stringify(sluggishMeal)).toBe(original);
+
+      const lowCheckIn = {
+        ...checkIn(date, 'reported-low-energy'), time: '14:00',
+        sleep: undefined, wellbeing: { energyLevel: 1 },
+      };
+      const checkInOnly = evaluateNutritionAlarms([], [lowCheckIn]);
+      const checkInAdvice = checkInOnly.activeAlarms.filter(a => a.triggerKey === 'afternoon_crash');
+      expect(checkInAdvice).toHaveLength(1);
+      expect(checkInAdvice[0].subtitle).toBe('سجّلت مستوى طاقة منخفضًا اليوم');
+      expect(checkInAdvice[0].subtitle).not.toMatch(/فشل|عقاب|إنذار/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('does not turn old or future entries into alarms about today', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-28T14:00:00'));
