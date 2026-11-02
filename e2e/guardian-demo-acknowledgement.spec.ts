@@ -168,3 +168,43 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   });
 }
+
+
+for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'mobile', width: 390, height: 844 }]) {
+  test(`Guardian announces the selected Arabic demo example on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.addInitScript(({ profile }) => {
+      localStorage.setItem('rhythm_language_v1', 'ar');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+      localStorage.setItem('nimmapp_moments_v1', '[]');
+      localStorage.setItem('nimmapp_checkins_v1', '[]');
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    }, { profile });
+    await page.goto('/');
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await guardian.getByRole('button', { name: 'تجربة لطيفة' }).click();
+    const sleep = guardian.getByRole('button', { name: /نوم أقل من المعتاد/ });
+    const meal = guardian.getByRole('button', { name: /الأكل تحت الضغط/ });
+    const energy = guardian.getByRole('button', { name: /طاقة أقل بعد الظهر/ });
+    for (const button of [sleep, meal, energy]) await expect(button).toHaveAttribute('aria-pressed', 'false');
+    await sleep.click();
+    await expect(sleep).toHaveAttribute('aria-pressed', 'true');
+    await expect(meal).toHaveAttribute('aria-pressed', 'false');
+    await expect(guardian.getByRole('note')).toContainText('هذه أمثلة وليست تسجيلاتك');
+    await meal.click();
+    await expect(sleep).toHaveAttribute('aria-pressed', 'false');
+    await expect(meal).toHaveAttribute('aria-pressed', 'true');
+    await expect(energy).toHaveAttribute('aria-pressed', 'false');
+    await guardian.getByRole('button', { name: /إعادة ضبط/ }).click();
+    for (const button of [sleep, meal, energy]) await expect(button).toHaveAttribute('aria-pressed', 'false');
+    await expect(guardian.getByRole('note')).toHaveCount(0);
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"]')).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('nimmapp_moments_v1'))).toBe('[]');
+    expect(await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'))).toBe('[]');
+  });
+}

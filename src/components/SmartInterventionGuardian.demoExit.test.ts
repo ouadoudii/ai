@@ -12,11 +12,12 @@ const calmStatus: GuardianStatus = {
   lastEvaluated: '',
 };
 
-const renderGuardian = (isSimulated: boolean) => renderToStaticMarkup(
+const renderGuardian = (isSimulated: boolean, activeDemoScenario: 'sleep' | 'rushed_meal' | 'afternoon_crash' | null = null) => renderToStaticMarkup(
   createElement(SmartInterventionGuardian, {
     guardianStatus: calmStatus,
     userArchetype: 'intuitive_mindful',
     isSimulated,
+    activeDemoScenario,
     onSimulateAlarm: () => {},
   }),
 );
@@ -40,6 +41,29 @@ describe('Guardian demo escape accessibility', () => {
     expect(html).toMatch(/min-h-11[^"]*focus-visible:outline-2/);
     expect(html).toContain('تجربة لطيفة');
     expect(html).not.toMatch(/bg-red|animate-pulse|عقاب|فشل/);
+  });
+
+  it('announces exactly the selected Arabic demo scenario without alarm styling', () => {
+    for (const selected of ['sleep', 'rushed_meal', 'afternoon_crash'] as const) {
+      const html = renderGuardian(true, selected);
+      const buttons = html.split('<button').slice(1)
+        .map((part) => '<button' + part.split('</button>')[0] + '</button>')
+        .filter((button) => button.includes('aria-pressed='));
+      expect(buttons).toHaveLength(3);
+      for (const [scenario, label] of [
+        ['sleep', 'نوم أقل من المعتاد'],
+        ['rushed_meal', 'الأكل تحت الضغط'],
+        ['afternoon_crash', 'طاقة أقل بعد الظهر'],
+      ] as const) {
+        const button = buttons.find((item) => item.includes(label));
+        expect(button).toBeDefined();
+        expect(button).toContain(`aria-pressed="${scenario === selected}"`);
+        expect(button).toContain('min-h-11');
+      }
+      expect(html).toContain('dir="rtl"');
+      expect(html).not.toMatch(/bg-red|animate-pulse|عقاب|فشل/);
+    }
+    expect(renderGuardian(false)).not.toContain('aria-pressed="true"');
   });
 
   it('does not expose an inoperative demo toggle without a simulation handler', () => {

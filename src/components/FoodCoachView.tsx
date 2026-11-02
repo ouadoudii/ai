@@ -301,6 +301,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
         userArchetype={nutritionProfile.archetype}
         onSimulateAlarm={handleSimulateAlarm}
         isSimulated={simulatedScenario !== null}
+        activeDemoScenario={simulatedScenario}
       />
 
       {/* 3. Top Welcome Hero & Ernährungstyp Quick Banner */}
