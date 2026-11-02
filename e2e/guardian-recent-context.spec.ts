@@ -171,6 +171,10 @@ for (const viewport of [
 
   test(`P0 Guardian does not revive an older rushed-meal suggestion after a calmer meal on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    // The calm 14:00 meal must be in the past for this recovery-order regression.
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed', false, false, false, true);
     await page.goto('/');
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
