@@ -43,11 +43,13 @@ for (const viewport of [
     // Before 13:00, no unsolicited afternoon suggestion.
     await expect(guardian.getByText('مساحة صغيرة لاستعادة نشاطك')).toHaveCount(0);
     await expect(guardian.getByText('هنا متى احتجت')).toBeVisible();
+    await expect(guardian.getByRole('status')).toContainText('خذ يومك على مهل');
 
     // The tab remains open; its minute refresh must activate timely guidance.
     await page.clock.fastForward(2 * 60_000);
     await expect(guardian.getByText('مساحة صغيرة لاستعادة نشاطك')).toBeVisible();
     await expect(guardian.getByText('سجّلت مستوى طاقة منخفضًا اليوم')).toBeVisible();
+    await expect(guardian.getByRole('status')).toContainText('أفكار يمكنك تجاهلها');
 
     // After 18:00, the same optional afternoon prompt should quietly retire.
     await page.clock.fastForward(5 * 60 * 60_000);
