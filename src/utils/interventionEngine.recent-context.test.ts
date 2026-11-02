@@ -444,4 +444,24 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(result.statusText).toContain('بلطف');
   });
 
+
+  it('still offers a gentle prompt when a later clock observation reports low energy', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    const earlierRecovered = {
+      ...checkIn(today, 'earlier-energy'), time: '14:00', createdAt: 900,
+      sleep: undefined, wellbeing: { energyLevel: 4 },
+    };
+    const laterLow = {
+      ...checkIn(today, 'later-low-energy'), time: '14:30', createdAt: 100,
+      sleep: undefined, wellbeing: { energyLevel: 2 },
+    };
+    const result = evaluateNutritionAlarms([], [earlierRecovered, laterLow]);
+    expect(result.activeAlarms.map(alarm => alarm.id))
+      .toContain('alarm-afternoon-crash-checkin-later-low-energy');
+    expect(result.activeAlarms[0].title).toBe('مساحة صغيرة لاستعادة نشاطك');
+    expect(result.activeAlarms[0].reason).not.toMatch(/فشل|عقاب|إنذار/);
+  });
+
 });
