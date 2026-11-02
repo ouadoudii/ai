@@ -14,7 +14,7 @@ for (const viewport of [
   { name: 'mobile', width: 390, height: 844 },
 ]) {
   for (const recoveryClock of ['99:99', '14:xx', '14:00'] as const) {
-    test(`P0 Guardian respects ${recoveryClock === '14:00' ? 'valid' : 'corrupt'} recovery time on ${viewport.name}`, async ({ page }) => {
+    test(`P0 Guardian respects ${recoveryClock === '14:00' ? 'valid' : 'corrupt'} recovery time (${recoveryClock}) on ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.clock.setFixedTime(new Date('2026-11-02T15:00:00Z'));
       await page.addInitScript(({ profile, recoveryClock }) => {
