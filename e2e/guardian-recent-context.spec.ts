@@ -222,7 +222,7 @@ for (const viewport of [
     await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-rose"]')).toHaveCount(0);
   });
 
-  for (const latestEnergy of ['neutral', 'sluggish'] as const) {
+  for (const latestEnergy of ['neutral', 'sluggish', 'unreported'] as const) {
     test(`P0 Guardian honors the latest reported meal energy (${latestEnergy}) on ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       const afternoon = new Date();
@@ -248,7 +248,7 @@ for (const viewport of [
             id: 'later-energy-meal', title: 'كسكس', label: 'غداء', category: 'lunch',
             date, time: '14:30', location: 'البيت', locationCategory: 'home',
             imageUrl: '', tags: [], eatingPace: 'slow', distraction: 'mindful',
-            energyAfter: latestEnergy, createdAt: Date.now() - 60_000,
+            energyAfter: latestEnergy === 'unreported' ? undefined : latestEnergy, createdAt: Date.now() - 60_000,
           },
         ]));
         sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
