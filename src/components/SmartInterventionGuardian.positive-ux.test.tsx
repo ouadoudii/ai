@@ -53,6 +53,9 @@ describe('optional, non-diagnostic Arabic Guardian suggestions', () => {
     expect(button).toContain('min-h-11');
     expect(button).toContain('focus-visible:outline-2');
     expect(button).toContain('focus-visible:outline-offset-2');
+    // The disappearing dismiss button hands keyboard focus to a calm status.
+    expect(html).toMatch(/tabindex="-1"[^>]*role="status"/i);
+    expect(html).toContain('aria-live="polite"');
     expect(button).toContain('focus-visible:outline-[#526B48]');
     expect(html).not.toMatch(/bg-red|bg-rose|animate-pulse|عقاب|فشل/);
   });
