@@ -639,4 +639,27 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(JSON.stringify({ tiredMeal, steadyCheckIn })).toBe(original);
   });
 
+
+  it('updates optional afternoon energy guidance at local hour boundaries without changing journal data', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-02T12:59:00'));
+    const today = getLocalDateKey();
+    const observed = {
+      ...checkIn(today, 'observed-energy'), time: '12:00', sleep: undefined,
+      wellbeing: { energyLevel: 1 }, createdAt: 100,
+    };
+    const original = JSON.stringify(observed);
+    for (const [clock, visible] of [
+      ['12:59', false], ['13:00', true], ['17:59', true], ['18:00', false],
+    ] as const) {
+      const at = new Date(`2026-11-02T${clock}:00`);
+      const result = evaluateNutritionAlarms([], [observed], 'intuitive_mindful', at);
+      const energy = result.activeAlarms.filter(a => a.triggerKey === 'afternoon_crash');
+      expect(energy).toHaveLength(visible ? 1 : 0);
+      expect(result.statusBadge).toBe(visible ? 'amber' : 'green');
+      expect(JSON.stringify(result)).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%|animate-pulse/);
+    }
+    expect(JSON.stringify(observed)).toBe(original);
+  });
+
 });
