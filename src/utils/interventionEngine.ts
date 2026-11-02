@@ -228,6 +228,11 @@ export function evaluateNutritionAlarms(
     if (checkInTime && momentTime) {
       return checkInTime > momentTime;
     }
+    // A corrupted clock on the supposed recovery check-in is not proof that
+    // the person felt better after this meal. Missing legacy clocks may still
+    // use creation timestamps, but impossible recorded times must not silence
+    // a genuine post-meal low-energy report.
+    if (latestEnergyCheckIn.time != null && latestEnergyCheckIn.time !== '' && !checkInTime) return false;
     return Number.isFinite(latestEnergyCheckIn.createdAt) && Number.isFinite(moment.createdAt)
       && latestEnergyCheckIn.createdAt >= moment.createdAt;
   };
