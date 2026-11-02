@@ -205,10 +205,12 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(dismiss).toHaveClass(/focus-visible:outline-2/);
     const bounds = await dismiss.boundingBox();
     expect(bounds?.height).toBeGreaterThanOrEqual(44);
+    const journalBeforeDismiss = await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'));
     await dismiss.focus();
     await expect(dismiss).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(dismiss).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'))).toBe(journalBeforeDismiss);
     await expect(guardian.getByRole('status')).toContainText('هنا متى احتجت');
     await expect(guardian).not.toContainText(/فشل|عقاب|إنذار|Ghrelin|28%/);
     await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
