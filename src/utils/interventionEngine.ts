@@ -186,12 +186,16 @@ export function evaluateNutritionAlarms(
       archetypeAdvice = 'لا توجد طريقة واحدة صحيحة لتناول الطعام. يمكنك تجربة لحظة هدوء وملاحظة شعورك بالشبع دون حكم.';
     }
 
+    // Legacy/photo imports may omit the meal title. Keep guidance readable
+    // without inventing a dish; preserve a real Arabic/Arabizi title as entered.
+    const mealName = typeof latestMoment.title === 'string' && latestMoment.title.trim()
+      ? `«${latestMoment.title.trim()}»` : 'وجبتك';
     alarms.push({
       id: `alarm-mindless-${latestMoment.id}`,
       triggerKey: 'distracted_meal',
       severity: 'medium',
       title: 'لحظة هدوء بعد وجبتك',
-      subtitle: `تناولت «${latestMoment.title}» بينما كان انتباهك مشغولًا`,
+      subtitle: `تناولت ${mealName} بينما كان انتباهك مشغولًا`,
       archetype,
       reason: 'من الطبيعي أن نأكل أحيانًا ونحن منشغلون. إن رغبت، لاحظ كيف تشعر الآن دون لوم.',
       recommendation: archetypeAdvice,
