@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// Guardian's time-of-day regressions must not inherit the CI-wide moving timezone.
+// Keep the observed local hour equal to the seeded fixture hour on every runner.
+test.use({ timezoneId: 'UTC' });
+
 const profile = {
   summary: 'Rhythm', priorities: [], preferences: [], rawIntro: 'Rhythm',
   confirmedAt: 1,
@@ -144,7 +148,7 @@ for (const viewport of [
   test(`P0 Guardian does not repeat stale low-energy advice after recovery on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     const afternoon = new Date();
-    afternoon.setHours(15, 0, 0, 0);
+    afternoon.setUTCHours(15, 0, 0, 0);
     await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed', false, true);
     await page.goto('/');
@@ -184,7 +188,7 @@ for (const viewport of [
   test(`P0 Guardian respects an evening family dinner without timing or fullness alarms on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     const evening = new Date();
-    evening.setHours(22, 15, 0, 0);
+    evening.setUTCHours(22, 15, 0, 0);
     await page.clock.setFixedTime(evening);
     await seed(page, true, 'refreshed', false, false, false, false, true);
     await page.goto('/');
@@ -226,7 +230,7 @@ for (const viewport of [
     test(`P0 Guardian honors the latest reported meal energy (${latestEnergy}) on ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       const afternoon = new Date();
-      afternoon.setHours(15, 0, 0, 0);
+      afternoon.setUTCHours(15, 0, 0, 0);
       await page.clock.setFixedTime(afternoon);
       await page.addInitScript(({ profile, latestEnergy }) => {
         const now = new Date();
@@ -254,7 +258,8 @@ for (const viewport of [
         sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
       }, { profile, latestEnergy });
       await page.goto('/');
-      expect(await page.evaluate(() => new Date().getHours())).toBe(15);
+      expect(await page.evaluate(() => ({ hour: new Date().getHours(), offset: new Date().getTimezoneOffset() })))
+        .toEqual({ hour: 15, offset: 0 });
       const originalMeals = await page.evaluate(() => localStorage.getItem('nimmapp_moments_v1'));
       await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
       const guardian = page.getByTestId('guardian');
