@@ -191,7 +191,9 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     const meal = guardian.getByRole('button', { name: /الأكل تحت الضغط/ });
     const energy = guardian.getByRole('button', { name: /طاقة أقل بعد الظهر/ });
     for (const button of [sleep, meal, energy]) await expect(button).toHaveAttribute('aria-pressed', 'false');
-    await sleep.click();
+    await sleep.focus();
+    await expect(sleep).toBeFocused();
+    await sleep.press('Enter');
     await expect(sleep).toHaveAttribute('aria-pressed', 'true');
     await expect(meal).toHaveAttribute('aria-pressed', 'false');
     await expect(guardian.getByRole('note')).toContainText('هذه أمثلة وليست تسجيلاتك');
