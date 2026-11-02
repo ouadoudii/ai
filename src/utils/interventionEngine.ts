@@ -83,7 +83,7 @@ export function evaluateNutritionAlarms(
   // The explicit simulator uses a legacy "Heute" marker; never interpret
   // that marker as a real user's date.
   const currentLocalClock = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  const isCurrent = (entry: { id: string; date: string; time?: unknown }) => {
+  const isCurrent = (entry: { id: string; date: string; time?: unknown; createdAt?: unknown }) => {
     // A personal import may also have an ID starting with sim-. Only the
     // explicitly activated demo may bypass the observed local clock or use
     // the legacy "Heute" marker. Normal journal entries never get this pass.
@@ -92,7 +92,13 @@ export function evaluateNutritionAlarms(
     // A missing clock is an unknown-time legacy observation. An explicitly
     // malformed clock is not evidence that a meal or check-in happened today:
     // do not create personal guidance from impossible imported times.
-    if (entry.time === undefined || entry.time === null || entry.time === '') return true;
+    if (entry.time === undefined || entry.time === null || entry.time === '') {
+      // A clockless legacy record is usable only once it could have happened.
+      // A future-dated import/queued record is not evidence of an observation
+      // yet, even when its date label says today. Preserve unknown timestamps.
+      return typeof entry.createdAt !== 'number' || !Number.isFinite(entry.createdAt)
+        || entry.createdAt <= now.getTime();
+    }
     if (typeof entry.time !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(entry.time)) return false;
     return entry.time <= currentLocalClock;
   };
