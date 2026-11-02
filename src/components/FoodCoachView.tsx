@@ -163,6 +163,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       guardianInputs.checkIns,
       simulatedScenario === null ? nutritionProfile.archetype : 'intuitive_mindful',
       evaluationTime,
+      simulatedScenario !== null,
     );
   }, [guardianInputs, nutritionProfile.archetype, simulatedScenario]);
 
