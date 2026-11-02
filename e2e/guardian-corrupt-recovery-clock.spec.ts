@@ -13,6 +13,8 @@ for (const viewport of [
   { name: 'desktop', width: 1280, height: 900 },
   { name: 'mobile', width: 390, height: 844 },
 ]) {
+  // Include the exact imported clock in the test title: both malformed values
+  // must run independently on desktop and mobile (Playwright rejects duplicate titles).
   for (const recoveryClock of ['99:99', '14:xx', '14:00'] as const) {
     test(`P0 Guardian respects ${recoveryClock === '14:00' ? 'valid' : 'corrupt'} recovery time (${recoveryClock}) on ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
