@@ -42,4 +42,13 @@ describe('Guardian explicit demo clock boundary', () => {
     expect(withDemo.activeAlarms.map(alarm => alarm.triggerKey)).toContain('sleep_deficit');
     expect(JSON.stringify(withDemo)).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
   });
+
+  it('still honors genuinely observed personal entries whose IDs happen to start with sim-', () => {
+    const meal = { ...futurePersonalMeal, time: '12:00' };
+    const checkIn = { ...legacyPersonalCheckIn, date: today, time: '08:00' };
+    const result = evaluateNutritionAlarms([meal], [checkIn], 'intuitive_mindful', atThree);
+    expect(result.activeAlarms.map(alarm => alarm.triggerKey)).toContain('distracted_meal');
+    expect(result.activeAlarms.map(alarm => alarm.triggerKey)).toContain('sleep_deficit');
+    expect(result.activeAlarms.every(alarm => !/فشل|عقاب|إنذار/.test(alarm.reason))).toBe(true);
+  });
 });
