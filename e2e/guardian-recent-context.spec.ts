@@ -280,4 +280,50 @@ for (const viewport of [
     });
   }
 
+  test(`P0 Guardian honors a later calm meal after an earlier low-energy check-in on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
+    await page.addInitScript(({ profile }) => {
+      const now = new Date();
+      const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      localStorage.setItem('rhythm_language_v1', 'ar');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+      localStorage.setItem('nimmapp_checkins_v1', JSON.stringify([{
+        id: 'earlier-low-checkin', date, time: '14:00', timeOfDay: 'midday',
+        wellbeing: { energyLevel: 1 }, createdAt: Date.now(),
+      }]));
+      localStorage.setItem('nimmapp_moments_v1', JSON.stringify([{
+        id: 'later-steady-couscous', title: 'كسكس', label: 'غداء', category: 'lunch',
+        date, time: '14:30', location: 'البيت', locationCategory: 'home',
+        imageUrl: '', tags: [], eatingPace: 'slow', distraction: 'mindful',
+        energyAfter: 'neutral', createdAt: Date.now() - 60_000,
+      }]));
+      localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    }, { profile });
+    await page.goto('/');
+    const before = await page.evaluate(() => [
+      localStorage.getItem('nimmapp_moments_v1'),
+      localStorage.getItem('nimmapp_checkins_v1'),
+    ]);
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian.getByText('هنا متى احتجت')).toBeVisible();
+    await expect(guardian.getByText('مساحة صغيرة لاستعادة نشاطك')).toHaveCount(0);
+    await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ })).toHaveCount(0);
+    await expect(guardian).not.toContainText(/فشل|عقاب|إنذار|Ghrelin|28%|Überessen/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    expect(await page.evaluate(() => [
+      localStorage.getItem('nimmapp_moments_v1'),
+      localStorage.getItem('nimmapp_checkins_v1'),
+    ])).toEqual(before);
+  });
+
 }
