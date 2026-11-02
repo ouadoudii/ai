@@ -21,7 +21,7 @@ const checkIn = (time: unknown): DailyCheckIn => ({
 
 describe('P0 Guardian impossible observation clocks', () => {
   it('does not infer a meal, sleep or low-energy observation from an impossible explicit time', () => {
-    for (const badClock of ['99:99', '24:00', '14:xx', 123]) {
+    for (const badClock of ['99:99', '24:00', '14:xx', ' 14:00', 123]) {
       const moments = [meal(badClock)];
       const checkIns = [checkIn(badClock)];
       const before = JSON.stringify({ moments, checkIns });
