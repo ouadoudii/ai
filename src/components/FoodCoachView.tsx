@@ -56,12 +56,20 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
 }) => {
   const { language } = useLanguage();
   const [localDay, setLocalDay] = React.useState(() => getLocalDateKey());
+  // Guardian suggestions depend on the current hour, not only the journal.
+  // Refresh the observed clock while the Coach stays open so an afternoon
+  // suggestion appears/ends at the right time without a page reload.
+  const [guardianNow, setGuardianNow] = React.useState(() => new Date());
   React.useEffect(() => {
-    const refreshLocalDay = () => setLocalDay((previous) => {
-      const current = getLocalDateKey();
-      return previous === current ? previous : current;
-    });
-    // Keep the Coach truthful when a tab stays open across local midnight.
+    const refreshLocalDay = () => {
+      const currentTime = new Date();
+      setGuardianNow(currentTime);
+      setLocalDay((previous) => {
+        const current = getLocalDateKey(currentTime);
+        return previous === current ? previous : current;
+      });
+    };
+    // Keep the Coach and Guardian truthful across hour boundaries and local midnight.
     const interval = window.setInterval(refreshLocalDay, 60_000);
     window.addEventListener('focus', refreshLocalDay);
     document.addEventListener('visibilitychange', refreshLocalDay);
@@ -156,7 +164,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   const guardianStatus: GuardianStatus = React.useMemo(() => {
     // An afternoon demo should remain useful outside 13:00–17:00, without
     // changing the real user's clock or their own time-sensitive suggestions.
-    const evaluationTime = new Date();
+    const evaluationTime = new Date(guardianNow);
     if (simulatedScenario === 'afternoon_crash') evaluationTime.setHours(15, 0, 0, 0);
     return evaluateNutritionAlarms(
       guardianInputs.moments,
@@ -165,7 +173,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
       evaluationTime,
       simulatedScenario !== null,
     );
-  }, [guardianInputs, nutritionProfile.archetype, simulatedScenario]);
+  }, [guardianInputs, nutritionProfile.archetype, simulatedScenario, guardianNow]);
 
   const handleSimulateAlarm = (scenario: 'sleep' | 'rushed_meal' | 'afternoon_crash' | 'clear') => {
     if (scenario === 'clear') {
