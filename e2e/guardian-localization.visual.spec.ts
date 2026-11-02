@@ -212,6 +212,8 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(dismiss).toHaveCount(0);
     // A removed button must not strand keyboard users on the document body.
     await expect(guardian.getByRole('status')).toBeFocused();
+    await expect(guardian.getByRole('status')).toHaveAttribute('tabindex', '-1');
+    await expect(guardian.getByRole('status')).toHaveClass(/focus-visible:outline-2/);
     expect(await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'))).toBe(journalBeforeDismiss);
     await expect(guardian.getByRole('status')).toContainText('خذ يومك على مهل');
     await expect(guardian.getByRole('status')).toHaveAttribute('aria-live', 'polite');
