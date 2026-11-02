@@ -46,6 +46,9 @@ describe('Guardian demo escape accessibility', () => {
   it('announces exactly the selected Arabic demo scenario without alarm styling', () => {
     for (const selected of ['sleep', 'rushed_meal', 'afternoon_crash'] as const) {
       const html = renderGuardian(true, selected);
+      // A restored active demo must expose the controls and the selected state on mount.
+      expect(html).toContain('aria-expanded="true"');
+      expect(html).toContain('aria-controls="guardian-demo-scenarios"');
       const buttons = html.split('<button').slice(1)
         .map((part) => '<button' + part.split('</button>')[0] + '</button>')
         .filter((button) => button.includes('aria-pressed='));
