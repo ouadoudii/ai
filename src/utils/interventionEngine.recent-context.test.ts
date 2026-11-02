@@ -392,4 +392,56 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
         .filter(alarm => alarm.triggerKey === 'afternoon_crash')).toEqual([]);
     }
   });
+
+  it('uses observed clock time over backfill order for sleep and energy recovery', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    const earlierSleep = {
+      ...checkIn(today, 'backfilled-short-sleep'), time: '07:00', createdAt: 900,
+      wellbeing: undefined,
+    };
+    const restedLater = {
+      ...checkIn(today, 'rested-later'), time: '08:30', createdAt: 100,
+      sleep: { durationHours: 8, quality: 4, wakeFeeling: 'refreshed' as const },
+      wellbeing: undefined,
+    };
+    const earlierEnergy = {
+      ...checkIn(today, 'backfilled-low-energy'), time: '14:00', createdAt: 800,
+      sleep: undefined, wellbeing: { energyLevel: 1 },
+    };
+    const recoveredLater = {
+      ...checkIn(today, 'energy-recovered-later'), time: '14:30', createdAt: 200,
+      sleep: undefined, wellbeing: { energyLevel: 4 },
+    };
+    for (const history of [
+      [earlierSleep, restedLater, earlierEnergy, recoveredLater],
+      [recoveredLater, earlierEnergy, restedLater, earlierSleep],
+    ]) {
+      const before = JSON.stringify(history);
+      const status = evaluateNutritionAlarms([], history);
+      expect(status.activeAlarms).toEqual([]);
+      expect(status.statusText).toContain('بلطف');
+      expect(JSON.stringify(status)).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
+      expect(JSON.stringify(history)).toBe(before);
+    }
+  });
+
+  it('does not let a malformed imported clock outrank a later valid sleep correction', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T10:00:00'));
+    const today = getLocalDateKey();
+    const corruptClock = {
+      ...checkIn(today, 'corrupt-clock'), time: '99:99', createdAt: 900,
+    };
+    const rested = {
+      ...checkIn(today, 'rested'), time: '08:30', createdAt: 100,
+      sleep: { durationHours: 8, quality: 4, wakeFeeling: 'refreshed' as const },
+      wellbeing: undefined,
+    };
+    const result = evaluateNutritionAlarms([], [corruptClock, rested]);
+    expect(result.activeAlarms.filter(alarm => alarm.triggerKey === 'sleep_deficit')).toEqual([]);
+    expect(result.statusText).toContain('بلطف');
+  });
+
 });
