@@ -76,6 +76,13 @@ for (const viewport of [
       expect(stored.checkIns).toBe(originalJournal.checkIns);
       await expect(firstGuardian).not.toContainText(/فشل|عقاب|Ghrelin|28%/);
       await expect(firstGuardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"]')).toHaveCount(0);
+
+      // Clearing dismissals in another tab should restore suggestions here,
+      // without resetting or changing any personal meal/check-in record.
+      await otherTab.evaluate((key) => localStorage.removeItem(key), acknowledgementKey);
+      await expect(firstGuardian.getByRole('button', { name: /إخفاء الفكرة/ })).toHaveCount(2);
+      expect(await page.evaluate(() => localStorage.getItem('nimmapp_moments_v1'))).toBe(originalJournal.meals);
+      expect(await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'))).toBe(originalJournal.checkIns);
     } finally {
       await otherTab.close();
     }
