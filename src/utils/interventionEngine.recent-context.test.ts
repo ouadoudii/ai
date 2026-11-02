@@ -606,4 +606,37 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(JSON.stringify([low, steady])).toBe(before);
   });
 
+
+  it('does not silence reported post-meal fatigue using an impossible recovery clock', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-02T15:00:00'));
+    const today = getLocalDateKey();
+    const tiredMeal = {
+      ...moment(today, 'meal-fatigue'), time: '12:30', createdAt: 100,
+      eatingPace: 'slow' as const, distraction: 'mindful' as const,
+      energyAfter: 'sluggish' as const,
+    };
+    const steadyCheckIn = {
+      ...checkIn(today, 'steady-import'), time: '14:00', createdAt: 300,
+      sleep: undefined, wellbeing: { energyLevel: 4 },
+    };
+    const original = JSON.stringify({ tiredMeal, steadyCheckIn });
+    for (const invalidTime of ['99:99', '14:xx', 99 as unknown as string]) {
+      const result = evaluateNutritionAlarms([tiredMeal], [{ ...steadyCheckIn, time: invalidTime }]);
+      const suggestions = result.activeAlarms.filter(a => a.triggerKey === 'afternoon_crash');
+      expect(suggestions).toHaveLength(1);
+      expect(suggestions[0].subtitle).toBe('ذكرت أنك شعرت بقلة النشاط بعد وجبتك');
+      expect(JSON.stringify(result)).not.toMatch(/99:99|14:xx|فشل|عقاب|إنذار|Ghrelin|28%/);
+    }
+    // A valid later observation still takes precedence, as does a legacy
+    // record with no clock and a trustworthy later creation timestamp.
+    for (const validOrMissing of ['14:00', undefined]) {
+      const result = evaluateNutritionAlarms(
+        [tiredMeal], [{ ...steadyCheckIn, time: validOrMissing }],
+      );
+      expect(result.activeAlarms.filter(a => a.triggerKey === 'afternoon_crash')).toEqual([]);
+    }
+    expect(JSON.stringify({ tiredMeal, steadyCheckIn })).toBe(original);
+  });
+
 });
