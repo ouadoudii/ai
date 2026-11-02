@@ -89,11 +89,12 @@ export function evaluateNutritionAlarms(
     // the legacy "Heute" marker. Normal journal entries never get this pass.
     if (allowSyntheticDemo && entry.id.startsWith('sim-')) return entry.date === today || entry.date === 'Heute';
     if (entry.date !== today) return false;
-    // A future local clock on a same-day import is not an observation yet.
-    // Preserve legacy records without a valid clock rather than guessing.
-    const clock = typeof entry.time === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(entry.time)
-      ? entry.time : null;
-    return clock === null || clock <= currentLocalClock;
+    // A missing clock is an unknown-time legacy observation. An explicitly
+    // malformed clock is not evidence that a meal or check-in happened today:
+    // do not create personal guidance from impossible imported times.
+    if (entry.time === undefined || entry.time === null || entry.time === '') return true;
+    if (typeof entry.time !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(entry.time)) return false;
+    return entry.time <= currentLocalClock;
   };
   const todayCheckIns = checkIns.filter(isCurrent);
   // A later midday/evening check-in may omit sleep; use the most recent
