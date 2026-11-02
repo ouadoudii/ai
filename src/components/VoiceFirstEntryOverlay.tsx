@@ -213,6 +213,15 @@ export function reconcileOnboardingWeightInput(
     ),
   };
 }
+// Do not override a field the person has already focused while the dialog's
+// scheduled initial-focus frame is waiting to run. This also prevents a lost
+// first Arabic-Indic digit when a fast typist enters the quick form.
+export function shouldAutofocusOnboardingDialog(
+  dialog: Pick<HTMLElement, "contains"> | null,
+  activeElement: Element | null,
+): boolean {
+  return !dialog?.contains(activeElement);
+}
 export function shouldShowVoiceFirstEntry(storage: Pick<Storage, "getItem">) {
   return !storage.getItem(PROFILE_INTRO_KEY);
 }
@@ -328,6 +337,9 @@ export const VoiceFirstEntryOverlay: React.FC<Props> = ({
     root?.setAttribute("inert", "");
     root?.setAttribute("aria-hidden", "true");
     const frame = window.requestAnimationFrame(() => {
+      // A user may focus the weight input before this deferred autofocus runs.
+      // Respect that choice instead of moving the caret back to the goal field.
+      if (!shouldAutofocusOnboardingDialog(dialogRef.current, document.activeElement)) return;
       if (mode === "form") {
         goalRef.current?.focus({ preventScroll: true });
         return;
