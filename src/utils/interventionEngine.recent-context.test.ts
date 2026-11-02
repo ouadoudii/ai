@@ -31,7 +31,7 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
       expect(suggestion?.subtitle).toBe(title === 'حريرة 7rira'
         ? 'تناولت «حريرة 7rira» بينما كان انتباهك مشغولًا'
         : 'تناولت وجبتك بينما كان انتباهك مشغولًا');
-      expect(suggestion?.subtitle).not.toMatch(/undefined|null|\\[object Object\\]|«\\s*»|فشل|عقاب|إنذار/);
+      expect(suggestion?.subtitle).not.toMatch(/undefined|null|\[object Object\]|«\s*»|فشل|عقاب|إنذار/);
       expect(JSON.stringify(imported)).toBe(original);
     }
   });
