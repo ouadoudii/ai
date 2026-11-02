@@ -69,6 +69,18 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     expect(example.activeAlarms.map(alarm => alarm.triggerKey)).toContain('distracted_meal');
   });
 
+  it('includes the current local minute without anticipating the next minute', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-28T15:00:00'));
+    const today = getLocalDateKey();
+    const current = { ...moment(today, 'observed-now'), time: '15:00' };
+    const future = { ...moment(today, 'not-yet-observed'), time: '15:01', createdAt: Date.now() + 60_000 };
+    const result = evaluateNutritionAlarms([future, current], []);
+    expect(result.activeAlarms.filter(alarm => alarm.triggerKey === 'distracted_meal')
+      .map(alarm => alarm.id)).toEqual(['alarm-mindless-observed-now']);
+    expect(result.activeAlarms[0].reason).not.toMatch(/فشل|عقاب|إنذار/);
+  });
+
   it('uses current entries even when an older entry is first in storage', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-28T14:00:00'));
