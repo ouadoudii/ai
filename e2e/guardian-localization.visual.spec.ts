@@ -188,7 +188,10 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
         sleep: { durationHours: 5, quality: 2, wakeFeeling: 'tired' },
         wellbeing: { energyLevel: 4 }, createdAt: Date.now(),
       }]));
-      localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
+      if (!sessionStorage.getItem('guardian-a11y-initialized')) {
+        localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
+        sessionStorage.setItem('guardian-a11y-initialized', 'true');
+      }
       sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
     }, profile);
 
