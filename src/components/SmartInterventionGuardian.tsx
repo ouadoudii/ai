@@ -4,7 +4,7 @@ import { GuardianStatus } from '../utils/interventionEngine';
 import { NutritionArchetype } from '../types';
 import { useLanguage } from '../i18n';
 import { getGuardianCopy } from '../utils/guardianLocalization';
-import { acknowledgeGuardianOccurrence, readGuardianAcknowledgements, writeGuardianAcknowledgements } from '../utils/guardianAcknowledgements';
+import { GUARDIAN_ACKNOWLEDGEMENTS_STORAGE_KEY, acknowledgeGuardianOccurrence, mergeGuardianAcknowledgements, readGuardianAcknowledgements, writeGuardianAcknowledgements } from '../utils/guardianAcknowledgements';
 import { selectGuardianAcknowledgements } from '../utils/guardianDemoIsolation';
 
 interface SmartInterventionGuardianProps {
@@ -27,6 +27,22 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
   // Demo dismissals are ephemeral and must never read or write personal acknowledgements.
   const [demoResolvedAlarmIds, setDemoResolvedAlarmIds] = React.useState<string[]>([]);
   const [showSimulator, setShowSimulator] = React.useState(false);
+  // Another tab can dismiss a suggestion or clear its acknowledgements.
+  // Keep this tab's calm guidance consistent without reloading or touching the journal.
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const syncAcknowledgements = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== GUARDIAN_ACKNOWLEDGEMENTS_STORAGE_KEY) return;
+      try {
+        if (event.storageArea !== window.localStorage) return;
+        setResolvedAlarmIds(readGuardianAcknowledgements(window.localStorage));
+      } catch {
+        // Browsers that deny storage still allow in-memory dismissals.
+      }
+    };
+    window.addEventListener('storage', syncAcknowledgements);
+    return () => window.removeEventListener('storage', syncAcknowledgements);
+  }, []);
   const statusRef = React.useRef<HTMLDivElement>(null);
   const activeAcknowledgements = selectGuardianAcknowledgements(isSimulated, resolvedAlarmIds, demoResolvedAlarmIds);
   const activeUnresolvedAlarms = guardianStatus.activeAlarms.filter((a) => !activeAcknowledgements.includes(a.id));
@@ -38,10 +54,17 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
       return;
     }
     setResolvedAlarmIds((prev) => {
-      const next = acknowledgeGuardianOccurrence(prev, alarmId);
+      let next = acknowledgeGuardianOccurrence(prev, alarmId);
       if (typeof window !== 'undefined') {
-        try { writeGuardianAcknowledgements(window.localStorage, next); }
-        catch (error) { console.error('Failed to persist guardian acknowledgement', error); }
+        try {
+          // Read again at dismissal time: another tab may have written since mount.
+          // Merge before persisting so concurrent dismissals are not lost.
+          const stored = readGuardianAcknowledgements(window.localStorage);
+          next = acknowledgeGuardianOccurrence(mergeGuardianAcknowledgements(prev, stored), alarmId);
+          writeGuardianAcknowledgements(window.localStorage, next);
+        } catch {
+          // Keep the local dismissal usable even when private storage is denied.
+        }
       }
       return next;
     });
