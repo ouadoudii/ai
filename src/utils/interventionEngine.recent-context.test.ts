@@ -492,6 +492,7 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     for (const untrusted of [
       { ...steady, energyAfter: undefined },
       { ...steady, time: '99:99' },
+      { ...steady, time: 99 as unknown as string },
     ]) {
       expect(evaluateNutritionAlarms([untrusted], [low]).activeAlarms
         .map(a => a.id)).toContain('alarm-afternoon-crash-checkin-energy-low-before-lunch');
