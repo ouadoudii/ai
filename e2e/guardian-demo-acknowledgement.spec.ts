@@ -66,6 +66,17 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(exitDemo).toBeFocused();
     await exitDemo.press('Enter');
     await expect(guardian.getByTestId('guardian-demo-notice')).toHaveCount(0);
+    // The disappearing exit button must return keyboard focus to the
+    // persistent, clearly labeled Arabic simulator toggle.
+    await expect(demoPicker).toBeFocused();
+    await expect(demoPicker).toHaveAttribute('aria-expanded', 'false');
+    // Pointer/touch exit must not forcibly move focus to the toggle.
+    await demoPicker.click();
+    await guardian.getByRole('button', { name: /نوم أقل من المعتاد/ }).click();
+    await demoPicker.click();
+    await guardian.getByTestId('guardian-demo-exit').click();
+    await expect(guardian.getByTestId('guardian-demo-notice')).toHaveCount(0);
+    await expect(demoPicker).not.toBeFocused();
     await expect(guardian).not.toContainText('4.5 ساعات نوم');
     expect(await page.evaluate((key) => localStorage.getItem(key), key)).toBe(personalAcknowledgements);
 
