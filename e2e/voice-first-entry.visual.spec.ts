@@ -228,7 +228,10 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     await expect(weight).toHaveValue('٨');
     await weight.pressSequentially('٢');
     await expect(weight).toHaveValue('٨٢');
-    await expect.poll(() => weight.evaluate((input: HTMLInputElement) => input.selectionStart)).toBe(2);
+    await weight.pressSequentially('٫٥');
+    await expect(weight).toHaveValue('٨٢٫٥');
+    await expect.poll(() => weight.evaluate((input: HTMLInputElement) => input.selectionStart)).toBe(4);
+    await expect(weight).not.toHaveAttribute('aria-invalid', 'true');
     expect(await page.evaluate(() => localStorage.getItem('rhythm_intro_profile_v1'))).toBeNull();
   });
 }
