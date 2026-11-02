@@ -169,3 +169,52 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
     expect(await page.evaluate(() => localStorage.getItem('nimmapp_moments_v1'))).toBe('[]');
   });
 }
+
+
+for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'mobile', width: 390, height: 844 }]) {
+  test(`real Guardian suggestions can be dismissed with keyboard and a 44px touch target on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.addInitScript((profile) => {
+      const now = new Date();
+      const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      localStorage.setItem('rhythm_language_v1', 'ar');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+      localStorage.setItem('nimmapp_moments_v1', '[]');
+      localStorage.setItem('nimmapp_checkins_v1', JSON.stringify([{
+        id: 'accessible-real-sleep', date, time: '07:00', timeOfDay: 'morning',
+        sleep: { durationHours: 5, quality: 2, wakeFeeling: 'tired' },
+        wellbeing: { energyLevel: 4 }, createdAt: Date.now(),
+      }]));
+      localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    }, profile);
+
+    await page.goto('/');
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    const dismiss = guardian.getByRole('button', { name: 'إخفاء الفكرة: قد تحتاج إلى بعض الراحة اليوم' });
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(dismiss).toBeVisible();
+    await expect(dismiss).toHaveClass(/focus-visible:outline-2/);
+    const bounds = await dismiss.boundingBox();
+    expect(bounds?.height).toBeGreaterThanOrEqual(44);
+    await dismiss.focus();
+    await expect(dismiss).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(dismiss).toHaveCount(0);
+    await expect(guardian.getByRole('status')).toContainText('هنا متى احتجت');
+    await expect(guardian).not.toContainText(/فشل|عقاب|إنذار|Ghrelin|28%/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() =>
+      JSON.parse(localStorage.getItem('moment.guardian.acknowledged-occurrences.v1') || '[]')
+    )).toContain('alarm-sleep-accessible-real-sleep');
+    await page.reload();
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    await expect(guardian.getByRole('button', { name: 'إخفاء الفكرة: قد تحتاج إلى بعض الراحة اليوم' })).toHaveCount(0);
+    await expect(guardian.getByRole('status')).toContainText('هنا متى احتجت');
+  });
+}
