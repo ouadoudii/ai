@@ -234,8 +234,8 @@ export function evaluateNutritionAlarms(
     const mealTime = validMealClock(moment.time);
     const checkInTime = validMealClock(checkIn.time);
     if (mealTime && checkInTime) return mealTime > checkInTime;
-    if (malformedMealClock(moment.time)
-      || (typeof checkIn.time === 'string' && checkIn.time.length > 0 && !checkInTime)) return false;
+    if ((moment.time != null && moment.time !== '' && !mealTime)
+      || (checkIn.time != null && checkIn.time !== '' && !checkInTime)) return false;
     return typeof moment.createdAt === 'number' && Number.isFinite(moment.createdAt)
       && typeof checkIn.createdAt === 'number' && Number.isFinite(checkIn.createdAt)
       && moment.createdAt > checkIn.createdAt;
