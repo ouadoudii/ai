@@ -69,6 +69,10 @@ describe('optional, non-diagnostic Arabic Guardian suggestions', () => {
     expect(demo).toContain('هذه أمثلة وليست تسجيلاتك');
     expect(demo).toContain('data-testid="guardian-demo-exit"');
     expect(demo).toContain('العودة إلى يومك');
+    const exitButton = demo.match(/<button[^>]*data-testid="guardian-demo-exit"[^>]*>/)?.[0];
+    expect(exitButton).toContain('type="button"');
+    expect(exitButton).toContain('min-h-11');
+    expect(exitButton).toContain('focus-visible:outline-2');
     expect(demo).not.toMatch(/Simuliert|Warnung|Alarm|Ghrelin|28%|animate-pulse|bg-red/);
   });
 
