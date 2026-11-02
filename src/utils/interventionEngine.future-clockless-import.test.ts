@@ -46,6 +46,17 @@ describe('P0 Guardian clockless future import boundary', () => {
     expect(JSON.stringify(status)).not.toMatch(/فشل|عقاب|إنذار|Ghrelin|28%/);
   });
 
+  it('accepts a clockless entry at the current instant but not one minute ahead', () => {
+    const atBoundary = evaluateNutritionAlarms(
+      [meal('at-boundary', now.getTime())], [], 'intuitive_mindful', now,
+    );
+    const oneMinuteAhead = evaluateNutritionAlarms(
+      [meal('not-yet', now.getTime() + 60_000)], [], 'intuitive_mindful', now,
+    );
+    expect(atBoundary.activeAlarms.some(item => item.id === 'alarm-mindless-at-boundary')).toBe(true);
+    expect(oneMinuteAhead.activeAlarms).toEqual([]);
+  });
+
   it('keeps explicit demo observations independent of their synthetic creation timestamp', () => {
     const demoMeal = { ...meal('sim-rushed', future), date: 'Heute' };
     const normal = evaluateNutritionAlarms([demoMeal], [], 'intuitive_mindful', now);
