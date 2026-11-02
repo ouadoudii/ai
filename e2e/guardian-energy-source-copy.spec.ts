@@ -54,6 +54,7 @@ for (const viewport of [
       if (source === 'meal') {
         await expect(guardian).not.toContainText('سجّلت مستوى طاقة منخفضًا اليوم');
       }
+      await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ })).toHaveCount(1);
       await expect(guardian.getByRole('status')).toContainText('أفكار يمكنك تجاهلها');
       await expect(guardian).not.toContainText(/فشل|عقاب|إنذار|Ghrelin|28%|Überessen/);
       await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
