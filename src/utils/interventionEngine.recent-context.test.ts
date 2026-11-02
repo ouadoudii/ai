@@ -322,7 +322,7 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     }
   });
 
-  it('hides malformed meal timestamps and honors later energy recovery', () => {
+  it('excludes impossible meal clocks while preserving valid observations and later recovery', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-28T15:00:00'));
     const today = getLocalDateKey();
@@ -336,8 +336,13 @@ describe('Guardian local-day context and gentle Arabic suggestions', () => {
     };
     const result = evaluateNutritionAlarms([imported], [recovered]);
     expect(result.activeAlarms.some(alarm => alarm.triggerKey === 'afternoon_crash')).toBe(false);
-    expect(result.activeAlarms.find(alarm => alarm.triggerKey === 'distracted_meal')?.timestamp).toBe('منذ قليل');
+    // An impossible explicit clock is not evidence of a meal observation.
+    expect(result.activeAlarms.some(alarm => alarm.triggerKey === 'distracted_meal')).toBe(false);
     expect(JSON.stringify(result)).not.toMatch(/99:99|فشل|عقاب|إنذار|Ghrelin|28%/);
+    // The same actual meal with a valid observed time still receives optional guidance.
+    const observed = evaluateNutritionAlarms([{ ...imported, time: '12:30' }], [recovered]);
+    expect(observed.activeAlarms.find(alarm => alarm.triggerKey === 'distracted_meal')?.timestamp).toBe('12:30');
+    expect(observed.activeAlarms.some(alarm => alarm.triggerKey === 'afternoon_crash')).toBe(false);
   });
 
 
