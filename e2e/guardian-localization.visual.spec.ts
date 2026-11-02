@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+test.use({ timezoneId: 'UTC' });
+
 const profile={summary:'Rhythm',priorities:[],preferences:[],rawIntro:'Rhythm',confirmedAt:1,firstPlan:{title:'Observe',rationale:'Notice',focusAreas:[],firstStep:'Capture',phase:'midday'}};
 const labels={
   de:{title:'Moment Fürsorge- & Frühwarn-System',clear:'Keine Intervention erforderlich',test:'Alarm testen',sleep:'Schlafmangel',done:'Als erledigt abhaken'},
@@ -58,6 +60,10 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
 for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'mobile', width: 390, height: 844 }]) {
   test(`Guardian demo never mixes real journal observations on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    // The private 12:40 meal is an observed event, not a future-dated journal entry.
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await page.addInitScript(({ profile }) => {
       const now = new Date();
       const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
