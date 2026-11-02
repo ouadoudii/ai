@@ -81,8 +81,17 @@ export function evaluateNutritionAlarms(
   // journal records remain untouched and discoverable in their own views.
   // The explicit simulator uses a legacy "Heute" marker; never interpret
   // that marker as a real user's date.
-  const isCurrent = (entry: { id: string; date: string }) =>
-    entry.date === today || (entry.id.startsWith('sim-') && entry.date === 'Heute');
+  const currentLocalClock = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const isCurrent = (entry: { id: string; date: string; time?: unknown }) => {
+    // Demo records describe examples and must remain usable at any time of day.
+    if (entry.id.startsWith('sim-')) return entry.date === today || entry.date === 'Heute';
+    if (entry.date !== today) return false;
+    // A future local clock on a same-day import is not an observation yet.
+    // Preserve legacy records without a valid clock rather than guessing.
+    const clock = typeof entry.time === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(entry.time)
+      ? entry.time : null;
+    return clock === null || clock <= currentLocalClock;
+  };
   const todayCheckIns = checkIns.filter(isCurrent);
   // A later midday/evening check-in may omit sleep; use the most recent
   // actual sleep entry rather than treating an omitted field as no sleep data.
