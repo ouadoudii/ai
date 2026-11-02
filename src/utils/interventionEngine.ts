@@ -226,8 +226,26 @@ export function evaluateNutritionAlarms(
   const lowEnergyMoment = latestReportedMealEnergy?.energyAfter === 'sluggish'
     && !recoveredAfterMoment(latestReportedMealEnergy)
     ? latestReportedMealEnergy : undefined;
+  // A later, explicitly steady post-meal report supersedes an earlier low-energy
+  // check-in. Do not keep nudging someone after they say they feel better.
+  // Compare observed local clocks before import timestamps; an invalid clock
+  // cannot be used as evidence of recovery.
+  const mealReportsRecoveryAfterCheckIn = (moment: FoodMoment, checkIn: DailyCheckIn): boolean => {
+    const mealTime = validMealClock(moment.time);
+    const checkInTime = validMealClock(checkIn.time);
+    if (mealTime && checkInTime) return mealTime > checkInTime;
+    if (malformedMealClock(moment.time)
+      || (typeof checkIn.time === 'string' && checkIn.time.length > 0 && !checkInTime)) return false;
+    return typeof moment.createdAt === 'number' && Number.isFinite(moment.createdAt)
+      && typeof checkIn.createdAt === 'number' && Number.isFinite(checkIn.createdAt)
+      && moment.createdAt > checkIn.createdAt;
+  };
+  const currentLowEnergyCheckIn = lowEnergyCheckIn && latestReportedMealEnergy
+    && (latestReportedMealEnergy.energyAfter === 'neutral' || latestReportedMealEnergy.energyAfter === 'energized')
+    && mealReportsRecoveryAfterCheckIn(latestReportedMealEnergy, lowEnergyCheckIn)
+    ? undefined : lowEnergyCheckIn;
 
-  if (isAfternoon && (lowEnergyCheckIn || lowEnergyMoment)) {
+  if (isAfternoon && (currentLowEnergyCheckIn || lowEnergyMoment)) {
     let archetypeAdvice = '';
     if (archetype === 'protein_performer') {
       archetypeAdvice = 'إذا كنت جائعًا، اختر وجبة خفيفة تستمتع بها وتمنحك شعورًا بالشبع.';
@@ -236,7 +254,7 @@ export function evaluateNutritionAlarms(
     } else {
       archetypeAdvice = 'جرّب شرب الماء أو أخذ استراحة قصيرة، واستمع لما يحتاجه جسمك.';
     }
-    const sourceOccurrenceId = lowEnergyCheckIn ? `checkin-${lowEnergyCheckIn.id}` : `moment-${lowEnergyMoment!.id}`;
+    const sourceOccurrenceId = currentLowEnergyCheckIn ? `checkin-${currentLowEnergyCheckIn.id}` : `moment-${lowEnergyMoment!.id}`;
     alarms.push({
       id: `alarm-afternoon-crash-${sourceOccurrenceId}`,
       triggerKey: 'afternoon_crash',
