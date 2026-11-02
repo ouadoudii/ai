@@ -256,4 +256,43 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
       expect(await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'))).toBe(before);
     });
   }
+
+  test(`Guardian honors later recovered check-ins despite reverse import timestamps on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.clock.install({ time: new Date('2026-11-01T15:00:00Z') });
+    await page.addInitScript((profile) => {
+      const now = new Date();
+      const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      localStorage.setItem('rhythm_language_v1', 'ar');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+      localStorage.setItem('nimmapp_moments_v1', '[]');
+      localStorage.setItem('nimmapp_checkins_v1', JSON.stringify([
+        { id: 'backfilled-short-sleep', date: today, time: '07:00', timeOfDay: 'morning',
+          createdAt: 900, sleep: { durationHours: 5, quality: 2, wakeFeeling: 'tired' } },
+        { id: 'rested-later', date: today, time: '08:30', timeOfDay: 'morning',
+          createdAt: 100, sleep: { durationHours: 8, quality: 4, wakeFeeling: 'refreshed' } },
+        { id: 'backfilled-low-energy', date: today, time: '14:00', timeOfDay: 'midday',
+          createdAt: 800, wellbeing: { energyLevel: 1 } },
+        { id: 'energy-recovered-later', date: today, time: '14:30', timeOfDay: 'midday',
+          createdAt: 200, wellbeing: { energyLevel: 4 } },
+      ]));
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    }, profile);
+    await page.goto('/');
+    expect(await page.evaluate(() => new Date().getHours())).toBe(15);
+    const before = await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'));
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(guardian).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian).toContainText('هنا متى احتجت');
+    await expect(guardian).not.toContainText(/قد تحتاج إلى بعض الراحة اليوم|مساحة صغيرة لاستعادة نشاطك|فشل|عقاب|إنذار|Ghrelin|28%/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('nimmapp_checkins_v1'))).toBe(before);
+  });
+
 }
