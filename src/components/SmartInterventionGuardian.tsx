@@ -17,7 +17,13 @@ interface SmartInterventionGuardianProps {
 export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps> = ({ guardianStatus, onSimulateAlarm, isSimulated = false }) => {
   const { language } = useLanguage();
   const copy = getGuardianCopy(language);
-  const [resolvedAlarmIds, setResolvedAlarmIds] = React.useState<string[]>(() => typeof window === 'undefined' ? [] : readGuardianAcknowledgements(window.localStorage));
+  const [resolvedAlarmIds, setResolvedAlarmIds] = React.useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    // Some privacy modes deny access to the storage property itself.
+    // Keep optional guidance available without reading or changing private data.
+    try { return readGuardianAcknowledgements(window.localStorage); }
+    catch { return []; }
+  });
   // Demo dismissals are ephemeral and must never read or write personal acknowledgements.
   const [demoResolvedAlarmIds, setDemoResolvedAlarmIds] = React.useState<string[]>([]);
   const [showSimulator, setShowSimulator] = React.useState(false);
