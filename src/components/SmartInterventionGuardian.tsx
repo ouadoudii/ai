@@ -47,6 +47,7 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
     return () => window.removeEventListener('storage', syncAcknowledgements);
   }, []);
   const statusRef = React.useRef<HTMLDivElement>(null);
+  const demoToggleRef = React.useRef<HTMLButtonElement>(null);
   const activeAcknowledgements = selectGuardianAcknowledgements(isSimulated, resolvedAlarmIds, demoResolvedAlarmIds);
   const activeUnresolvedAlarms = guardianStatus.activeAlarms.filter((a) => !activeAcknowledgements.includes(a.id));
 
@@ -76,9 +77,12 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
     if (fromKeyboard) statusRef.current?.focus();
   };
 
-  const handleDemoScenario = (scenario: 'sleep' | 'rushed_meal' | 'afternoon_crash' | 'clear') => {
+  const handleDemoScenario = (scenario: 'sleep' | 'rushed_meal' | 'afternoon_crash' | 'clear', fromKeyboard = false) => {
     setDemoResolvedAlarmIds([]);
     onSimulateAlarm?.(scenario);
+    // The collapsed demo exit disappears after Reset. Return keyboard focus to
+    // its persistent toggle; never steal focus from a touch/pointer interaction.
+    if (scenario === 'clear' && fromKeyboard) demoToggleRef.current?.focus();
   };
 
   return (
@@ -101,7 +105,7 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
             <span className={`w-2 h-2 rounded-full ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
             <span>{activeUnresolvedAlarms.length > 0 ? copy.activeAlarm(activeUnresolvedAlarms.length) : copy.allClear}</span>
           </div>
-          {onSimulateAlarm && <button type="button" aria-expanded={showSimulator} aria-controls="guardian-demo-scenarios" onClick={() => setShowSimulator(!showSimulator)} className="min-h-11 text-xs font-semibold px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors flex items-center gap-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"><RefreshCw className="w-3 h-3" /><span>{copy.testAlarm}</span></button>}
+          {onSimulateAlarm && <button type="button" ref={demoToggleRef} aria-expanded={showSimulator} aria-controls="guardian-demo-scenarios" onClick={() => setShowSimulator(!showSimulator)} className="min-h-11 text-xs font-semibold px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors flex items-center gap-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"><RefreshCw className="w-3 h-3" /><span>{copy.testAlarm}</span></button>}
         </div>
       </div>
 
@@ -124,7 +128,7 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
             <button
               type="button"
               data-testid="guardian-demo-exit"
-              onClick={() => handleDemoScenario('clear')}
+              onClick={(event) => handleDemoScenario('clear', event.detail === 0)}
               className="mt-3 block min-h-11 rounded-xl border border-[#D4B78A] bg-white px-4 py-2 text-sm font-semibold text-[#4B3B2B] hover:bg-[#F7EBD8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"
             >
               العودة إلى يومك
