@@ -40,7 +40,10 @@ describe('guardian intervention engine', () => {
       sleep: { durationHours: 5, quality: 2, wakeFeeling: 'tired' },
       wellbeing: { energyLevel: 2, mood: 'comfort', stressLevel: 3 }, createdAt: 1,
     };
-    const result = evaluateNutritionAlarms([], [checkIn]);
+    // The 08:00 check-in is observed, not future, regardless of CI run hour.
+    const afternoon = new Date();
+    afternoon.setHours(15, 0, 0, 0);
+    const result = evaluateNutritionAlarms([], [checkIn], 'intuitive_mindful', afternoon);
     expect(result.hasAlarms).toBe(true);
     expect(result.activeAlarms.some(a => a.triggerKey === 'sleep_deficit')).toBe(true);
   });
