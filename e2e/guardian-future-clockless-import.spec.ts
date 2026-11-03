@@ -48,6 +48,7 @@ for (const viewport of [
     await page.goto('/');
     // Fail clearly if the browser clock/fixture day diverges before checking Guardian.
     expect(await page.evaluate(() => new Date().toISOString())).toBe('2026-11-02T15:00:00.000Z');
+    expect(await page.evaluate(() => Date.now())).toBe(Date.parse('2026-11-02T15:00:00Z'));
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').map((item: { id: string }) => item.id)))
       .toEqual(['future-meal', 'past-harira']);
     const before = await page.evaluate(() => [
