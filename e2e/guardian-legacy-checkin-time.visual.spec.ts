@@ -13,6 +13,8 @@ const profile = {
 for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'mobile', width: 390, height: 844 }]) {
   test(`Guardian handles imported check-ins without time on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    // The imported morning observations must be in the past regardless of CI start time.
+    await page.clock.setFixedTime(new Date('2026-11-02T15:00:00Z'));
     await page.addInitScript((profile) => {
       const now = new Date();
       const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
@@ -40,6 +42,8 @@ for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: '
 
   test(`Guardian ignores impossible imported clock values on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    // The imported morning observations must be in the past regardless of CI start time.
+    await page.clock.setFixedTime(new Date('2026-11-02T15:00:00Z'));
     await page.addInitScript((profile) => {
       const now = new Date();
       const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
