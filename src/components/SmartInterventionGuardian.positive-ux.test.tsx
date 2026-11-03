@@ -19,7 +19,7 @@ const alarm: NutritionAlarm = {
   timestamp: 'هذا الصباح',
 };
 
-const render = (activeAlarms: NutritionAlarm[]) => {
+const render = (activeAlarms: NutritionAlarm[], isSimulated = false) => {
   const status: GuardianStatus = {
     hasAlarms: activeAlarms.length > 0,
     activeAlarms,
@@ -28,7 +28,7 @@ const render = (activeAlarms: NutritionAlarm[]) => {
     lastEvaluated: '',
   };
   return renderToStaticMarkup(
-    <SmartInterventionGuardian guardianStatus={status} userArchetype="stress_craver" />,
+    <SmartInterventionGuardian guardianStatus={status} userArchetype="stress_craver" isSimulated={isSimulated} />,
   );
 };
 
@@ -43,6 +43,17 @@ describe('optional, non-diagnostic Arabic Guardian suggestions', () => {
     expect(html).toContain('ما قد يساعدك');
     expect(html).not.toMatch(/نمطك|نمط الأكل تحت الضغط|اقتراح عاجل|تدخل فوري|إنذار|عقاب|فشل/);
     expect(html).not.toMatch(/bg-rose|bg-red|animate-pulse|animate-ping/);
+  });
+
+  it('clearly marks simulated suggestions as examples, not personal observations', () => {
+    const normal = render([alarm]);
+    const demo = render([alarm], true);
+    expect(normal).not.toContain('وضع تجريبي');
+    expect(demo).toContain('role="note"');
+    expect(demo).toContain('data-testid="guardian-demo-notice"');
+    expect(demo).toContain('هذه أمثلة وليست تسجيلاتك');
+    expect(demo).toContain('إعادة ضبط');
+    expect(demo).not.toMatch(/Simuliert|Warnung|Alarm|Ghrelin|28%|animate-pulse|bg-red/);
   });
 
   it('does not imply a medical all-clear when no suggestions are present', () => {

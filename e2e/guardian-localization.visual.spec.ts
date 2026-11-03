@@ -31,6 +31,13 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
       await expect(page.locator('html')).toHaveAttribute('dir','rtl');
       await expect(page.locator('html')).toHaveAttribute('lang','ar');
       await guardian.getByRole('button',{name:labels.ar.test}).click();
+      await expect(guardian.getByTestId('guardian-demo-notice')).toHaveCount(0);
+      await guardian.getByRole('button',{name:/الأكل تحت الضغط/}).click();
+      await expect(guardian.getByRole('note')).toContainText('هذه أمثلة وليست تسجيلاتك');
+      await expect(guardian.getByRole('note')).toHaveAttribute('aria-live','polite');
+      await expect(guardian).toContainText('حريرة تناولتها على عجل أمام الشاشة');
+      await expect(guardian).not.toContainText(/Schnelles Pastagericht|Mittagessen|Schreibtisch|Simuliert/);
+      await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('nimmapp_moments_v1') || '[]').length)).toBe(0);
       await expect(guardian).not.toContainText('اختبار تنبيه');
       await expect(guardian).not.toContainText('نقص النوم');
       await guardian.getByRole('button',{name:new RegExp(labels.ar.sleep)}).click();
@@ -41,6 +48,9 @@ for(const viewport of [{name:'desktop',width:1280,height:900},{name:'mobile',wid
       await expect(guardian.getByRole('status')).toContainText('أفكار يمكنك تجاهلها');
       await expect(guardian.locator('[class*="bg-rose"], [class*="text-rose"]')).toHaveCount(0);
       await expect(guardian).not.toContainText(/Ghrelin|Ghrelin-Hoch|Küchenschluss|Überessen|28%|Akute Intervention|Heißhunger/);
+      await guardian.getByRole('button',{name:/إعادة ضبط/}).click();
+      await expect(guardian.getByTestId('guardian-demo-notice')).toHaveCount(0);
+      await expect(guardian.getByText(labels.ar.clear)).toBeVisible();
     });
   }
 }
