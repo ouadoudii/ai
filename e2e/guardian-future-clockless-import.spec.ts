@@ -15,7 +15,7 @@ for (const viewport of [
   test(`P0 Guardian ignores future clockless imports but keeps observed meals on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     // Install the browser clock before seeding: Date and the Guardian evaluation must agree.
-    await page.clock.install({ time: new Date('2026-11-02T15:00:00Z') });
+    await page.clock.setFixedTime(new Date('2026-11-02T15:00:00Z'));
     await page.addInitScript(({ profile }) => {
       // Explicit fixture timestamps avoid init-script scheduling skew on CI runners.
       const date = '2026-11-02';
