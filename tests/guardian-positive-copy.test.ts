@@ -235,7 +235,10 @@ describe('guardian positive Arabic-first experience', () => {
   });
 
   it('respects a distracted meal without judging or restricting eating', () => {
-    const status = evaluateNutritionAlarms([rushedMeal], []);
+    // The seeded 12:00 meal must already have occurred: a future meal is not evidence.
+    const afternoon = new Date();
+    afternoon.setHours(15, 0, 0, 0);
+    const status = evaluateNutritionAlarms([rushedMeal], [], 'intuitive_mindful', afternoon);
     expect(status.activeAlarms).toHaveLength(1);
     expect(status.activeAlarms[0].id).toBe('alarm-mindless-meal-1');
     expect(allVisibleText(status.activeAlarms[0])).toContain('كسكس');
