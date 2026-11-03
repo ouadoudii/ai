@@ -50,6 +50,20 @@ describe('persisted storage validation', () => {
     expect(loadPersistedCheckIns()).toEqual([checkIn]);
   });
 
+  it('preserves imported check-ins without a valid clock time through migration and runtime hydration', () => {
+    const legacy = [
+      { id: 'no-time', date: '2026-09-19', timeOfDay: 'morning', createdAt: 1, sleep: { durationHours: 5 } },
+      { id: 'bad-time', date: '2026-09-19', time: 12, timeOfDay: 'morning', createdAt: null, wellbeing: { energyLevel: 3 } },
+    ];
+    localStorage.setItem(MIGRATION_KEY, 'done');
+    localStorage.setItem(CHECKINS_KEY, JSON.stringify([...legacy, { id: 'invalid' }]));
+
+    migrateLegacyStorage();
+
+    expect(loadPersistedCheckIns()).toEqual(legacy);
+    expect(JSON.parse(localStorage.getItem(CHECKINS_KEY) || '[]')).toEqual(legacy);
+  });
+
   it('runtime loaders use a valid legacy fallback when the current payload is corrupt', () => {
     const legacyMoment = { id: 'legacy-meal', title: 'Couscous', date: '2026-09-19', time: '13:00' };
     localStorage.setItem(MOMENTS_KEY, '{}');
