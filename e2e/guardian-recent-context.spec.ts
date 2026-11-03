@@ -96,6 +96,9 @@ for (const viewport of [
 
   test(`P0 Guardian respects a refreshed wake feeling after short sleep on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed');
     await page.goto('/');
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
@@ -112,6 +115,9 @@ for (const viewport of [
 
   test(`P0 Guardian honors a corrected sleep check-in without old fatigue advice on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed', false, false, true);
     await page.goto('/');
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
@@ -129,6 +135,9 @@ for (const viewport of [
 
   test(`P0 Guardian keeps a partial morning sleep check-in after a newer midday entry on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed', true);
     await page.goto('/');
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
@@ -215,6 +224,9 @@ for (const viewport of [
 
   test(`P0 Guardian still offers optional Arabic care for today's entries on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await seed(page, true);
     await page.goto('/');
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
