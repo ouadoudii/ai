@@ -31,6 +31,7 @@ import { buildCoachFollowUps } from '../utils/coachFollowUps';
 import { useLanguage } from '../i18n';
 import { getLocalDateKey } from '../utils/dateKey';
 import { scopeGuardianEvaluationInputs } from '../utils/guardianDemoIsolation';
+import { getGuardianEvaluationTime } from '../utils/guardianDemoTime';
 import { ARABIC_COACH_SUGGESTIONS, ARABIC_COACH_UNAVAILABLE, getArabicCoachWelcome, getArabicCoachSummary, getArabicCoachFocus, getArabicGoalCopy, formatObservedMealSignals } from '../utils/coachArabicPresentation';
 
 interface FoodCoachViewProps {
@@ -164,8 +165,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
   const guardianStatus: GuardianStatus = React.useMemo(() => {
     // An afternoon demo should remain useful outside 13:00–17:00, without
     // changing the real user's clock or their own time-sensitive suggestions.
-    const evaluationTime = new Date(guardianNow);
-    if (simulatedScenario === 'afternoon_crash') evaluationTime.setHours(15, 0, 0, 0);
+    const evaluationTime = getGuardianEvaluationTime(new Date(guardianNow), simulatedScenario);
     return evaluateNutritionAlarms(
       guardianInputs.moments,
       guardianInputs.checkIns,
