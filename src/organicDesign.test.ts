@@ -42,6 +42,12 @@ describe('organic Arabic-first design foundation', () => {
     expect(css).toContain(".font-display");
   });
 
+  it('keeps the Today home responsive across desktop and mobile', () => {
+    expect(today).toContain('max-w-[1180px]');
+    expect(today).toContain('min-h-[620px] lg:min-h-0');
+    expect(today).toContain('grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2');
+  });
+
   it('keeps body text, muted copy and focus indicators accessible on ivory', () => {
     expect(contrast(token('ink'), token('bg'))).toBeGreaterThanOrEqual(7);
     expect(contrast(token('muted'), token('bg'))).toBeGreaterThanOrEqual(4.5);
