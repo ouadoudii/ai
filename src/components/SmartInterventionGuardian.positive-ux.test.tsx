@@ -45,6 +45,21 @@ describe('optional, non-diagnostic Arabic Guardian suggestions', () => {
     expect(html).not.toMatch(/bg-rose|bg-red|animate-pulse|animate-ping/);
   });
 
+  it('makes the real suggestion dismiss action accessible by keyboard and touch', () => {
+    const html = render([alarm]);
+    const button = html.match(/<button[^>]*aria-label="إخفاء الفكرة: قد تحتاج إلى بعض الراحة اليوم"[^>]*>/)?.[0];
+    expect(button).toBeDefined();
+    expect(button).toContain('type="button"');
+    expect(button).toContain('min-h-11');
+    expect(button).toContain('focus-visible:outline-2');
+    expect(button).toContain('focus-visible:outline-offset-2');
+    // The disappearing dismiss button hands keyboard focus to a calm status.
+    expect(html).toMatch(/tabindex="-1"[^>]*role="status"/i);
+    expect(html).toContain('aria-live="polite"');
+    expect(button).toContain('focus-visible:outline-[#526B48]');
+    expect(html).not.toMatch(/bg-red|bg-rose|animate-pulse|عقاب|فشل/);
+  });
+
   it('clearly marks simulated suggestions as examples, not personal observations', () => {
     const normal = render([alarm]);
     const demo = render([alarm], true);
@@ -52,8 +67,28 @@ describe('optional, non-diagnostic Arabic Guardian suggestions', () => {
     expect(demo).toContain('role="note"');
     expect(demo).toContain('data-testid="guardian-demo-notice"');
     expect(demo).toContain('هذه أمثلة وليست تسجيلاتك');
-    expect(demo).toContain('إعادة ضبط');
+    expect(demo).toContain('data-testid="guardian-demo-exit"');
+    expect(demo).toContain('العودة إلى يومك');
+    const exitButton = demo.match(/<button[^>]*data-testid="guardian-demo-exit"[^>]*>/)?.[0];
+    expect(exitButton).toContain('type="button"');
+    expect(exitButton).toContain('min-h-11');
+    expect(exitButton).toContain('focus-visible:outline-2');
     expect(demo).not.toMatch(/Simuliert|Warnung|Alarm|Ghrelin|28%|animate-pulse|bg-red/);
+  });
+
+  it('renders supportive Arabic guidance when a privacy mode denies the localStorage getter', () => {
+    vi.stubGlobal('window', {
+      get localStorage() { throw new Error('SecurityError: storage access denied'); },
+    });
+    try {
+      const html = render([alarm]);
+      expect(html).toContain('dir="rtl"');
+      expect(html).toContain('قد تحتاج إلى بعض الراحة اليوم');
+      expect(html).toContain('إخفاء الفكرة');
+      expect(html).not.toMatch(/bg-red|animate-pulse|عقاب|فشل/);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('does not imply a medical all-clear when no suggestions are present', () => {

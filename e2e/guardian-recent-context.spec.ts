@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// Guardian's time-of-day regressions must not inherit the CI-wide moving timezone.
+// Keep the observed local hour equal to the seeded fixture hour on every runner.
+test.use({ timezoneId: 'UTC' });
+
 const profile = {
   summary: 'Rhythm', priorities: [], preferences: [], rawIntro: 'Rhythm',
   confirmedAt: 1,
@@ -92,6 +96,9 @@ for (const viewport of [
 
   test(`P0 Guardian respects a refreshed wake feeling after short sleep on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed');
     await page.goto('/');
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
@@ -108,6 +115,9 @@ for (const viewport of [
 
   test(`P0 Guardian honors a corrected sleep check-in without old fatigue advice on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed', false, false, true);
     await page.goto('/');
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
@@ -125,6 +135,9 @@ for (const viewport of [
 
   test(`P0 Guardian keeps a partial morning sleep check-in after a newer midday entry on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed', true);
     await page.goto('/');
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
@@ -144,10 +157,11 @@ for (const viewport of [
   test(`P0 Guardian does not repeat stale low-energy advice after recovery on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     const afternoon = new Date();
-    afternoon.setHours(15, 0, 0, 0);
+    afternoon.setUTCHours(15, 0, 0, 0);
     await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed', false, true);
     await page.goto('/');
+    expect(await page.evaluate(() => new Date().getHours())).toBe(15);
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
     const guardian = page.getByTestId('guardian');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
@@ -166,8 +180,13 @@ for (const viewport of [
 
   test(`P0 Guardian does not revive an older rushed-meal suggestion after a calmer meal on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    // The calm 14:00 meal must be in the past for this recovery-order regression.
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await seed(page, true, 'refreshed', false, false, false, true);
     await page.goto('/');
+    expect(await page.evaluate(() => new Date().getHours())).toBe(15);
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
     const guardian = page.getByTestId('guardian');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
@@ -184,10 +203,11 @@ for (const viewport of [
   test(`P0 Guardian respects an evening family dinner without timing or fullness alarms on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     const evening = new Date();
-    evening.setHours(22, 15, 0, 0);
+    evening.setUTCHours(22, 15, 0, 0);
     await page.clock.setFixedTime(evening);
     await seed(page, true, 'refreshed', false, false, false, false, true);
     await page.goto('/');
+    expect(await page.evaluate(() => new Date().getHours())).toBe(22);
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
     const guardian = page.getByTestId('guardian');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
@@ -204,6 +224,9 @@ for (const viewport of [
 
   test(`P0 Guardian still offers optional Arabic care for today's entries on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
     await seed(page, true);
     await page.goto('/');
     await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
@@ -221,4 +244,159 @@ for (const viewport of [
     await expect(dismissButtons).toHaveCount(before - 1);
     await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-rose"]')).toHaveCount(0);
   });
+
+  for (const latestEnergy of ['neutral', 'sluggish', 'unreported'] as const) {
+    test(`P0 Guardian honors the latest reported meal energy (${latestEnergy}) on ${viewport.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      const afternoon = new Date();
+      afternoon.setUTCHours(15, 0, 0, 0);
+      await page.clock.setFixedTime(afternoon);
+      await page.addInitScript(({ profile, latestEnergy }) => {
+        const now = new Date();
+        const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+        localStorage.setItem('rhythm_language_v1', 'ar');
+        localStorage.setItem('cary_access_mode_v1', 'guest');
+        localStorage.setItem('cary_onboarding_v2_complete', 'true');
+        localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+        localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+        localStorage.setItem('nimmapp_checkins_v1', '[]');
+        localStorage.setItem('nimmapp_moments_v1', JSON.stringify([
+          {
+            id: 'older-sluggish-meal', title: 'حريرة', label: 'غداء', category: 'lunch',
+            date, time: '12:30', location: 'البيت', locationCategory: 'home',
+            imageUrl: '', tags: [], eatingPace: 'slow', distraction: 'mindful',
+            energyAfter: 'sluggish', createdAt: Date.now(),
+          },
+          {
+            id: 'later-energy-meal', title: 'كسكس', label: 'غداء', category: 'lunch',
+            date, time: '14:30', location: 'البيت', locationCategory: 'home',
+            imageUrl: '', tags: [], eatingPace: 'slow', distraction: 'mindful',
+            energyAfter: latestEnergy === 'unreported' ? undefined : latestEnergy, createdAt: Date.now() - 60_000,
+          },
+        ]));
+        sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+      }, { profile, latestEnergy });
+      await page.goto('/');
+      expect(await page.evaluate(() => ({ hour: new Date().getHours(), offset: new Date().getTimezoneOffset() })))
+        .toEqual({ hour: 15, offset: 0 });
+      const originalMeals = await page.evaluate(() => localStorage.getItem('nimmapp_moments_v1'));
+      await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+      const guardian = page.getByTestId('guardian');
+      await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+      await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+      if (latestEnergy === 'neutral') {
+        await expect(guardian.getByText('هنا متى احتجت')).toBeVisible();
+        await expect(guardian.getByText('مساحة صغيرة لاستعادة نشاطك')).toHaveCount(0);
+      } else {
+        await expect(guardian.getByText('مساحة صغيرة لاستعادة نشاطك')).toBeVisible();
+        await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ })).toHaveCount(1);
+      }
+      await expect(guardian).not.toContainText(/فشل|عقاب|إنذار|Ghrelin|28%|Überessen/);
+      await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+      expect(await page.evaluate(() => localStorage.getItem('nimmapp_moments_v1'))).toBe(originalMeals);
+    });
+  }
+
+  test(`P0 Guardian honors a later calm meal after an earlier low-energy check-in on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
+    await page.addInitScript(({ profile }) => {
+      const now = new Date();
+      const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      localStorage.setItem('rhythm_language_v1', 'ar');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+      localStorage.setItem('nimmapp_checkins_v1', JSON.stringify([{
+        id: 'earlier-low-checkin', date, time: '14:00', timeOfDay: 'midday',
+        wellbeing: { energyLevel: 1 }, createdAt: Date.now(),
+      }]));
+      localStorage.setItem('nimmapp_moments_v1', JSON.stringify([{
+        id: 'later-steady-couscous', title: 'كسكس', label: 'غداء', category: 'lunch',
+        date, time: '14:30', location: 'البيت', locationCategory: 'home',
+        imageUrl: '', tags: [], eatingPace: 'slow', distraction: 'mindful',
+        energyAfter: 'neutral', createdAt: Date.now() - 60_000,
+      }]));
+      localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    }, { profile });
+    await page.goto('/');
+    expect(await page.evaluate(() => new Date().getHours())).toBe(15);
+    const before = await page.evaluate(() => [
+      localStorage.getItem('nimmapp_moments_v1'),
+      localStorage.getItem('nimmapp_checkins_v1'),
+    ]);
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian.getByText('هنا متى احتجت')).toBeVisible();
+    await expect(guardian.getByText('مساحة صغيرة لاستعادة نشاطك')).toHaveCount(0);
+    await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ })).toHaveCount(0);
+    await expect(guardian).not.toContainText(/فشل|عقاب|إنذار|Ghrelin|28%|Überessen/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    expect(await page.evaluate(() => [
+      localStorage.getItem('nimmapp_moments_v1'),
+      localStorage.getItem('nimmapp_checkins_v1'),
+    ])).toEqual(before);
+  });
+
+
+  test(`P0 Guardian ignores future-clock observations on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const afternoon = new Date();
+    afternoon.setUTCHours(15, 0, 0, 0);
+    await page.clock.setFixedTime(afternoon);
+    await page.addInitScript(({ profile }) => {
+      const now = new Date();
+      const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      localStorage.setItem('rhythm_language_v1', 'ar');
+      localStorage.setItem('cary_access_mode_v1', 'guest');
+      localStorage.setItem('cary_onboarding_v2_complete', 'true');
+      localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
+      localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
+      localStorage.setItem('nimmapp_moments_v1', JSON.stringify([
+        { id: 'future-rushed', title: 'حريرة', label: 'عشاء', category: 'dinner',
+          date, time: '19:00', location: 'البيت', locationCategory: 'home',
+          imageUrl: '', tags: [], eatingPace: 'rushed', distraction: 'screen',
+          energyAfter: 'sluggish', createdAt: Date.now() },
+        { id: 'past-calm', title: 'كسكس', label: 'غداء', category: 'lunch',
+          date, time: '14:00', location: 'البيت', locationCategory: 'home',
+          imageUrl: '', tags: [], eatingPace: 'slow', distraction: 'mindful',
+          energyAfter: 'neutral', createdAt: Date.now() - 60_000 },
+      ]));
+      localStorage.setItem('nimmapp_checkins_v1', JSON.stringify([
+        { id: 'future-tired', date, time: '19:30', timeOfDay: 'evening',
+          sleep: { durationHours: 5, quality: 2, wakeFeeling: 'exhausted' },
+          wellbeing: { energyLevel: 1 }, createdAt: Date.now() },
+        { id: 'past-rested', date, time: '08:00', timeOfDay: 'morning',
+          sleep: { durationHours: 8, quality: 4, wakeFeeling: 'refreshed' },
+          wellbeing: { energyLevel: 4 }, createdAt: Date.now() - 60_000 },
+      ]));
+      localStorage.removeItem('moment.guardian.acknowledged-occurrences.v1');
+      sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
+    }, { profile });
+    await page.goto('/');
+    expect(await page.evaluate(() => new Date().getHours())).toBe(15);
+    const before = await page.evaluate(() => [
+      localStorage.getItem('nimmapp_moments_v1'),
+      localStorage.getItem('nimmapp_checkins_v1'),
+    ]);
+    await page.getByTestId(viewport.name === 'desktop' ? 'desktop-coach-nav' : 'mobile-coach-nav').click();
+    const guardian = page.getByTestId('guardian');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(guardian.getByText('هنا متى احتجت')).toBeVisible();
+    await expect(guardian.getByRole('button', { name: /إخفاء الفكرة/ })).toHaveCount(0);
+    await expect(guardian).not.toContainText(/فشل|عقاب|إنذار|Ghrelin|28%|Überessen/);
+    await expect(guardian.locator('.animate-pulse, .animate-ping, [class*="bg-red"], [class*="bg-rose"]')).toHaveCount(0);
+    expect(await page.evaluate(() => [
+      localStorage.getItem('nimmapp_moments_v1'),
+      localStorage.getItem('nimmapp_checkins_v1'),
+    ])).toEqual(before);
+  });
+
 }

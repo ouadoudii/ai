@@ -207,3 +207,31 @@ for (const [script, enteredWeight] of [
     await expect(page.getByTestId('voice-first-entry-overlay')).toHaveCount(0);
   });
 }
+
+for (const viewport of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'mobile', width: 390, height: 844 }]) {
+  test(`deferred form autofocus respects an already focused weight field on ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await seedNewUser(page, 'ar');
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await page.getByTestId('voice-first-entry-form').click();
+    const weight = page.getByTestId('onboarding-weight');
+    await weight.focus();
+    await expect(weight).toBeFocused();
+    // Allow the dialog's deferred initial-focus frame to settle after the
+    // user has already chosen the optional weight field.
+    await page.evaluate(() => new Promise<void>(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    }));
+    await expect(weight).toBeFocused();
+    await weight.pressSequentially('٨');
+    await expect(weight).toHaveValue('٨');
+    await weight.pressSequentially('٢');
+    await expect(weight).toHaveValue('٨٢');
+    await weight.pressSequentially('٫٥');
+    await expect(weight).toHaveValue('٨٢٫٥');
+    await expect.poll(() => weight.evaluate((input: HTMLInputElement) => input.selectionStart)).toBe(4);
+    await expect(weight).not.toHaveAttribute('aria-invalid', 'true');
+    expect(await page.evaluate(() => localStorage.getItem('rhythm_intro_profile_v1'))).toBeNull();
+  });
+}

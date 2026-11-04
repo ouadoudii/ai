@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { getOnboardingWeightSelection, reconcileOnboardingWeightInput, resolveOnboardingWeightSelectionBeforeInput, sanitizeOnboardingWeightInput, parseOnboardingWeight, PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from '../src/components/VoiceFirstEntryOverlay';
+import { getOnboardingWeightSelection, shouldAutofocusOnboardingDialog, reconcileOnboardingWeightInput, resolveOnboardingWeightSelectionBeforeInput, sanitizeOnboardingWeightInput, parseOnboardingWeight, PROFILE_INTRO_KEY, shouldShowVoiceFirstEntry, voiceFirstEntryCopy } from '../src/components/VoiceFirstEntryOverlay';
 
 describe('quick onboarding form guards', () => {
+  it('does not steal an already focused input when deferred dialog autofocus runs', () => {
+    const weight = {} as Element;
+    const outside = {} as Element;
+    const dialog = { contains: (node: Node | null) => node === weight };
+    expect(shouldAutofocusOnboardingDialog(dialog, weight)).toBe(false);
+    expect(shouldAutofocusOnboardingDialog(dialog, outside)).toBe(true);
+    expect(shouldAutofocusOnboardingDialog(dialog, null)).toBe(true);
+    expect(shouldAutofocusOnboardingDialog(null, weight)).toBe(true);
+  });
+
   it('restores the caret after the first digit without breaking deliberate edits', () => {
     // Some Chromium input events report 0 before the native caret advances.
     expect(getOnboardingWeightSelection('8', 0, '')).toBe(1);

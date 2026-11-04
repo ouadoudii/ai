@@ -44,23 +44,64 @@ const compareRecentCheckIns = (a: DailyCheckIn, b: DailyCheckIn): number => {
   // Reject impossible imported times (e.g. 99:99) so stale entries cannot outrank recovery.
   const clockTime = (entry: DailyCheckIn) =>
     typeof entry.time === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(entry.time) ? entry.time : '';
-  return createdAt(b) - createdAt(a) || clockTime(b).localeCompare(clockTime(a));
+  const aTime = clockTime(a);
+  const bTime = clockTime(b);
+  // A backfilled record may have a later import timestamp but an earlier
+  // observation clock. When both clocks are valid, honor the person's actual
+  // sequence so an older concern cannot hide a later recovery.
+  if (aTime && bTime) return bTime.localeCompare(aTime) || createdAt(b) - createdAt(a);
+  // An impossible imported clock must not outrank a valid observed time.
+  if (aTime && typeof b.time === 'string' && b.time.length > 0) return -1;
+  if (bTime && typeof a.time === 'string' && a.time.length > 0) return 1;
+  // Older records without a clock still retain their creation-time fallback.
+  return createdAt(b) - createdAt(a) || bTime.localeCompare(aTime);
 };
+
+// Imported sleep reports can contain corrupted fields. A wholly invalid later
+// record must not hide an earlier, usable observation or create a false prompt.
+const isValidSleepDuration = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 24;
+const isValidSleepQuality = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 5;
+const isValidWakeFeeling = (value: unknown): value is 'refreshed' | 'normal' | 'tired' | 'exhausted' =>
+  value === 'refreshed' || value === 'normal' || value === 'tired' || value === 'exhausted';
 
 export function evaluateNutritionAlarms(
   moments: FoodMoment[],
   checkIns: DailyCheckIn[],
-  archetype: NutritionArchetype = 'intuitive_mindful'
+  archetype: NutritionArchetype = 'intuitive_mindful',
+  evaluationTime: Date = new Date(),
+  allowSyntheticDemo = false,
 ): GuardianStatus {
   const alarms: NutritionAlarm[] = [];
-  const now = new Date();
+  // A demo may use a representative afternoon clock; real journal evaluation
+  // continues to use the actual local time by default.
+  const now = evaluationTime;
   const today = getLocalDateKey(now);
   // Only today's entries can prompt "today" suggestions. Historical and future
   // journal records remain untouched and discoverable in their own views.
   // The explicit simulator uses a legacy "Heute" marker; never interpret
   // that marker as a real user's date.
-  const isCurrent = (entry: { id: string; date: string }) =>
-    entry.date === today || (entry.id.startsWith('sim-') && entry.date === 'Heute');
+  const currentLocalClock = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const isCurrent = (entry: { id: string; date: string; time?: unknown; createdAt?: unknown }) => {
+    // A personal import may also have an ID starting with sim-. Only the
+    // explicitly activated demo may bypass the observed local clock or use
+    // the legacy "Heute" marker. Normal journal entries never get this pass.
+    if (allowSyntheticDemo && entry.id.startsWith('sim-')) return entry.date === today || entry.date === 'Heute';
+    if (entry.date !== today) return false;
+    // A missing clock is an unknown-time legacy observation. An explicitly
+    // malformed clock is not evidence that a meal or check-in happened today:
+    // do not create personal guidance from impossible imported times.
+    if (entry.time === undefined || entry.time === null || entry.time === '') {
+      // A clockless legacy record is usable only once it could have happened.
+      // A future-dated import/queued record is not evidence of an observation
+      // yet, even when its date label says today. Preserve unknown timestamps.
+      return typeof entry.createdAt !== 'number' || !Number.isFinite(entry.createdAt)
+        || entry.createdAt <= now.getTime();
+    }
+    if (typeof entry.time !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(entry.time)) return false;
+    return entry.time <= currentLocalClock;
+  };
   const todayCheckIns = checkIns.filter(isCurrent);
   // A later midday/evening check-in may omit sleep; use the most recent
   // actual sleep entry rather than treating an omitted field as no sleep data.
@@ -68,7 +109,11 @@ export function evaluateNutritionAlarms(
   // report, regardless of persisted array order; an unrelated midday check-in
   // without sleep must not erase the last actual sleep observation.
   const latestSleepCheckIn = todayCheckIns
-    .filter(checkIn => checkIn.sleep)
+    .filter(checkIn => {
+      const sleep = checkIn.sleep;
+      return sleep && (isValidSleepDuration(sleep.durationHours)
+        || isValidSleepQuality(sleep.quality) || isValidWakeFeeling(sleep.wakeFeeling));
+    })
     .sort(compareRecentCheckIns)[0];
   // Imported and edited meal histories are not guaranteed newest-first.
   // Use the meal's actual local time when both entries have one, rather than
@@ -93,10 +138,15 @@ export function evaluateNutritionAlarms(
 
   if (latestSleepCheckIn?.sleep) {
     const { durationHours, wakeFeeling, quality } = latestSleepCheckIn.sleep;
-    if (durationHours < 6 || wakeFeeling === 'exhausted' || quality <= 2) {
-      // Reflect the person's actual check-in, not an inferred feeling of fatigue.
-      // Sleep fields are optional; never display "undefined hours" for a
-      // quality-only or wake-feeling-only entry.
+    // Imported/legacy sleep fields may contain impossible values. Do not
+    // turn corrupted data into a health prompt or repeat it back as a fact.
+    const sleepHours = isValidSleepDuration(durationHours) ? durationHours : null;
+    const sleepQuality = isValidSleepQuality(quality) ? quality : null;
+    const validWakeFeeling = isValidWakeFeeling(wakeFeeling) ? wakeFeeling : null;
+    if ((sleepHours !== null && sleepHours < 6)
+      || validWakeFeeling === 'exhausted'
+      || (sleepQuality !== null && sleepQuality <= 2)) {
+      // Only reflect observations that are plausible and explicitly recorded.
       const wakeDescriptions = {
         refreshed: 'منتعش',
         normal: 'كالمعتاد',
@@ -104,11 +154,9 @@ export function evaluateNutritionAlarms(
         exhausted: 'مرهق',
       } as const;
       const sleepSummary = [
-        typeof durationHours === 'number' && Number.isFinite(durationHours)
-          ? `سجّلت ${durationHours} ساعات نوم` : null,
-        wakeFeeling ? `شعورك عند الاستيقاظ: ${wakeDescriptions[wakeFeeling]}` : null,
-        typeof quality === 'number' && Number.isFinite(quality)
-          ? `تقييم جودة النوم: ${quality} من 5` : null,
+        sleepHours !== null ? `سجّلت ${sleepHours} ساعات نوم` : null,
+        validWakeFeeling ? `شعورك عند الاستيقاظ: ${wakeDescriptions[validWakeFeeling]}` : null,
+        sleepQuality !== null ? `تقييم جودة النوم: ${sleepQuality} من 5` : null,
       ].filter(Boolean).join('، ');
       let archetypeAdvice = '';
       if (archetype === 'protein_performer') {
@@ -145,12 +193,16 @@ export function evaluateNutritionAlarms(
       archetypeAdvice = 'لا توجد طريقة واحدة صحيحة لتناول الطعام. يمكنك تجربة لحظة هدوء وملاحظة شعورك بالشبع دون حكم.';
     }
 
+    // Legacy/photo imports may omit the meal title. Keep guidance readable
+    // without inventing a dish; preserve a real Arabic/Arabizi title as entered.
+    const mealName = typeof latestMoment.title === 'string' && latestMoment.title.trim()
+      ? `«${latestMoment.title.trim()}»` : 'وجبتك';
     alarms.push({
       id: `alarm-mindless-${latestMoment.id}`,
       triggerKey: 'distracted_meal',
       severity: 'medium',
       title: 'لحظة هدوء بعد وجبتك',
-      subtitle: `تناولت «${latestMoment.title}» بينما كان انتباهك مشغولًا`,
+      subtitle: `تناولت ${mealName} بينما كان انتباهك مشغولًا`,
       archetype,
       reason: 'من الطبيعي أن نأكل أحيانًا ونحن منشغلون. إن رغبت، لاحظ كيف تشعر الآن دون لوم.',
       recommendation: archetypeAdvice,
@@ -163,8 +215,12 @@ export function evaluateNutritionAlarms(
   // The latest explicit energy check-in is the person's current report. An
   // earlier low-energy entry must not keep prompting after they feel better.
   // Sort a copy because imported/persisted history is not guaranteed newest-first.
+  // Legacy imports may contain out-of-range energy scores. Treat those as
+  // unknown rather than inventing low energy or masking a valid earlier report.
+  const isValidEnergyLevel = (value: unknown): value is number =>
+    typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 5;
   const latestEnergyCheckIn = todayCheckIns
-    .filter(c => typeof c.wellbeing?.energyLevel === 'number' && Number.isFinite(c.wellbeing.energyLevel))
+    .filter(c => isValidEnergyLevel(c.wellbeing?.energyLevel))
     .sort(compareRecentCheckIns)[0];
   const lowEnergyCheckIn = latestEnergyCheckIn && latestEnergyCheckIn.wellbeing.energyLevel! <= 2
     ? latestEnergyCheckIn : undefined;
@@ -179,12 +235,45 @@ export function evaluateNutritionAlarms(
     if (checkInTime && momentTime) {
       return checkInTime > momentTime;
     }
+    // A corrupted clock on the supposed recovery check-in is not proof that
+    // the person felt better after this meal. Missing legacy clocks may still
+    // use creation timestamps, but impossible recorded times must not silence
+    // a genuine post-meal low-energy report.
+    if (latestEnergyCheckIn.time != null && latestEnergyCheckIn.time !== '' && !checkInTime) return false;
     return Number.isFinite(latestEnergyCheckIn.createdAt) && Number.isFinite(moment.createdAt)
       && latestEnergyCheckIn.createdAt >= moment.createdAt;
   };
-  const lowEnergyMoment = recentMoments.find(m => m.energyAfter === 'sluggish' && !recoveredAfterMoment(m));
+  // Only the most recent explicitly reported post-meal energy reflects how
+  // the person feels now. An older sluggish meal must not prompt again after
+  // a later meal where they reported feeling steady, even if imports are unsorted.
+  // Missing or malformed energy fields are not invented as a recovery report.
+  const latestReportedMealEnergy = recentMoments.find(m =>
+    m.energyAfter === 'energized' || m.energyAfter === 'neutral'
+    || m.energyAfter === 'sluggish' || m.energyAfter === 'heavy',
+  );
+  const lowEnergyMoment = latestReportedMealEnergy?.energyAfter === 'sluggish'
+    && !recoveredAfterMoment(latestReportedMealEnergy)
+    ? latestReportedMealEnergy : undefined;
+  // A later, explicitly steady post-meal report supersedes an earlier low-energy
+  // check-in. Do not keep nudging someone after they say they feel better.
+  // Compare observed local clocks before import timestamps; an invalid clock
+  // cannot be used as evidence of recovery.
+  const mealReportsRecoveryAfterCheckIn = (moment: FoodMoment, checkIn: DailyCheckIn): boolean => {
+    const mealTime = validMealClock(moment.time);
+    const checkInTime = validMealClock(checkIn.time);
+    if (mealTime && checkInTime) return mealTime > checkInTime;
+    if ((moment.time != null && moment.time !== '' && !mealTime)
+      || (checkIn.time != null && checkIn.time !== '' && !checkInTime)) return false;
+    return typeof moment.createdAt === 'number' && Number.isFinite(moment.createdAt)
+      && typeof checkIn.createdAt === 'number' && Number.isFinite(checkIn.createdAt)
+      && moment.createdAt > checkIn.createdAt;
+  };
+  const currentLowEnergyCheckIn = lowEnergyCheckIn && latestReportedMealEnergy
+    && (latestReportedMealEnergy.energyAfter === 'neutral' || latestReportedMealEnergy.energyAfter === 'energized')
+    && mealReportsRecoveryAfterCheckIn(latestReportedMealEnergy, lowEnergyCheckIn)
+    ? undefined : lowEnergyCheckIn;
 
-  if (isAfternoon && (lowEnergyCheckIn || lowEnergyMoment)) {
+  if (isAfternoon && (currentLowEnergyCheckIn || lowEnergyMoment)) {
     let archetypeAdvice = '';
     if (archetype === 'protein_performer') {
       archetypeAdvice = 'إذا كنت جائعًا، اختر وجبة خفيفة تستمتع بها وتمنحك شعورًا بالشبع.';
@@ -193,13 +282,17 @@ export function evaluateNutritionAlarms(
     } else {
       archetypeAdvice = 'جرّب شرب الماء أو أخذ استراحة قصيرة، واستمع لما يحتاجه جسمك.';
     }
-    const sourceOccurrenceId = lowEnergyCheckIn ? `checkin-${lowEnergyCheckIn.id}` : `moment-${lowEnergyMoment!.id}`;
+    const sourceOccurrenceId = currentLowEnergyCheckIn ? `checkin-${currentLowEnergyCheckIn.id}` : `moment-${lowEnergyMoment!.id}`;
     alarms.push({
       id: `alarm-afternoon-crash-${sourceOccurrenceId}`,
       triggerKey: 'afternoon_crash',
       severity: 'high',
       title: 'مساحة صغيرة لاستعادة نشاطك',
-      subtitle: 'سجّلت مستوى طاقة منخفضًا اليوم',
+      // Describe the observation actually supplied: a post-meal feeling is not
+      // a numeric low-energy check-in. Keep suggestions factual and gentle.
+      subtitle: currentLowEnergyCheckIn
+        ? 'سجّلت مستوى طاقة منخفضًا اليوم'
+        : 'ذكرت أنك شعرت بقلة النشاط بعد وجبتك',
       archetype,
       reason: 'قد تتغير طاقتنا خلال اليوم لأسباب كثيرة. لا يعني ذلك أنك فعلت شيئًا خاطئًا.',
       recommendation: archetypeAdvice,

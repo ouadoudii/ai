@@ -1,9 +1,9 @@
-const STORAGE_KEY = 'moment.guardian.acknowledged-occurrences.v1';
+export const GUARDIAN_ACKNOWLEDGEMENTS_STORAGE_KEY = 'moment.guardian.acknowledged-occurrences.v1';
 const MAX_ACKNOWLEDGEMENTS = 100;
 
 export const readGuardianAcknowledgements = (storage: Pick<Storage, 'getItem'>): string[] => {
   try {
-    const raw = storage.getItem(STORAGE_KEY);
+    const raw = storage.getItem(GUARDIAN_ACKNOWLEDGEMENTS_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -26,5 +26,11 @@ export const writeGuardianAcknowledgements = (
   storage: Pick<Storage, 'setItem'>,
   acknowledgements: string[],
 ): void => {
-  storage.setItem(STORAGE_KEY, JSON.stringify(acknowledgements.slice(-MAX_ACKNOWLEDGEMENTS)));
+  storage.setItem(GUARDIAN_ACKNOWLEDGEMENTS_STORAGE_KEY, JSON.stringify(acknowledgements.slice(-MAX_ACKNOWLEDGEMENTS)));
 };
+
+/** Preserve acknowledgements written by another tab before this tab dismisses a suggestion. */
+export const mergeGuardianAcknowledgements = (
+  inMemory: readonly string[],
+  inStorage: readonly string[],
+): string[] => [...new Set([...inMemory, ...inStorage])].slice(-MAX_ACKNOWLEDGEMENTS);

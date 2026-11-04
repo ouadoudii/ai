@@ -4,31 +4,85 @@ import { GuardianStatus } from '../utils/interventionEngine';
 import { NutritionArchetype } from '../types';
 import { useLanguage } from '../i18n';
 import { getGuardianCopy } from '../utils/guardianLocalization';
-import { acknowledgeGuardianOccurrence, readGuardianAcknowledgements, writeGuardianAcknowledgements } from '../utils/guardianAcknowledgements';
+import { GUARDIAN_ACKNOWLEDGEMENTS_STORAGE_KEY, acknowledgeGuardianOccurrence, mergeGuardianAcknowledgements, readGuardianAcknowledgements, writeGuardianAcknowledgements } from '../utils/guardianAcknowledgements';
+import { selectGuardianAcknowledgements } from '../utils/guardianDemoIsolation';
 
 interface SmartInterventionGuardianProps {
   guardianStatus: GuardianStatus;
   userArchetype: NutritionArchetype;
   onSimulateAlarm?: (scenario: 'sleep' | 'rushed_meal' | 'afternoon_crash' | 'clear') => void;
   isSimulated?: boolean;
+  activeDemoScenario?: 'sleep' | 'rushed_meal' | 'afternoon_crash' | null;
 }
 
-export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps> = ({ guardianStatus, onSimulateAlarm, isSimulated = false }) => {
+export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps> = ({ guardianStatus, onSimulateAlarm, isSimulated = false, activeDemoScenario = null }) => {
   const { language } = useLanguage();
   const copy = getGuardianCopy(language);
-  const [resolvedAlarmIds, setResolvedAlarmIds] = React.useState<string[]>(() => typeof window === 'undefined' ? [] : readGuardianAcknowledgements(window.localStorage));
-  const [showSimulator, setShowSimulator] = React.useState(false);
-  const activeUnresolvedAlarms = guardianStatus.activeAlarms.filter((a) => !resolvedAlarmIds.includes(a.id));
+  const [resolvedAlarmIds, setResolvedAlarmIds] = React.useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    // Some privacy modes deny access to the storage property itself.
+    // Keep optional guidance available without reading or changing private data.
+    try { return readGuardianAcknowledgements(window.localStorage); }
+    catch { return []; }
+  });
+  // Demo dismissals are ephemeral and must never read or write personal acknowledgements.
+  const [demoResolvedAlarmIds, setDemoResolvedAlarmIds] = React.useState<string[]>([]);
+  // When a selected demo is restored on mount, expose its selected state immediately.
+  // Otherwise the collapsed controls hide which scenario is currently active.
+  const [showSimulator, setShowSimulator] = React.useState(activeDemoScenario !== null);
+  // Another tab can dismiss a suggestion or clear its acknowledgements.
+  // Keep this tab's calm guidance consistent without reloading or touching the journal.
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const syncAcknowledgements = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== GUARDIAN_ACKNOWLEDGEMENTS_STORAGE_KEY) return;
+      try {
+        if (event.storageArea !== window.localStorage) return;
+        setResolvedAlarmIds(readGuardianAcknowledgements(window.localStorage));
+      } catch {
+        // Browsers that deny storage still allow in-memory dismissals.
+      }
+    };
+    window.addEventListener('storage', syncAcknowledgements);
+    return () => window.removeEventListener('storage', syncAcknowledgements);
+  }, []);
+  const statusRef = React.useRef<HTMLDivElement>(null);
+  const demoToggleRef = React.useRef<HTMLButtonElement>(null);
+  const activeAcknowledgements = selectGuardianAcknowledgements(isSimulated, resolvedAlarmIds, demoResolvedAlarmIds);
+  const activeUnresolvedAlarms = guardianStatus.activeAlarms.filter((a) => !activeAcknowledgements.includes(a.id));
 
-  const handleResolve = (alarmId: string) => {
+  const handleResolve = (alarmId: string, fromKeyboard = false) => {
+    if (isSimulated) {
+      setDemoResolvedAlarmIds((prev) => acknowledgeGuardianOccurrence(prev, alarmId));
+      if (fromKeyboard) statusRef.current?.focus();
+      return;
+    }
     setResolvedAlarmIds((prev) => {
-      const next = acknowledgeGuardianOccurrence(prev, alarmId);
+      let next = acknowledgeGuardianOccurrence(prev, alarmId);
       if (typeof window !== 'undefined') {
-        try { writeGuardianAcknowledgements(window.localStorage, next); }
-        catch (error) { console.error('Failed to persist guardian acknowledgement', error); }
+        try {
+          // Read again at dismissal time: another tab may have written since mount.
+          // Merge before persisting so concurrent dismissals are not lost.
+          const stored = readGuardianAcknowledgements(window.localStorage);
+          next = acknowledgeGuardianOccurrence(mergeGuardianAcknowledgements(prev, stored), alarmId);
+          writeGuardianAcknowledgements(window.localStorage, next);
+        } catch {
+          // Keep the local dismissal usable even when private storage is denied.
+        }
       }
       return next;
     });
+    // The dismissed button disappears. Keep keyboard and screen-reader users
+    // oriented on the calm, politely announced Guardian status instead of body.
+    if (fromKeyboard) statusRef.current?.focus();
+  };
+
+  const handleDemoScenario = (scenario: 'sleep' | 'rushed_meal' | 'afternoon_crash' | 'clear', fromKeyboard = false) => {
+    setDemoResolvedAlarmIds([]);
+    onSimulateAlarm?.(scenario);
+    // The collapsed demo exit disappears after Reset. Return keyboard focus to
+    // its persistent toggle; never steal focus from a touch/pointer interaction.
+    if (scenario === 'clear' && fromKeyboard) demoToggleRef.current?.focus();
   };
 
   return (
@@ -47,30 +101,40 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div role="status" aria-live="polite" className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 border ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-50 text-amber-900 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>
+          <div ref={statusRef} tabIndex={-1} role="status" aria-live="polite" className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48] ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-50 text-amber-900 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>
             <span className={`w-2 h-2 rounded-full ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
             <span>{activeUnresolvedAlarms.length > 0 ? copy.activeAlarm(activeUnresolvedAlarms.length) : copy.allClear}</span>
           </div>
-          {onSimulateAlarm && <button onClick={() => setShowSimulator(!showSimulator)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors flex items-center gap-1"><RefreshCw className="w-3 h-3" /><span>{copy.testAlarm}</span></button>}
+          {onSimulateAlarm && <button type="button" ref={demoToggleRef} aria-expanded={showSimulator} aria-controls="guardian-demo-scenarios" onClick={() => setShowSimulator(!showSimulator)} className="min-h-11 text-xs font-semibold px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors flex items-center gap-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"><RefreshCw className="w-3 h-3" /><span>{copy.testAlarm}</span></button>}
         </div>
       </div>
 
       {showSimulator && onSimulateAlarm && (
-        <div className="mt-4 p-3.5 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-2 animate-in fade-in duration-200">
+        <div id="guardian-demo-scenarios" role="group" aria-label={copy.simulator} className="mt-4 p-3.5 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-2 animate-in fade-in duration-200">
           <div className="flex items-center justify-between"><span className="text-[11px] font-bold text-stone-700 uppercase tracking-wider">{copy.simulator}</span><span className="text-[10px] text-stone-400">{copy.reacts}</span></div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <button onClick={() => onSimulateAlarm('sleep')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Moon className="w-3 h-3 text-indigo-500" /> {copy.sleep}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.sleepDetail}</span></button>
-            <button onClick={() => onSimulateAlarm('rushed_meal')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Utensils className="w-3 h-3 text-amber-600" /> {copy.stressMeal}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.stressDetail}</span></button>
-            <button onClick={() => onSimulateAlarm('afternoon_crash')} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs"><span className="font-bold text-stone-800 flex items-center gap-1"><Coffee className="w-3 h-3 text-amber-500" /> {copy.crash}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.crashDetail}</span></button>
-            <button onClick={() => { onSimulateAlarm('clear'); setResolvedAlarmIds([]); }} className="p-2 text-left rtl:text-right rounded-xl bg-white border border-emerald-200 hover:bg-emerald-50 text-xs"><span className="font-bold text-emerald-800 flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> {copy.reset}</span><span className="text-[10px] text-emerald-600 block mt-0.5">{copy.noWarnings}</span></button>
+            <button type="button" onClick={() => handleDemoScenario('sleep')} aria-pressed={activeDemoScenario === 'sleep'} className="aria-pressed:border-[#B68A52] aria-pressed:bg-[#FFF8EB] min-h-11 p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"><span className="font-bold text-stone-800 flex items-center gap-1"><Moon className="w-3 h-3 text-indigo-500" /> {copy.sleep}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.sleepDetail}</span></button>
+            <button type="button" onClick={() => handleDemoScenario('rushed_meal')} aria-pressed={activeDemoScenario === 'rushed_meal'} className="aria-pressed:border-[#B68A52] aria-pressed:bg-[#FFF8EB] min-h-11 p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"><span className="font-bold text-stone-800 flex items-center gap-1"><Utensils className="w-3 h-3 text-amber-600" /> {copy.stressMeal}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.stressDetail}</span></button>
+            <button type="button" onClick={() => handleDemoScenario('afternoon_crash')} aria-pressed={activeDemoScenario === 'afternoon_crash'} className="aria-pressed:border-[#B68A52] aria-pressed:bg-[#FFF8EB] min-h-11 p-2 text-left rtl:text-right rounded-xl bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"><span className="font-bold text-stone-800 flex items-center gap-1"><Coffee className="w-3 h-3 text-amber-500" /> {copy.crash}</span><span className="text-[10px] text-stone-500 block mt-0.5">{copy.crashDetail}</span></button>
+            <button type="button" onClick={() => handleDemoScenario('clear')} className="min-h-11 p-2 text-left rtl:text-right rounded-xl bg-white border border-emerald-200 hover:bg-emerald-50 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"><span className="font-bold text-emerald-800 flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> {copy.reset}</span><span className="text-[10px] text-emerald-600 block mt-0.5">{copy.noWarnings}</span></button>
           </div>
         </div>
       )}
 
       {isSimulated && (
-        <p role="note" aria-live="polite" data-testid="guardian-demo-notice" className="mt-4 rounded-2xl border border-[#E8D6B5] bg-[#FFF8EB] px-4 py-3 text-xs leading-relaxed text-[#5B4632]">
-          وضع تجريبي — هذه أمثلة وليست تسجيلاتك. اختر «إعادة ضبط» للعودة إلى يومك.
-        </p>
+        <div role="note" aria-live="polite" data-testid="guardian-demo-notice" className="mt-4 rounded-2xl border border-[#E8D6B5] bg-[#FFF8EB] px-4 py-3 text-xs leading-relaxed text-[#5B4632]">
+          <span>وضع تجريبي — هذه أمثلة وليست تسجيلاتك. يمكنك العودة إلى يومك في أي وقت.</span>
+          {!showSimulator && (
+            <button
+              type="button"
+              data-testid="guardian-demo-exit"
+              onClick={(event) => handleDemoScenario('clear', event.detail === 0)}
+              className="mt-3 block min-h-11 rounded-xl border border-[#D4B78A] bg-white px-4 py-2 text-sm font-semibold text-[#4B3B2B] hover:bg-[#F7EBD8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"
+            >
+              العودة إلى يومك
+            </button>
+          )}
+        </div>
       )}
 
       <div className="mt-4">
@@ -85,7 +149,7 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
               <div key={alarm.id} className="rounded-2xl p-4 sm:p-5 border border-amber-200 bg-amber-50/60 shadow-xs transition-all">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                   <div className="space-y-1 max-w-xl"><div className="flex items-center gap-2"><span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">{copy.recommendation}</span><span className="text-[11px] text-stone-500 font-medium flex items-center gap-1"><Clock className="w-3 h-3" />{alarm.timestamp}</span></div><h3 className="text-sm sm:text-base font-bold text-stone-900">{alarm.title}</h3><p className="text-xs text-stone-600 font-medium">{alarm.subtitle}</p></div>
-                  <button type="button" aria-label={`${copy.done}: ${alarm.title}`} onClick={() => handleResolve(alarm.id)} className="px-4 py-2 bg-white hover:bg-stone-50 active:scale-95 text-stone-800 text-xs font-bold rounded-xl border border-stone-200 shadow-xs flex items-center gap-1.5 transition-all shrink-0 self-end md:self-center"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /><span>{copy.done}</span></button>
+                  <button type="button" aria-label={`${copy.done}: ${alarm.title}`} onClick={(event) => handleResolve(alarm.id, event.detail === 0)} className="min-h-11 px-4 py-2 bg-white hover:bg-stone-50 active:scale-95 text-stone-800 text-xs font-bold rounded-xl border border-stone-200 shadow-xs flex items-center gap-1.5 transition-all shrink-0 self-end md:self-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#526B48]"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /><span>{copy.done}</span></button>
                 </div>
                 <div className="mt-3.5 pt-3 border-t border-stone-200/60 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <div className="bg-white/80 rounded-xl p-3 border border-stone-200/60"><span className="font-bold text-stone-700 flex items-center gap-1 mb-1"><Zap className="w-3.5 h-3.5 text-amber-600" /> {copy.why}</span><p className="text-stone-600 leading-relaxed">{alarm.reason}</p></div>
