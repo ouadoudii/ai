@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 const workflow = readFileSync('.github/workflows/build-check.yml', 'utf8');
 
 describe('post-merge main CI trigger', () => {
-  it('runs the full release gate after a pull request is merged', () => {
-    expect(workflow).toContain('types: [opened, synchronize, reopened, closed]');
+  it('runs the full release gate after a pull request is merged or retargeted', () => {
+    expect(workflow).toContain('types: [opened, synchronize, reopened, edited, closed]');
     expect(
       workflow.match(/github\.event\.pull_request\.merged == true/g),
     ).toHaveLength(4);
