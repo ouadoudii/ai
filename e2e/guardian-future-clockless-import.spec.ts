@@ -12,7 +12,7 @@ for (const viewport of [
   { name: 'desktop', width: 1280, height: 900 },
   { name: 'mobile', width: 390, height: 844 },
 ]) {
-  test(`P0 Guardian ignores future clockless imports but keeps observed meals on ${viewport.name}`, async ({ page }) => {
+  test(`P0 Guardian ignores future-dated imports but keeps observed meals on ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     // Install the browser clock before seeding: Date and the Guardian evaluation must agree.
     await page.clock.setFixedTime(new Date('2026-11-02T15:00:00Z'));
@@ -31,8 +31,8 @@ for (const viewport of [
       localStorage.setItem('rhythm_voice_entry_seen_v1', 'true');
       localStorage.setItem('rhythm_intro_profile_v1', JSON.stringify(profile));
       localStorage.setItem('nimmapp_moments_v1', JSON.stringify([
-        { ...base, id: 'future-meal', title: 'وجبة مستقبلية', createdAt: observedAt + 300_000 },
-        { ...base, id: 'past-harira', title: 'حريرة 7rira', createdAt: observedAt - 60_000 },
+        { ...base, id: 'future-meal', title: 'وجبة مستقبلية', time: '15:05', createdAt: observedAt + 300_000 },
+        { ...base, id: 'past-harira', title: 'حريرة 7rira', time: '14:59', createdAt: observedAt - 60_000 },
       ]));
       localStorage.setItem('nimmapp_checkins_v1', JSON.stringify([
         { id: 'future-sleep', date, timeOfDay: 'midday',
