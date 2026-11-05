@@ -52,10 +52,10 @@ export function calculateCoachingMetrics(moments: FoodMoment[], dateKey: string 
       screenFreeRatio: 0,
       screenFreeObservations: 0,
       slowEatingRatio: 0,
-      dailyFocusTitle: 'Erste Mahlzeit achtsam erfassen',
-      dailyFocusTip: 'Nimm dir vor dem ersten Bissen 3 bewusste Atemzüge und beurteile deinen Hunger auf einer Skala von 1 bis 5.',
+      dailyFocusTitle: 'مساحة لتسجيل وجبتك',
+      dailyFocusTip: 'يمكنك تسجيل وجبتك عندما يناسبك، وإضافة شعورك بالجوع إن رغبت.',
       streaksDays: 0,
-      coachSummary: 'Erfasse deine nächste Mahlzeit, um dein persönliches Coaching-Feedback zu aktivieren.',
+      coachSummary: 'لا توجد وجبات مسجلة اليوم بعد. يمكنك البدء وقتما تشاء.',
     };
   }
 
@@ -115,8 +115,8 @@ export function calculateCoachingMetrics(moments: FoodMoment[], dateKey: string 
     screenFreeRatio,
     screenFreeObservations,
     slowEatingRatio,
-    dailyFocusTitle: 'Heutiger Coaching-Fokus: Das 20-Minuten-Signal',
-    dailyFocusTip: 'Dein Magen braucht etwa 20 Minuten, um dem Gehirn zu signalisieren: Ich bin satt! Lege nach der halben Portion die Gabel für 60 Sekunden kurz ab.',
+    dailyFocusTitle: 'مساحة للتأمل في يومك',
+    dailyFocusTip: 'إذا أحببت، خذ وقتك مع وجبتك ولاحظ شعورك بالراحة دون قواعد صارمة.',
     streaksDays: 0, // Do not invent a multi-day streak from today's observations.
     coachSummary,
   };
@@ -125,44 +125,44 @@ export function calculateCoachingMetrics(moments: FoodMoment[], dateKey: string 
 export const INITIAL_COACHING_GOALS: CoachingGoal[] = [
   {
     id: 'goal-1',
-    title: 'Hunger-Check vor jeder Mahlzeit',
-    description: 'Bewerte deinen Hunger auf der 1-5 Skala, bevor der erste Bissen genommen wird.',
+    title: 'ملاحظة الجوع قبل الوجبة',
+    description: 'يمكنك تسجيل شعورك بالجوع قبل الوجبة إن رغبت.',
     current: 0,
     target: 3,
-    unit: 'Mahlzeiten',
+    unit: 'وجبات',
     category: 'mindful',
     completed: false,
     icon: 'Eye',
   },
   {
     id: 'goal-2',
-    title: 'Screen-Free Dining',
-    description: 'Mindestens 2 Hauptmahlzeiten ohne Smartphone, TV oder Laptop genießen.',
+    title: 'لحظة هادئة مع الطعام',
+    description: 'جرّب تناول وجبة بهدوء بعيدًا عن الشاشات عندما يناسبك.',
     current: 0,
     target: 2,
-    unit: 'Mahlzeiten',
+    unit: 'وجبات',
     category: 'habits',
     completed: false,
     icon: 'SmartphoneOff',
   },
   {
     id: 'goal-3',
-    title: 'Sättigungs-Stopp bei Stufe 4',
-    description: 'Aufhören, wenn man angenehm satt ist (nicht überfüllt bei Stufe 5).',
+    title: 'الانتباه إلى الشبع',
+    description: 'يمكنك ملاحظة إحساسك بالشبع دون تقييم أو ضغط.',
     current: 0,
     target: 3,
-    unit: 'Mahlzeiten',
+    unit: 'وجبات',
     category: 'mindful',
     completed: false,
     icon: 'CheckCircle2',
   },
   {
     id: 'goal-4',
-    title: 'Protein-Power in Hauptgerichten',
-    description: 'Mindestens 20g Protein pro Hauptmahlzeit für langanhaltende Sättigung.',
+    title: 'ملاحظة مصادر البروتين',
+    description: 'سجّل مصادر البروتين في وجباتك إن أحببت.',
     current: 0,
     target: 3,
-    unit: 'Portionen',
+    unit: 'حصص',
     category: 'nutrition',
     completed: false,
     icon: 'Flame',
@@ -195,33 +195,21 @@ export function deriveDailyCoachingGoals(
 }
 
 export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]): string {
-  const q = userQuestion.toLowerCase();
-
-  if (q.includes('alarm') || q.includes('eingreif') || q.includes('warn') || q.includes('notfall') || q.includes('rote flagge') || q.includes('frühwarn')) {
-    return `Dein Coach achtet kontinuierlich auf 4 physiologische Schlüsselmomente und meldet sich sanft, wenn dein Körper Unterstützung braucht:\n1. ⚠️ Schlafmangel (<6h): Schützt dich vor der hormonellen Ghrelin-Heißhungerfalle.\n2. ⚠️ Gehetztes Essen am Bildschirm: Verhindert unbemerktes Überessen & Völlegefühl.\n3. ⚠️ Kritisches Nachmittagstief: Schneller, sanfter Impuls gegen den Blutzucker-Absturz.\n4. ⚠️ Spätes, schweres Abendessen: Sichert deine erholsame Tiefschlaf-Phase.\nSolange alles im Gleichgewicht ist, bleibt Moment dezent im Hintergrund.`;
+  const q = userQuestion.trim().toLocaleLowerCase();
+  const today = getLocalDateKey();
+  const todayCount = moments.filter((moment) => moment.date === today).length;
+  if (/اليوم|نهار|تحليل|ملخص|تقرير|heute|analyse|bilanz/.test(q)) {
+    return todayCount === 0
+      ? 'لا توجد وجبات مسجلة اليوم بعد. يمكنك إضافة وجبة عندما يناسبك، دون أي ضغط.'
+      : `سجّلت اليوم ${todayCount} ${todayCount === 1 ? 'وجبة' : 'وجبات'}. يمكنك مراجعة ملاحظاتك وإضافة ما شعرت به إن أحببت.`;
   }
-
-  if (q.includes('tag') || q.includes('heute') || q.includes('analyse') || q.includes('bilanz')) {
-    const todayMoments = moments.slice(0, 3);
-    const count = todayMoments.length;
-    return `Hier ist deine fürsorgliche Tagesbilanz von Moment: Du hast heute ${count} kulinarische Momente erfasst. Deine Mahlzeiten waren nahrhaft und boten eine wunderbare Mischung aus Genuss und Wohlbefinden. Dein Achtsamkeits-Score liegt bei schönen 88%! Tipp für den Abend: Mach es dir gemütlich, halte das Abendessen leicht und nimm dir mindestens 15 Minuten echte Ruhe.`;
-  }
-
-  if (q.includes('heißhunger') || q.includes('süß') || q.includes('nachmittag')) {
-    return `Dein Coach hilft dir durch das Nachmittagstief mit drei sanften Schritten:\n1. 💧 Trinke zuerst ein großes Glas warmes Wasser oder Kräutertee – der Körper verwechselt oft Durst mit Verlangen.\n2. 🥜 Eine kleine Handvoll Mandeln oder Nüsse stabilisiert deinen Blutzucker sanft.\n3. 🪟 Einmal kurz das Fenster öffnen und 3 tiefe Atemzüge nehmen stoppt das Verlangen im Gehirn.`;
-  }
-
-  if (q.includes('abendessen') || q.includes('dinner') || q.includes('schlaf')) {
-    return `Für einen tiefen, erholsamen Schlaf empfiehlt dein Coach: Leicht bekömmliches Protein (z. B. milder Lachs, Eier, Tofu) kombiniert mit gedünstetem Gemüse oder einer warmen Suppe. Vermeide schwere, frittierte Speisen nach 20:00 Uhr, damit deine Verdauung zur Ruhe kommen kann.`;
-  }
-
-  if (q.includes('protein') || q.includes('eiweiß') || q.includes('muskel')) {
-    return `Proteine sind essenziell für anhaltende Zufriedenheit und Zellerneuerung. In deinen geloggten Momenten sind bereits tolle Bausteine dabei! Achte darauf, pro Mahlzeit eine kleine, verlässliche Eiweißquelle einzubauen.`;
-  }
-
-  if (q.includes('sättigung') || q.includes('portion') || q.includes('zu viel')) {
-    return `Dein Körper braucht 15–20 Minuten, bis das Sättigungssignal im Gehirn ankommt. Tipp deines Coaches: Nimm dir Zeit für jeden Bissen, kaue genussvoll und spüre bei Stufe 4 nach, ob du schon vollkommen zufrieden bist.`;
-  }
-
-  return `Als dein fürsorglicher Moment-Coach bin ich immer an deiner Seite. Mir geht es darum, dass du dich in deinem Körper rundum wohlfühlst – ohne Druck oder strenge Regeln. Worüber möchtest du sprechen? (Achtsamkeit, Schlaferholung, Genussmomente oder Energie?)`;
+  if (/نوم|نعاس|تعب|sleep|schlaf|alarm|warn/.test(q))
+    return 'إذا كان يومك متعبًا، يمكنك تخصيص وقت للراحة حسب ظروفك. لا يمكنني استنتاج حالتك الصحية من سجل الوجبات.';
+  if (/جوع|شهية|حلو|سكر|heißhunger|süß/.test(q))
+    return 'تغيّر الشهية أمر طبيعي. إن أحببت، لاحظ ما تشعر به واختر ما يناسبك دون لوم.';
+  if (/بروتين|protein|eiweiß/.test(q))
+    return 'يمكنك استكشاف مصادر البروتين التي تحبها، مثل العدس والحمص والبيض، حسب تفضيلاتك.';
+  if (/شبع|كمية|وجبة|portion|sättigung/.test(q))
+    return 'لكل شخص تجربة مختلفة مع الشبع. يمكنك ملاحظة إحساسك أثناء الطعام دون قواعد صارمة.';
+  return 'أهلًا بك. يمكننا التحدث عن وجباتك أو شعورك بالجوع والشبع أو راحتك اليوم، بالوتيرة التي تناسبك.';
 }
