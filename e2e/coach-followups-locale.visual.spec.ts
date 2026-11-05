@@ -23,6 +23,11 @@ async function verifyChat(page: Page, legacyLocale: CoachLocale, nav: string) {
   await composer.fill(question);
   await composer.press('Enter');
 
+  const coachReply = page.getByTestId('coach-chat-coach-message').last();
+  await expect(coachReply).toBeVisible();
+  await expect(coachReply).toContainText(/[\u0600-\u06ff]/);
+  await expect(coachReply).not.toContainText(/[A-Za-zÄÖÜäöüß]/);
+
   const followUps = page.getByTestId('cary-contextual-followups').last();
   await expect(followUps).toBeVisible();
   const next = buildCoachFollowUps(question, 'response', 'ar')[1];
