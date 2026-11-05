@@ -18,9 +18,9 @@ describe('Coach follow-up conversation context', () => {
 
     const query = buildContextualCoachQuery('Und heute?', history);
 
-    expect(query).toContain('Nutzer: Ich hatte gestern nach dem Couscous ein starkes Nachmittagstief.');
-    expect(query).toContain('Coach: Das könnte mit Portionsgröße, Tempo oder Schlaf zusammenhängen.');
-    expect(query).toContain('Aktuelle Frage:\nUnd heute?');
+    expect(query).toContain('المستخدم: Ich hatte gestern nach dem Couscous ein starkes Nachmittagstief.');
+    expect(query).toContain('المرشد: Das könnte mit Portionsgröße, Tempo oder Schlaf zusammenhängen.');
+    expect(query).toContain('السؤال الحالي:\nUnd heute?');
   });
 
   it('preserves Arabic/Darija and mixed-language turns verbatim', () => {
