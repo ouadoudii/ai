@@ -536,7 +536,7 @@ export const FoodCoachView: React.FC<FoodCoachViewProps> = ({
                       : 'bg-amber-500 text-white shadow-xs'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{msg.id === 'msg-1' && isCoach ? welcomeMessage : msg.text}</p>
+                  <p data-testid={isCoach ? 'coach-chat-coach-message' : 'coach-chat-user-message'} className="whitespace-pre-line">{msg.id === 'msg-1' && isCoach ? welcomeMessage : msg.text}</p>
                 </div>
 
                 <span className="text-[10px] text-stone-400 px-1">

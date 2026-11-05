@@ -41,14 +41,19 @@ export function buildCoachConversationContext(messages:CoachChatMessage[]):Array
 }
 export function buildContextualCoachQuery(query:string,messages:CoachChatMessage[]):string{
   const context=buildCoachConversationContext(messages); if(context.length===0)return query;
-  const transcript=context.map((message)=>`${message.role==='user'?'Nutzer':'Coach'}: ${message.text}`).join('\n');
-  return `Bisheriges Gespräch:\n${transcript}\n\nAktuelle Frage:\n${query}`;
+  const transcript=context.map((message)=>`${message.role==='user'?'المستخدم':'المرشد'}: ${message.text}`).join('\n');
+  return `سياق المحادثة السابقة:\n${transcript}\n\nالسؤال الحالي:\n${query}`;
 }
 function readRecentCoachMessages():CoachChatMessage[]{ if(typeof localStorage==='undefined')return []; return readCoachSession(localStorage); }
 
+export function ensureArabicCoachReply(reply:string,query:string,moments:FoodMoment[]):string{
+  const text=String(reply||'').trim();
+  return text && !/[A-Za-zÄÖÜäöüß]/.test(text) ? text : fallbackChat(query,moments);
+}
+
 export async function askGeminiCoach(query:string,moments:FoodMoment[],checkIns:DailyCheckIn[]=[],userArchetype?:string):Promise<string>{
   const contextualQuery=buildContextualCoachQuery(query,readRecentCoachMessages());
-  try{const res=await fetch('/api/coach-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:contextualQuery,moments,checkIns,userArchetype})});if(!res.ok)throw new Error(`API returned status ${res.status}`);const data=await res.json();return data.reply||'Ich bin immer für dich da. Wie kann ich dich heute unterstützen?';}catch(error){console.warn('Backend /api/coach-chat not reachable, using local response fallback:',error);return fallbackChat(query,moments);}
+  try{const res=await fetch('/api/coach-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:contextualQuery,moments,checkIns,userArchetype})});if(!res.ok)throw new Error(`API returned status ${res.status}`);const data=await res.json();return ensureArabicCoachReply(data.reply,query,moments);}catch(error){console.warn('Backend /api/coach-chat not reachable, using local response fallback:',error);return fallbackChat(query,moments);}
 }
 
 export async function fetchFoodAutocomplete(input:{query:string;category:string;language:'en'|'ar';country?:string|null}):Promise<string[]>{
