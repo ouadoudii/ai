@@ -195,21 +195,28 @@ export function deriveDailyCoachingGoals(
 }
 
 export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]): string {
-  const q = userQuestion.trim().toLocaleLowerCase();
+  // Normalize common Arabic orthography while preserving Arabizi and mixed-script words.
+  // Matching only identifies the topic; it never invents personal observations.
+  const q = userQuestion.trim().toLocaleLowerCase()
+    .normalize('NFKC')
+    .replace(/[\u064b-\u065f\u0670]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي');
+  const latin = q.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   const today = getLocalDateKey();
   const todayCount = moments.filter((moment) => moment.date === today).length;
-  if (/اليوم|نهار|تحليل|ملخص|تقرير|heute|analyse|bilanz/.test(q)) {
+  if (/اليوم|نهار|تحليل|ملخص|تقرير|شنو كليت|اش كليت|واش كليت|lyoum|lyoum|nhar|chno klit|ach klit|wach klit|heute|analyse|bilanz/.test(latin)) {
     return todayCount === 0
       ? 'لا توجد وجبات مسجلة اليوم بعد. يمكنك إضافة وجبة عندما يناسبك، دون أي ضغط.'
       : `سجّلت اليوم ${todayCount} ${todayCount === 1 ? 'وجبة' : 'وجبات'}. يمكنك مراجعة ملاحظاتك وإضافة ما شعرت به إن أحببت.`;
   }
-  if (/نوم|نعاس|تعب|sleep|schlaf|alarm|warn/.test(q))
+  if (/نوم|نعاس|تعب|عيان|نعسان|n3as|n3ass|3yan|sleep|schlaf|alarm|warn/.test(latin))
     return 'إذا كان يومك متعبًا، يمكنك تخصيص وقت للراحة حسب ظروفك. لا يمكنني استنتاج حالتك الصحية من سجل الوجبات.';
-  if (/جوع|شهية|حلو|سكر|heißhunger|süß/.test(q))
+  if (/جوع|جائع|جيعان|جوعان|شهية|حلو|سكر|jou3|jo3|ji3an|jوع|heißhunger|süß/.test(latin))
     return 'تغيّر الشهية أمر طبيعي. إن أحببت، لاحظ ما تشعر به واختر ما يناسبك دون لوم.';
-  if (/بروتين|protein|eiweiß/.test(q))
+  if (/بروتين|protein|proteine|eiweiß/.test(latin))
     return 'يمكنك استكشاف مصادر البروتين التي تحبها، مثل العدس والحمص والبيض، حسب تفضيلاتك.';
-  if (/شبع|كمية|وجبة|portion|sättigung/.test(q))
+  if (/شبع|شبعت|كمية|وجبة|chba3|chb3t|portion|sättigung/.test(latin))
     return 'لكل شخص تجربة مختلفة مع الشبع. يمكنك ملاحظة إحساسك أثناء الطعام دون قواعد صارمة.';
   return 'أهلًا بك. يمكننا التحدث عن وجباتك أو شعورك بالجوع والشبع أو راحتك اليوم، بالوتيرة التي تناسبك.';
 }
