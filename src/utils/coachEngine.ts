@@ -211,7 +211,7 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
       : `سجّلت اليوم ${todayCount} ${todayCount === 1 ? 'وجبة' : 'وجبات'}. يمكنك مراجعة ملاحظاتك وإضافة ما شعرت به إن أحببت.`;
   }
   if (/نوم|نعاس|ننعس|تعب|عيان|نعسان|n3as|n3ass|3yan|sleep|schlaf|alarm|warn/.test(latin))
-    return 'إذا كان يومك متعبًا، يمكنك تخصيص وقت للراحة حسب ظروفك. لا يمكنني استنتاج حالتك الصحية من سجل الوجبات.';
+    return 'إذا كان يومك متعبًا، يمكنك أخذ قسط من الراحة حسب ظروفك. لا يمكنني استنتاج حالتك الصحية من سجل الوجبات.';
   if (/جوع|جائع|جيعان|جوعان|شهية|حلو|سكر|jou3|jo3|ji3an|jوع|heißhunger|süß/.test(latin))
     return 'تغيّر الشهية أمر طبيعي. إن أحببت، لاحظ ما تشعر به واختر ما يناسبك دون لوم.';
   if (/بروتين|protein|proteine|eiweiß/.test(latin))
