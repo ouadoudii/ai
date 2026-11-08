@@ -199,7 +199,7 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
   // Matching only identifies the topic; it never invents personal observations.
   const q = userQuestion.trim().toLocaleLowerCase()
     .normalize('NFKC')
-    .replace(/[\u064b-\u065f\u0670]/g, '')
+    .replace(/[\u064b-\u065f\u0670\u0640]/g, '')
     .replace(/[أإآٱ]/g, 'ا')
     .replace(/ى/g, 'ي');
   const latin = q.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
