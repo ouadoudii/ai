@@ -43,6 +43,12 @@ describe('Arabic-first coach: Darija and Arabizi intent regression', () => {
     expect(reply).not.toMatch(/عقاب|فشل|ممنوع/);
   });
 
+  it('recognizes stretched Arabic words without changing supportive guidance', () => {
+    const reply = getCoachChatResponse('عـدس', []);
+    expect(reply).toContain('العدس والحمص والبيض');
+    expect(reply).not.toMatch(/ذنب|فشل|عقاب|ممنوع/);
+  });
+
   it('handles Arabic diacritics and hamza variants', () => {
     expect(getCoachChatResponse('أَلْيَوْم', [])).toContain('لا توجد وجبات مسجلة اليوم');
   });
