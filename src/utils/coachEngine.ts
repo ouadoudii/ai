@@ -211,8 +211,8 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
     return 'لا بأس إن لم تسجّل وجبة أو لم تأكل بعد. إن أحببت، انتبه لما تحتاجه الآن واختر ما يناسبك دون لوم أو ضغط.';
   // Loss of appetite is a personal observation, not a failed goal or a journal recap.
   // Recognize common Egyptian, Levantine, Gulf and Darija/Arabizi wording first.
-  if (/(?:ما\\s*عندي(?:ش)?\\s*شهي[هة]|ما\\s*عنديش\\s*نفس|مش\\s*نفسي\\s*اكل|مالي\\s*نفس\\s*اكل|ما\\s*عندي\\s*شهية|ma\\s*3andich\\s*chahiya|ma\\s*3ndich\\s*chahiya|machi\\s*jay3)/.test(latin))
-    return 'قد تتغيّر الشهية من يوم لآخر. إن أحببت، لاحظ ما يناسبك الآن دون ضغط أو لوم، ولا يلزمك تسجيل شيء.';
+  if (/(?:ما\s*عندي(?:ش)?\s*شهي[هة]|ما\s*عنديش\s*نفس|مش\s*نفسي\s*اكل|مالي\s*نفس\s*اكل|ma\s*3andich\s*chahiya|ma\s*3ndich\s*chahiya|machi\s*jay3)/.test(latin))
+    return 'تتغيّر الشهية من يوم لآخر. إن أحببت، لاحظ ما يناسبك الآن دون ضغط أو لوم، ولا يلزمك تسجيل شيء.';
   // A time word must not override an explicit feeling: «اليوم أنا جعانة» asks for support, not a meal recap.
   const feelingIntent = /نوم|نعاس|ننعس|تعب|عيان|نعسان|مرهق|تعبان|تعبانة|دايخ|n3as|n3ass|3yan|3yane|na3s|sleep|جوع|جائع|جيعان|جوعان|جوعانة|جعان|جعانة|يوعان|شهية|حلو|سكر|jou3|jo3|ji3an|joo3|mjou3|شبع|شبعت|شبعان|شبعانة|chba3|chb3t|chba3t/;
   if (!feelingIntent.test(latin) && /اليوم|نهار|النهاردة|النهارده|النهار دا|النهار ده|naharda|ennaharda|تحليل|ملخص|تقرير|شنو كليت|اش كليت|واش كليت|lyoum|nhar|lyom|nhari|chno klit|ach klit|wach klit|شو اكلت|ايش اكلت|وش اكلت|شنو اكلت|اكلت ايه|akalt eh|shoo akalt|esh akalt|heute|analyse|bilanz/.test(latin)) {
