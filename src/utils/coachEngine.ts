@@ -207,7 +207,7 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
   const todayCount = moments.filter((moment) => moment.date === today).length;
   // A time word must not override an explicit feeling: «اليوم أنا جعانة» asks for support, not a meal recap.
   const feelingIntent = /نوم|نعاس|ننعس|تعب|عيان|نعسان|مرهق|تعبان|تعبانة|دايخ|n3as|n3ass|3yan|3yane|na3s|sleep|جوع|جائع|جيعان|جوعان|جوعانة|جعان|جعانة|يوعان|شهية|حلو|سكر|jou3|jo3|ji3an|joo3|mjou3|شبع|شبعت|شبعان|شبعانة|chba3|chb3t|chba3t/;
-  if (!feelingIntent.test(latin) && /اليوم|نهار|تحليل|ملخص|تقرير|شنو كليت|اش كليت|واش كليت|lyoum|nhar|lyom|nhari|chno klit|ach klit|wach klit|شو اكلت|ايش اكلت|وش اكلت|شنو اكلت|اكلت ايه|akalt eh|shoo akalt|esh akalt|heute|analyse|bilanz/.test(latin)) {
+  if (!feelingIntent.test(latin) && /اليوم|نهار|النهاردة|النهارده|النهار دا|النهار ده|naharda|ennaharda|تحليل|ملخص|تقرير|شنو كليت|اش كليت|واش كليت|lyoum|nhar|lyom|nhari|chno klit|ach klit|wach klit|شو اكلت|ايش اكلت|وش اكلت|شنو اكلت|اكلت ايه|akalt eh|shoo akalt|esh akalt|heute|analyse|bilanz/.test(latin)) {
     return todayCount === 0
       ? 'لا توجد وجبات مسجلة اليوم بعد. يمكنك إضافة وجبة عندما يناسبك، دون أي ضغط.'
       : `سجّلت اليوم ${todayCount} ${todayCount === 1 ? 'وجبة' : 'وجبات'}. يمكنك مراجعة ملاحظاتك وإضافة ما شعرت به إن أحببت.`;
