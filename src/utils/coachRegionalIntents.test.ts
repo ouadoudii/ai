@@ -91,6 +91,20 @@ describe('regional Arabic coach intents', () => {
     expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
   });
 
+  it.each([
+    'مش جعان النهاردة',
+    'مش جعانة اليوم',
+    'ماني جوعان اليوم',
+    'مو جوعانة اليوم',
+    'ma jay3ch lyoum',
+  ])('recognizes explicit absence of hunger without suggesting a failed goal: %s', (question) => {
+    const response = getCoachChatResponse(question, []);
+    expect(response).toContain('تتغيّر الشهية');
+    expect(response).toContain('دون ضغط أو لوم');
+    expect(response).not.toContain('لا توجد وجبات مسجلة اليوم');
+    expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
+  });
+
   it('does not confuse a normal daily recap with a skipped-meal statement', () => {
     expect(getCoachChatResponse('شنو كليت اليوم', [])).toContain('لا توجد وجبات مسجلة اليوم');
   });
