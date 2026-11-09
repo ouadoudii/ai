@@ -26,4 +26,18 @@ describe('regional Arabic coach intents', () => {
     }
     expect(response).not.toMatch(/(?:failed|bad food|cheat meal|فشلت|طعام سيئ)/i);
   });
+  it.each([
+    ['Egyptian hunger today', 'النهاردة انا جعانة', 'الشهية'],
+    ['Gulf hunger today', 'اليوم انا يوعان', 'الشهية'],
+    ['Levantine fullness today', 'اليوم انا شبعانة', 'الشبع'],
+    ['Egyptian fatigue today', 'اليوم انا تعبانة', 'الراحة'],
+    ['mixed Arabizi hunger today', 'lyoum ana jou3', 'الشهية'],
+    ['Moroccan hunger spelling', 'أنا جوعانة اليوم', 'الشهية'],
+  ])('%s prioritizes the stated feeling over a date word', (_label, question, expected) => {
+    const response = getCoachChatResponse(question, []);
+    expect(response).toContain(expected);
+    expect(response).not.toContain('لا توجد وجبات مسجلة اليوم');
+    expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
+  });
+
 });
