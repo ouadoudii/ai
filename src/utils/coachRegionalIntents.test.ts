@@ -68,7 +68,10 @@ describe('regional Arabic coach intents', () => {
     'ma klit lyom',
   ])('responds without shame to a stated missed meal: %s', (question) => {
     const response = getCoachChatResponse(question, []);
+    expect(response).toContain('فهمت أنك لم تأكل اليوم');
+    expect(response).toContain('لا أفترض سبب ذلك');
     expect(response).toContain('دون لوم أو ضغط');
+    expect(response).not.toContain('لم تسجّل وجبة');
     expect(response).not.toContain('لا توجد وجبات مسجلة اليوم');
     expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
     expect(response).toMatch(/[\u0600-\u06ff]/);
