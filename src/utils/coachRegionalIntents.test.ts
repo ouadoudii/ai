@@ -40,4 +40,21 @@ describe('regional Arabic coach intents', () => {
     expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
   });
 
+  it.each(['النهاردة', 'النهارده', 'النهار ده', 'naharda', 'ennaharda'])(
+    'recognizes standalone Egyptian today recap without inventing meals: %s',
+    (question) => {
+      const response = getCoachChatResponse(question, []);
+      expect(response).toContain('لا توجد وجبات مسجلة اليوم');
+      expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
+    },
+  );
+  it.each(['النهاردة انا جعانة', 'naharda ana jou3'])(
+    'keeps feelings above Egyptian today wording: %s',
+    (question) => {
+      const response = getCoachChatResponse(question, []);
+      expect(response).toContain('الشهية');
+      expect(response).not.toContain('لا توجد وجبات مسجلة اليوم');
+    },
+  );
+
 });
