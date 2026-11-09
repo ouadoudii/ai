@@ -208,7 +208,7 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
   // Explicitly reported skipped meals are not journal summaries or failures.
   // Respond to the user's statement without assuming why they did not eat.
   if (/(?:ما\s*كليتش|مكليتش|ما\s*اكلتش|ما\s*أكلتش|ما\s*اكلت|ما\s*أكلت|ما\s*كلتش|ma\s*klitch|maklitch|ma\s*akaltsh|ma\s*akalt|ma\s*klit(?:ch)?)/.test(latin))
-    return 'لا بأس إن لم تسجّل وجبة أو لم تأكل بعد. إن أحببت، انتبه لما تحتاجه الآن واختر ما يناسبك دون لوم أو ضغط.';
+    return 'فهمت أنك لم تأكل اليوم. يمكنك الانتباه لما تحتاجه الآن، واختيار ما يناسبك دون لوم أو ضغط. لا أفترض سبب ذلك من رسالتك.';
   // Loss of appetite is a personal observation, not a failed goal or a journal recap.
   // Recognize common Egyptian, Levantine, Gulf and Darija/Arabizi wording first.
   if (/(?:ما\s*عندي(?:ش)?\s*شهي[هة]|ما\s*عنديش\s*نفس|مش\s*نفسي\s*اكل|مالي\s*نفس\s*اكل|ma\s*3andich\s*chahiya|ma\s*3ndich\s*chahiya|machi\s*jay3|ma\s*jay3ch|مش\s*جعان(?:ة)?|ماني\s*جوعان(?:ة)?|مو\s*جوعان(?:ة)?)/.test(latin))
