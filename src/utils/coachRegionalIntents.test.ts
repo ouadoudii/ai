@@ -74,6 +74,23 @@ describe('regional Arabic coach intents', () => {
     expect(response).toMatch(/[\u0600-\u06ff]/);
   });
 
+  it.each([
+    'ما عنديش شهية اليوم',
+    'ما عندي شهية اليوم',
+    'مش نفسي اكل النهاردة',
+    'ما عنديش نفس اليوم',
+    'مالي نفس اكل اليوم',
+    'ma 3andich chahiya lyoum',
+    'ma 3ndich chahiya',
+    'machi jay3 lyoum',
+  ])('supports loss of appetite without blame or invented journal facts: %s', (question) => {
+    const response = getCoachChatResponse(question, []);
+    expect(response).toContain('تتغيّر الشهية');
+    expect(response).toContain('دون ضغط أو لوم');
+    expect(response).not.toContain('لا توجد وجبات مسجلة اليوم');
+    expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
+  });
+
   it('does not confuse a normal daily recap with a skipped-meal statement', () => {
     expect(getCoachChatResponse('شنو كليت اليوم', [])).toContain('لا توجد وجبات مسجلة اليوم');
   });
