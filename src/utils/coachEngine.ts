@@ -205,6 +205,10 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
   const latin = q.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   const today = getLocalDateKey();
   const todayCount = moments.filter((moment) => moment.date === today).length;
+  // Explicitly reported skipped meals are not journal summaries or failures.
+  // Respond to the user's statement without assuming why they did not eat.
+  if (/(?:ما\s*كليتش|مكليتش|ما\s*اكلتش|ما\s*أكلتش|ما\s*اكلت|ما\s*أكلت|ما\s*كلتش|ma\s*klitch|maklitch|ma\s*akaltsh|ma\s*akalt|ma\s*klit(?:ch)?)/.test(latin))
+    return 'لا بأس إن لم تسجّل وجبة أو لم تأكل بعد. إن أحببت، انتبه لما تحتاجه الآن واختر ما يناسبك دون لوم أو ضغط.';
   // A time word must not override an explicit feeling: «اليوم أنا جعانة» asks for support, not a meal recap.
   const feelingIntent = /نوم|نعاس|ننعس|تعب|عيان|نعسان|مرهق|تعبان|تعبانة|دايخ|n3as|n3ass|3yan|3yane|na3s|sleep|جوع|جائع|جيعان|جوعان|جوعانة|جعان|جعانة|يوعان|شهية|حلو|سكر|jou3|jo3|ji3an|joo3|mjou3|شبع|شبعت|شبعان|شبعانة|chba3|chb3t|chba3t/;
   if (!feelingIntent.test(latin) && /اليوم|نهار|النهاردة|النهارده|النهار دا|النهار ده|naharda|ennaharda|تحليل|ملخص|تقرير|شنو كليت|اش كليت|واش كليت|lyoum|nhar|lyom|nhari|chno klit|ach klit|wach klit|شو اكلت|ايش اكلت|وش اكلت|شنو اكلت|اكلت ايه|akalt eh|shoo akalt|esh akalt|heute|analyse|bilanz/.test(latin)) {
