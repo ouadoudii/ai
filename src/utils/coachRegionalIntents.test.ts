@@ -57,4 +57,25 @@ describe('regional Arabic coach intents', () => {
     },
   );
 
+  it.each([
+    'ما كليتش اليوم',
+    'مكليتش النهاردة',
+    'ما اكلتش اليوم',
+    'ما اكلت اليوم',
+    'ma klitch lyoum',
+    'maklitch',
+    'ma akaltsh elnaharda',
+    'ma klit lyom',
+  ])('responds without shame to a stated missed meal: %s', (question) => {
+    const response = getCoachChatResponse(question, []);
+    expect(response).toContain('دون لوم أو ضغط');
+    expect(response).not.toContain('لا توجد وجبات مسجلة اليوم');
+    expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
+    expect(response).toMatch(/[\u0600-\u06ff]/);
+  });
+
+  it('does not confuse a normal daily recap with a skipped-meal statement', () => {
+    expect(getCoachChatResponse('شنو كليت اليوم', [])).toContain('لا توجد وجبات مسجلة اليوم');
+  });
+
 });
