@@ -112,4 +112,18 @@ describe('regional Arabic coach intents', () => {
     expect(getCoachChatResponse('شنو كليت اليوم', [])).toContain('لا توجد وجبات مسجلة اليوم');
   });
 
+  it.each([
+    'ما فطرتش اليوم', 'مفطرتش النهاردة', 'ما تغديتش اليوم',
+    'ما تعشيتش اليوم', 'ma ftartch lyoum', 'ma tghdditch lyoum',
+    'ma t3chitch lyom',
+  ])('does not infer a whole day without food from one missed meal: %s', (question) => {
+    const response = getCoachChatResponse(question, []);
+    expect(response).toContain('إحدى الوجبات');
+    expect(response).toContain('بقية يومك');
+    expect(response).toContain('دون لوم أو ضغط');
+    expect(response).not.toContain('لم تأكل اليوم');
+    expect(response).not.toContain('لا توجد وجبات مسجلة اليوم');
+    expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
+  });
+
 });
