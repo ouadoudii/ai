@@ -140,4 +140,19 @@ describe('regional Arabic coach intents', () => {
     expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
   });
 
+  it.each([
+    'ما كليتش بزاف اليوم',
+    'ما اكلتش كتير النهاردة',
+    'ma klitch bzaf lyoum',
+    'maklitch bezzaf',
+    'ma akaltsh kteer elnaharda',
+  ])('does not interpret eating little as eating nothing: %s', (question) => {
+    const response = getCoachChatResponse(question, []);
+    expect(response).toContain('تناولت كمية قليلة');
+    expect(response).toContain('دون لوم أو ضغط');
+    expect(response).not.toContain('لم تأكل اليوم');
+    expect(response).not.toContain('لا توجد وجبات مسجلة اليوم');
+    expect(response).not.toMatch(/فشل|عقاب|ذنب|ممنوع|88%|28%/);
+  });
+
 });
