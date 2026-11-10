@@ -207,7 +207,7 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
   const todayCount = moments.filter((moment) => moment.date === today).length;
   // "I didn't eat much" still reports some food, not an entirely missed day.
   // Handle common Darija, Egyptian and Arabizi quantity negations before no-food intents.
-  if (/(?:ما\\s*كليتش|مكليتش|ما\\s*اكلتش|ما\\s*اكلت|ma\\s*klitch|maklitch|ma\\s*akaltsh)\\s*(?:بزاف|كتير|كثير|برشا|bzaf|bezzaf|ktir|keteer|barsha)(?:\\s|$)/u.test(latin))
+  if (/(?:ما\s*كليتش|مكليتش|ما\s*اكلتش|ما\s*اكلت|ma\s*klitch|maklitch|ma\s*akaltsh)\s*(?:بزاف|كتير|كثير|برشا|bzaf|bezzaf|ktir|keteer|barsha)(?:\s|$)/u.test(latin))
     return 'فهمت أنك تناولت كمية قليلة اليوم. يمكنك ملاحظة ما تحتاجه الآن دون لوم أو ضغط، ولا أفترض تفاصيل أخرى عن يومك.';
   // "I only ate ..." is not a claim of eating nothing all day.
   if (/(?:ما\s*كليتش|مكليتش|ما\s*اكلتش|ما\s*اكلت|ma\s*klitch|maklitch|ma\s*akaltsh)\s*(?:غير|الا|بس|ghir|gheir|illa|bass|bas)(?:\s|$)/u.test(latin))
