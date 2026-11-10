@@ -205,6 +205,9 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
   const latin = q.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   const today = getLocalDateKey();
   const todayCount = moments.filter((moment) => moment.date === today).length;
+  // "I only ate ..." is not a claim of eating nothing all day.
+  if (/(?:ما\s*كليتش|مكليتش|ما\s*اكلتش|ما\s*اكلت|ma\s*klitch|maklitch|ma\s*akaltsh)\s*(?:غير|الا|بس|ghir|gheir|illa|bass|bas)(?:\s|$)/u.test(latin))
+    return 'فهمت أنك تناولت شيئًا اليوم. يمكنك ملاحظة ما تحتاجه الآن دون لوم أو ضغط، ولا أفترض تفاصيل أخرى عن يومك.';
   // Explicitly reported skipped meals are not journal summaries or failures.
   // Respond to the user's statement without assuming why they did not eat.
   if (/(?:ما\s*كليتش|مكليتش|ما\s*اكلتش|ما\s*أكلتش|ما\s*اكلت|ما\s*أكلت|ما\s*كلتش|ma\s*klitch|maklitch|ma\s*akaltsh|ma\s*akalt|ma\s*klit(?:ch)?)/.test(latin))
