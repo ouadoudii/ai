@@ -18,7 +18,26 @@ describe("desktop Header timeline navigation", () => {
 
     expect(html).toContain("التنقل الرئيسي");
     expect(html).toContain("لحظات");
-    expect(html).toContain("bg-[#526B48] text-white");
+    expect(html).toContain("bg-[#315F4F] text-white shadow-sm");
+  });
+
+  it("provides a spacious desktop shell with a distinct capture action", () => {
+    const html = renderToString(
+      <LanguageProvider>
+        <Header
+          activeTab="today"
+          setActiveTab={() => undefined}
+          onOpenAddModal={() => undefined}
+        />
+      </LanguageProvider>,
+    );
+
+    expect(html).toContain("max-w-[1280px]");
+    expect(html).toContain("h-20");
+    expect(html).toContain('data-testid="desktop-capture-button"');
+    expect(html).toContain("bg-[#A15E3D] text-white");
+    expect(html).toContain("rounded-2xl p-1.5");
+    expect(html).toContain("التنقل الرئيسي");
   });
 
   it("removes the obsolete language picker while retaining direct data export", () => {
