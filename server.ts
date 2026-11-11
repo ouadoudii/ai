@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { GoogleGenAI, Type } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
+import { getCoachIntentResponse } from "./src/utils/coachEngine.js";
 
 dotenv.config();
 
@@ -347,6 +348,11 @@ app.post("/api/coach-chat", async (req, res) => {
     const { query, moments = [], checkIns = [], userArchetype } = req.body;
     if (!query) {
       return res.status(400).json({ error: "Query is required" });
+    }
+
+    const intentReply = getCoachIntentResponse(query, moments);
+    if (intentReply) {
+      return res.json({ reply: intentReply });
     }
 
     const ai = getGeminiClient();

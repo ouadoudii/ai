@@ -194,7 +194,7 @@ export function deriveDailyCoachingGoals(
   });
 }
 
-export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]): string {
+export function getCoachIntentResponse(userQuestion: string, moments: FoodMoment[]): string | null {
   // Normalize common Arabic orthography while preserving Arabizi and mixed-script words.
   // Matching only identifies the topic; it never invents personal observations.
   const q = userQuestion.trim().toLocaleLowerCase()
@@ -239,5 +239,10 @@ export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]
     return 'يمكنك استكشاف مصادر البروتين التي تحبها، مثل العدس والحمص والبيض، حسب تفضيلاتك.';
   if (/شبع|شبعت|شبعان|شبعانة|كمية|وجبة|chba3|chb3t|chba3t|chb3|portion|sättigung/.test(latin))
     return 'لكل شخص تجربة مختلفة مع الشبع. يمكنك ملاحظة إحساسك أثناء الطعام دون قواعد صارمة.';
-  return 'أهلًا بك. يمكننا التحدث عن وجباتك أو شعورك بالجوع والشبع أو راحتك اليوم، بالوتيرة التي تناسبك.';
+  return null;
+}
+
+export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]): string {
+  return getCoachIntentResponse(userQuestion, moments)
+    ?? 'أهلًا بك. يمكننا التحدث عن وجباتك أو شعورك بالجوع والشبع أو راحتك اليوم، بالوتيرة التي تناسبك.';
 }

@@ -2,6 +2,7 @@ import express from 'express';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 import { LIMITS, applyApiSecurityHeaders, cleanText, publicError, rateLimit, safeArray } from './security.js';
+import { getCoachIntentResponse } from '../src/utils/coachEngine.js';
 
 dotenv.config();
 
@@ -393,6 +394,9 @@ app.post('/api/coach-chat', async (req, res) => {
     const checkIns = safeArray(req.body?.checkIns ?? [], LIMITS.checkIns);
     const userArchetype = cleanText(req.body?.userArchetype, 64) || 'intuitiv';
     if (!query || !moments || !checkIns) return publicError(res, 400, 'Invalid coach request');
+
+    const intentReply = getCoachIntentResponse(query, moments);
+    if (intentReply) return res.json({ reply: intentReply });
 
     const ai = getGeminiClient();
     if (!ai) {
