@@ -44,7 +44,7 @@ test.describe('Rhythm desktop navigation visual hierarchy', () => {
     expect(nav).not.toBeNull();
     expect(nav!.x).toBeGreaterThanOrEqual(0);
     expect(nav!.x + nav!.width).toBeLessThanOrEqual(1440);
-    await expect(header).toHaveCSS('height', '80px');
+    await expect(header.locator(':scope > div').first()).toHaveCSS('height', '80px');
   });
 
   test('mobile retains its dedicated navigation without horizontal overflow', async ({ page }) => {
