@@ -70,11 +70,9 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browser
-        run: |
-          sudo rm -f /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/google-chrome.sources
-          sudo apt-get clean
-          sudo rm -rf /var/lib/apt/lists/*
-          npx playwright install --with-deps chromium
+        # GitHub-hosted Ubuntu runners already include Chromium's system libraries.
+        # Avoid apt here so transient Ubuntu mirror/DNS outages cannot block E2E startup.
+        run: npx playwright install chromium
 
       - name: Full Playwright E2E suite
         run: npm run test:e2e
