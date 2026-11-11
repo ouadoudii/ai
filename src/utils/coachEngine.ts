@@ -194,22 +194,55 @@ export function deriveDailyCoachingGoals(
   });
 }
 
-export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]): string {
-  const q = userQuestion.trim().toLocaleLowerCase();
+export function getCoachIntentResponse(userQuestion: string, moments: FoodMoment[]): string | null {
+  // Normalize common Arabic orthography while preserving Arabizi and mixed-script words.
+  // Matching only identifies the topic; it never invents personal observations.
+  const q = userQuestion.trim().toLocaleLowerCase()
+    .normalize('NFKC')
+    .replace(/[\u064b-\u065f\u0670\u0640]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي');
+  const latin = q.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   const today = getLocalDateKey();
   const todayCount = moments.filter((moment) => moment.date === today).length;
-  if (/اليوم|نهار|تحليل|ملخص|تقرير|heute|analyse|bilanz/.test(q)) {
+  // "I didn't eat much" still reports some food, not an entirely missed day.
+  // Handle common Darija, Egyptian and Arabizi quantity negations before no-food intents.
+  if (/(?:ما\s*كليتش|مكليتش|ما\s*اكلتش|ما\s*اكلت|ma\s*klitch|maklitch|ma\s*akaltsh)\s*(?:بزاف|كتير|كثير|برشا|bzaf|bezzaf|ktir|kteer|keteer|barsha)(?:\s|$)/u.test(latin))
+    return 'فهمت أنك تناولت كمية قليلة اليوم. يمكنك ملاحظة ما تحتاجه الآن دون لوم أو ضغط، ولا أفترض تفاصيل أخرى عن يومك.';
+  // "I only ate ..." is not a claim of eating nothing all day.
+  if (/(?:ما\s*كليتش|مكليتش|ما\s*اكلتش|ما\s*اكلت|ma\s*klitch|maklitch|ma\s*akaltsh)\s*(?:غير|الا|بس|ghir|gheir|illa|bass|bas)(?:\s|$)/u.test(latin))
+    return 'فهمت أنك تناولت شيئًا اليوم. يمكنك ملاحظة ما تحتاجه الآن دون لوم أو ضغط، ولا أفترض تفاصيل أخرى عن يومك.';
+  // Explicitly reported skipped meals are not journal summaries or failures.
+  // Respond to the user's statement without assuming why they did not eat.
+  if (/(?:ما\s*كليتش|مكليتش|ما\s*اكلتش|ما\s*أكلتش|ما\s*اكلت|ما\s*أكلت|ما\s*كلتش|ma\s*klitch|maklitch|ma\s*akaltsh|ma\s*akalt|ma\s*klit(?:ch)?)/.test(latin))
+    return 'فهمت أنك لم تأكل اليوم. يمكنك الانتباه لما تحتاجه الآن، واختيار ما يناسبك دون لوم أو ضغط. لا أفترض سبب ذلك من رسالتك.';
+  // Missing one named meal does not mean the person ate nothing all day.
+  // Preserve the distinction even when a day word appears in the message.
+  if (/(?:ما\s*فطرتش|مفطرتش|ما\s*تغديتش|متغديتش|ما\s*تعشيتش|متعشيتش|ma\s*ftartch|ma\s*tghdditch|ma\s*t3chitch)/.test(latin))
+    return 'فهمت أنك لم تتناول إحدى الوجبات. لا يعني ذلك شيئًا عن بقية يومك. يمكنك اختيار ما يناسبك الآن دون لوم أو ضغط.';
+  // Loss of appetite is a personal observation, not a failed goal or a journal recap.
+  // Recognize common Egyptian, Levantine, Gulf and Darija/Arabizi wording first.
+  if (/(?:ما\s*عندي(?:ش)?\s*شهي[هة]|ما\s*عنديش\s*نفس|مش\s*نفسي\s*اكل|مالي\s*نفس\s*اكل|ma\s*3andich\s*chahiya|ma\s*3ndich\s*chahiya|machi\s*jay3|ma\s*jay3ch|مش\s*جعان(?:ة)?|ماني\s*جوعان(?:ة)?|مو\s*جوعان(?:ة)?)/.test(latin))
+    return 'تتغيّر الشهية من يوم لآخر. إن أحببت، لاحظ ما يناسبك الآن دون ضغط أو لوم، ولا يلزمك تسجيل شيء.';
+  // A time word must not override an explicit feeling: «اليوم أنا جعانة» asks for support, not a meal recap.
+  const feelingIntent = /نوم|نعاس|ننعس|تعب|عيان|نعسان|مرهق|تعبان|تعبانة|دايخ|n3as|n3ass|3yan|3yane|na3s|sleep|جوع|جائع|جيعان|جوعان|جوعانة|جعان|جعانة|يوعان|شهية|حلو|سكر|jou3|jo3|ji3an|joo3|mjou3|شبع|شبعت|شبعان|شبعانة|chba3|chb3t|chba3t/;
+  if (!feelingIntent.test(latin) && /اليوم|نهار|النهاردة|النهارده|النهار دا|النهار ده|naharda|ennaharda|تحليل|ملخص|تقرير|شنو كليت|اش كليت|واش كليت|lyoum|nhar|lyom|nhari|chno klit|ach klit|wach klit|شو اكلت|ايش اكلت|وش اكلت|شنو اكلت|اكلت ايه|akalt eh|shoo akalt|esh akalt|heute|analyse|bilanz/.test(latin)) {
     return todayCount === 0
       ? 'لا توجد وجبات مسجلة اليوم بعد. يمكنك إضافة وجبة عندما يناسبك، دون أي ضغط.'
       : `سجّلت اليوم ${todayCount} ${todayCount === 1 ? 'وجبة' : 'وجبات'}. يمكنك مراجعة ملاحظاتك وإضافة ما شعرت به إن أحببت.`;
   }
-  if (/نوم|نعاس|تعب|sleep|schlaf|alarm|warn/.test(q))
-    return 'إذا كان يومك متعبًا، يمكنك تخصيص وقت للراحة حسب ظروفك. لا يمكنني استنتاج حالتك الصحية من سجل الوجبات.';
-  if (/جوع|شهية|حلو|سكر|heißhunger|süß/.test(q))
+  if (/نوم|نعاس|ننعس|تعب|عيان|نعسان|مرهق|تعبان|تعبانة|دايخ|n3as|n3ass|3yan|3yane|na3s|sleep|schlaf|alarm|warn/.test(latin))
+    return 'إذا كان يومك متعبًا، يمكنك أخذ قسط من الراحة حسب ظروفك. لا يمكنني استنتاج حالتك الصحية من سجل الوجبات.';
+  if (/جوع|جائع|جيعان|جوعان|جوعانة|جعان|جعانة|يوعان|شهية|حلو|سكر|jou3|jo3|ji3an|jوع|joo3|mjou3|heißhunger|süß/.test(latin))
     return 'تغيّر الشهية أمر طبيعي. إن أحببت، لاحظ ما تشعر به واختر ما يناسبك دون لوم.';
-  if (/بروتين|protein|eiweiß/.test(q))
+  if (/بروتين|protein|proteine|eiweiß|عدس|حمص|3dess|3des|7oms|l3des/.test(latin))
     return 'يمكنك استكشاف مصادر البروتين التي تحبها، مثل العدس والحمص والبيض، حسب تفضيلاتك.';
-  if (/شبع|كمية|وجبة|portion|sättigung/.test(q))
+  if (/شبع|شبعت|شبعان|شبعانة|كمية|وجبة|chba3|chb3t|chba3t|chb3|portion|sättigung/.test(latin))
     return 'لكل شخص تجربة مختلفة مع الشبع. يمكنك ملاحظة إحساسك أثناء الطعام دون قواعد صارمة.';
-  return 'أهلًا بك. يمكننا التحدث عن وجباتك أو شعورك بالجوع والشبع أو راحتك اليوم، بالوتيرة التي تناسبك.';
+  return null;
+}
+
+export function getCoachChatResponse(userQuestion: string, moments: FoodMoment[]): string {
+  return getCoachIntentResponse(userQuestion, moments)
+    ?? 'أهلًا بك. يمكننا التحدث عن وجباتك أو شعورك بالجوع والشبع أو راحتك اليوم، بالوتيرة التي تناسبك.';
 }
