@@ -53,10 +53,11 @@ export function selectDailyHeartNote(seed: string, localDate: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(localDate)) throw new Error('Invalid local date');
   const [year, month, day] = localDate.split('-').map(Number);
   const ordinal = Math.floor(Date.UTC(year, month - 1, day) / 86_400_000);
-  const start = hashSeed(seed) % HEART_NOTES.length;
-  // 31 is prime, so every stride from 1..30 visits all notes before repeating.
-  const stride = 1 + (hashSeed(seed + '|stride') % (HEART_NOTES.length - 1));
-  const index = (start + (ordinal % HEART_NOTES.length) * stride) % HEART_NOTES.length;
+  // Keep each installation on a stable offset in the shared 31-day cycle.
+  // A shared one-step stride prevents two distinct offsets from crossing later
+  // in the month, which previously made personalized notes intermittently equal.
+  const visitorOffset = hashSeed(seed + '|visitor') % HEART_NOTES.length;
+  const index = (visitorOffset + (ordinal % HEART_NOTES.length)) % HEART_NOTES.length;
   return HEART_NOTES[index];
 }
 
