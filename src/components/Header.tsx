@@ -23,31 +23,31 @@ export const Header: React.FC<HeaderProps> = ({
   const { language, t } = useLanguage();
   const ar = language === "ar";
   return (
-    <header className="hidden md:block sticky top-0 z-30 bg-[#F7F1E7]/90 backdrop-blur-xl border-b border-[#E5DCCF]/70">
-      <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between gap-3">
+    <header className="hidden md:block sticky top-0 z-30 bg-[#FFFCF6]/95 backdrop-blur-xl border-b border-[#E7DDCD] shadow-[0_8px_30px_rgba(50,61,47,.035)]">
+      <div className="max-w-[1280px] mx-auto px-6 xl:px-10 h-20 flex items-center justify-between gap-6">
         <button
           onClick={() => setActiveTab("today")}
-          className="flex items-center gap-2 font-display font-black text-xl tracking-tight text-[#2D3B31]"
+          className="flex shrink-0 items-center gap-3 font-display font-black text-2xl tracking-tight text-[#2D3B31]"
         >
-          <span className="w-9 h-9 rounded-full bg-[#526B48] text-white grid place-items-center shadow-sm">
+          <span className="w-11 h-11 rounded-2xl bg-[#315F4F] text-white grid place-items-center shadow-[0_8px_20px_rgba(49,95,79,.18)]">
             <Sprout className="w-4 h-4" />
           </span>
           <span>{ar ? "إيقاع" : "Rhythm"}</span>
         </button>
         <nav
-          className="flex items-center gap-1 bg-white/88 rounded-full p-1 border border-[#E5DCCF] shadow-sm"
+          className="flex items-center gap-1 bg-[#F2EDE3] rounded-2xl p-1.5 border border-[#E8DECF]"
           aria-label={t("mainNav")}
         >
           <button
             onClick={() => setActiveTab("today")}
-            className={`rounded-full px-4 py-2 text-xs font-bold flex gap-1.5 items-center ${activeTab === "today" ? "bg-[#526B48] text-white" : "text-[#706F68]"}`}
+            className={`rounded-xl px-4 py-3 text-sm font-bold flex gap-2 items-center transition-colors ${activeTab === "today" ? "bg-[#315F4F] text-white shadow-sm" : "text-[#706F68]"}`}
           >
             <Home className="w-3.5 h-3.5" />
             {t("today")}
           </button>
           <button
             onClick={() => setActiveTab("timeline")}
-            className={`rounded-full px-4 py-2 text-xs font-bold flex gap-1.5 items-center ${activeTab === "timeline" ? "bg-[#526B48] text-white" : "text-[#706F68]"}`}
+            className={`rounded-xl px-4 py-3 text-sm font-bold flex gap-2 items-center transition-colors ${activeTab === "timeline" ? "bg-[#315F4F] text-white shadow-sm" : "text-[#706F68]"}`}
           >
             <CalendarDays className="w-3.5 h-3.5" />
             {t("entries")}
@@ -55,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             data-testid="desktop-capture-button"
             onClick={onOpenAddModal}
-            className="rounded-full px-4 py-2 text-xs font-bold flex gap-1.5 items-center text-[#A15E3D]"
+            className="rounded-xl px-4 py-3 text-sm font-bold flex gap-2 items-center transition-colors bg-[#A15E3D] text-white shadow-[0_5px_14px_rgba(161,94,61,.16)] hover:bg-[#87492D]"
           >
             <Plus className="w-3.5 h-3.5" />
             {t("add")}
@@ -63,23 +63,20 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setActiveTab("coach")}
             data-testid="desktop-coach-nav"
-            className={`rounded-full px-4 py-2 text-xs font-bold flex gap-1.5 items-center ${activeTab === "coach" ? "bg-[#526B48] text-white" : "text-[#706F68]"}`}
+            className={`rounded-xl px-4 py-3 text-sm font-bold flex gap-2 items-center transition-colors ${activeTab === "coach" ? "bg-[#315F4F] text-white shadow-sm" : "text-[#706F68]"}`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
             {t("navCoach")}
           </button>
           <button
             onClick={() => setActiveTab("type_analysis")}
-            className={`rounded-full px-4 py-2 text-xs font-bold flex gap-1.5 items-center ${activeTab === "type_analysis" ? "bg-[#526B48] text-white" : "text-[#706F68]"}`}
+            className={`rounded-xl px-4 py-3 text-sm font-bold flex gap-2 items-center transition-colors ${activeTab === "type_analysis" ? "bg-[#315F4F] text-white shadow-sm" : "text-[#706F68]"}`}
           >
             <Activity className="w-3.5 h-3.5" />
             {t("patterns")}
           </button>
         </nav>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold text-[#8A867E]">
-            {t("sleepFoodEnergy")}
-          </span>
+        <div className="flex shrink-0 items-center gap-2">
           <PersonalDataExportButton
             surface="header"
             compact
