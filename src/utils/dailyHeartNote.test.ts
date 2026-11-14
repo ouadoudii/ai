@@ -15,9 +15,13 @@ describe('daily Arabic heart note', () => {
     expect(today).not.toBe(selectDailyHeartNote('alpha-user', '2026-10-28'));
   });
 
-  it('personalizes between installations without reading private journal data', () => {
-    expect(selectDailyHeartNote('alpha-user', '2026-10-27'))
-      .not.toBe(selectDailyHeartNote('beta-user', '2026-10-27'));
+  it('keeps distinct installation offsets separate throughout the full cycle', () => {
+    const start = Date.UTC(2026, 9, 1);
+    for (let offset = 0; offset < HEART_NOTES.length; offset += 1) {
+      const date = new Date(start + offset * 86_400_000).toISOString().slice(0, 10);
+      expect(selectDailyHeartNote('alpha-user', date))
+        .not.toBe(selectDailyHeartNote('beta-user', date));
+    }
   });
 
   it('cycles through all 31 notes without repeating for 31 consecutive days', () => {
