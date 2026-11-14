@@ -33,10 +33,10 @@ body{background-color:var(--moment-bg);background-image:radial-gradient(ellipse 
     align-items: center;
     padding: clamp(2.5rem, 4vw, 4.5rem);
   }
-  .rhythm-organic-hero > div.relative > div:first-child,
-  .rhythm-organic-hero > div.relative > div:nth-child(2),
+  .rhythm-organic-hero > div.relative > div:first-child { grid-column: 1; }
+  .rhythm-organic-hero > div.relative > div:nth-child(2) { grid-column: 2; }
   .rhythm-organic-hero > div.relative > p,
-  .rhythm-organic-hero > div.relative > div:last-child { grid-column: 1 / -1; }
+  .rhythm-organic-hero > div.relative > div:nth-child(n+3) { grid-column: 1 / -1; }
   .rhythm-organic-hero h1 {
     font-size: clamp(3.4rem, 5vw, 5.5rem);
     letter-spacing: -.045em;
