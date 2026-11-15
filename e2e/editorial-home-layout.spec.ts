@@ -36,6 +36,16 @@ test('Arabic editorial home keeps its primary voice action on desktop', async ({
   expect(gridPlacement.map(item => item.column)).toEqual(['1', '2']);
   expect(gridPlacement[0].x).not.toBe(gridPlacement[1].x);
   await expect(voice).toHaveAccessibleName(/\S/);
+  // Keyboard users must be able to reach and see the main action, not only see it visually.
+  await voice.focus();
+  await expect(voice).toBeFocused();
+  const focusVisibility = await voice.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return { visible: rect.width > 0 && rect.height > 0, hidden: style.visibility === 'hidden' };
+  });
+  expect(focusVisibility.visible).toBe(true);
+  expect(focusVisibility.hidden).toBe(false);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('arabic-editorial-desktop.png'), fullPage: true });
 });
