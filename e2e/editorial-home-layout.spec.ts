@@ -37,8 +37,35 @@ test('Arabic editorial home keeps its primary voice action on desktop', async ({
   expect(gridPlacement[0].x).not.toBe(gridPlacement[1].x);
   await expect(voice).toHaveAccessibleName(/\S/);
   // Keyboard users must be able to reach and see the main action, not only see it visually.
-  await voice.focus();
+  // Traverse the real keyboard sequence from the beginning of the document.
+  // Programmatic focus alone does not prove keyboard accessibility.
+  await page.keyboard.press('ControlOrMeta+Home');
+  await page.evaluate(() => (document.activeElement instanceof HTMLElement) && document.activeElement.blur());
+  let reachedByTab = false;
+  for (let index = 0; index < 80; index += 1) {
+    await page.keyboard.press('Tab');
+    if (await voice.evaluate(element => element === document.activeElement)) {
+      reachedByTab = true;
+      break;
+    }
+  }
+  expect(reachedByTab, 'Primary voice action must be reachable using Tab').toBe(true);
   await expect(voice).toBeFocused();
+  const keyboardFocusStyle = await voice.evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      focusVisible: element.matches(':focus-visible'),
+      outlineStyle: style.outlineStyle,
+      outlineWidth: parseFloat(style.outlineWidth),
+      boxShadow: style.boxShadow,
+    };
+  });
+  expect(keyboardFocusStyle.focusVisible).toBe(true);
+  expect(
+    (keyboardFocusStyle.outlineStyle !== 'none' && keyboardFocusStyle.outlineWidth > 0)
+      || keyboardFocusStyle.boxShadow !== 'none',
+    'Keyboard focus must have a visible outline or shadow',
+  ).toBe(true);
   const focusVisibility = await voice.evaluate(element => {
     const rect = element.getBoundingClientRect();
     const style = getComputedStyle(element);
