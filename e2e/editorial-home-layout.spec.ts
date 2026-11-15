@@ -49,3 +49,22 @@ test('Arabic editorial home remains usable at mobile width', async ({ page }, te
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('arabic-editorial-mobile.png'), fullPage: true });
 });
+
+test('Arabic home stays readable at narrow mobile and desktop zoom-equivalent widths', async ({ page }) => {
+  for (const viewport of [{ width: 320, height: 700 }, { width: 720, height: 450 }]) {
+    await page.setViewportSize(viewport);
+    await openArabicToday(page);
+    const hero = page.getByTestId('today-organic-hero');
+    const voice = hero.getByTestId('voice-home-mic');
+    await expect(voice).toBeVisible();
+    const geometry = await voice.evaluate(element => {
+      const bounds = element.getBoundingClientRect();
+      return { left: bounds.left, right: bounds.right, width: bounds.width };
+    });
+    expect(geometry.width).toBeGreaterThan(0);
+    expect(geometry.left).toBeGreaterThanOrEqual(-1);
+    expect(geometry.right).toBeLessThanOrEqual(viewport.width + 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  }
+});
