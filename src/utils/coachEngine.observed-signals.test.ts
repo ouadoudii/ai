@@ -28,16 +28,17 @@ describe('Coach uses only explicitly reported body signals (#486)', () => {
     expect(JSON.stringify(recorded)).toBe(before);
   });
 
-  it('scores only observed satiety, without treating missing fields as perfect', () => {
+  it('counts only observed satiety without grading eating experiences or missing fields', () => {
     const metrics = calculateCoachingMetrics([
       meal({ id: 'unknown' }),
       meal({ id: 'reported', fullnessLevel: 5, distraction: 'screen', eatingPace: 'rushed' }),
     ], '2026-10-30');
     expect(metrics.satietyObservations).toBe(1);
-    expect(metrics.satietyBalanceScore).toBe(50);
+    expect(metrics.satietyBalanceScore).toBe(0);
     expect(metrics.screenFreeObservations).toBe(1);
     expect(metrics.screenFreeRatio).toBe(0);
-    expect(metrics.mindfulScore).toBe(30);
+    expect(metrics.mindfulScore).toBe(0);
+    expect(metrics.coachSummary).not.toMatch(/فشل|عقاب|سيئ|Überessen|50%|88%/);
     expect(metrics.slowEatingRatio).toBe(0);
   });
 
@@ -48,6 +49,6 @@ describe('Coach uses only explicitly reported body signals (#486)', () => {
     expect(feedback.message).not.toContain('طاقة');
     const metrics = calculateCoachingMetrics([recorded], '2026-10-30');
     expect(metrics.satietyObservations).toBe(1);
-    expect(metrics.satietyBalanceScore).toBe(50);
+    expect(metrics.satietyBalanceScore).toBe(0);
   });
 });
