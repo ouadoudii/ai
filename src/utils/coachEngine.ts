@@ -168,7 +168,8 @@ export function deriveDailyCoachingGoals(
   const observed = [
     today.filter((moment) => moment.hungerLevel !== undefined).length,
     mainMeals.filter((moment) => moment.distraction === 'mindful').length,
-    today.filter((moment) => moment.fullnessLevel !== undefined && moment.fullnessLevel >= 3 && moment.fullnessLevel <= 4).length,
+    // Any explicitly recorded fullness is a valid observation, not only a "preferred" level.
+    today.filter((moment) => typeof moment.fullnessLevel === 'number' && Number.isFinite(moment.fullnessLevel)).length,
     mainMeals.filter((moment) => (moment.nutrition?.protein ?? 0) >= 20).length,
   ];
   return INITIAL_COACHING_GOALS.map((goal, index) => {
