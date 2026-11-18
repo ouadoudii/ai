@@ -28,8 +28,8 @@ export function generateMomentCoachFeedback(moment: Partial<FoodMoment>): CoachF
 
 export interface DailyCoachingMetrics {
   todayMomentsCount: number;
-  mindfulScore: number; // 0-100
-  satietyBalanceScore: number; // 0-100 from observed fullness only
+  mindfulScore: number; // deprecated: neutral placeholder, never a wellbeing grade
+  satietyBalanceScore: number; // deprecated: neutral placeholder, never a satiety grade
   satietyObservations: number; // Missing fullness remains unknown
   screenFreeRatio: number; // 0-100 % of meals with an explicit distraction report
   screenFreeObservations: number; // Never infer screen-free eating from missing data
@@ -61,51 +61,34 @@ export function calculateCoachingMetrics(moments: FoodMoment[], dateKey: string 
 
   const relevantMoments = todayMoments;
 
-  let mindfulPoints = 0;
-  let mindfulObservations = 0;
-  let satietyPoints = 0;
-  let satietyObservations = 0;
-  let screenFreeCount = 0;
-  let screenFreeObservations = 0;
-  let slowPaceCount = 0;
-  let paceObservations = 0;
+  // Legacy numeric fields remain for API compatibility, but are not assessments
+  // of a person, their eating, or their health. Only explicit observations count.
+  const satietyObservations = relevantMoments.filter(
+    moment => typeof moment.fullnessLevel === 'number' && Number.isFinite(moment.fullnessLevel)
+  ).length;
+  const screenFreeObservations = relevantMoments.filter(
+    moment => moment.distraction !== undefined
+  ).length;
+  const screenFreeCount = relevantMoments.filter(
+    moment => moment.distraction === 'mindful'
+  ).length;
+  const paceObservations = relevantMoments.filter(
+    moment => moment.eatingPace !== undefined
+  ).length;
+  const slowPaceCount = relevantMoments.filter(
+    moment => moment.eatingPace === 'slow'
+  ).length;
 
-  relevantMoments.forEach((moment) => {
-    if (typeof moment.fullnessLevel === 'number' && Number.isFinite(moment.fullnessLevel)) {
-      satietyObservations++;
-      if (moment.fullnessLevel === 3 || moment.fullnessLevel === 4) satietyPoints += 100;
-      else if (moment.fullnessLevel === 2) satietyPoints += 70;
-      else satietyPoints += 50;
-    }
-    if (moment.distraction !== undefined) {
-      screenFreeObservations++;
-      mindfulObservations++;
-      if (moment.distraction === 'mindful') screenFreeCount++;
-      mindfulPoints += moment.distraction === 'mindful' ? 100 : 30;
-    }
-    if (moment.eatingPace !== undefined) {
-      paceObservations++;
-      mindfulObservations++;
-      if (moment.eatingPace === 'slow') slowPaceCount++;
-      mindfulPoints += moment.eatingPace === 'slow' ? 100 : moment.eatingPace === 'moderate' ? 70 : 30;
-    }
-    if (typeof moment.rating === 'number' && Number.isFinite(moment.rating)) {
-      mindfulObservations++;
-      mindfulPoints += moment.rating >= 4 ? 100 : 50;
-    }
-  });
-
-  const mindfulScore = mindfulObservations > 0 ? Math.round(mindfulPoints / mindfulObservations) : 0;
-  const satietyBalanceScore = satietyObservations > 0 ? Math.round(satietyPoints / satietyObservations) : 0;
+  // Do not manufacture a mindfulness or satiety "score" from arbitrary weights.
+  // Deprecation-safe placeholders until consumers migrate to observed counts.
+  const mindfulScore = 0;
+  const satietyBalanceScore = 0;
   const screenFreeRatio = screenFreeObservations > 0 ? Math.round((screenFreeCount / screenFreeObservations) * 100) : 0;
   const slowEatingRatio = paceObservations > 0 ? Math.round((slowPaceCount / paceObservations) * 100) : 0;
 
-  // A meal title is not evidence of the person's feelings or habits.
-  let coachSummary = 'تم تسجيل وجبتك. يمكنك إضافة ملاحظات عن شعورك لاحقًا إذا أحببت.';
-  if (satietyObservations > 0 && satietyBalanceScore < 75)
-    coachSummary = 'يمكنك ملاحظة إشارات الشبع في الوجبات المقبلة، دون ضغط أو أحكام.';
-  else if (screenFreeObservations > 0 && screenFreeRatio < 60)
-    coachSummary = 'إن أحببت، جرّب لحظة هادئة أثناء إحدى وجباتك المقبلة.';
+  const coachSummary = satietyObservations > 0
+    ? 'سجّلت ملاحظات عن الشبع اليوم. يمكنك العودة إليها عندما يناسبك، دون تقييم أو ضغط.'
+    : 'تم تسجيل وجبتك. يمكنك إضافة ملاحظات عن شعورك لاحقًا إذا أحببت.';
 
   return {
     todayMomentsCount: todayMoments.length,
@@ -185,7 +168,8 @@ export function deriveDailyCoachingGoals(
   const observed = [
     today.filter((moment) => moment.hungerLevel !== undefined).length,
     mainMeals.filter((moment) => moment.distraction === 'mindful').length,
-    today.filter((moment) => moment.fullnessLevel !== undefined && moment.fullnessLevel >= 3 && moment.fullnessLevel <= 4).length,
+    // Any explicitly recorded fullness is a valid observation, not only a "preferred" level.
+    today.filter((moment) => typeof moment.fullnessLevel === 'number' && Number.isFinite(moment.fullnessLevel)).length,
     mainMeals.filter((moment) => (moment.nutrition?.protein ?? 0) >= 20).length,
   ];
   return INITIAL_COACHING_GOALS.map((goal, index) => {

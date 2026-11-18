@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FoodMoment } from '../types';
-import { calculateCoachingMetrics, generateMomentCoachFeedback } from './coachEngine';
+import { calculateCoachingMetrics, deriveDailyCoachingGoals, generateMomentCoachFeedback } from './coachEngine';
 
 const meal = (fields: Partial<FoodMoment> = {}): FoodMoment => ({
   id: 'observed-1', title: 'نص tajine ديال الدجاج بلا زيت', label: 'غداء',
@@ -28,17 +28,34 @@ describe('Coach uses only explicitly reported body signals (#486)', () => {
     expect(JSON.stringify(recorded)).toBe(before);
   });
 
-  it('scores only observed satiety, without treating missing fields as perfect', () => {
+  it('counts only observed satiety without grading eating experiences or missing fields', () => {
     const metrics = calculateCoachingMetrics([
       meal({ id: 'unknown' }),
       meal({ id: 'reported', fullnessLevel: 5, distraction: 'screen', eatingPace: 'rushed' }),
     ], '2026-10-30');
     expect(metrics.satietyObservations).toBe(1);
-    expect(metrics.satietyBalanceScore).toBe(50);
+    expect(metrics.satietyBalanceScore).toBe(0);
     expect(metrics.screenFreeObservations).toBe(1);
     expect(metrics.screenFreeRatio).toBe(0);
-    expect(metrics.mindfulScore).toBe(30);
+    expect(metrics.mindfulScore).toBe(0);
+    expect(metrics.coachSummary).not.toMatch(/فشل|عقاب|سيئ|Überessen|50%|88%/);
     expect(metrics.slowEatingRatio).toBe(0);
+  });
+
+  it('recognizes every explicitly recorded fullness level without labeling a body signal wrong', () => {
+    const moments = [
+      meal({ id: 'low', fullnessLevel: 1 }),
+      meal({ id: 'high', fullnessLevel: 5 }),
+      meal({ id: 'neutral', fullnessLevel: 3 }),
+      meal({ id: 'unknown' }),
+    ];
+    const goals = deriveDailyCoachingGoals(moments, '2026-10-30');
+    const fullnessGoal = goals.find(goal => goal.id === 'goal-3');
+    expect(fullnessGoal?.current).toBe(3);
+    expect(fullnessGoal?.completed).toBe(true);
+    expect(fullnessGoal?.description).toContain('دون تقييم أو ضغط');
+    expect(calculateCoachingMetrics(moments, '2026-10-30').satietyObservations).toBe(3);
+    expect(deriveDailyCoachingGoals(moments, '2026-10-31').find(goal => goal.id === 'goal-3')?.current).toBe(0);
   });
 
   it('preserves explicit zero and does not praise unknown energy or pace', () => {
@@ -48,6 +65,6 @@ describe('Coach uses only explicitly reported body signals (#486)', () => {
     expect(feedback.message).not.toContain('طاقة');
     const metrics = calculateCoachingMetrics([recorded], '2026-10-30');
     expect(metrics.satietyObservations).toBe(1);
-    expect(metrics.satietyBalanceScore).toBe(50);
+    expect(metrics.satietyBalanceScore).toBe(0);
   });
 });
