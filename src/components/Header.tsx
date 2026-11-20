@@ -26,7 +26,9 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="hidden md:block sticky top-0 z-30 bg-[#FFFCF6]/95 backdrop-blur-xl border-b border-[#E7DDCD] shadow-[0_8px_30px_rgba(50,61,47,.035)]">
       <div className="max-w-[1280px] mx-auto px-6 xl:px-10 h-20 flex items-center justify-between gap-6">
         <button
+          type="button"
           onClick={() => setActiveTab("today")}
+          aria-current={activeTab === "today" ? "page" : undefined}
           className="flex shrink-0 items-center gap-3 font-display font-black text-2xl tracking-tight text-[#2D3B31]"
         >
           <span className="w-11 h-11 rounded-2xl bg-[#315F4F] text-white grid place-items-center shadow-[0_8px_20px_rgba(49,95,79,.18)]">
@@ -47,6 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
           <button
             onClick={() => setActiveTab("timeline")}
+          aria-current={activeTab === "timeline" ? "page" : undefined}
             className={`rounded-xl px-4 py-3 text-sm font-bold flex gap-2 items-center transition-colors ${activeTab === "timeline" ? "bg-[#315F4F] text-white shadow-sm" : "text-[#706F68]"}`}
           >
             <CalendarDays className="w-3.5 h-3.5" />
@@ -62,6 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
           <button
             onClick={() => setActiveTab("coach")}
+          aria-current={activeTab === "coach" ? "page" : undefined}
             data-testid="desktop-coach-nav"
             className={`rounded-xl px-4 py-3 text-sm font-bold flex gap-2 items-center transition-colors ${activeTab === "coach" ? "bg-[#315F4F] text-white shadow-sm" : "text-[#706F68]"}`}
           >
@@ -70,6 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
           <button
             onClick={() => setActiveTab("type_analysis")}
+          aria-current={activeTab === "type_analysis" ? "page" : undefined}
             className={`rounded-xl px-4 py-3 text-sm font-bold flex gap-2 items-center transition-colors ${activeTab === "type_analysis" ? "bg-[#315F4F] text-white shadow-sm" : "text-[#706F68]"}`}
           >
             <Activity className="w-3.5 h-3.5" />
