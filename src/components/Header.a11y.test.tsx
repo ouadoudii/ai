@@ -15,7 +15,9 @@ describe('desktop Arabic navigation accessibility', () => {
       );
       expect((html.match(/aria-current="page"/g) ?? [])).toHaveLength(1);
       expect(html).toContain('aria-label=');
-      expect((html.match(/type="button"/g) ?? [])).toHaveLength(6);
+      const renderedButtons = html.match(/<button\b/g) ?? [];
+      const explicitlyTypedButtons = html.match(/<button\b[^>]*type="button"/g) ?? [];
+      expect(explicitlyTypedButtons).toHaveLength(renderedButtons.length);
       expect((html.match(/focus-visible:outline-2/g) ?? [])).toHaveLength(6);
       expect(html).toContain('focus-visible:outline-offset-2');
       expect(html).toContain('focus-visible:outline-offset-4');
