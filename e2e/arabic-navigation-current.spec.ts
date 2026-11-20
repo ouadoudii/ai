@@ -18,6 +18,10 @@ for (const { name, viewport } of [
     await expect(nav).toBeVisible();
     await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
     if (name === 'desktop') {
+      await nav.getByTestId('desktop-capture-button').focus();
+      await page.keyboard.press('Tab');
+      await expect(nav.getByTestId('desktop-coach-nav')).toBeFocused();
+      await expect(nav.getByTestId('desktop-coach-nav')).toHaveCSS('outline-style', 'solid');
       await nav.getByTestId('desktop-coach-nav').click();
       await expect(nav.getByTestId('desktop-coach-nav')).toHaveAttribute('aria-current', 'page');
       await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
