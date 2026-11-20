@@ -15,7 +15,10 @@ describe('desktop Arabic navigation accessibility', () => {
       );
       expect((html.match(/aria-current="page"/g) ?? [])).toHaveLength(1);
       expect(html).toContain('aria-label=');
-      expect(html).toContain('type="button"');
+      expect((html.match(/type="button"/g) ?? [])).toHaveLength(6);
+      expect((html.match(/focus-visible:outline-2/g) ?? [])).toHaveLength(6);
+      expect(html).toContain('focus-visible:outline-offset-2');
+      expect(html).toContain('focus-visible:outline-offset-4');
       expect(html).toMatch(/[\u0600-\u06FF]/);
     });
   }
