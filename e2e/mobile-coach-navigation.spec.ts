@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("Arabic mobile navigation reaches Coach without changing viewport", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "android-arabic", "Native mobile navigation journey");
+test("Arabic mobile navigation reaches Coach without changing viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   const nav = page.getByRole("navigation", { name: /.+/ }).filter({
@@ -20,7 +19,6 @@ test("Arabic mobile navigation reaches Coach without changing viewport", async (
 });
 
 test("Desktop Coach navigation remains available", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-arabic", "Desktop navigation regression");
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   const coach = page.getByTestId("desktop-coach-nav");
