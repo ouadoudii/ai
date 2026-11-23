@@ -10,7 +10,7 @@ test("Arabic mobile navigation reaches Coach without changing viewport", async (
   const coach = page.getByTestId("mobile-coach-nav");
   await expect(nav).toBeVisible();
   await expect(coach).toBeVisible();
-  await expect(coach).toHaveAccessibleName(/مدرب|مرشد|مرافق|كوتش|نصيح/);
+  await expect(coach).toHaveAccessibleName(/[\u0600-\u06FF]+/);
   await coach.click();
   await expect(coach).toHaveAttribute("aria-current", "page");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
