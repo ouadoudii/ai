@@ -19,7 +19,7 @@ const renderNav = (activeTab: "today" | "coach") =>
 describe("mobile Coach navigation regression", () => {
   it("keeps Coach, capture, moments, today, discoveries and export accessible", () => {
     const html = renderNav("today");
-    expect(html).toContain('data-testid="mobile-coach-nav"');
+    expect(html).toContain('data-testid="mobile-bottom-coach-nav"');
     expect(html).toContain('data-testid="mobile-moments-nav"');
     expect(html).toContain('data-testid="primary-capture-button"');
     expect(html).toContain('grid-cols-6');
@@ -32,7 +32,7 @@ describe("mobile Coach navigation regression", () => {
 
   it("marks Coach as the active page and does not mark Today active", () => {
     const html = renderNav("coach");
-    expect(html).toMatch(/data-testid="mobile-coach-nav"[^>]*aria-current="page"|aria-current="page"[^>]*data-testid="mobile-coach-nav"/);
+    expect(html).toMatch(/data-testid="mobile-bottom-coach-nav"[^>]*aria-current="page"|aria-current="page"[^>]*data-testid="mobile-bottom-coach-nav"/);
     expect((html.match(/aria-current="page"/g) ?? []).length).toBe(1);
   });
 });
