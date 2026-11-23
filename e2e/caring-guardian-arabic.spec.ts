@@ -32,6 +32,9 @@ test('live Arabic Guardian offers calm RTL guidance on desktop and Android', asy
   await expect(guardian).toContainText('أفكار بسيطة تدعم راحتك، دون أحكام أو ضغط.');
   await expect(guardian).toContainText('لكل يوم إيقاعه الخاص');
   await expect(guardian).not.toContainText(/Alles im grünen|harmonisch|Protein-Performer|Für dich da|⚠️/);
+  // On desktop the real Coach Guardian sits below the initial fold. Scroll to
+  // it as a user would, then assert it is actually inside the viewport.
+  await guardian.scrollIntoViewIfNeeded();
   await expect(guardian).toBeInViewport();
 
   await guardian.getByRole('button', { name: 'تجربة لطيفة' }).click();
