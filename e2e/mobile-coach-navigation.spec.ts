@@ -1,5 +1,14 @@
 import { test, expect } from "@playwright/test";
 
+// These navigation regressions start as a returning local-device user. Dedicated
+// account-gate and onboarding specs exercise first-run choices independently.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("cary_access_mode_v1", "guest");
+    localStorage.setItem("cary_onboarding_v2_complete", "true");
+  });
+});
+
 test("Arabic mobile navigation reaches Coach without changing viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
