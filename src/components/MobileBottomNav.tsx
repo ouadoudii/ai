@@ -91,7 +91,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           onClick={() => nav("coach", "coach")}
           aria-current={activeTab === "coach" ? "page" : undefined}
           className={`${item} ${activeTab === "coach" ? "text-[#506B48]" : "text-[#858078]"}`}
-          data-testid="mobile-coach-nav"
+          data-testid="mobile-bottom-coach-nav"
         >
           <MessageSquare className="w-5 h-5" aria-hidden="true" />
           <span>{t("navCoach")}</span>
