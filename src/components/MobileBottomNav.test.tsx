@@ -26,13 +26,13 @@ describe("mobile Coach navigation regression", () => {
     expect(html).toContain("اكتشافاتك");
     expect(html).toContain("لحظاتي");
     expect(html).toMatch(/المدرب|المرشد|مدرب/);
-    expect((html.match(/<button\\b/g) ?? []).length).toBe(6);
+    expect((html.match(/<button\b/g) ?? []).length).toBe(6);
     expect(html).toContain('aria-label=');
   });
 
   it("marks Coach as the active page and does not mark Today active", () => {
     const html = renderNav("coach");
     expect(html).toMatch(/data-testid="mobile-coach-nav"[^>]*aria-current="page"|aria-current="page"[^>]*data-testid="mobile-coach-nav"/);
-    expect(html).not.toMatch(/aria-current="page"[^>]*>[^<]*<[^>]*>[^<]*<\\/[^>]*>[^<]*<span[^>]*>اليوم/);
+    expect((html.match(/aria-current="page"/g) ?? []).length).toBe(1);
   });
 });
