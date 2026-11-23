@@ -4,9 +4,9 @@ test("Arabic mobile navigation reaches Coach without changing viewport", async (
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   const nav = page.getByRole("navigation", { name: /.+/ }).filter({
-    has: page.getByTestId("mobile-coach-nav"),
+    has: page.getByTestId("mobile-bottom-coach-nav"),
   });
-  const coach = page.getByTestId("mobile-coach-nav");
+  const coach = page.getByTestId("mobile-bottom-coach-nav");
   await expect(nav).toBeVisible();
   await expect(coach).toBeVisible();
   await expect(coach).toHaveAccessibleName(/[\u0600-\u06FF]+/);
@@ -18,7 +18,7 @@ test("Arabic mobile navigation reaches Coach without changing viewport", async (
   await expect(page.getByTestId("primary-capture-button")).toBeVisible();
 });
 
-test("Desktop Coach navigation remains available", async ({ page }, testInfo) => {
+test("Desktop Coach navigation remains available", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   const coach = page.getByTestId("desktop-coach-nav");
