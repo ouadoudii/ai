@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, BookOpen, CalendarDays, Plus } from "lucide-react";
+import { Activity, BookOpen, CalendarDays, MessageSquare, Plus } from "lucide-react";
 import { ActiveTab } from "../types";
 import { useLanguage, type AppLanguage } from "../i18n";
 import { trackUx } from "../utils/uxAnalytics";
@@ -23,7 +23,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const item =
-    "min-h-[58px] rounded-[18px] flex flex-col items-center justify-center gap-1 text-[9px] font-black";
+    "min-h-[58px] rounded-[18px] flex flex-col items-center justify-center gap-1 text-[9px] font-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315F4F]";
   const nav = (tab: ActiveTab, route: string) => {
     trackUx({
       eventName: "nav_tapped",
@@ -48,7 +48,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       className="fixed bottom-0 left-0 right-0 z-40 px-3 pt-3 pb-[max(.65rem,env(safe-area-inset-bottom))] md:hidden bg-gradient-to-t from-[#F7F3EC] via-[#F7F3EC]/96 to-transparent"
       aria-label={t("mainNav")}
     >
-      <div className="max-w-md mx-auto grid grid-cols-5 items-end rounded-[28px] bg-[#FFFDF9] px-2 pt-2 pb-1.5 shadow-[0_10px_32px_rgba(48,38,28,.16)] border border-[#E8DED0]">
+      <div className="max-w-lg mx-auto grid grid-cols-6 items-end rounded-[28px] bg-[#FFFDF9] px-2 pt-2 pb-1.5 shadow-[0_10px_32px_rgba(48,38,28,.16)] border border-[#E8DED0]">
         <button
           type="button"
           onClick={() => nav("type_analysis", "discoveries")}
@@ -85,6 +85,16 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         >
           <CalendarDays className="w-5 h-5" />
           <span>{t("today")}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => nav("coach", "coach")}
+          aria-current={activeTab === "coach" ? "page" : undefined}
+          className={`${item} ${activeTab === "coach" ? "text-[#506B48]" : "text-[#858078]"}`}
+          data-testid="mobile-coach-nav"
+        >
+          <MessageSquare className="w-5 h-5" aria-hidden="true" />
+          <span>{t("navCoach")}</span>
         </button>
         <PersonalDataExportButton
           surface="bottom_nav"
