@@ -86,7 +86,7 @@ export const SmartInterventionGuardian: React.FC<SmartInterventionGuardianProps>
   };
 
   return (
-    <section dir="rtl" data-testid="guardian" className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200 shadow-xs relative overflow-hidden transition-all">
+    <section dir="rtl" aria-label="مساحة لطيفة للاهتمام بنفسك" data-testid="guardian" className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200 shadow-xs relative overflow-hidden transition-all">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
         <div className="flex items-center gap-2.5">
           <div className={`p-2 rounded-xl flex items-center justify-center ${activeUnresolvedAlarms.length > 0 ? 'bg-amber-100 text-amber-800 shadow-xs' : 'bg-emerald-500 text-white shadow-xs'}`}>
