@@ -27,8 +27,8 @@ export function normalizeArabicFoodText(value:string):string{
     .replace(/ئ/g,'ي')
     .replace(/ة/g,'ه')
     .replace(/ـ/g,'')
-    .replace(/[’'\-_/.,،؛:()[\]{}]/g,' ')
-    .replace(/\s+/g,' ');
+    .replace(/[\p{P}\p{Z}]/gu,' ')
+    .replace(/\s+/g,' ').trim();
 }
 
 export function normalizeFoodSearchText(value:string):string{
