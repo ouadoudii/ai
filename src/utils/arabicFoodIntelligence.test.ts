@@ -51,3 +51,12 @@ describe('voice food phrase extraction',()=>{
     expect(extractFoodPhraseFromVoice(spoken)).toBe(expected);
   });
 });
+
+ describe('punctuated food input',()=>{
+  it.each(['«طاجين»','طاجين؟','… طاجين!','（طاجين）'])('resolves %s',value=>{
+    expect(resolveArabFoodAlias(value,'MA')?.canonicalAr).toBe('طاجين');
+  });
+  it('treats punctuation-only input as empty',()=>{
+    expect(normalizeArabicFoodText(' ؟!… ')).toBe('');
+  });
+});

@@ -32,7 +32,7 @@ test('Arabic meal capture still finds accented French foods typed without accent
 
   const input = page.getByPlaceholder('ابدأ بالكتابة… مثلاً طاجين');
   await expect(input).toBeVisible();
-  await input.fill('creme bru');
+  await input.fill('«creme bru»');
 
   const suggestion = page.getByRole('button', { name: /^Crème brûlée/ });
   await expect(suggestion).toBeVisible();
