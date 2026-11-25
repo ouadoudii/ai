@@ -17,7 +17,8 @@ test('Arabic guest captures and retains a meal', async ({ page }) => {
   // Keep this real smoke independent of the runner's geolocated country.
   // Country packs vary by /api/locale, while Tiramisu is part of the global
   // catalogue and still exercises Latin input -> Arabic persisted display.
-  await input.fill('tiramisu');
+  // Autocomplete intentionally excludes exact matches; use a partial query.
+  await input.fill('«tirami»');
   const suggestion = page.getByRole('button', { name: /^Tiramisu/ });
   await expect(suggestion).toBeVisible();
   await suggestion.click();
