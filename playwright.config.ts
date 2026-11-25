@@ -35,7 +35,11 @@ const returningUserIntroProfile=JSON.stringify({
 });
 
 const production = process.env.RHYTHM_PRODUCTION_SMOKE === '1';
-const baseURL = production ? 'https://ai-lyart-tau-91.vercel.app' : 'http://127.0.0.1:4173';
+const deploymentURL = process.env.RHYTHM_DEPLOYMENT_URL;
+if (production && (!deploymentURL || !/^https:\/\/ai-[a-z0-9-]+\.vercel\.app$/.test(deploymentURL))) {
+  throw new Error('Production smoke requires an explicit Vercel deployment URL');
+}
+const baseURL = production ? deploymentURL! : 'http://127.0.0.1:4173';
 
 export default defineConfig({
   testDir:'./e2e',
