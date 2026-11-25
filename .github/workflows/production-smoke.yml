@@ -26,16 +26,22 @@ jobs:
           [[ "$DEPLOYMENT_ID" =~ ^[0-9]+$ ]]
           deployment=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID")
           status=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses" --jq '.[0]')
+          current=$(gh api "repos/$GITHUB_REPOSITORY/deployments?environment=Production&per_page=1" --jq '.[0]')
           sha=$(jq -er '.sha' <<< "$deployment")
           url=$(jq -er '.environment_url' <<< "$status")
+          current_id=$(jq -er '.id' <<< "$current")
+          current_sha=$(jq -er '.sha' <<< "$current")
           [[ "$(jq -r '.environment' <<< "$deployment")" == Production ]]
           [[ "$(jq -r '.state' <<< "$status")" == success ]]
           [[ "$sha" =~ ^[a-f0-9]{40}$ ]]
           [[ "$url" =~ ^https://ai-[a-z0-9-]+\.vercel\.app$ ]]
           [[ "$url" != https://ai-lyart-tau-91.vercel.app && "$url" != https://ai-git-main-dadda3ettaa-4200.vercel.app && "$url" != https://ai-dadda3ettaa-4200.vercel.app ]]
+          [[ "$current_id" == "$DEPLOYMENT_ID" ]]
+          [[ "$current_sha" == "$sha" ]]
+          echo "deployment_id=$DEPLOYMENT_ID" >> "$GITHUB_OUTPUT"
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "url=$url" >> "$GITHUB_OUTPUT"
-          printf 'Deployment %s, SHA %s, URL %s\n' "$DEPLOYMENT_ID" "$sha" "$url" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Before smoke: expected/current deployment %s, expected/current SHA %s, immutable URL %s\n' "$DEPLOYMENT_ID" "$sha" "$url" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/checkout@v4
         with:
           ref: ${{ steps.target.outputs.sha }}
@@ -50,6 +56,28 @@ jobs:
           RHYTHM_PRODUCTION_SMOKE: '1'
           RHYTHM_DEPLOYMENT_URL: ${{ steps.target.outputs.url }}
         run: npx playwright test e2e/production-smoke.spec.ts
+      - name: Verify production deployment did not change during smoke
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_DEPLOYMENT_ID: ${{ steps.target.outputs.deployment_id }}
+          EXPECTED_SHA: ${{ steps.target.outputs.sha }}
+          EXPECTED_URL: ${{ steps.target.outputs.url }}
+        run: |
+          set -euo pipefail
+          current=$(gh api "repos/$GITHUB_REPOSITORY/deployments?environment=Production&per_page=1" --jq '.[0]')
+          actual_id=$(jq -er '.id' <<< "$current")
+          actual_sha=$(jq -er '.sha' <<< "$current")
+          actual_status=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$actual_id/statuses" --jq '.[0]')
+          actual_state=$(jq -er '.state' <<< "$actual_status")
+          actual_url=$(jq -er '.environment_url' <<< "$actual_status")
+          printf 'After smoke: expected deployment %s / SHA %s / URL %s; actual deployment %s / SHA %s / URL %s; run %s/actions/runs/%s\n' \
+            "$EXPECTED_DEPLOYMENT_ID" "$EXPECTED_SHA" "$EXPECTED_URL" \
+            "$actual_id" "$actual_sha" "$actual_url" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+          [[ "$actual_id" == "$EXPECTED_DEPLOYMENT_ID" ]]
+          [[ "$actual_sha" == "$EXPECTED_SHA" ]]
+          [[ "$actual_state" == success ]]
+          [[ "$actual_url" == "$EXPECTED_URL" ]]
       - uses: actions/upload-artifact@v4
         if: always()
         with:
