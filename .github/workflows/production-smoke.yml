@@ -2,17 +2,43 @@ name: Production browser smoke
 on:
   deployment_status:
   workflow_dispatch:
+    inputs:
+      deployment_id:
+        description: GitHub deployment ID for successful production deployment
+        required: true
+        type: string
 permissions:
   contents: read
+  deployments: read
 jobs:
   smoke:
     if: github.event_name == 'workflow_dispatch' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Resolve exact successful production deployment
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOYMENT_ID: ${{ github.event.deployment.id || inputs.deployment_id }}
+        run: |
+          set -euo pipefail
+          [[ "$DEPLOYMENT_ID" =~ ^[0-9]+$ ]]
+          deployment=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID")
+          status=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses" --jq '.[0]')
+          sha=$(jq -er '.sha' <<< "$deployment")
+          url=$(jq -er '.environment_url' <<< "$status")
+          [[ "$(jq -r '.environment' <<< "$deployment")" == Production ]]
+          [[ "$(jq -r '.state' <<< "$status")" == success ]]
+          [[ "$sha" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$url" =~ ^https://ai-[a-z0-9-]+\.vercel\.app$ ]]
+          [[ "$url" != https://ai-lyart-tau-91.vercel.app && "$url" != https://ai-git-main-dadda3ettaa-4200.vercel.app && "$url" != https://ai-dadda3ettaa-4200.vercel.app ]]
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          printf 'Deployment %s, SHA %s, URL %s\n' "$DEPLOYMENT_ID" "$sha" "$url" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ steps.target.outputs.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -22,6 +48,7 @@ jobs:
       - name: Test live Arabic guest journey on desktop and Android
         env:
           RHYTHM_PRODUCTION_SMOKE: '1'
+          RHYTHM_DEPLOYMENT_URL: ${{ steps.target.outputs.url }}
         run: npx playwright test e2e/production-smoke.spec.ts
       - uses: actions/upload-artifact@v4
         if: always()
