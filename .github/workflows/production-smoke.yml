@@ -1,0 +1,33 @@
+name: Production browser smoke
+on:
+  deployment_status:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium
+      - name: Test live Arabic guest journey on desktop and Android
+        env:
+          RHYTHM_PRODUCTION_SMOKE: '1'
+        run: npx playwright test e2e/production-smoke.spec.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-smoke-report
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14
