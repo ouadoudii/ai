@@ -5,7 +5,17 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), {
+      name: 'rhythm-build-identity',
+      apply: 'build',
+      transformIndexHtml() {
+        const sha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'local';
+        if (process.env.VERCEL_ENV === 'production' && !/^[a-f0-9]{40}$/.test(sha)) {
+          throw new Error('Missing production build commit SHA');
+        }
+        return [{tag: 'meta', attrs: {name: 'rhythm-build-sha', content: sha}, injectTo: 'head'}];
+      },
+    }],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
