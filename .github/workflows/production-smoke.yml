@@ -54,7 +54,7 @@ jobs:
       - name: Test live Arabic guest journey on desktop and Android
         env:
           RHYTHM_PRODUCTION_SMOKE: '1'
-          RHYTHM_DEPLOYMENT_URL: ${{ steps.target.outputs.url }}
+          RHYTHM_EXPECTED_SHA: ${{ steps.target.outputs.sha }}
         run: npx playwright test e2e/production-smoke.spec.ts
       - name: Verify production deployment did not change during smoke
         env:
