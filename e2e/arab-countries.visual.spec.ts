@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {captureFullPageStrict} from './support/strictScreenshot';
 
 const countries=['DZ','BH','KM','DJ','EG','IQ','JO','KW','LB','LY','MR','MA','OM','PS','QA','SA','SO','SD','SY','TN','AE','YE'];
 
@@ -40,15 +41,15 @@ test('real Arabic first-run journey: guest to onboarding to app',async({page},te
   await suppressAutoCapture(page);
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('dir','rtl');
-  await page.screenshot({path:testInfo.outputPath('01-account-choice.png'),fullPage:true});
+  await captureFullPageStrict(page,{path:testInfo.outputPath('01-account-choice.png')});
 
   await page.getByRole('button',{name:/ابدأ على هذا الجهاز/}).click();
   await expect(page.getByRole('button',{name:/ابدأ اليوم|ابدأ/})).toBeVisible();
-  await page.screenshot({path:testInfo.outputPath('02-onboarding.png'),fullPage:true});
+  await captureFullPageStrict(page,{path:testInfo.outputPath('02-onboarding.png')});
 
   await page.getByRole('button',{name:/ابدأ اليوم|ابدأ/}).click();
   await expect(page.getByText(/مرحباً بك/)).toBeVisible();
-  await page.screenshot({path:testInfo.outputPath('03-home-after-onboarding.png'),fullPage:true});
+  await captureFullPageStrict(page,{path:testInfo.outputPath('03-home-after-onboarding.png')});
 });
 
 for(const {name,viewport} of [
@@ -92,7 +93,7 @@ for(const country of countries){
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('dir','rtl');
     await expect(page.getByText(/مرحباً بك/)).toBeVisible();
-    await page.screenshot({path:testInfo.outputPath(`${country}-01-home.png`),fullPage:true});
+    await captureFullPageStrict(page,{path:testInfo.outputPath(`${country}-01-home.png`)});
 
     await openCapture(page);
     await expect(page.locator('html')).toHaveAttribute('lang','ar');
@@ -100,7 +101,7 @@ for(const country of countries){
     const captureDialog=page.getByRole('dialog');
     await expect(captureDialog.locator('[data-language-option]')).toHaveCount(0);
     await expect(captureDialog.getByRole('button',{name:/English|Deutsch|Français/})).toHaveCount(0);
-    await page.screenshot({path:testInfo.outputPath(`${country}-02-capture.png`),fullPage:true});
+    await captureFullPageStrict(page,{path:testInfo.outputPath(`${country}-02-capture.png`)});
 
     await expect(captureDialog).toBeVisible();
     const photoButton=captureDialog.getByRole('button',{name:/صورة/});
@@ -112,7 +113,7 @@ for(const country of countries){
     await expect(foodSearch).toBeVisible();
     await foodSearch.fill('بيض');
     await expect(page.getByTestId('recognized-food-alias')).toContainText('بيض');
-    await page.screenshot({path:testInfo.outputPath(`${country}-03-food-picker.png`),fullPage:true});
+    await captureFullPageStrict(page,{path:testInfo.outputPath(`${country}-03-food-picker.png`)});
   });
 }
 

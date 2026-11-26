@@ -34,6 +34,13 @@ const returningUserIntroProfile=JSON.stringify({
   confirmedAt:1,
 });
 
+const production = process.env.RHYTHM_PRODUCTION_SMOKE === '1';
+const deploymentURL = process.env.RHYTHM_DEPLOYMENT_URL;
+if (production && (!deploymentURL || !/^https:\/\/ai-[a-z0-9-]+\.vercel\.app$/.test(deploymentURL))) {
+  throw new Error('Production smoke requires an explicit Vercel deployment URL');
+}
+const baseURL = production ? deploymentURL! : 'http://127.0.0.1:4173';
+
 export default defineConfig({
   testDir:'./e2e',
   timeout:45_000,
@@ -42,7 +49,7 @@ export default defineConfig({
   // Desktop/Android user journey into a green release gate.
   failOnFlakyTests:true,
   use:{
-    baseURL:'http://127.0.0.1:4173',
+    baseURL,
     trace:'retain-on-failure',
     screenshot:'only-on-failure',
     video:'retain-on-failure',
@@ -50,7 +57,7 @@ export default defineConfig({
     storageState:{
       cookies:[],
       origins:[{
-        origin:'http://127.0.0.1:4173',
+        origin:baseURL,
         localStorage:[
           {name:'rhythm_voice_entry_seen_v1',value:'true'},
           {name:'rhythm_intro_profile_v1',value:returningUserIntroProfile},
@@ -58,7 +65,7 @@ export default defineConfig({
       }],
     },
   },
-  webServer:{command:'npm run build && npm run preview -- --host 127.0.0.1 --port 4173',url:'http://127.0.0.1:4173',reuseExistingServer:false,timeout:120_000},
+  webServer:production ? undefined : {command:'npm run build && npm run preview -- --host 127.0.0.1 --port 4173',url:'http://127.0.0.1:4173',reuseExistingServer:false,timeout:120_000},
   // Exercise Arabic/RTL journeys in genuine desktop Chromium and Android contexts.
   projects:[
     {name:'desktop-arabic',use:{...devices['Desktop Chrome']}},
