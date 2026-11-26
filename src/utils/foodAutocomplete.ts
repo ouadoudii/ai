@@ -10,9 +10,15 @@ export function normalizeAutocomplete(value:string):string{
 
 export function rankLocalAutocomplete(names:string[],query:string,limit=6):string[]{
   const q=normalizeAutocomplete(query);
-  if(!q)return names.slice(0,limit);
-  const starts:string[]=[]; const contains:string[]=[];
+  const unique = new Map<string,string>();
   for(const name of names){
+    const key=normalizeAutocomplete(name);
+    if(key&&!unique.has(key))unique.set(key,name);
+  }
+  const candidates=[...unique.values()];
+  if(!q)return candidates.slice(0,limit);
+  const starts:string[]=[]; const contains:string[]=[];
+  for(const name of candidates){
     const n=normalizeAutocomplete(name);
     if(n===q)continue;
     if(n.startsWith(q))starts.push(name);
