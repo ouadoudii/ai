@@ -7,7 +7,12 @@ test('Arabic guest captures and retains a meal', async ({ page }) => {
     localStorage.setItem('cary_onboarding_v2_complete', 'true');
     sessionStorage.setItem('nimmapp_checkin_auto_opened', 'true');
   });
+  const expectedSHA = process.env.RHYTHM_EXPECTED_SHA || process.env.GITHUB_SHA || 'local';
+  const assertBuild = async () => {
+    await expect(page.locator('meta[name="rhythm-build-sha"]')).toHaveAttribute('content', expectedSHA);
+  };
   const response = await page.goto('/');
+  await assertBuild();
   expect(response?.ok()).toBe(true);
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -26,5 +31,6 @@ test('Arabic guest captures and retains a meal', async ({ page }) => {
   await page.getByRole('button', { name: 'حفظ الوجبة', exact: true }).click();
   await expect(page.getByText('تيراميسو', { exact: true })).toBeVisible();
   await page.reload();
+  await assertBuild();
   await expect(page.getByText('تيراميسو', { exact: true })).toBeVisible();
 });
