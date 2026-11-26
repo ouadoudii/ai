@@ -12,6 +12,13 @@ describe('accent-insensitive food autocomplete', () => {
     expect(rankLocalAutocomplete(['Käsespätzle', 'Bratwurst'], 'kasespatz')).toEqual(['Käsespätzle']);
   });
 
+  it('keeps distinct local suggestions before applying the limit', () => {
+    expect(rankLocalAutocomplete(['Crème brûlée', 'Creme brulee', 'Crème caramel'], 'creme', 2))
+      .toEqual(['Crème brûlée', 'Crème caramel']);
+    expect(rankLocalAutocomplete(['طاجين', ' طاجين ', 'كسكس', ' '], '', 2))
+      .toEqual(['طاجين', 'كسكس']);
+  });
+
   it('deduplicates equivalent accented and unaccented AI/local suggestions', () => {
     expect(mergeAutocompleteSuggestions(['Crème brûlée'], ['Creme brulee'], '')).toEqual(['Crème brûlée']);
   });
