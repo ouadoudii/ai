@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { foodSearchMatches, resolveArabFoodAlias } from './utils/arabicFoodIntelligence';
-import { rankLocalAutocomplete } from './utils/foodAutocomplete';
+import { foodSearchMatches, resolveArabFoodAlias } from '../../src/utils/arabicFoodIntelligence';
+import { rankLocalAutocomplete } from '../../src/utils/foodAutocomplete';
 
 describe('composed Arabic food phrases', () => {
   it('resolves a known base food inside a preparation phrase', () => {
