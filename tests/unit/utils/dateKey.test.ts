@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getLocalDateKey } from './dateKey';
+import { getLocalDateKey } from '../../../src/utils/dateKey';
 
 describe('getLocalDateKey', () => {
   it('uses the requested local timezone across a UTC date boundary', () => {

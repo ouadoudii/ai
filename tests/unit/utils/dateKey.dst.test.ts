@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getLocalDateKey } from './dateKey';
+import { getLocalDateKey } from '../../../src/utils/dateKey';
 
 describe('getLocalDateKey timezone and DST regressions', () => {
   it('uses the next Berlin calendar day before the spring clock change', () => {

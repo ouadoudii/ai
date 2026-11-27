@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getLocalDateKey } from './dateKey';
+import { getLocalDateKey } from '../../../src/utils/dateKey';
 
 describe('getLocalDateKey Santiago midnight DST regressions', () => {
   it('advances the calendar day when Santiago skips local midnight in spring', () => {
