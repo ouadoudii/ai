@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCoachFollowUps } from './coachFollowUps';
+import { buildCoachFollowUps } from '../../../src/utils/coachFollowUps';
 describe('Cary coach follow-up language', () => {
  it('generates distinct follow-ups in all four supported locales',()=>{
   const outputs = (['de','en','fr','ar'] as const).map(lang=>buildCoachFollowUps('Sleep', 'Try consistency', lang));

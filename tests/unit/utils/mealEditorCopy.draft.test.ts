@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mealEditorCopy } from './mealEditorCopy';
+import { mealEditorCopy } from '../../../src/utils/mealEditorCopy';
 
 describe('meal draft recovery copy', () => {
   it.each(['en', 'de', 'fr', 'ar'] as const)('offers localized resume and discard actions in %s', language => {

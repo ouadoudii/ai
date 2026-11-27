@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {getVoiceBackDestination} from './utils/voiceBackNavigation';
+import {getVoiceBackDestination} from '../../src/utils/voiceBackNavigation';
 
 describe('voice back navigation',()=>{
   it('returns an unfinished profile voice flow to the required entry gate',()=>{
