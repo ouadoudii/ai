@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasExplicitMealRating } from './mealRating';
+import { hasExplicitMealRating } from '../../../src/utils/mealRating';
 
 describe('meal rating evidence', () => {
   it('does not invent a rating for an omitted, null or invalid value', () => {
