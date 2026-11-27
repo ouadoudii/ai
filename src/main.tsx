@@ -61,7 +61,7 @@ const AccountButton: React.FC<{
   accessMode: "guest" | "account";
   session: any;
   openAccount: () => void;
-}> = ({ accessMode, session, openAccount, mealFirst, openFirstMeal, consumeFirstMeal }) => {
+}> = ({ accessMode, session, openAccount }) => {
   const { language } = useLanguage();
   return (
     <button
