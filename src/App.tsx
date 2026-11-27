@@ -50,7 +50,15 @@ const STORAGE_KEY = "nimmapp_moments_v1";
 const STORAGE_KEY_CHECKINS = "nimmapp_checkins_v1";
 const SEEDED_CHECKIN_IDS = new Set(["checkin-1", "checkin-2", "checkin-3"]);
 
-export default function App() {
+export default function App({
+  mealFirst = false,
+  openFirstMeal = false,
+  consumeFirstMeal,
+}: {
+  mealFirst?: boolean;
+  openFirstMeal?: boolean;
+  consumeFirstMeal?: () => void;
+} = {}) {
   const { language, t } = useLanguage();
   const [moments, setMoments] = React.useState<FoodMoment[]>(() => {
     try {
@@ -105,7 +113,10 @@ export default function App() {
   const [isProfileIntroOpen, setIsProfileIntroOpen] = React.useState(false);
   const [profileIntroTranscript, setProfileIntroTranscript] =
     React.useState("");
-  const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = React.useState(openFirstMeal);
+  React.useEffect(() => {
+    if (openFirstMeal) consumeFirstMeal?.();
+  }, [openFirstMeal, consumeFirstMeal]);
   const [isCheckInModalOpen, setIsCheckInModalOpen] = React.useState(false);
   const [requestedPhase, setRequestedPhase] =
     React.useState<TimeOfDayPhase | null>(null);
@@ -582,7 +593,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F4EEE4] text-stone-900 pb-28 md:pb-0">
-      <VoiceFirstEntryOverlay
+      {!mealFirst && <VoiceFirstEntryOverlay
         onStart={() => {
           invalidateVoiceSubmission();
           trackUx({
@@ -605,7 +616,7 @@ export default function App() {
           setProfileIntroTranscript("");
           setIsProfileIntroOpen(true);
         }}
-      />
+      />}
       <Header
         activeTab={activeTab}
         setActiveTab={go}

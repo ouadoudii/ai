@@ -21,12 +21,12 @@ export const PersonalPlanHomeCard:React.FC<Props>=({onStart,moments,checkIns})=>
   const priorities=buildTodayPriorities(moments,checkIns,lang);
 
   const copy=language==='de'
-    ?{eyebrow:'Heute wichtig',why:'Was deine Daten gerade zeigen',next:'Eine kleine Sache für heute',later:(time:string)=>`Ab ${time} verfügbar`,phase:{morning:'Morgen-Check-in starten',midday:'Mittag-Check-in starten',evening:'Abend-Check-in starten'}}
+    ?{eyebrow:'Heute wichtig',why:'Aus deinen Angaben beim Einstieg',next:'Eine kleine Sache für heute',later:(time:string)=>`Ab ${time} verfügbar`,phase:{morning:'Morgen-Check-in starten',midday:'Mittag-Check-in starten',evening:'Abend-Check-in starten'}}
     :language==='fr'
-      ?{eyebrow:'Important aujourd’hui',why:'Ce que montrent tes données',next:'Une petite action pour aujourd’hui',later:(time:string)=>`Disponible à partir de ${time}`,phase:{morning:'Commencer le check-in du matin',midday:'Commencer le check-in de midi',evening:'Commencer le check-in du soir'}}
+      ?{eyebrow:'Important aujourd’hui',why:'D’après les informations que tu as partagées au départ',next:'Une petite action pour aujourd’hui',later:(time:string)=>`Disponible à partir de ${time}`,phase:{morning:'Commencer le check-in du matin',midday:'Commencer le check-in de midi',evening:'Commencer le check-in du soir'}}
       :language==='ar'
-        ?{eyebrow:'المهم اليوم',why:'ما الذي تظهره بياناتك الآن',next:'خطوة صغيرة لليوم',later:(time:string)=>`متاح ابتداءً من ${time}`,phase:{morning:'ابدأ تسجيل الصباح',midday:'ابدأ تسجيل منتصف اليوم',evening:'ابدأ تسجيل المساء'}}
-        :{eyebrow:'What matters today',why:'What your data is showing',next:'One small thing for today',later:(time:string)=>`Available from ${time}`,phase:{morning:'Start morning check-in',midday:'Start midday check-in',evening:'Start evening check-in'}};
+        ?{eyebrow:'المهم اليوم',why:'بناءً على ما شاركته عند البداية',next:'خطوة صغيرة لليوم',later:(time:string)=>`متاح ابتداءً من ${time}`,phase:{morning:'ابدأ تسجيل الصباح',midday:'ابدأ تسجيل منتصف اليوم',evening:'ابدأ تسجيل المساء'}}
+        :{eyebrow:'What matters today',why:'Based on what you shared at the start',next:'One small thing for today',later:(time:string)=>`Available from ${time}`,phase:{morning:'Start morning check-in',midday:'Start midday check-in',evening:'Start evening check-in'}};
 
   const firstPlan=localizeIntroPlanForDisplay(profile.firstPlan,language);
   const available=isPhaseAvailable(firstPlan.phase,new Date().getHours());

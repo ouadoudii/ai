@@ -61,7 +61,7 @@ const AccountButton: React.FC<{
   accessMode: "guest" | "account";
   session: any;
   openAccount: () => void;
-}> = ({ accessMode, session, openAccount }) => {
+}> = ({ accessMode, session, openAccount, mealFirst, openFirstMeal, consumeFirstMeal }) => {
   const { language } = useLanguage();
   return (
     <button
@@ -79,9 +79,9 @@ const AccountButton: React.FC<{
   );
 };
 
-const ReactiveApp: React.FC = () => {
+const ReactiveApp: React.FC<React.ComponentProps<typeof App>> = (props) => {
   useLocalNow();
-  return <App />;
+  return <App {...props} />;
 };
 
 if (!rootElement) throw new Error("Root element #root is missing");
@@ -105,12 +105,12 @@ createRoot(rootElement).render(
     <RuntimeErrorBoundary>
       <LanguageProvider>
         <CaryAccountGate>
-          {({ accessMode, session, openAccount }) => (
-            <MomentOnboarding>
+          {({ accessMode, session, openAccount, mealFirst, openFirstMeal, consumeFirstMeal }) => (
+            <MomentOnboarding skip={mealFirst}>
               <CaryCloudMemorySync
                 session={accessMode === "account" ? session : null}
               />
-              <ReactiveApp />
+              <ReactiveApp mealFirst={mealFirst} openFirstMeal={openFirstMeal} consumeFirstMeal={consumeFirstMeal} />
               <AccountButton
                 accessMode={accessMode}
                 session={session}
