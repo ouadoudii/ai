@@ -3,7 +3,7 @@ import {
   ARABIC_FATAL_MESSAGE,
   ARABIC_FATAL_TITLE,
   buildFatalErrorMarkup,
-} from "./fatalUi";
+} from "../../../src/utils/fatalUi";
 
 describe("fatal UI", () => {
   it("renders a safe Arabic RTL fallback without exposing exception details", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createEntityId } from './entityId';
+import { createEntityId } from '../../../src/utils/entityId';
 
 describe('createEntityId',()=>{
   it('keeps ids unique when wall-clock time does not advance',()=>{

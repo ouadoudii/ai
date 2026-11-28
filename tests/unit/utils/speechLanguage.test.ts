@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { browserSpeechLocale, voiceCopy } from './speechLanguage';
+import { browserSpeechLocale, voiceCopy } from '../../../src/utils/speechLanguage';
 
 describe('speech language helpers', () => {
   it('uses the right browser recognition locale for every supported language', () => {

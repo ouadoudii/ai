@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { getFoodSuggestions } from './utils/foodSuggestions';
-import { hasLatinLetters, localizeFoodSuggestions, localizeStoredFoodName } from './utils/arabicFoodNames';
-import type { MomentCategory } from './types';
+import { getFoodSuggestions } from '../../src/utils/foodSuggestions';
+import { hasLatinLetters, localizeFoodSuggestions, localizeStoredFoodName } from '../../src/utils/arabicFoodNames';
+import type { MomentCategory } from '../../src/types';
 
 const supportedCountries = ['MA','DE','FR','IT','ES','TR','GB','US','IN','JP','MX','AE','SA','EG','DZ','TN','QA','KW','JO','LB','OM','BH','IQ','LY','SD','YE','PS','ZZ'];
 const categories: MomentCategory[] = ['breakfast','lunch','dinner','snack','coffee','dessert'];

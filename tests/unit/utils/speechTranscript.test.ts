@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {mergeSpeechSegments} from './speechTranscript';
+import {mergeSpeechSegments} from '../../../src/utils/speechTranscript';
 
 describe('mergeSpeechSegments',()=>{
   it('keeps the longest cumulative Arabic hypothesis instead of repeating it',()=>{

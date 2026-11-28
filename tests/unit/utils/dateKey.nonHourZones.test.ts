@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getLocalDateKey } from './dateKey';
+import { getLocalDateKey } from '../../../src/utils/dateKey';
 
 describe('getLocalDateKey non-hour timezone regressions', () => {
   it('uses Casablanca GMT during the 2026 Ramadan DST suspension', () => {

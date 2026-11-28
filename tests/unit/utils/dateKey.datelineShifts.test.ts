@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getLocalDateKey } from './dateKey';
+import { getLocalDateKey } from '../../../src/utils/dateKey';
 
 describe('getLocalDateKey historical international date-line shifts', () => {
   it('skips the nonexistent December 30, 2011 in Samoa at the exact transition', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeAutocompleteSuggestions, normalizeAutocomplete, rankLocalAutocomplete } from './utils/foodAutocomplete';
+import { mergeAutocompleteSuggestions, normalizeAutocomplete, rankLocalAutocomplete } from '../../src/utils/foodAutocomplete';
 
 describe('accent-insensitive food autocomplete', () => {
   it('folds Latin diacritics without changing the canonical suggestion text', () => {
