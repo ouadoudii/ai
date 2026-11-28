@@ -110,6 +110,17 @@ describe('buildVoiceJournalEntries', () => {
     expect(result.checkIns.find(c => c.timeOfDay==='evening')?.food?.category).toBe('dinner');
   });
 
+  it.each([
+    { mealTitle:'حريرة', mealItems:['حريرة'], mealCategory:'dinner' },
+    { meals:[{category:'dinner',timeOfDay:'evening',time:'19:15',mealTitle:'حريرة',mealItems:['حريرة'],hungerBefore:0,fullnessAfter:0}] },
+  ])('does not write a restaurant-style rating or meal mood from a plain voice entry (%j)', (extractedData) => {
+    const journal = buildVoiceJournalEntries({ coachFeedback:feedback, extractedData }, 'تعشيت حريرة', 'ar', new Date('2026-09-10T20:00:00'));
+    expect(journal.moments).toHaveLength(1);
+    expect(journal.moments[0].title).toBe('حريرة');
+    expect(journal.moments[0]).not.toHaveProperty('rating');
+    expect(journal.moments[0]).not.toHaveProperty('mood');
+  });
+
   it('keeps snacks as moments without falsely completing a main meal slot', () => {
     const result = buildVoiceJournalEntries({
       coachFeedback: feedback,
