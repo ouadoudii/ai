@@ -71,6 +71,16 @@ test('Voice capture stores a recognized meal instead of requiring a second edito
   await expect.poll(()=>calls).toBe(1);
   await expect.poll(async()=>((await stored(page,'nimmapp_moments_v1')) as any[]).some(m=>m.title==='بيض مسلوق'&&m.category==='breakfast')).toBe(true);
   await expect(page.getByRole('heading',{name:'ماذا أكلت؟'})).toHaveCount(0);
+  const savedMeal = async () => (await stored(page,'nimmapp_moments_v1') as Array<Record<string, unknown>>)
+    .find(m => m.title === 'بيض مسلوق' && String(m.id).startsWith('voice-moment-'));
+  const verifyUnrated = async () => {
+    await expect.poll(async () => (await savedMeal())?.title).toBe('بيض مسلوق');
+    expect(await savedMeal()).not.toHaveProperty('rating');
+    expect(await savedMeal()).not.toHaveProperty('mood');
+  };
+  await verifyUnrated();
+  await page.reload();
+  await verifyUnrated();
 });
 
 test('Arabic free voice keeps negation out and assigns distinct meal moments',async({page})=>{
